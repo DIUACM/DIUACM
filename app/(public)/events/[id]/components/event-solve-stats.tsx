@@ -97,6 +97,7 @@ export function EventSolveStats({ stats }: EventSolveStatsProps) {
                             alt={stat.user.name}
                             width={40}
                             height={40}
+                            unoptimized
                           />
                         )}
                         <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">

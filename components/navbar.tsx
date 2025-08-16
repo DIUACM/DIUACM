@@ -117,6 +117,7 @@ export default function Navbar() {
                     width={32}
                     height={32}
                     className="object-cover rounded-lg"
+                    unoptimized
                   />
                 </div>
                 <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent dark:from-blue-400 dark:to-cyan-300">

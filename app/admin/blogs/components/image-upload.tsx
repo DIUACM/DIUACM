@@ -129,6 +129,7 @@ export function ImageUpload({ value, onChange }: ImageUploadProps) {
                 alt="Featured image"
                 fill
                 className="object-cover"
+                unoptimized
               />
             </div>
           </CardContent>

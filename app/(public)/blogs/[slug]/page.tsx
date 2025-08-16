@@ -39,6 +39,7 @@ const MarkdownImage = ({ src, alt, title }: MarkdownImageProps) => {
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
         className="w-full h-auto object-cover"
         style={{ width: "100%", height: "auto" }}
+        unoptimized
       />
     </span>
   );

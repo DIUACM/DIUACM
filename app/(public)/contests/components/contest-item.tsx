@@ -242,6 +242,7 @@ export function Contest({ contest }: ContestProps) {
                                         alt={member.user.name}
                                         fill
                                         className="object-cover"
+                                        unoptimized
                                       />
                                     ) : (
                                       <div className="w-full h-full flex items-center justify-center text-xs text-slate-500 dark:text-slate-400">
@@ -296,6 +297,7 @@ export function Contest({ contest }: ContestProps) {
                             fill
                             className="object-cover hover:scale-105 transition-transform duration-300"
                             sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 20vw"
+                            unoptimized
                           />
                         </div>
                       ))}

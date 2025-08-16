@@ -68,6 +68,7 @@ function MediaCard({ media, onEdit, onDelete, onPreview }: MediaCardProps) {
               fill
               className="object-cover transition-transform group-hover:scale-105"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              unoptimized
             />
           </AspectRatio>
 
@@ -281,6 +282,7 @@ export function MediaGrid({ gallery }: MediaGridProps) {
                   fill
                   className="object-contain"
                   sizes="90vw"
+                  unoptimized
                 />
               </AspectRatio>
             </div>

@@ -301,6 +301,7 @@ export function MediaUploader({ galleryId }: MediaUploaderProps) {
                       className="rounded object-cover"
                       fill
                       sizes="48px"
+                      unoptimized
                     />
                   </div>
                 ) : (
