@@ -26,8 +26,7 @@ class EventForm
                     ->columnSpanFull()
                     ->schema([
                         TextInput::make('title')
-                            ->required()
-                            ->columnSpan('full'),
+                            ->required(),
 
                         RichEditor::make('description')
                             ->toolbarButtons([
@@ -42,7 +41,7 @@ class EventForm
                                 'codeBlock',
                             ])
                             ->placeholder('Enter event description')
-                            ->columnSpan('full'),
+                            ,
 
                         Grid::make()
                             ->schema([
@@ -81,7 +80,7 @@ class EventForm
                                 Placeholder::make('duration')
                                     ->live()
                                     ->content(fn ($get) => self::calculateRuntime($get('starting_at'), $get('ending_at')))
-                                    ->columnSpan('full'),
+                                    ,
                             ]),
                     ]),
 
