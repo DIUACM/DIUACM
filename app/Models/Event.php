@@ -5,10 +5,13 @@ namespace App\Models;
 use App\Enums\EventType;
 use App\Enums\ParticipationScope;
 use App\Enums\VisibilityStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Event extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'title',
         'description',
