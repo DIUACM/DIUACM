@@ -21,6 +21,17 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'username',
+        'image',
+        'gender',
+        'phone',
+        'codeforces_handle',
+        'atcoder_handle',
+        'vjudge_handle',
+        'department',
+        'student_id',
+        'max_cf_rating',
+
     ];
 
     /**
