@@ -9,14 +9,14 @@ use Filament\Support\Contracts\HasLabel;
 enum EventType: string implements HasColor, HasIcon, HasLabel
 {
     case CONTEST = 'contest';
-    case CLASS = 'class';
+    case _CLASS = 'class';
     case OTHER = 'other';
 
     public function getLabel(): ?string
     {
         return match ($this) {
             self::CONTEST => 'Contest',
-            self::CLASS => 'Class',
+            self::_CLASS => 'Class',
             self::OTHER => 'Other',
         };
     }
@@ -25,7 +25,7 @@ enum EventType: string implements HasColor, HasIcon, HasLabel
     {
         return match ($this) {
             self::CONTEST => 'danger',
-            self::CLASS => 'primary',
+            self::_CLASS => 'primary',
             self::OTHER => 'gray',
         };
     }
@@ -34,7 +34,7 @@ enum EventType: string implements HasColor, HasIcon, HasLabel
     {
         return match ($this) {
             self::CONTEST => 'heroicon-m-trophy',
-            self::CLASS => 'heroicon-m-book-open',
+            self::_CLASS => 'heroicon-m-book-open',
             self::OTHER => 'heroicon-m-ellipsis-horizontal-circle',
         };
     }
