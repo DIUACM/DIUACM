@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\Trackers\Tables;
 
 use App\Enums\VisibilityStatus;
+use App\Filament\Resources\Trackers\TrackerResource;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -52,8 +54,7 @@ class TrackersTable
                     ->counts('rankLists')
                     ->badge()
                     ->color(Color::Green)
-                    ->alignCenter()
-                    ->description('Number of rank lists'),
+                    ->alignCenter(),
 
                 TextColumn::make('created_at')
                     ->label('Created')
@@ -76,6 +77,12 @@ class TrackersTable
                     ->preload(),
             ])
             ->recordActions([
+                Action::make('rank_lists')
+                    ->label('Rank Lists')
+                    ->icon('heroicon-o-rectangle-stack')
+                    ->color('gray')
+                    ->url(fn ($record) => TrackerResource::getUrl('rank-lists', ['record' => $record]))
+                    ->tooltip('Manage rank lists for this tracker'),
                 EditAction::make()
                     ->iconButton(),
             ])
