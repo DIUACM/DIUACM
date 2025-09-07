@@ -47,6 +47,11 @@ class UserForm
                         Grid::make()
                             ->schema([
                                 FileUpload::make('image')
+                                    ->disk('public')
+                                    ->directory('profile-images')
+                                    ->visibility('public')
+                                    ->avatar()
+                                    ->imageEditor()
                                     ->image(),
                                 DateTimePicker::make('email_verified_at')
                                     ->label('Email verified at')

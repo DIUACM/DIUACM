@@ -21,9 +21,10 @@ class UsersTable
             ->defaultSort('created_at', 'desc')
             ->columns([
                 ImageColumn::make('image')
+                      ->disk('public')
                     ->label('Avatar')
                     ->circular()
-                    ->size(36),
+                    ->imageSize(36),
 
                 TextColumn::make('name')
                     ->searchable()
