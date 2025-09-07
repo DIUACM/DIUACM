@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Models\Tracker;
 
 return new class extends Migration
 {
@@ -13,10 +14,10 @@ return new class extends Migration
     {
         Schema::create('rank_lists', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tracker_id')->constrained('trackers')->onDelete('cascade');
+            $table->foreignIdFor(Tracker::class)->constrained('trackers')->onDelete('cascade');
             $table->string('keyword');
             $table->text('description')->nullable();
-            $table->float('weight_of_upsolve');
+            $table->float('weight_of_upsolve')->default(0.25);
             $table->integer('order')->default(0);
             $table->boolean('is_active')->default(true);
             $table->boolean('consider_strict_attendance')->default(true);
