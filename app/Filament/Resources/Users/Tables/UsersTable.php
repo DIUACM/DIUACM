@@ -61,6 +61,7 @@ class UsersTable
                 TextColumn::make('email_verified_at')
                     ->label('Verified At')
                     ->dateTime('M j, Y')
+                    ->timezone('Asia/Dhaka')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
@@ -75,11 +76,13 @@ class UsersTable
 
                 TextColumn::make('created_at')
                     ->dateTime('M j, Y')
+                    ->timezone('Asia/Dhaka')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('updated_at')
                     ->dateTime('M j, Y')
+                    ->timezone('Asia/Dhaka')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

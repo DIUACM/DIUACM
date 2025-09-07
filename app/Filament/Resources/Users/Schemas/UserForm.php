@@ -50,7 +50,8 @@ class UserForm
                                     ->image(),
                                 DateTimePicker::make('email_verified_at')
                                     ->label('Email verified at')
-                                    ->seconds(false),
+                                    ->seconds(false)
+                                    ->timezone('Asia/Dhaka'),
                                 TextInput::make('password')
                                     ->password()
                                     ->revealable()
