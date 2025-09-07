@@ -1,9 +1,9 @@
 <?php
 
+use App\Models\Tracker;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\Tracker;
 
 return new class extends Migration
 {
@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('keyword');
             $table->text('description')->nullable();
             $table->float('weight_of_upsolve')->default(0.25);
+            $table->string('status')->default('draft');
             $table->integer('order')->default(0);
             $table->boolean('is_active')->default(true);
             $table->boolean('consider_strict_attendance')->default(true);

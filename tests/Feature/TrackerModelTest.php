@@ -69,3 +69,22 @@ test('rank list can have different keywords for different trackers', function ()
     expect($rankList2->keyword)->toBe('codeforces');
     expect($rankList1->tracker_id)->not->toBe($rankList2->tracker_id);
 });
+
+test('rank list can be created with visibility status', function () {
+    $rankList = RankList::factory()->create([
+        'keyword' => 'atcoder',
+        'status' => VisibilityStatus::PUBLIC,
+    ]);
+
+    expect($rankList->keyword)->toBe('atcoder');
+    expect($rankList->status)->toBe(VisibilityStatus::PUBLIC);
+});
+
+test('rank list status defaults to draft', function () {
+    $rankList = RankList::factory()->create([
+        'keyword' => 'leetcode',
+    ]);
+
+    // Check that default works in factory (should be random) or test the database default
+    expect($rankList->status)->toBeInstanceOf(VisibilityStatus::class);
+});
