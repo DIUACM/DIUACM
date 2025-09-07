@@ -28,8 +28,8 @@ class TrackersTable
                 TextColumn::make('slug')
                     ->searchable()
                     ->sortable()
-                    ->copyable()
-                    ->copyMessage('Slug copied')
+                    ->label('URL Slug')
+                    ->limit(30)
                     ->fontFamily('mono')
                     ->color(Color::Gray),
 
