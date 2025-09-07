@@ -78,7 +78,8 @@ class EventForm
 
                                 TextEntry::make('duration')
                                     ->live()
-                                    ->formatStateUsing(fn ($get) => self::calculateRuntime($get('starting_at'), $get('ending_at'))),
+                                    ->formatStateUsing(fn ($get) => self::calculateRuntime($get('starting_at'), $get('ending_at')))
+                                    ->hiddenOn('create'),
                             ]),
                     ]),
 
@@ -128,7 +129,8 @@ class EventForm
                                     ->label('Last Modified Date')
                                     ->formatStateUsing(fn (?Event $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
                             ]),
-                    ])->collapsed(),
+                    ])->collapsed()
+                    ->hiddenOn('create'),
             ]);
     }
 

@@ -89,7 +89,8 @@ class TrackerForm
                                     ->label('Last Modified Date')
                                     ->formatStateUsing(fn (?Tracker $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
                             ]),
-                    ])->collapsed(),
+                    ])->collapsed()
+                    ->hiddenOn('create'),
             ]);
     }
 }

@@ -81,9 +81,8 @@ class UserForm
                                 TextInput::make('max_cf_rating')
                                     ->label('Max CF rating')
                                     ->numeric()
-                                    ->default(-1),
-                                TextEntry::make('rating_hint')
-                                    ->formatStateUsing(fn () => 'Use -1 if unknown'),
+                                    ->default(-1)
+                                    ->helperText('Use -1 if unknown'),
                             ]),
                     ]),
 
@@ -111,7 +110,8 @@ class UserForm
                                     ->formatStateUsing(fn (?User $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
                             ]),
                     ])
-                    ->collapsed(),
+                    ->collapsed()
+                    ->hiddenOn('create'),
             ]);
     }
 }
