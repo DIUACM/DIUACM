@@ -20,7 +20,7 @@ class TrackerResource extends Resource
 {
     protected static ?string $model = Tracker::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;
 
     protected static ?string $navigationLabel = 'Trackers';
 
