@@ -36,4 +36,10 @@ class RankList extends Model
     {
         return $this->belongsTo(Tracker::class);
     }
+
+    public function events()
+    {
+        return $this->belongsToMany(Event::class, 'event_rank_list')
+            ->withPivot('weight');
+    }
 }
