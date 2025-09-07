@@ -36,7 +36,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: profile.name,
           emailVerified: new Date(),
           email: profile.email,
-          username: profile.email?.split("@")[0] ?? generateRandomUsername(),
           image: profile.picture,
         } as User;
       },
@@ -131,6 +130,43 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
           // Set the user ID to the existing user's ID
           user.id = existingUser.id;
+        } else {
+          // For new users, we need to create the user manually with username
+          const username = profile?.email?.split("@")[0] ?? generateRandomUsername();
+          
+          // Ensure required fields are not null
+          if (!profile?.name || !profile?.email) {
+            return false;
+          }
+          
+          // Create the user manually to include username
+          const [newUser] = await db.insert(users).values({
+            name: profile.name,
+            email: profile.email,
+            emailVerified: new Date(),
+            image: profile?.picture || null,
+            username: username,
+          }).returning({ id: users.id });
+
+          // Set the user ID for the session
+          user.id = newUser.id;
+          
+          // Create the account manually since we bypassed the adapter
+          await db.insert(accounts).values({
+            userId: newUser.id,
+            type: account.type as "oauth",
+            provider: account.provider,
+            providerAccountId: account.providerAccountId,
+            access_token: account.access_token,
+            expires_at: account.expires_at,
+            token_type: account.token_type,
+            scope: account.scope,
+            id_token: account.id_token,
+            session_state: account.session_state?.toString(),
+          });
+          
+          // The account will be created automatically by the adapter
+          return true;
         }
 
         return true;
