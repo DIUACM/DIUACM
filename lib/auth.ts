@@ -12,6 +12,16 @@ import { eq, or, and } from "drizzle-orm";
 
 const adapter = DrizzleAdapter(db);
 
+// Function to generate a random username
+const generateRandomUsername = (): string => {
+  const adjectives = ['quick', 'brave', 'clever', 'bright', 'swift', 'bold', 'wise', 'cool', 'smart', 'fast'];
+  const nouns = ['coder', 'hacker', 'dev', 'ninja', 'wizard', 'guru', 'master', 'pro', 'ace', 'star'];
+  const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+  const randomNoun = nouns[Math.floor(Math.random() * nouns.length)];
+  const randomNumber = Math.floor(Math.random() * 1000);
+  return `${randomAdjective}${randomNoun}${randomNumber}`;
+};
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter,
   pages: {
@@ -26,7 +36,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: profile.name,
           emailVerified: new Date(),
           email: profile.email,
-          username: profile.email?.split("@")[0] ?? undefined,
+          username: profile.email?.split("@")[0] ?? generateRandomUsername(),
           image: profile.picture,
         } as User;
       },
