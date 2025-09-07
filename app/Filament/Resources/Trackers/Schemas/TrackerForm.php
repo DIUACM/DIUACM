@@ -4,10 +4,10 @@ namespace App\Filament\Resources\Trackers\Schemas;
 
 use App\Enums\VisibilityStatus;
 use App\Models\Tracker;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -81,13 +81,13 @@ class TrackerForm
                     ->schema([
                         Grid::make()
                             ->schema([
-                                Placeholder::make('created_at')
+                                TextEntry::make('created_at')
                                     ->label('Created Date')
-                                    ->content(fn (?Tracker $record): string => $record?->created_at?->diffForHumans() ?? '-'),
+                                    ->formatStateUsing(fn (?Tracker $record): string => $record?->created_at?->diffForHumans() ?? '-'),
 
-                                Placeholder::make('updated_at')
+                                TextEntry::make('updated_at')
                                     ->label('Last Modified Date')
-                                    ->content(fn (?Tracker $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+                                    ->formatStateUsing(fn (?Tracker $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
                             ]),
                     ])->collapsed(),
             ]);

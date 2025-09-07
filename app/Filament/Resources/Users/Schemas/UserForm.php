@@ -6,9 +6,9 @@ use App\Enums\Gender;
 use App\Models\User;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -82,8 +82,8 @@ class UserForm
                                     ->label('Max CF rating')
                                     ->numeric()
                                     ->default(-1),
-                                Placeholder::make('rating_hint')
-                                    ->content('Use -1 if unknown'),
+                                TextEntry::make('rating_hint')
+                                    ->formatStateUsing(fn () => 'Use -1 if unknown'),
                             ]),
                     ]),
 
@@ -103,12 +103,12 @@ class UserForm
                     ->schema([
                         Grid::make()
                             ->schema([
-                                Placeholder::make('created_at')
+                                TextEntry::make('created_at')
                                     ->label('Created Date')
-                                    ->content(fn (?User $record): string => $record?->created_at?->diffForHumans() ?? '-'),
-                                Placeholder::make('updated_at')
+                                    ->formatStateUsing(fn (?User $record): string => $record?->created_at?->diffForHumans() ?? '-'),
+                                TextEntry::make('updated_at')
                                     ->label('Last Modified Date')
-                                    ->content(fn (?User $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+                                    ->formatStateUsing(fn (?User $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
                             ]),
                     ])
                     ->collapsed(),

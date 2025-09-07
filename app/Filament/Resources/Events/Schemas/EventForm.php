@@ -8,10 +8,10 @@ use App\Enums\VisibilityStatus;
 use App\Models\Event;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -40,8 +40,7 @@ class EventForm
                                 'blockquote',
                                 'codeBlock',
                             ])
-                            ->placeholder('Enter event description')
-                            ,
+                            ->placeholder('Enter event description'),
 
                         Grid::make()
                             ->schema([
@@ -77,10 +76,9 @@ class EventForm
                                     ->after('starting_at')
                                     ->required(),
 
-                                Placeholder::make('duration')
+                                TextEntry::make('duration')
                                     ->live()
-                                    ->content(fn ($get) => self::calculateRuntime($get('starting_at'), $get('ending_at')))
-                                    ,
+                                    ->formatStateUsing(fn ($get) => self::calculateRuntime($get('starting_at'), $get('ending_at'))),
                             ]),
                     ]),
 
@@ -122,13 +120,13 @@ class EventForm
                     ->schema([
                         Grid::make()
                             ->schema([
-                                Placeholder::make('created_at')
+                                TextEntry::make('created_at')
                                     ->label('Created Date')
-                                    ->content(fn (?Event $record): string => $record?->created_at?->diffForHumans() ?? '-'),
+                                    ->formatStateUsing(fn (?Event $record): string => $record?->created_at?->diffForHumans() ?? '-'),
 
-                                Placeholder::make('updated_at')
+                                TextEntry::make('updated_at')
                                     ->label('Last Modified Date')
-                                    ->content(fn (?Event $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+                                    ->formatStateUsing(fn (?Event $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
                             ]),
                     ])->collapsed(),
             ]);
