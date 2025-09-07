@@ -38,4 +38,9 @@ class Event extends Model
             'status' => VisibilityStatus::class,
         ];
     }
+
+    public function attendees()
+    {
+        return $this->belongsToMany(User::class, 'event_attendance')->withTimestamps();
+    }
 }
