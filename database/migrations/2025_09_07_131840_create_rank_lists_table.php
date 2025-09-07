@@ -14,7 +14,7 @@ return new class extends Migration
     {
         Schema::create('rank_lists', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(Tracker::class)->constrained('trackers')->onDelete('cascade');
+            $table->foreignIdFor(Tracker::class)->constrained('trackers');
             $table->string('keyword');
             $table->text('description')->nullable();
             $table->float('weight_of_upsolve')->default(0.25);
