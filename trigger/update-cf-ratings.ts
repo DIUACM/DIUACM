@@ -45,7 +45,7 @@ export const updateCodeforcesRatings = schedules.task({
 
       let updatedCount = 0;
       let cleanedHandles = 0;
-      let removedHandles = 0;
+      let skippedHandles = 0;
 
       // Process each user individually (like the Laravel implementation)
       for (const user of users) {
@@ -86,29 +86,21 @@ export const updateCodeforcesRatings = schedules.task({
 
           if (!response.ok) {
             logger.warn(
-              `API request failed for ${cfHandle}. Setting handle to null.`
+              `API request failed for ${cfHandle}. Keeping existing handle.`
             );
 
-            await db
-              .update(usersTable)
-              .set({ codeforcesHandle: null })
-              .where(eq(usersTable.id, user.id));
-
-            removedHandles++;
+            // Don't remove the handle, just skip this user
+            skippedHandles++;
             continue;
           }
 
           const data = (await response.json()) as CodeforcesApiResponse;
 
           if (data.status !== "OK" || !data.result || !data.result[0]) {
-            logger.warn(`Invalid handle: ${cfHandle}. Setting to null.`);
+            logger.warn(`Invalid handle: ${cfHandle}. Keeping existing handle.`);
 
-            await db
-              .update(usersTable)
-              .set({ codeforcesHandle: null })
-              .where(eq(usersTable.id, user.id));
-
-            removedHandles++;
+            // Don't remove the handle, just skip this user
+            skippedHandles++;
             continue;
           }
 
@@ -144,7 +136,7 @@ export const updateCodeforcesRatings = schedules.task({
         processed: users.length,
         updated: updatedCount,
         cleanedHandles,
-        removedHandles,
+        skippedHandles,
       });
     } catch (error) {
       logger.error("Error in Codeforces cleanup task", { error });
