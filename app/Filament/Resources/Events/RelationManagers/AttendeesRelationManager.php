@@ -8,9 +8,9 @@ use Filament\Actions\DetachAction;
 use Filament\Actions\DetachBulkAction;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Filament\Tables\Columns\ImageColumn;
 
 class AttendeesRelationManager extends RelationManager
 {
@@ -27,11 +27,11 @@ class AttendeesRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('name')
+            ->recordTitle(fn (\App\Models\User $record): string => "{$record->name} ({$record->username})")
             ->inverseRelationship('attendedEvents')
             ->columns([
-                  ImageColumn::make('image')
-                      ->disk('public')
+                ImageColumn::make('image')
+                    ->disk('public')
                     ->label('Avatar')
                     ->circular()
                     ->imageSize(36),
@@ -51,12 +51,9 @@ class AttendeesRelationManager extends RelationManager
             ])
             ->headerActions([
                 AttachAction::make()
-                ->recordSelectSearchColumns(['email', 'name', 'student_id', 'username', 'phone', 'codeforces_handle', 'atcoder_handle', 'vjudge_handle'])
+                    ->recordSelectSearchColumns(['email', 'name', 'student_id', 'username', 'phone', 'codeforces_handle', 'atcoder_handle', 'vjudge_handle'])
                     ->preloadRecordSelect()
                     ->modalWidth('3xl')
-                    ->recordTitle(function ($record) {
-                        return $record->name.' || '.$record->username;
-                    })
                     ->label('Mark Attendance')
                     ->multiple()
                     ->modalHeading('Mark User Attendance'),
