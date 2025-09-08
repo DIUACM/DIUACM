@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Trackers\Resources\RankLists\RelationManagers;
 
+use Filament\Actions\Action;
 use Filament\Actions\AttachAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DetachAction;
@@ -71,6 +72,27 @@ class EventsRelationManager extends RelationManager
                     }),
             ])
             ->recordActions([
+                Action::make('editWeight')
+                    ->label('Edit Weight')
+                    ->form([
+                        TextInput::make('weight')
+                            ->label('Weight')
+                            ->numeric()
+                            ->step(0.01)
+                            ->minValue(0)
+                            ->maxValue(1)
+                            ->required(),
+                    ])
+                    ->fillForm(function (\App\Models\Event $record): array {
+                        return [
+                            'weight' => $record->pivot->weight,
+                        ];
+                    })
+                    ->action(function (\App\Models\Event $record, array $data): void {
+                        $this->getRelationship()->updateExistingPivot($record->getKey(), [
+                            'weight' => $data['weight'],
+                        ]);
+                    }),
                 DetachAction::make()
                     ->label('Detach'),
             ])
