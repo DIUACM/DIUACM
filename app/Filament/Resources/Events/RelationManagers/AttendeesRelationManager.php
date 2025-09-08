@@ -53,7 +53,6 @@ class AttendeesRelationManager extends RelationManager
                 AttachAction::make()
                     ->recordSelectSearchColumns(['email', 'name', 'student_id', 'username', 'phone', 'codeforces_handle', 'atcoder_handle', 'vjudge_handle'])
                     ->preloadRecordSelect()
-                    ->modalWidth('3xl')
                     ->label('Mark Attendance')
                     ->multiple()
                     ->modalHeading('Mark User Attendance'),

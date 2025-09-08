@@ -53,7 +53,6 @@ class EventsRelationManager extends RelationManager
                 AttachAction::make()
                     ->multiple()
                     ->preloadRecordSelect()
-                    ->modalWidth('3xl')
                     ->label('Attach Event')
                     ->modalHeading('Attach Event with Weight')
                     ->recordSelectSearchColumns(['title', 'description', 'event_link'])
