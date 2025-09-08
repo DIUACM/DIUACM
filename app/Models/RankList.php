@@ -42,4 +42,10 @@ class RankList extends Model
         return $this->belongsToMany(Event::class, 'event_rank_list')
             ->withPivot('weight');
     }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'rank_list_user')
+            ->withPivot('score');
+    }
 }
