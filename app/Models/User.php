@@ -71,4 +71,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsToMany(RankList::class, 'rank_list_user')
             ->withPivot('score');
     }
+
+    public function eventUserStats()
+    {
+        return $this->hasMany(EventUserStat::class);
+    }
+
+    public function eventsWithStats()
+    {
+        return $this->belongsToMany(Event::class, 'event_user_stats')
+            ->withPivot(['solves_count', 'upsolves_count', 'participation'])
+            ->withTimestamps();
+    }
 }

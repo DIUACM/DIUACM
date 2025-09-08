@@ -49,4 +49,16 @@ class Event extends Model
         return $this->belongsToMany(RankList::class, 'event_rank_list')
             ->withPivot('weight');
     }
+
+    public function eventUserStats()
+    {
+        return $this->hasMany(EventUserStat::class);
+    }
+
+    public function usersWithStats()
+    {
+        return $this->belongsToMany(User::class, 'event_user_stats')
+            ->withPivot(['solves_count', 'upsolves_count', 'participation'])
+            ->withTimestamps();
+    }
 }
