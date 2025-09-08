@@ -148,23 +148,36 @@ class UpdateAtcoderEventStats extends Command
     {
         $endEpoch = $startEpoch + $duration;
 
-        foreach ($users as $user) {
-            $handle = $user->atcoder_handle;
+        // Partition users by presence of a non-empty handle
+        $withHandles = $users->filter(function ($u) {
+            $h = $u->atcoder_handle;
 
-            if (! $this->isValidAtcoderHandle($handle)) {
-                // Invalid or missing handle → mark absent with zeros.
-                EventUserStat::updateOrCreate([
-                    'event_id' => $eventId,
-                    'user_id' => $user->id,
-                ], [
-                    'solves_count' => 0,
-                    'upsolves_count' => 0,
-                    'participation' => false,
-                ]);
-                $this->line("  · {$user->name} — invalid handle ('".(string) $handle."'), set absent");
+            return $h !== null && trim((string) $h) !== '';
+        })->values();
+        $withoutHandles = $users->reject(function ($u) {
+            $h = $u->atcoder_handle;
 
-                continue;
-            }
+            return $h !== null && trim((string) $h) !== '';
+        })->values();
+
+        // Mark users without handles as absent with zeros
+        /** @var \App\Models\User $user */
+        foreach ($withoutHandles as $user) {
+            EventUserStat::updateOrCreate([
+                'event_id' => $eventId,
+                'user_id' => $user->id,
+            ], [
+                'solves_count' => 0,
+                'upsolves_count' => 0,
+                'participation' => false,
+            ]);
+            $this->line("  · {$user->name} — no AtCoder handle, set absent");
+        }
+
+        // Process users with handles
+        /** @var \App\Models\User $user */
+        foreach ($withHandles as $user) {
+            $handle = trim((string) $user->atcoder_handle);
 
             // Fetch user submissions from the start time; API returns all later submissions.
             $subsJson = $this->fetch(self::ATCODER_API_SUBMISSIONS.'?user='.rawurlencode($handle).'&from_second='.$startEpoch);
@@ -232,24 +245,6 @@ class UpdateAtcoderEventStats extends Command
         }
     }
 
-    private function isValidAtcoderHandle(?string $handle): bool
-    {
-        if ($handle === null) {
-            return false;
-        }
-
-        $handle = trim($handle);
-        if ($handle === '') {
-            return false;
-        }
-
-        // AtCoder allows alphanumerics and underscores; be permissive.
-        if (! preg_match('/^[A-Za-z0-9_]{1,50}$/', $handle)) {
-            return false;
-        }
-
-        return true;
-    }
 
     private function extractContestId(?string $eventLink): ?string
     {
