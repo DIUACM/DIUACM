@@ -69,6 +69,23 @@ class UsersRelationManager extends RelationManager
                                 ->required(),
                         ];
                     }),
+                Action::make('attachUsersFromAttendance')
+                    ->label('Attach Users from Attendance')
+                    ->action(function (): void {
+                        $userIds = $this->ownerRecord
+                            ->events()
+                            ->with('attendees:id')
+                            ->get()
+                            ->pluck('attendees.*.id')
+                            ->flatten()
+                            ->unique()
+                            ->values()
+                            ->all();
+
+                        if (! empty($userIds)) {
+                            $this->ownerRecord->users()->syncWithoutDetaching($userIds);
+                        }
+                    }),
             ])
             ->recordActions([
                 Action::make('editScore')
