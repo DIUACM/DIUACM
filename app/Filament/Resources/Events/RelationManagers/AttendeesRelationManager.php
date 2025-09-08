@@ -44,7 +44,7 @@ class AttendeesRelationManager extends RelationManager
                 TextColumn::make('pivot.created_at')
                     ->label('Attendance Time')
                     ->dateTime()
-                    ->sortable(),
+                    ->sortable(['pivot_created_at']),
             ])
             ->filters([
                 //
