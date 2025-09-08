@@ -80,29 +80,19 @@ class UpdateCodeforcesEventStats extends Command
                 continue;
             }
 
-            // Split users into valid/invalid handle groups
-            $valid = $users->filter(fn ($u) => $this->isValidCfHandle($u->codeforces_handle));
-            $invalid = $users->reject(fn ($u) => $this->isValidCfHandle($u->codeforces_handle));
+            // Use all users that have a non-empty handle (no format validation)
+            $withHandles = $users->filter(function ($u) {
+                $h = $u->codeforces_handle;
 
-            // Mark invalid handles as absent with zero stats
-            foreach ($invalid as $user) {
-                EventUserStat::updateOrCreate([
-                    'event_id' => $event->id,
-                    'user_id' => $user->id,
-                ], [
-                    'solves_count' => 0,
-                    'upsolves_count' => 0,
-                    'participation' => false,
-                ]);
-                $this->line("  · {$user->name} — invalid handle ('".(string) $user->codeforces_handle."'), set absent");
-            }
+                return $h !== null && trim((string) $h) !== '';
+            });
 
-            if ($valid->isEmpty()) {
+            if ($withHandles->isEmpty()) {
                 continue;
             }
 
             // Fetch standings for valid handles
-            $handles = $valid->pluck('codeforces_handle')->implode(';');
+            $handles = $withHandles->pluck('codeforces_handle')->implode(';');
             $url = 'https://codeforces.com/api/contest.standings?contestId='.urlencode((string) $contestId).'&showUnofficial=true&handles='.urlencode($handles);
 
             $response = Http::timeout(30)
@@ -110,50 +100,31 @@ class UpdateCodeforcesEventStats extends Command
                 ->get($url);
 
             if (! $response->successful()) {
-                // On API failure, mark valid users as absent too (conservative default)
-                foreach ($valid as $user) {
-                    EventUserStat::updateOrCreate([
-                        'event_id' => $event->id,
-                        'user_id' => $user->id,
-                    ], [
-                        'solves_count' => 0,
-                        'upsolves_count' => 0,
-                        'participation' => false,
-                    ]);
-                }
-                $this->warn('  API error from Codeforces; defaulted remaining users to absent.');
+                $this->error("  [skip] Failed to fetch standings from Codeforces API for contest {$contestId} (HTTP {$response->status()})");
 
                 continue;
             }
 
             $payload = $response->json();
             if (($payload['status'] ?? null) !== 'OK') {
-                foreach ($valid as $user) {
-                    EventUserStat::updateOrCreate([
-                        'event_id' => $event->id,
-                        'user_id' => $user->id,
-                    ], [
-                        'solves_count' => 0,
-                        'upsolves_count' => 0,
-                        'participation' => false,
-                    ]);
-                }
-                $this->warn('  Codeforces API returned non-OK status; defaulted remaining users to absent.');
+                $this->error("  [skip] Codeforces API returned error for contest {$contestId}: ".($payload['comment'] ?? 'unknown error'));
 
                 continue;
             }
 
             $rows = collect($payload['result']['rows'] ?? []);
 
-            foreach ($valid as $user) {
+            foreach ($withHandles as $user) {
                 // Find the contest row (participation) and practice row (upsolves)
                 $contestRow = $rows->first(function ($row) use ($user) {
                     $handle = strtolower($row['party']['members'][0]['handle'] ?? '');
                     $type = $row['party']['participantType'] ?? '';
 
-                    return $handle === strtolower((string) $user->codeforces_handle)
-            && in_array($type, ['CONTESTANT', 'OUT_OF_COMPETITION'], true);
+                    return $handle === strtolower((string) $user->codeforces_handle) && in_array($type, ['CONTESTANT', 'OUT_OF_COMPETITION'], true);
                 });
+
+
+
 
                 $practiceRow = $rows->first(function ($row) use ($user) {
                     $handle = strtolower($row['party']['members'][0]['handle'] ?? '');
@@ -163,26 +134,11 @@ class UpdateCodeforcesEventStats extends Command
                         && $type === 'PRACTICE';
                 });
 
-                $solves = 0;
-                $contestSolvedIdx = [];
-
-                if (is_array($contestRow)) {
-                    foreach ($contestRow['problemResults'] ?? [] as $idx => $pr) {
-                        if (isset($pr['points']) && $pr['points'] > 0) {
-                            $solves++;
-                            $contestSolvedIdx[] = (int) $idx;
-                        }
-                    }
-                }
-
-                $upsolves = 0;
-                if (is_array($practiceRow)) {
-                    foreach ($practiceRow['problemResults'] ?? [] as $idx => $pr) {
-                        if (isset($pr['points']) && $pr['points'] > 0 && ! in_array((int) $idx, $contestSolvedIdx, true)) {
-                            $upsolves++;
-                        }
-                    }
-                }
+                // Calculate stats similar to the TS reference: points > 0 counts as solved; upsolves exclude problems solved in contest
+                [$solves, $upsolves] = $this->calculateUserStats(
+                    is_array($contestRow) ? $contestRow : null,
+                    is_array($practiceRow) ? $practiceRow : null,
+                );
 
                 EventUserStat::updateOrCreate([
                     'event_id' => $event->id,
@@ -221,20 +177,41 @@ class UpdateCodeforcesEventStats extends Command
         return null;
     }
 
-    private function isValidCfHandle(?string $handle): bool
+    /**
+     * Calculate contest solves and upsolves from Codeforces rows.
+     * Mirrors the TS calculateUserStats implementation:
+     * - A problem counts as solved if points > 0.
+     * - Upsolves are PRACTICE solves excluding problems solved during the contest.
+     *
+     * @param  array<string,mixed>|null  $contestRow
+     * @param  array<string,mixed>|null  $practiceRow
+     * @return array{0:int,1:int}
+     */
+    private function calculateUserStats(?array $contestRow, ?array $practiceRow): array
     {
-        if ($handle === null) {
-            return false;
-        }
-        $handle = trim($handle);
-        if ($handle === '') {
-            return false;
-        }
-        // CF handles: alphanumerics, underscore, hyphen (no spaces)
-        if (! preg_match('/^[A-Za-z0-9_\-]{1,50}$/', $handle)) {
-            return false;
+        $solveCount = 0;
+        $contestSolvedIdx = [];
+
+        if (is_array($contestRow)) {
+            foreach (($contestRow['problemResults'] ?? []) as $idx => $pr) {
+                $points = is_array($pr) && array_key_exists('points', $pr) ? (float) $pr['points'] : 0.0;
+                if ($points > 0) {
+                    $solveCount++;
+                    $contestSolvedIdx[] = (int) $idx;
+                }
+            }
         }
 
-        return true;
+        $upsolveCount = 0;
+        if (is_array($practiceRow)) {
+            foreach (($practiceRow['problemResults'] ?? []) as $idx => $pr) {
+                $points = is_array($pr) && array_key_exists('points', $pr) ? (float) $pr['points'] : 0.0;
+                if ($points > 0 && ! in_array((int) $idx, $contestSolvedIdx, true)) {
+                    $upsolveCount++;
+                }
+            }
+        }
+
+        return [$solveCount, $upsolveCount];
     }
 }
