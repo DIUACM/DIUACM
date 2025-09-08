@@ -66,14 +66,14 @@ class RankListsTable
 
                 TextColumn::make('created_at')
                     ->label('Created')
-                    ->dateTime('M j, Y')
+                    ->dateTime('M j, Y g:i A')
                     ->timezone('Asia/Dhaka')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('updated_at')
                     ->label('Updated')
-                    ->dateTime('M j, Y')
+                    ->dateTime('M j, Y g:i A')
                     ->timezone('Asia/Dhaka')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

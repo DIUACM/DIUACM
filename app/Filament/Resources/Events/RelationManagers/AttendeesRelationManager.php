@@ -43,7 +43,8 @@ class AttendeesRelationManager extends RelationManager
                     ->sortable(),
                 TextColumn::make('pivot.created_at')
                     ->label('Attendance Time')
-                    ->dateTime()
+                    ->dateTime('M j, Y g:i A')
+                    ->timezone('Asia/Dhaka')
                     ->sortable(['pivot_created_at']),
             ])
             ->filters([

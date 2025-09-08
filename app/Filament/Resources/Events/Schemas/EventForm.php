@@ -5,7 +5,6 @@ namespace App\Filament\Resources\Events\Schemas;
 use App\Enums\EventType;
 use App\Enums\ParticipationScope;
 use App\Enums\VisibilityStatus;
-use App\Models\Event;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\RichEditor;
@@ -65,12 +64,14 @@ class EventForm
                             ->schema([
                                 DateTimePicker::make('starting_at')
                                     ->seconds(false)
+                                    ->displayFormat('M j, Y g:i A')
                                     ->timezone('Asia/Dhaka')
                                     ->label('Starting Date')
                                     ->required(),
 
                                 DateTimePicker::make('ending_at')
                                     ->seconds(false)
+                                    ->displayFormat('M j, Y g:i A')
                                     ->label('Ending Date')
                                     ->timezone('Asia/Dhaka')
                                     ->after('starting_at')
@@ -123,11 +124,11 @@ class EventForm
                             ->schema([
                                 TextEntry::make('created_at')
                                     ->label('Created Date')
-                                    ->formatStateUsing(fn (?Event $record): string => $record?->created_at?->diffForHumans() ?? '-'),
+                                    ->dateTime('M j, Y g:i A', timezone: 'Asia/Dhaka'),
 
                                 TextEntry::make('updated_at')
                                     ->label('Last Modified Date')
-                                    ->formatStateUsing(fn (?Event $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+                                    ->dateTime('M j, Y g:i A', timezone: 'Asia/Dhaka'),
                             ]),
                     ])->collapsed()
                     ->hiddenOn('create'),
@@ -141,8 +142,9 @@ class EventForm
         }
 
         try {
-            $start = new \DateTime($startingAt);
-            $end = new \DateTime($endingAt);
+            $tz = new \DateTimeZone('Asia/Dhaka');
+            $start = new \DateTime($startingAt, $tz);
+            $end = new \DateTime($endingAt, $tz);
 
             if ($end <= $start) {
                 return 'End date must be after start date';

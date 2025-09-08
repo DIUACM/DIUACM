@@ -93,13 +93,13 @@ class EventsTable
                     ->limit(30),
 
                 TextColumn::make('created_at')
-                    ->dateTime('M j, Y')
+                    ->dateTime('M j, Y g:i A')
                     ->timezone('Asia/Dhaka')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('updated_at')
-                    ->dateTime('M j, Y')
+                    ->dateTime('M j, Y g:i A')
                     ->timezone('Asia/Dhaka')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

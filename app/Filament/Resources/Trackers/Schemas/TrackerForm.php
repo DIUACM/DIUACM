@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Trackers\Schemas;
 
 use App\Enums\VisibilityStatus;
-use App\Models\Tracker;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
@@ -83,11 +82,11 @@ class TrackerForm
                             ->schema([
                                 TextEntry::make('created_at')
                                     ->label('Created Date')
-                                    ->formatStateUsing(fn (?Tracker $record): string => $record?->created_at?->diffForHumans() ?? '-'),
+                                    ->dateTime('M j, Y g:i A', timezone: 'Asia/Dhaka'),
 
                                 TextEntry::make('updated_at')
                                     ->label('Last Modified Date')
-                                    ->formatStateUsing(fn (?Tracker $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+                                    ->dateTime('M j, Y g:i A', timezone: 'Asia/Dhaka'),
                             ]),
                     ])->collapsed()
                     ->hiddenOn('create'),

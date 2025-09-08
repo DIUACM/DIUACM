@@ -52,7 +52,7 @@ class EventResource extends Resource
         return [
             'Type' => $record->type?->getLabel(),
             'Status' => $record->status?->getLabel(),
-            'Starts' => $record->starting_at?->format('M j, Y g:i A'),
+            'Starts' => optional($record->starting_at)->setTimezone('Asia/Dhaka')?->format('M j, Y g:i A'),
         ];
     }
 

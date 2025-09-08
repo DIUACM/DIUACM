@@ -21,7 +21,7 @@ class UsersTable
             ->defaultSort('created_at', 'desc')
             ->columns([
                 ImageColumn::make('image')
-                      ->disk('public')
+                    ->disk('public')
                     ->label('Avatar')
                     ->circular()
                     ->imageSize(36),
@@ -61,7 +61,7 @@ class UsersTable
 
                 TextColumn::make('email_verified_at')
                     ->label('Verified At')
-                    ->dateTime('M j, Y')
+                    ->dateTime('M j, Y g:i A')
                     ->timezone('Asia/Dhaka')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -76,13 +76,13 @@ class UsersTable
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('created_at')
-                    ->dateTime('M j, Y')
+                    ->dateTime('M j, Y g:i A')
                     ->timezone('Asia/Dhaka')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('updated_at')
-                    ->dateTime('M j, Y')
+                    ->dateTime('M j, Y g:i A')
                     ->timezone('Asia/Dhaka')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

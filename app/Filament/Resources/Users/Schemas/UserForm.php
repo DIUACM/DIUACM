@@ -56,6 +56,7 @@ class UserForm
                                 DateTimePicker::make('email_verified_at')
                                     ->label('Email verified at')
                                     ->seconds(false)
+                                    ->displayFormat('M j, Y g:i A')
                                     ->timezone('Asia/Dhaka'),
                                 TextInput::make('password')
                                     ->password()
@@ -109,10 +110,10 @@ class UserForm
                             ->schema([
                                 TextEntry::make('created_at')
                                     ->label('Created Date')
-                                    ->formatStateUsing(fn (?User $record): string => $record?->created_at?->diffForHumans() ?? '-'),
+                                    ->dateTime('M j, Y g:i A', timezone: 'Asia/Dhaka'),
                                 TextEntry::make('updated_at')
                                     ->label('Last Modified Date')
-                                    ->formatStateUsing(fn (?User $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+                                    ->dateTime('M j, Y g:i A', timezone: 'Asia/Dhaka'),
                             ]),
                     ])
                     ->collapsed()

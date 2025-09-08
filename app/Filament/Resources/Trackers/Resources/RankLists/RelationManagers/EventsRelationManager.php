@@ -27,18 +27,20 @@ class EventsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitle(fn (\App\Models\Event $record): string => "{$record->title} ({$record->starting_at->format('M j, Y')})")
+            ->recordTitle(fn (\App\Models\Event $record): string => "{$record->title} (".optional($record->starting_at)->setTimezone('Asia/Dhaka')?->format('M j, Y').')')
             ->inverseRelationship('rankLists')
             ->columns([
                 TextColumn::make('title')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('starting_at')
-                    ->dateTime()
+                    ->dateTime('M j, Y g:i A')
+                    ->timezone('Asia/Dhaka')
                     ->label('Starts')
                     ->sortable(),
                 TextColumn::make('ending_at')
-                    ->dateTime()
+                    ->dateTime('M j, Y g:i A')
+                    ->timezone('Asia/Dhaka')
                     ->label('Ends')
                     ->sortable(),
                 TextColumn::make('pivot.weight')
