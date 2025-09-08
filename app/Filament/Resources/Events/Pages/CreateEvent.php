@@ -24,7 +24,7 @@ class CreateEvent extends CreateRecord
                 ->label('Quick Contest')
                 ->icon('heroicon-o-bolt')
                 ->color('success')
-                ->form([
+                ->schema([
                     TextInput::make('contest_link')
                         ->label('Contest Link')
                         ->placeholder('https://codeforces.com/contest/1234 or https://vjudge.net/contest/567890')

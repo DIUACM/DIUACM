@@ -74,7 +74,7 @@ class EventsRelationManager extends RelationManager
             ->recordActions([
                 Action::make('editWeight')
                     ->label('Edit Weight')
-                    ->form([
+                    ->schema([
                         TextInput::make('weight')
                             ->label('Weight')
                             ->numeric()
