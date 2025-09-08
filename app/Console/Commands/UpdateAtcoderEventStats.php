@@ -182,15 +182,7 @@ class UpdateAtcoderEventStats extends Command
             // Fetch user submissions from the start time; API returns all later submissions.
             $subsJson = $this->fetch(self::ATCODER_API_SUBMISSIONS.'?user='.rawurlencode($handle).'&from_second='.$startEpoch);
             if ($subsJson === false) {
-                EventUserStat::updateOrCreate([
-                    'event_id' => $eventId,
-                    'user_id' => $user->id,
-                ], [
-                    'solves_count' => 0,
-                    'upsolves_count' => 0,
-                    'participation' => false,
-                ]);
-                $this->line("  · {$user->name} — API error, set absent");
+                $this->error(sprintf("  [skip] Failed to fetch submissions from AtCoder API for user '%s'", $handle));
 
                 continue;
             }
@@ -244,7 +236,6 @@ class UpdateAtcoderEventStats extends Command
             ));
         }
     }
-
 
     private function extractContestId(?string $eventLink): ?string
     {
