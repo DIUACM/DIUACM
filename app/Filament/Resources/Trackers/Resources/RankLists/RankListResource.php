@@ -38,6 +38,7 @@ class RankListResource extends Resource
     {
         return [
             RelationManagers\EventsRelationManager::class,
+            RelationManagers\UsersRelationManager::class,
         ];
     }
 
