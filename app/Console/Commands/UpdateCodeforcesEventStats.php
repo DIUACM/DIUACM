@@ -80,12 +80,30 @@ class UpdateCodeforcesEventStats extends Command
                 continue;
             }
 
-            // Use all users that have a non-empty handle (no format validation)
+            // Partition users based on presence of a handle
             $withHandles = $users->filter(function ($u) {
                 $h = $u->codeforces_handle;
 
                 return $h !== null && trim((string) $h) !== '';
             });
+            $withoutHandles = $users->reject(function ($u) {
+                $h = $u->codeforces_handle;
+
+                return $h !== null && trim((string) $h) !== '';
+            });
+
+            // Users without a handle are marked absent with zero stats
+            foreach ($withoutHandles as $user) {
+                EventUserStat::updateOrCreate([
+                    'event_id' => $event->id,
+                    'user_id' => $user->id,
+                ], [
+                    'solves_count' => 0,
+                    'upsolves_count' => 0,
+                    'participation' => false,
+                ]);
+                $this->line("  · {$user->name} — no Codeforces handle, set absent");
+            }
 
             if ($withHandles->isEmpty()) {
                 continue;
