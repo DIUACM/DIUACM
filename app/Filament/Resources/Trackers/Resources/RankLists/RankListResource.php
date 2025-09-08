@@ -37,7 +37,7 @@ class RankListResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\EventsRelationManager::class,
         ];
     }
 
