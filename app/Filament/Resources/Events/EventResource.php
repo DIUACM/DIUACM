@@ -70,6 +70,7 @@ class EventResource extends Resource
     {
         return [
             RelationManagers\AttendeesRelationManager::class,
+            RelationManagers\RankListsRelationManager::class,
         ];
     }
 
