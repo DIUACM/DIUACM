@@ -11,6 +11,14 @@ Route::get('/about', function () {
     return Inertia::render('about');
 })->name('about');
 
+Route::get('/privacy-policy', function () {
+    return Inertia::render('privacy-policy');
+})->name('privacy-policy');
+
+Route::get('/terms-and-conditions', function () {
+    return Inertia::render('terms-and-conditions');
+})->name('terms-and-conditions');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', function () {
         return Inertia::render('dashboard');
