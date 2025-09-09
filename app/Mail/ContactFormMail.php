@@ -40,6 +40,7 @@ class ContactFormMail extends Mailable implements ShouldQueue
     {
         return new Content(
             view: 'emails.contact-form',
+            text: 'emails.contact-form-text',
             with: [
                 'senderName' => $this->senderName,
                 'senderEmail' => $this->senderEmail,

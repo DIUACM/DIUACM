@@ -71,11 +71,18 @@ export default function Contact() {
                                         duration: 5000,
                                     });
                                 }}
+                                resetOnSuccess={true}
                                 onError={(errors) => {
                                     // Show specific error if it's a server error (like email sending failure)
                                     if (errors.email && errors.email.includes('error sending')) {
                                         toast.error("Failed to send message", {
                                             description: errors.email,
+                                            duration: 8000,
+                                        });
+                                    } else if (errors.form) {
+                                        // Rate limiting or general form errors
+                                        toast.error("Form submission failed", {
+                                            description: errors.form,
                                             duration: 8000,
                                         });
                                     } else if (Object.keys(errors).length > 0) {
@@ -128,6 +135,15 @@ export default function Contact() {
                                                 )}
                                             </div>
                                         </div>
+
+                                        {/* Honeypot field - hidden from users */}
+                                        <input
+                                            type="text"
+                                            name="website"
+                                            style={{ display: 'none' }}
+                                            tabIndex={-1}
+                                            autoComplete="off"
+                                        />
 
                                         <div className="grid gap-2">
                                             <Label htmlFor="message" className="text-sm md:text-base text-slate-700 dark:text-slate-300">

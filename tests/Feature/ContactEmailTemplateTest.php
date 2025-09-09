@@ -43,7 +43,31 @@ test('contact email content definition is correct', function () {
     $content = $mail->content();
 
     expect($content->view)->toBe('emails.contact-form');
+    expect($content->text)->toBe('emails.contact-form-text');
     expect($content->with)->toHaveKey('senderName', 'Test User');
     expect($content->with)->toHaveKey('senderEmail', 'test@example.com');
     expect($content->with)->toHaveKey('messageContent', 'Test content.');
+});
+
+test('contact email plain text template renders correctly', function () {
+    $mail = new ContactFormMail(
+        senderName: 'John Doe',
+        senderEmail: 'john@example.com',
+        messageContent: 'This is a test message for DIU ACM.'
+    );
+
+    // Test rendering the plain text version
+    $textContent = view('emails.contact-form-text', [
+        'senderName' => $mail->senderName,
+        'senderEmail' => $mail->senderEmail,
+        'messageContent' => $mail->messageContent,
+    ])->render();
+
+    expect($textContent)
+        ->toContain('NEW CONTACT FORM SUBMISSION')
+        ->toContain('From: John Doe')
+        ->toContain('Email: john@example.com')
+        ->toContain('This is a test message for DIU ACM.')
+        ->toContain('DIU ACM contact form')
+        ->toContain('Association for Computing Machinery');
 });

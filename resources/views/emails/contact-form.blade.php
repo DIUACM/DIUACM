@@ -87,14 +87,14 @@
         <div class="content">
             <div class="field">
                 <div class="field-label">Name</div>
-                <div class="field-value">{{ $senderName }}</div>
+                <div class="field-value">{!! e($senderName) !!}</div>
             </div>
             
             <div class="field">
                 <div class="field-label">Email</div>
                 <div class="field-value">
-                    <a href="mailto:{{ $senderEmail }}" style="color: #3b82f6; text-decoration: none;">
-                        {{ $senderEmail }}
+                    <a href="mailto:{!! e($senderEmail) !!}" style="color: #3b82f6; text-decoration: none;">
+                        {!! e($senderEmail) !!}
                     </a>
                 </div>
             </div>
@@ -102,7 +102,7 @@
             <div class="field">
                 <div class="field-label">Message</div>
                 <div class="field-value">
-                    <div class="message-content">{{ $messageContent }}</div>
+                    <div class="message-content">{!! nl2br(e($messageContent)) !!}</div>
                 </div>
             </div>
             
