@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { ReactNode } from 'react';
 import Navigation from '@/components/navigation';
+import Footer from '@/components/footer';
 
 interface MainLayoutProps {
     children: ReactNode;
@@ -27,6 +28,8 @@ export default function MainLayout({ children, title }: MainLayoutProps) {
                 <main className="pt-16 flex-1">
                     {children}
                 </main>
+
+                <Footer />
             </div>
         </>
     );
