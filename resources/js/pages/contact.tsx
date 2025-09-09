@@ -1,0 +1,240 @@
+import MainLayout from '@/layouts/main-layout';
+import { Form } from '@inertiajs/react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+    Clock,
+    Mail,
+    MessageCircle,
+    MessageSquare,
+    Send,
+} from 'lucide-react';
+import { toast } from 'sonner';
+
+/**
+ * Contact Page Component
+ * 
+ * Features:
+ * - Contact form with validation
+ * - Email sending to submissions@diuacm.com
+ * - Success/error feedback with Sonner toasts (no duplicate messages)
+ * - Responsive design with dark mode support
+ * - Loading states during form submission
+ * - Individual field error highlighting
+ * 
+ * UX Improvements:
+ * - Single source of truth for feedback (Sonner toasts)
+ * - Smart error handling (server errors vs validation errors)
+ * - Clean, focused form interface
+ * - Auto-dismissing success messages
+ */
+
+export default function Contact() {
+    return (
+        <MainLayout title="Contact Us">
+            <div className="container mx-auto px-4 py-8 md:py-16">
+                <div className="mb-8 md:mb-12 text-center">
+                    <h1 className="text-2xl md:text-4xl font-bold mb-4 text-slate-900 dark:text-white">
+                        Contact{' '}
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
+                            Us
+                        </span>
+                    </h1>
+                    <div className="mx-auto w-16 md:w-20 h-1 md:h-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full mb-4 md:mb-6"></div>
+                    <p className="text-base md:text-lg text-slate-600 dark:text-slate-300 max-w-xl mx-auto px-4">
+                        Have questions or feedback? We'd love to hear from you and help with anything you need.
+                    </p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+                    {/* Contact Form */}
+                    <div className="text-card-foreground flex flex-col gap-6 rounded-xl py-6 lg:col-span-2 overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
+                        <div className="p-4 md:p-8">
+                            <div className="flex items-center mb-4 md:mb-6">
+                                <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600 flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
+                                    <MessageSquare className="h-4 w-4 md:h-6 md:w-6 text-white" />
+                                </div>
+                                <h2 className="text-lg md:text-2xl font-bold text-slate-900 dark:text-white">
+                                    Send us a message
+                                </h2>
+                            </div>
+
+                            <Form 
+                                action="/contact" 
+                                method="post" 
+                                className="space-y-4 md:space-y-6"
+                                onSuccess={() => {
+                                    toast.success("Message sent successfully!", {
+                                        description: "We'll get back to you within 24-48 hours.",
+                                        duration: 5000,
+                                    });
+                                }}
+                                onError={(errors) => {
+                                    // Show specific error if it's a server error (like email sending failure)
+                                    if (errors.email && errors.email.includes('error sending')) {
+                                        toast.error("Failed to send message", {
+                                            description: errors.email,
+                                            duration: 8000,
+                                        });
+                                    } else if (Object.keys(errors).length > 0) {
+                                        // General validation errors
+                                        toast.error("Please check your form", {
+                                            description: "Fix the highlighted errors and try again.",
+                                            duration: 5000,
+                                        });
+                                    }
+                                }}
+                            >
+                                {({ processing, errors }) => (
+                                    <>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="name" className="text-sm md:text-base text-slate-700 dark:text-slate-300">
+                                                    Name <span className="text-red-500">*</span>
+                                                </Label>
+                                                <Input
+                                                    id="name"
+                                                    name="name"
+                                                    placeholder="Your name"
+                                                    className={`bg-slate-50 dark:bg-slate-700/40 border-slate-200 dark:border-slate-600 focus-visible:ring-blue-500/20 dark:focus-visible:ring-blue-500/40 text-sm md:text-base transition-all duration-200 ${
+                                                        errors.name ? 'border-red-500 dark:border-red-500 focus-visible:ring-red-500/20' : ''
+                                                    }`}
+                                                    required
+                                                />
+                                                {errors.name && (
+                                                    <p className="text-sm text-red-600 dark:text-red-400 animate-in slide-in-from-top-1 duration-200">{errors.name}</p>
+                                                )}
+                                            </div>
+
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="email" className="text-sm md:text-base text-slate-700 dark:text-slate-300">
+                                                    Email <span className="text-red-500">*</span>
+                                                </Label>
+                                                <Input
+                                                    id="email"
+                                                    name="email"
+                                                    type="email"
+                                                    placeholder="Your email address"
+                                                    className={`bg-slate-50 dark:bg-slate-700/40 border-slate-200 dark:border-slate-600 focus-visible:ring-blue-500/20 dark:focus-visible:ring-blue-500/40 text-sm md:text-base transition-all duration-200 ${
+                                                        errors.email ? 'border-red-500 dark:border-red-500 focus-visible:ring-red-500/20' : ''
+                                                    }`}
+                                                    required
+                                                />
+                                                {errors.email && (
+                                                    <p className="text-sm text-red-600 dark:text-red-400 animate-in slide-in-from-top-1 duration-200">{errors.email}</p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="message" className="text-sm md:text-base text-slate-700 dark:text-slate-300">
+                                                Message <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Textarea
+                                                id="message"
+                                                name="message"
+                                                placeholder="How can we help you?"
+                                                className={`min-h-[120px] md:min-h-[150px] bg-slate-50 dark:bg-slate-700/40 border-slate-200 dark:border-slate-600 focus-visible:ring-blue-500/20 dark:focus-visible:ring-blue-500/40 resize-none text-sm md:text-base transition-all duration-200 ${
+                                                    errors.message ? 'border-red-500 dark:border-red-500 focus-visible:ring-red-500/20' : ''
+                                                }`}
+                                                required
+                                            />
+                                            {errors.message && (
+                                                <p className="text-sm text-red-600 dark:text-red-400 animate-in slide-in-from-top-1 duration-200">{errors.message}</p>
+                                            )}
+                                        </div>
+
+                                        <div className="pt-2">
+                                            <Button
+                                                type="submit"
+                                                disabled={processing}
+                                                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 transition-all duration-300 px-4 md:px-6 py-2 md:py-2.5 text-white text-sm md:text-base disabled:opacity-60 disabled:cursor-not-allowed"
+                                            >
+                                                {processing ? (
+                                                    <>
+                                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                                                        Sending...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Send className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                                                        Send Message
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </div>
+                                    </>
+                                )}
+                            </Form>
+                        </div>
+                    </div>
+
+                    {/* Contact Information Sidebar */}
+                    <div className="space-y-4 md:space-y-6">
+                        {/* Contact Information Card */}
+                        <div className="text-card-foreground flex flex-col gap-6 rounded-xl py-6 overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
+                            <div className="p-4 md:p-6">
+                                <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white mb-3 md:mb-4 flex items-center">
+                                    <span className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600 flex items-center justify-center mr-2 flex-shrink-0">
+                                        <Mail className="h-3 w-3 md:h-4 md:w-4 text-white" />
+                                    </span>
+                                    Contact Information
+                                </h2>
+                                <div className="space-y-3 md:space-y-4 mt-4 md:mt-6">
+                                    <div className="flex items-start space-x-3 p-3 md:p-4 rounded-lg bg-slate-50 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-800 transition-colors duration-200">
+                                        <Mail className="h-4 w-4 md:h-5 md:w-5 mt-0.5 text-blue-500 flex-shrink-0" />
+                                        <div>
+                                            <p className="font-medium text-slate-900 dark:text-slate-200 text-sm md:text-base">
+                                                Contact Email
+                                            </p>
+                                            <a
+                                                href="mailto:info@diuacm.com"
+                                                className="text-sm md:text-base text-slate-600 dark:text-slate-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors break-all"
+                                            >
+                                                info@diuacm.com
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start space-x-3 p-3 md:p-4 rounded-lg bg-slate-50 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-800 transition-colors duration-200">
+                                        <MessageCircle className="h-4 w-4 md:h-5 md:w-5 mt-0.5 text-blue-500 flex-shrink-0" />
+                                        <div>
+                                            <p className="font-medium text-slate-900 dark:text-slate-200 text-sm md:text-base">
+                                                Telegram Channel
+                                            </p>
+                                            <a
+                                                href="https://t.me/+AH0gg2-V5xIxYjA9"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm md:text-base text-slate-600 dark:text-slate-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors break-all"
+                                            >
+                                                https://t.me/+AH0gg2-V5xIxYjA9
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Response Time Card */}
+                        <div className="text-card-foreground flex flex-col gap-6 rounded-xl py-6 overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
+                            <div className="p-4 md:p-6">
+                                <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white mb-3 md:mb-4 flex items-center">
+                                    <span className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600 flex items-center justify-center mr-2 flex-shrink-0">
+                                        <Clock className="h-3 w-3 md:h-4 md:w-4 text-white" />
+                                    </span>
+                                    Response Time
+                                </h2>
+                                <p className="text-sm md:text-base text-slate-600 dark:text-slate-300 mt-2 md:mt-3">
+                                    We typically respond to inquiries within 24-48 hours during weekdays.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </MainLayout>
+    );
+}

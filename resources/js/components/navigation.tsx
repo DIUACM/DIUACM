@@ -27,6 +27,13 @@ export default function Navigation() {
                             About
                         </Link>
 
+                        <Link
+                            href="/contact"
+                            className="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors"
+                        >
+                            Contact
+                        </Link>
+
                         {auth.user ? (
                             <Link
                                 href={dashboard()}

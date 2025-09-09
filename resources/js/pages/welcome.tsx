@@ -581,7 +581,7 @@ export default function Welcome() {
                                 size="lg"
                                 className="rounded-full px-8 bg-white hover:bg-slate-50 text-blue-600 hover:text-blue-700 border border-slate-200 hover:border-blue-200 shadow-md hover:shadow-xl transition-all dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-blue-400 dark:hover:text-blue-300 dark:border-slate-700 dark:hover:border-slate-600 font-medium"
                             >
-                                <Link href="/about">
+                                <Link href="/contact">
                                     <MessageSquare className="mr-2 h-4 w-4" />
                                     Contact Us
                                 </Link>

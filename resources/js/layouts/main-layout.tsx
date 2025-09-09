@@ -2,6 +2,7 @@ import { Head } from '@inertiajs/react';
 import { ReactNode } from 'react';
 import Navigation from '@/components/navigation';
 import Footer from '@/components/footer';
+import { Toaster } from 'sonner';
 
 interface MainLayoutProps {
     children: ReactNode;
@@ -30,6 +31,13 @@ export default function MainLayout({ children, title }: MainLayoutProps) {
                 </main>
 
                 <Footer />
+                
+                <Toaster 
+                    position="top-right"
+                    expand={true}
+                    richColors
+                    closeButton
+                />
             </div>
         </>
     );
