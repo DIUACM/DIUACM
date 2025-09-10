@@ -25,11 +25,8 @@ export default function MainLayout({ children, title }: MainLayoutProps) {
                 </div>
 
                 <Navigation />
-                
-                <main className="pt-16 flex-1">
-                    {children}
-                </main>
-
+            
+                 {children}
                 <Footer />
                 
                 <Toaster 
