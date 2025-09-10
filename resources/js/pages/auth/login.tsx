@@ -53,7 +53,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                         <div className="flex items-center">
                                             <Label htmlFor="password">Password</Label>
                                             {canResetPassword && (
-                                                <TextLink href={request()} className="ml-auto text-sm" tabIndex={5}>
+                                                <TextLink href={request()} className="ml-auto text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300" tabIndex={5}>
                                                     Forgot password?
                                                 </TextLink>
                                             )}
@@ -74,7 +74,12 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                         <Label htmlFor="remember">Remember me</Label>
                                     </div>
 
-                                    <Button type="submit" className="mt-2 w-full bg-primary" tabIndex={4} disabled={processing}>
+                                    <Button 
+                                        type="submit" 
+                                        className="mt-2 w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600" 
+                                        tabIndex={4} 
+                                        disabled={processing}
+                                    >
                                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                                         Log in
                                     </Button>
@@ -82,7 +87,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
                                 <div className="text-center text-sm text-muted-foreground">
                                     Don't have an account?{' '}
-                                    <TextLink href={register()} tabIndex={5} className="text-primary hover:text-primary/80">
+                                    <TextLink href={register()} tabIndex={5} className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
                                         Sign up
                                     </TextLink>
                                 </div>

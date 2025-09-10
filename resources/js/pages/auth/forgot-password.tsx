@@ -37,7 +37,10 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                     </div>
 
                                     <div className="my-6 flex items-center justify-start">
-                                        <Button className="w-full bg-primary" disabled={processing}>
+                                        <Button 
+                                            className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600" 
+                                            disabled={processing}
+                                        >
                                             {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                                             Email password reset link
                                         </Button>
@@ -48,7 +51,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
                         <div className="space-x-1 text-center text-sm text-muted-foreground">
                             <span>Or, return to</span>
-                            <TextLink href={login()} className="text-primary hover:text-primary/80">log in</TextLink>
+                            <TextLink href={login()} className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">log in</TextLink>
                         </div>
                     </div>
                 </div>
