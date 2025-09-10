@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PasswordInput } from '@/components/ui/password-input';
 import MainLayout from '@/layouts/main-layout';
 import { register } from '@/routes';
 import { request } from '@/routes/password';
@@ -21,13 +22,13 @@ export default function Login({ status, canResetPassword }: LoginProps) {
         <MainLayout title="Log in">
             <Head title="Log in" />
             <div className="container mx-auto px-4 py-16">
-                <div className="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-md dark:border-slate-700 dark:bg-slate-800">
+                <div className="mx-auto max-w-md overflow-hidden rounded-xl border border-input bg-card p-6 shadow-md">
                     <div className="mb-6 text-center">
-                        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Log in to your account</h1>
-                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Use your email or username and password</p>
+                        <h1 className="text-2xl font-semibold text-card-foreground">Log in to your account</h1>
+                        <p className="mt-1 text-sm text-muted-foreground">Use your email or username and password</p>
                     </div>
 
-                    {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
+                    {status && <div className="mb-4 rounded-md bg-primary/10 p-3 text-center text-sm font-medium text-primary">{status}</div>}
 
                     <Form {...AuthenticatedSessionController.store.form()} resetOnSuccess={['password']} className="flex flex-col gap-6">
                         {({ processing, errors }) => (
@@ -57,9 +58,8 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                                 </TextLink>
                                             )}
                                         </div>
-                                        <Input
+                                        <PasswordInput
                                             id="password"
-                                            type="password"
                                             name="password"
                                             required
                                             tabIndex={2}
@@ -74,15 +74,15 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                         <Label htmlFor="remember">Remember me</Label>
                                     </div>
 
-                                    <Button type="submit" className="mt-2 w-full" tabIndex={4} disabled={processing}>
+                                    <Button type="submit" className="mt-2 w-full bg-primary" tabIndex={4} disabled={processing}>
                                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                                         Log in
                                     </Button>
                                 </div>
 
-                                <div className="text-center text-sm text-slate-600 dark:text-slate-300">
+                                <div className="text-center text-sm text-muted-foreground">
                                     Don't have an account?{' '}
-                                    <TextLink href={register()} tabIndex={5}>
+                                    <TextLink href={register()} tabIndex={5} className="text-primary hover:text-primary/80">
                                         Sign up
                                     </TextLink>
                                 </div>

@@ -8,6 +8,7 @@ import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PasswordInput } from '@/components/ui/password-input';
 import MainLayout from '@/layouts/main-layout';
 
 export default function Register() {
@@ -15,10 +16,10 @@ export default function Register() {
         <MainLayout title="Register">
             <Head title="Register" />
             <div className="container mx-auto px-4 py-16">
-                <div className="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-md dark:border-slate-700 dark:bg-slate-800">
+                <div className="mx-auto max-w-md overflow-hidden rounded-xl border border-input bg-card p-6 shadow-md">
                     <div className="mb-6 text-center">
-                        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Create an account</h1>
-                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Enter your details below to create your account</p>
+                        <h1 className="text-2xl font-semibold text-card-foreground">Create an account</h1>
+                        <p className="mt-1 text-sm text-muted-foreground">Enter your details below to create your account</p>
                     </div>
 
                     <Form
@@ -75,9 +76,8 @@ export default function Register() {
 
                                     <div className="grid gap-2">
                                         <Label htmlFor="password">Password</Label>
-                                        <Input
+                                        <PasswordInput
                                             id="password"
-                                            type="password"
                                             required
                                             tabIndex={4}
                                             autoComplete="new-password"
@@ -89,9 +89,8 @@ export default function Register() {
 
                                     <div className="grid gap-2">
                                         <Label htmlFor="password_confirmation">Confirm password</Label>
-                                        <Input
+                                        <PasswordInput
                                             id="password_confirmation"
-                                            type="password"
                                             required
                                             tabIndex={5}
                                             autoComplete="new-password"
@@ -101,15 +100,15 @@ export default function Register() {
                                         <InputError message={errors.password_confirmation} />
                                     </div>
 
-                                    <Button type="submit" className="mt-2 w-full" tabIndex={6}>
+                                    <Button type="submit" className="mt-2 w-full bg-primary" tabIndex={6}>
                                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                                         Create account
                                     </Button>
                                 </div>
 
-                                <div className="text-center text-sm text-slate-600 dark:text-slate-300">
+                                <div className="text-center text-sm text-muted-foreground">
                                     Already have an account?{' '}
-                                    <TextLink href={login()} tabIndex={7}>
+                                    <TextLink href={login()} tabIndex={7} className="text-primary hover:text-primary/80">
                                         Log in
                                     </TextLink>
                                 </div>

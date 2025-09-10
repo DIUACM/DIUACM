@@ -14,14 +14,14 @@ export default function VerifyEmail({ status }: { status?: string }) {
             <Head title="Email verification" />
 
             <div className="container mx-auto px-4 py-16">
-                <div className="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-md dark:border-slate-700 dark:bg-slate-800">
+                <div className="mx-auto max-w-md overflow-hidden rounded-xl border border-input bg-card p-6 shadow-md">
                     <div className="mb-6 text-center">
-                        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Verify email</h1>
-                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Please verify your email address by clicking the link we sent you.</p>
+                        <h1 className="text-2xl font-semibold text-card-foreground">Verify email</h1>
+                        <p className="mt-1 text-sm text-muted-foreground">Please verify your email address by clicking the link we sent you.</p>
                     </div>
 
                     {status === 'verification-link-sent' && (
-                        <div className="mb-4 text-center text-sm font-medium text-green-600">
+                        <div className="mb-4 rounded-md bg-primary/10 p-3 text-center text-sm font-medium text-primary">
                             A new verification link has been sent to the email address you provided during registration.
                         </div>
                     )}
@@ -34,7 +34,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
                                     Resend verification email
                                 </Button>
 
-                                <TextLink href={logout()} className="mx-auto block text-sm">
+                                <TextLink href={logout()} className="mx-auto block text-sm text-primary hover:text-primary/80">
                                     Log out
                                 </TextLink>
                             </>

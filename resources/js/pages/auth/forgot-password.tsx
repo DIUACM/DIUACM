@@ -17,13 +17,13 @@ export default function ForgotPassword({ status }: { status?: string }) {
             <Head title="Forgot password" />
 
             <div className="container mx-auto px-4 py-16">
-                <div className="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-md dark:border-slate-700 dark:bg-slate-800">
+                <div className="mx-auto max-w-md overflow-hidden rounded-xl border border-input bg-card p-6 shadow-md">
                     <div className="mb-6 text-center">
-                        <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Forgot password</h1>
-                        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Enter your email to receive a password reset link</p>
+                        <h1 className="text-2xl font-semibold text-card-foreground">Forgot password</h1>
+                        <p className="mt-1 text-sm text-muted-foreground">Enter your email to receive a password reset link</p>
                     </div>
 
-                    {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
+                    {status && <div className="mb-4 rounded-md bg-primary/10 p-3 text-center text-sm font-medium text-primary">{status}</div>}
 
                     <div className="space-y-6">
                         <Form {...PasswordResetLinkController.store.form()}>
@@ -37,7 +37,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                                     </div>
 
                                     <div className="my-6 flex items-center justify-start">
-                                        <Button className="w-full" disabled={processing}>
+                                        <Button className="w-full bg-primary" disabled={processing}>
                                             {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
                                             Email password reset link
                                         </Button>
@@ -46,9 +46,9 @@ export default function ForgotPassword({ status }: { status?: string }) {
                             )}
                         </Form>
 
-                        <div className="space-x-1 text-center text-sm text-slate-600 dark:text-slate-300">
+                        <div className="space-x-1 text-center text-sm text-muted-foreground">
                             <span>Or, return to</span>
-                            <TextLink href={login()}>log in</TextLink>
+                            <TextLink href={login()} className="text-primary hover:text-primary/80">log in</TextLink>
                         </div>
                     </div>
                 </div>
