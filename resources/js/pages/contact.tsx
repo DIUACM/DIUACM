@@ -1,11 +1,13 @@
-import MainLayout from '@/layouts/main-layout';
-import { Form } from '@inertiajs/react';
+import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import MainLayout from '@/layouts/main-layout';
+import { Form } from '@inertiajs/react';
 import {
     Clock,
+    LoaderCircle,
     Mail,
     MessageCircle,
     MessageSquare,
@@ -50,21 +52,17 @@ export default function Contact() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                     {/* Contact Form */}
-                    <div className="text-card-foreground flex flex-col gap-6 rounded-xl py-6 lg:col-span-2 overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
-                        <div className="p-4 md:p-8">
-                            <div className="flex items-center mb-4 md:mb-6">
-                                <div className="w-8 h-8 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600 flex items-center justify-center mr-3 md:mr-4 flex-shrink-0">
-                                    <MessageSquare className="h-4 w-4 md:h-6 md:w-6 text-white" />
-                                </div>
-                                <h2 className="text-lg md:text-2xl font-bold text-slate-900 dark:text-white">
-                                    Send us a message
-                                </h2>
+                    <div className="lg:col-span-2">
+                        <div className="overflow-hidden rounded-xl border border-input bg-card p-6 shadow-md">
+                            <div className="mb-6 text-center">
+                                <h2 className="text-2xl font-semibold text-card-foreground">Send us a message</h2>
+                                <p className="mt-1 text-sm text-muted-foreground">We'll get back to you as soon as possible</p>
                             </div>
 
                             <Form 
                                 action="/contact" 
                                 method="post" 
-                                className="space-y-4 md:space-y-6"
+                                className="flex flex-col gap-6"
                                 onSuccess={() => {
                                     toast.success("Message sent successfully!", {
                                         description: "We'll get back to you within 24-48 hours.",
@@ -96,90 +94,59 @@ export default function Contact() {
                             >
                                 {({ processing, errors }) => (
                                     <>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                                        <div className="grid gap-6">
                                             <div className="grid gap-2">
-                                                <Label htmlFor="name" className="text-sm md:text-base text-slate-700 dark:text-slate-300">
-                                                    Name <span className="text-red-500">*</span>
-                                                </Label>
+                                                <Label htmlFor="name">Name</Label>
                                                 <Input
                                                     id="name"
                                                     name="name"
                                                     placeholder="Your name"
-                                                    className={`bg-slate-50 dark:bg-slate-700/40 border-slate-200 dark:border-slate-600 focus-visible:ring-blue-500/20 dark:focus-visible:ring-blue-500/40 text-sm md:text-base transition-all duration-200 ${
-                                                        errors.name ? 'border-red-500 dark:border-red-500 focus-visible:ring-red-500/20' : ''
-                                                    }`}
                                                     required
+                                                    autoFocus
                                                 />
-                                                {errors.name && (
-                                                    <p className="text-sm text-red-600 dark:text-red-400 animate-in slide-in-from-top-1 duration-200">{errors.name}</p>
-                                                )}
+                                                <InputError message={errors.name} />
                                             </div>
 
                                             <div className="grid gap-2">
-                                                <Label htmlFor="email" className="text-sm md:text-base text-slate-700 dark:text-slate-300">
-                                                    Email <span className="text-red-500">*</span>
-                                                </Label>
+                                                <Label htmlFor="email">Email</Label>
                                                 <Input
                                                     id="email"
                                                     name="email"
                                                     type="email"
                                                     placeholder="Your email address"
-                                                    className={`bg-slate-50 dark:bg-slate-700/40 border-slate-200 dark:border-slate-600 focus-visible:ring-blue-500/20 dark:focus-visible:ring-blue-500/40 text-sm md:text-base transition-all duration-200 ${
-                                                        errors.email ? 'border-red-500 dark:border-red-500 focus-visible:ring-red-500/20' : ''
-                                                    }`}
                                                     required
                                                 />
-                                                {errors.email && (
-                                                    <p className="text-sm text-red-600 dark:text-red-400 animate-in slide-in-from-top-1 duration-200">{errors.email}</p>
-                                                )}
+                                                <InputError message={errors.email} />
                                             </div>
-                                        </div>
 
-                                        {/* Honeypot field - hidden from users */}
-                                        <input
-                                            type="text"
-                                            name="website"
-                                            style={{ display: 'none' }}
-                                            tabIndex={-1}
-                                            autoComplete="off"
-                                        />
-
-                                        <div className="grid gap-2">
-                                            <Label htmlFor="message" className="text-sm md:text-base text-slate-700 dark:text-slate-300">
-                                                Message <span className="text-red-500">*</span>
-                                            </Label>
-                                            <Textarea
-                                                id="message"
-                                                name="message"
-                                                placeholder="How can we help you?"
-                                                className={`min-h-[120px] md:min-h-[150px] bg-slate-50 dark:bg-slate-700/40 border-slate-200 dark:border-slate-600 focus-visible:ring-blue-500/20 dark:focus-visible:ring-blue-500/40 resize-none text-sm md:text-base transition-all duration-200 ${
-                                                    errors.message ? 'border-red-500 dark:border-red-500 focus-visible:ring-red-500/20' : ''
-                                                }`}
-                                                required
+                                            {/* Honeypot field - hidden from users */}
+                                            <input
+                                                type="text"
+                                                name="website"
+                                                style={{ display: 'none' }}
+                                                tabIndex={-1}
+                                                autoComplete="off"
                                             />
-                                            {errors.message && (
-                                                <p className="text-sm text-red-600 dark:text-red-400 animate-in slide-in-from-top-1 duration-200">{errors.message}</p>
-                                            )}
-                                        </div>
 
-                                        <div className="pt-2">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="message">Message</Label>
+                                                <Textarea
+                                                    id="message"
+                                                    name="message"
+                                                    placeholder="How can we help you?"
+                                                    className="min-h-[120px] resize-none"
+                                                    required
+                                                />
+                                                <InputError message={errors.message} />
+                                            </div>
+
                                             <Button
                                                 type="submit"
                                                 disabled={processing}
-                                                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 transition-all duration-300 px-4 md:px-6 py-2 md:py-2.5 text-white text-sm md:text-base disabled:opacity-60 disabled:cursor-not-allowed"
+                                                className="mt-2 w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
                                             >
-                                                {processing ? (
-                                                    <>
-                                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                                                        Sending...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Send className="h-3 w-3 md:h-4 md:w-4 mr-2" />
-                                                        Send Message
-                                                    </>
-                                                )}
+                                                {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                                                Send Message
                                             </Button>
                                         </div>
                                     </>
