@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import { type SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
 import { dashboard, login, register } from '@/routes';
+import AppearanceToggleDropdown from './appearance-dropdown';
 
 export default function Navigation() {
     const { auth } = usePage<SharedData>().props;
@@ -33,6 +34,8 @@ export default function Navigation() {
                         >
                             Contact
                         </Link>
+                        
+                        <AppearanceToggleDropdown />
 
                         {auth.user ? (
                             <Link
