@@ -10,8 +10,6 @@ import {
     LoaderCircle,
     Mail,
     MessageCircle,
-    MessageSquare,
-    Send,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -95,28 +93,34 @@ export default function Contact() {
                                 {({ processing, errors }) => (
                                     <>
                                         <div className="grid gap-6">
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="name">Name</Label>
-                                                <Input
-                                                    id="name"
-                                                    name="name"
-                                                    placeholder="Your name"
-                                                    required
-                                                    autoFocus
-                                                />
-                                                <InputError message={errors.name} />
-                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="name">Name</Label>
+                                                    <Input
+                                                        id="name"
+                                                        name="name"
+                                                        placeholder="Your name"
+                                                        required
+                                                        autoFocus
+                                                    />
+                                                    <div className="min-h-[20px]">
+                                                        <InputError message={errors.name} />
+                                                    </div>
+                                                </div>
 
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="email">Email</Label>
-                                                <Input
-                                                    id="email"
-                                                    name="email"
-                                                    type="email"
-                                                    placeholder="Your email address"
-                                                    required
-                                                />
-                                                <InputError message={errors.email} />
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="email">Email</Label>
+                                                    <Input
+                                                        id="email"
+                                                        name="email"
+                                                        type="email"
+                                                        placeholder="Your email address"
+                                                        required
+                                                    />
+                                                    <div className="min-h-[20px]">
+                                                        <InputError message={errors.email} />
+                                                    </div>
+                                                </div>
                                             </div>
 
                                             {/* Honeypot field - hidden from users */}
