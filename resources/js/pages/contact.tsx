@@ -34,16 +34,16 @@ import { toast } from 'sonner';
 export default function Contact() {
     return (
         <MainLayout title="Contact Us">
-            <div className="container mx-auto px-4 py-8 md:py-16">
-                <div className="mb-8 md:mb-12 text-center">
-                    <h1 className="text-2xl md:text-4xl font-bold mb-4 text-slate-900 dark:text-white">
+            <div className="container mx-auto px-4 py-16">
+                <div className="mb-12 text-center">
+                    <h1 className="text-4xl font-bold mb-4 text-slate-900 dark:text-white">
                         Contact{' '}
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500 dark:from-blue-400 dark:to-cyan-300">
                             Us
                         </span>
                     </h1>
-                    <div className="mx-auto w-16 md:w-20 h-1 md:h-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full mb-4 md:mb-6"></div>
-                    <p className="text-base md:text-lg text-slate-600 dark:text-slate-300 max-w-xl mx-auto px-4">
+                    <div className="mx-auto w-20 h-1.5 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full mb-6"></div>
+                    <p className="text-lg text-slate-600 dark:text-slate-300 max-w-xl mx-auto">
                         Have questions or feedback? We'd love to hear from you and help with anything you need.
                     </p>
                 </div>
