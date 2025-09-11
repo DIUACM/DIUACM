@@ -8,6 +8,7 @@ import {
   rankListUser,
   events,
   users,
+  eventUserAttendance,
 } from "@/db/schema";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
@@ -779,6 +780,132 @@ export async function getAvailableUsers(
     return {
       success: true,
       data: availableUsers,
+    };
+  } catch (error) {
+    return handleDbError(error);
+  }
+}
+
+// Get attendees from all events attached to a ranklist who are not already in the ranklist
+export async function getEventAttendeesForRanklist(
+  ranklistId: number
+): Promise<ActionResult> {
+  try {
+    const permissionError = await validatePermission();
+    if (permissionError) return permissionError;
+
+    // Get all events attached to this ranklist
+    const attachedEvents = await db
+      .select({ eventId: eventRankList.eventId })
+      .from(eventRankList)
+      .where(eq(eventRankList.rankListId, ranklistId));
+
+    if (attachedEvents.length === 0) {
+      return {
+        success: true,
+        data: [],
+      };
+    }
+
+    const eventIds = attachedEvents.map((event) => event.eventId);
+
+    // Get already attached user IDs to this ranklist
+    const attachedUserIds = await db
+      .select({ userId: rankListUser.userId })
+      .from(rankListUser)
+      .where(eq(rankListUser.rankListId, ranklistId));
+
+    const attachedIds = attachedUserIds.map((item) => item.userId);
+
+    // Get all attendees from the events who are not already in the ranklist
+    const attendees = await db
+      .selectDistinct({
+        userId: users.id,
+        user: {
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          username: users.username,
+          image: users.image,
+          studentId: users.studentId,
+          department: users.department,
+        },
+        eventCount: sql<number>`count(distinct ${eventUserAttendance.eventId})`,
+      })
+      .from(eventUserAttendance)
+      .innerJoin(users, eq(eventUserAttendance.userId, users.id))
+      .where(
+        and(
+          sql`${eventUserAttendance.eventId} = ANY(${eventIds})`,
+          attachedIds.length > 0 ? notInArray(users.id, attachedIds) : undefined
+        )
+      )
+      .groupBy(users.id)
+      .orderBy(desc(sql`count(distinct ${eventUserAttendance.eventId})`), asc(users.name));
+
+    return {
+      success: true,
+      data: attendees,
+    };
+  } catch (error) {
+    return handleDbError(error);
+  }
+}
+
+// Bulk attach users from event attendance to ranklist
+export async function bulkAttachEventAttendeesToRanklist(
+  ranklistId: number,
+  userIds: string[]
+): Promise<ActionResult> {
+  try {
+    const permissionError = await validatePermission();
+    if (permissionError) return permissionError;
+
+    if (userIds.length === 0) {
+      return {
+        success: false,
+        error: "No users selected",
+      };
+    }
+
+    // Check which users are already attached
+    const existingUsers = await db
+      .select({ userId: rankListUser.userId })
+      .from(rankListUser)
+      .where(
+        and(
+          eq(rankListUser.rankListId, ranklistId),
+          sql`${rankListUser.userId} = ANY(${userIds})`
+        )
+      );
+
+    const existingUserIds = existingUsers.map((user) => user.userId);
+    const newUserIds = userIds.filter((id) => !existingUserIds.includes(id));
+
+    if (newUserIds.length === 0) {
+      return {
+        success: false,
+        error: "All selected users are already attached to this ranklist",
+      };
+    }
+
+    // Bulk insert new users with default score of 0
+    const insertValues = newUserIds.map((userId) => ({
+      rankListId: ranklistId,
+      userId,
+      score: 0,
+    }));
+
+    await db.insert(rankListUser).values(insertValues);
+
+    revalidatePath(`/admin/trackers/*/ranklists/${ranklistId}/users`);
+
+    return {
+      success: true,
+      message: `Successfully attached ${newUserIds.length} user${
+        newUserIds.length !== 1 ? "s" : ""
+      } to the ranklist`,
+      data: { attachedCount: newUserIds.length, skippedCount: existingUserIds.length },
     };
   } catch (error) {
     return handleDbError(error);
