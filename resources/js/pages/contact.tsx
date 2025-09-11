@@ -51,111 +51,120 @@ export default function Contact() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                     {/* Contact Form */}
                     <div className="lg:col-span-2">
-                        <div className="overflow-hidden rounded-xl border border-input bg-card p-6 shadow-md">
-                            <div className="mb-6 text-center">
-                                <h2 className="text-2xl font-semibold text-card-foreground">Send us a message</h2>
-                                <p className="mt-1 text-sm text-muted-foreground">We'll get back to you as soon as possible</p>
+                        <div className="text-card-foreground flex flex-col gap-6 rounded-xl py-6 overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
+                            <div className="p-4 md:p-6">
+                                <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white mb-3 md:mb-4 flex items-center">
+                                    <span className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600 flex items-center justify-center mr-2 flex-shrink-0">
+                                        <MessageCircle className="h-3 w-3 md:h-4 md:w-4 text-white" />
+                                    </span>
+                                    Send us a message
+                                </h2>
+                                <p className="mt-1 text-sm md:text-base text-slate-600 dark:text-slate-300">We'll get back to you as soon as possible</p>
                             </div>
 
-                            <Form 
-                                action="/contact" 
-                                method="post" 
-                                className="flex flex-col gap-6"
-                                onSuccess={() => {
-                                    toast.success("Message sent successfully!", {
-                                        description: "We'll get back to you within 24-48 hours.",
-                                        duration: 5000,
-                                    });
-                                }}
-                                resetOnSuccess={true}
-                                onError={(errors) => {
-                                    // Show specific error if it's a server error (like email sending failure)
-                                    if (errors.email && errors.email.includes('error sending')) {
-                                        toast.error("Failed to send message", {
-                                            description: errors.email,
-                                            duration: 8000,
-                                        });
-                                    } else if (errors.form) {
-                                        // Rate limiting or general form errors
-                                        toast.error("Form submission failed", {
-                                            description: errors.form,
-                                            duration: 8000,
-                                        });
-                                    } else if (Object.keys(errors).length > 0) {
-                                        // General validation errors
-                                        toast.error("Please check your form", {
-                                            description: "Fix the highlighted errors and try again.",
+                            <div className="px-4 md:px-6 pb-4 md:pb-6">
+                                <Form 
+                                    action="/contact" 
+                                    method="post" 
+                                    className="flex flex-col gap-6"
+                                    onSuccess={() => {
+                                        toast.success("Message sent successfully!", {
+                                            description: "We'll get back to you within 24-48 hours.",
                                             duration: 5000,
                                         });
-                                    }
-                                }}
-                            >
-                                {({ processing, errors }) => (
-                                    <>
-                                        <div className="grid gap-6">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="name">Name</Label>
-                                                    <Input
-                                                        id="name"
-                                                        name="name"
-                                                        placeholder="Your name"
-                                                        required
-                                                        autoFocus
-                                                    />
-                                                    <div className="min-h-[20px]">
-                                                        <InputError message={errors.name} />
+                                    }}
+                                    resetOnSuccess={true}
+                                    onError={(errors) => {
+                                        // Show specific error if it's a server error (like email sending failure)
+                                        if (errors.email && errors.email.includes('error sending')) {
+                                            toast.error("Failed to send message", {
+                                                description: errors.email,
+                                                duration: 8000,
+                                            });
+                                        } else if (errors.form) {
+                                            // Rate limiting or general form errors
+                                            toast.error("Form submission failed", {
+                                                description: errors.form,
+                                                duration: 8000,
+                                            });
+                                        } else if (Object.keys(errors).length > 0) {
+                                            // General validation errors
+                                            toast.error("Please check your form", {
+                                                description: "Fix the highlighted errors and try again.",
+                                                duration: 5000,
+                                            });
+                                        }
+                                    }}
+                                >
+                                    {({ processing, errors }) => (
+                                        <>
+                                            <div className="grid gap-6">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="name" className="text-slate-900 dark:text-slate-200">Name</Label>
+                                                        <Input
+                                                            id="name"
+                                                            name="name"
+                                                            placeholder="Your name"
+                                                            required
+                                                            autoFocus
+                                                            className="bg-slate-50 dark:bg-slate-700/40 border-slate-200 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400"
+                                                        />
+                                                        <div className="min-h-[20px]">
+                                                            <InputError message={errors.name} />
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="email" className="text-slate-900 dark:text-slate-200">Email</Label>
+                                                        <Input
+                                                            id="email"
+                                                            name="email"
+                                                            type="email"
+                                                            placeholder="Your email address"
+                                                            required
+                                                            className="bg-slate-50 dark:bg-slate-700/40 border-slate-200 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400"
+                                                        />
+                                                        <div className="min-h-[20px]">
+                                                            <InputError message={errors.email} />
+                                                        </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="grid gap-2">
-                                                    <Label htmlFor="email">Email</Label>
-                                                    <Input
-                                                        id="email"
-                                                        name="email"
-                                                        type="email"
-                                                        placeholder="Your email address"
-                                                        required
-                                                    />
-                                                    <div className="min-h-[20px]">
-                                                        <InputError message={errors.email} />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Honeypot field - hidden from users */}
-                                            <input
-                                                type="text"
-                                                name="website"
-                                                style={{ display: 'none' }}
-                                                tabIndex={-1}
-                                                autoComplete="off"
-                                            />
-
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="message">Message</Label>
-                                                <Textarea
-                                                    id="message"
-                                                    name="message"
-                                                    placeholder="How can we help you?"
-                                                    className="min-h-[120px] resize-none"
-                                                    required
+                                                {/* Honeypot field - hidden from users */}
+                                                <input
+                                                    type="text"
+                                                    name="website"
+                                                    style={{ display: 'none' }}
+                                                    tabIndex={-1}
+                                                    autoComplete="off"
                                                 />
-                                                <InputError message={errors.message} />
-                                            </div>
 
-                                            <Button
-                                                type="submit"
-                                                disabled={processing}
-                                                className="mt-2 w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
-                                            >
-                                                {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                                                Send Message
-                                            </Button>
-                                        </div>
-                                    </>
-                                )}
-                            </Form>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="message" className="text-slate-900 dark:text-slate-200">Message</Label>
+                                                    <Textarea
+                                                        id="message"
+                                                        name="message"
+                                                        placeholder="How can we help you?"
+                                                        className="min-h-[120px] resize-none bg-slate-50 dark:bg-slate-700/40 border-slate-200 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400"
+                                                        required
+                                                    />
+                                                    <InputError message={errors.message} />
+                                                </div>
+
+                                                <Button
+                                                    type="submit"
+                                                    disabled={processing}
+                                                    className="mt-2 w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
+                                                >
+                                                    {processing && <LoaderCircle className="h-4 w-4 animate-spin mr-2" />}
+                                                    Send Message
+                                                </Button>
+                                            </div>
+                                        </>
+                                    )}
+                                </Form>
+                            </div>
                         </div>
                     </div>
 
