@@ -22,6 +22,7 @@ import {
   asc,
   sql,
   notInArray,
+  inArray,
 } from "drizzle-orm";
 import {
   ranklistFormSchema,
@@ -836,7 +837,7 @@ export async function getEventAttendeesForRanklist(
       .innerJoin(users, eq(eventUserAttendance.userId, users.id))
       .where(
         and(
-          sql`${eventUserAttendance.eventId} = ANY(${eventIds})`,
+          inArray(eventUserAttendance.eventId, eventIds),
           attachedIds.length > 0 ? notInArray(users.id, attachedIds) : undefined
         )
       )
@@ -875,7 +876,7 @@ export async function bulkAttachEventAttendeesToRanklist(
       .where(
         and(
           eq(rankListUser.rankListId, ranklistId),
-          sql`${rankListUser.userId} = ANY(${userIds})`
+          inArray(rankListUser.userId, userIds)
         )
       );
 
