@@ -22,7 +22,8 @@ import {
     User, 
     Mail, 
     Calendar, 
-    BookOpen 
+    BookOpen,
+    KeyRound 
 } from 'lucide-react';
 import { 
     DropdownMenu, 
@@ -174,6 +175,15 @@ export default function Navigation() {
                                                 >
                                                     <User className="mr-2 h-4 w-4" />
                                                     <span>Edit Profile</span>
+                                                </Link>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem asChild>
+                                                <Link
+                                                    href="/profile/change-password"
+                                                    className="cursor-pointer flex w-full items-center"
+                                                >
+                                                    <KeyRound className="mr-2 h-4 w-4" />
+                                                    <span>Change Password</span>
                                                 </Link>
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
@@ -333,7 +343,23 @@ export default function Navigation() {
 
                         {/* Menu footer */}
                         {auth.user && (
-                            <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+                            <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
+                                <div className="space-y-1">
+                                    <Link
+                                        href="/profile/edit"
+                                        className="flex items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+                                    >
+                                        <User className="h-4 w-4 mr-3" />
+                                        Edit Profile
+                                    </Link>
+                                    <Link
+                                        href="/profile/change-password"
+                                        className="flex items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors"
+                                    >
+                                        <KeyRound className="h-4 w-4 mr-3" />
+                                        Change Password
+                                    </Link>
+                                </div>
                                 <Button
                                     variant="outline"
                                     size="sm"

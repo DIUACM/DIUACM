@@ -28,6 +28,10 @@ Route::get('/terms-and-conditions', function () {
 Route::middleware('auth')->group(function () {
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    
+    // Password change routes
+    Route::get('/profile/change-password', [ProfileController::class, 'showChangePasswordForm'])->name('password.change');
+    Route::patch('/profile/change-password', [ProfileController::class, 'changePassword'])->name('password.update');
 });
 
 require __DIR__.'/auth.php';

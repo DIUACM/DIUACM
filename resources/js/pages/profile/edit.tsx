@@ -263,7 +263,13 @@ export default function EditProfile() {
                             </div>
 
                             {/* Form Actions */}
-                            <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-700">
+                            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                                <a
+                                    href="/profile/change-password"
+                                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors border border-slate-200 dark:border-slate-600 rounded-lg hover:border-blue-300 dark:hover:border-blue-500"
+                                >
+                                    Change Password
+                                </a>
                                 <Button
                                     type="submit"
                                     disabled={processing}
