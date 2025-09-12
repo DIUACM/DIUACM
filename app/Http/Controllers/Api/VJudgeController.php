@@ -3,14 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ProcessVJudgeDataRequest;
 use App\Models\Event;
 use App\Models\EventUserStat;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Request;
 
 class VJudgeController extends Controller
 {
@@ -18,12 +16,12 @@ class VJudgeController extends Controller
     {
         try {
             // Fetch events that have 'vjudge.net' in the event_link and have active ranklists
-            $activeContests = Event::select('events.id', 'events.title', 'events.event_link as eventLink')
-                ->join('event_rank_list', 'events.id', '=', 'event_rank_list.event_id')
-                ->join('rank_lists', 'event_rank_list.rank_list_id', '=', 'rank_lists.id')
-                ->where('events.event_link', 'like', '%vjudge.net%')
-                ->where('rank_lists.is_active', true)
-                ->distinct()
+            $activeContests = Event::select('id', 'title', 'event_link as eventLink', 'starting_at')
+                ->where('event_link', 'like', '%vjudge.net%')
+                ->whereHas('rankLists', function ($query) {
+                    $query->where('is_active', true);
+                })
+                ->orderBy('starting_at', 'desc')
                 ->get();
 
             return response()->json([
