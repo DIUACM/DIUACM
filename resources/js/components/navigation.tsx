@@ -4,7 +4,6 @@ import { type SharedData } from '@/types';
 import AppearanceToggleDropdown from './appearance-dropdown';
 
 // Define route functions since we're rebuilding the navigation
-const dashboard = () => '/dashboard';
 const login = () => '/login';
 const register = () => '/register';
 
@@ -167,15 +166,7 @@ export default function Navigation() {
                                                 </div>
                                             </DropdownMenuLabel>
                                             <DropdownMenuSeparator />
-                                            <DropdownMenuItem asChild>
-                                                <Link
-                                                    href={dashboard()}
-                                                    className="cursor-pointer flex w-full items-center"
-                                                >
-                                                    <User className="mr-2 h-4 w-4" />
-                                                    <span>Dashboard</span>
-                                                </Link>
-                                            </DropdownMenuItem>
+                                          
                                             <DropdownMenuItem asChild>
                                                 <Link
                                                     href="/profile/edit"
