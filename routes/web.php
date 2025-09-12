@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -23,5 +24,10 @@ Route::get('/terms-and-conditions', function () {
     return Inertia::render('terms-and-conditions');
 })->name('terms-and-conditions');
 
+// Profile routes - require authentication
+Route::middleware('auth')->group(function () {
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+});
 
 require __DIR__.'/auth.php';
