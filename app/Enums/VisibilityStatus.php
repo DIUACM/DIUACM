@@ -8,13 +8,13 @@ use Filament\Support\Contracts\HasLabel;
 
 enum VisibilityStatus: string implements HasColor, HasIcon, HasLabel
 {
-    case PUBLIC = 'public';
+    case PUBLIC = 'published';
     case DRAFT = 'draft';
 
     public function getLabel(): ?string
     {
         return match ($this) {
-            self::PUBLIC => 'Public',
+            self::PUBLIC => 'Published',
             self::DRAFT => 'Draft',
         };
     }

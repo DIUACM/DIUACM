@@ -15,125 +15,187 @@ class ImportLegacyEvents extends Command
     /**
      * The name and signature of the console command.
      */
-    protected $signature = 'app:import-legacy-events {--url=http://localhost:3000/api/migrate/events}';
+    protected $signature = 'app:import-legacy-events {--url=http://localhost:3000/api/migrate/events} {--page=1} {--limit=500} {--dry-run : Show what would be imported without making changes}';
 
     /**
      * The console command description.
      */
-    protected $description = 'Imports legacy events from the old system API and upserts them into the database, preserving timestamps.';
+    protected $description = 'Imports legacy events from the Next.js API and upserts them into the database, preserving timestamps and handling attendance data.';
 
     public function handle(): int
     {
         $url = (string) $this->option('url');
-        $this->info('Fetching events from: '.$url);
+        $page = (int) $this->option('page');
+        $limit = (int) $this->option('limit');
+        $dryRun = (bool) $this->option('dry-run');
 
-        $response = Http::timeout(60)->acceptJson()->get($url);
-        if (! $response->ok()) {
-            $this->error('Failed to fetch events. HTTP status: '.$response->status());
-
-            return self::FAILURE;
+        if ($dryRun) {
+            $this->warn('DRY RUN MODE: No changes will be made to the database.');
         }
 
-        $payload = $response->json();
-        if (! is_array($payload) || ! Arr::get($payload, 'success')) {
-            $this->error('Unexpected response shape or success=false.');
+        $totalProcessed = 0;
+        $currentPage = $page;
 
-            return self::FAILURE;
+        do {
+            $pageUrl = $url . "?page={$currentPage}&limit={$limit}";
+            $this->info("Fetching events from: {$pageUrl}");
+
+            $response = Http::timeout(120)->acceptJson()->get($pageUrl);
+            
+            if (!$response->ok()) {
+                $this->error("Failed to fetch events. HTTP status: {$response->status()}");
+                return self::FAILURE;
+            }
+
+            $payload = $response->json();
+            
+            if (!is_array($payload) || !Arr::get($payload, 'success')) {
+                $this->error('Unexpected response shape or success=false.');
+                return self::FAILURE;
+            }
+
+            $events = Arr::get($payload, 'events', []);
+            $totalCount = Arr::get($payload, 'totalCount', 0);
+            $totalPages = Arr::get($payload, 'totalPages', 1);
+            $hasNextPage = Arr::get($payload, 'hasNextPage', false);
+
+            if (!is_array($events) || empty($events)) {
+                if ($currentPage === 1) {
+                    $this->warn('No events found to import.');
+                    return self::SUCCESS;
+                } else {
+                    $this->info('No more events to process.');
+                    break;
+                }
+            }
+
+            $this->info("Processing page {$currentPage} of {$totalPages} ({$totalCount} total events)");
+            
+            $result = $this->processEventsPage($events, $dryRun);
+            
+            if (!$result) {
+                $this->error('Failed to process events page.');
+                return self::FAILURE;
+            }
+
+            $totalProcessed += count($events);
+            $this->info("Processed {$totalProcessed} events so far...");
+
+            $currentPage++;
+        } while ($hasNextPage && $currentPage <= $totalPages);
+
+        $this->info("Event import complete. Processed {$totalProcessed} events total.");
+        
+        if ($dryRun) {
+            $this->warn('DRY RUN completed - no actual changes were made.');
         }
 
-        $events = Arr::get($payload, 'events', []);
-        if (! is_array($events) || empty($events)) {
-            $this->warn('No events found to import.');
+        return self::SUCCESS;
+    }
 
-            return self::SUCCESS;
-        }
+    protected function processEventsPage(array $events, bool $dryRun): bool
+    {
+        try {
+            // Map rows into DB-ready payloads
+            $rows = collect($events)->map(function (array $e): array {
+                $createdAt = Arr::get($e, 'createdAt');
+                $updatedAt = Arr::get($e, 'updatedAt');
 
-        // Map rows into DB-ready payloads
-        $rows = collect($events)->map(function (array $e): array {
-            $createdAt = Arr::get($e, 'createdAt');
-            $updatedAt = Arr::get($e, 'updatedAt');
-
-            return [
-                'title' => (string) Arr::get($e, 'title'),
-                'description' => Arr::get($e, 'description'),
-                'status' => $this->normalizeStatus(Arr::get($e, 'status')),
-                'starting_at' => Carbon::parse((string) Arr::get($e, 'startingAt')),
-                'ending_at' => Carbon::parse((string) Arr::get($e, 'endingAt')),
-                'event_link' => Arr::get($e, 'eventLink'),
-                'event_password' => Arr::get($e, 'eventPassword'),
-                'open_for_attendance' => (bool) Arr::get($e, 'openForAttendance', false),
-                'strict_attendance' => (bool) Arr::get($e, 'strictAttendance', false),
-                'type' => $this->normalizeType(Arr::get($e, 'type')),
-                'participation_scope' => $this->normalizeParticipation(Arr::get($e, 'participationScope')),
-                'created_at' => $createdAt ? Carbon::parse($createdAt) : now(),
-                'updated_at' => $updatedAt ? Carbon::parse($updatedAt) : now(),
-            ];
-        });
-
-        $withLink = $rows->filter(fn ($r) => filled($r['event_link']))->values();
-        $withoutLink = $rows->reject(fn ($r) => filled($r['event_link']))->values();
-
-        // Upsert by unique event_link first
-        if ($withLink->isNotEmpty()) {
-            $this->info('Upserting '.$withLink->count().' events with links...');
-            $withLink->chunk(500)->each(function ($chunk) {
-                Event::query()->upsert(
-                    $chunk->all(),
-                    uniqueBy: ['event_link'],
-                    update: [
-                        'title',
-                        'description',
-                        'status',
-                        'starting_at',
-                        'ending_at',
-                        'event_password',
-                        'open_for_attendance',
-                        'strict_attendance',
-                        'type',
-                        'participation_scope',
-                        'created_at',
-                        'updated_at',
-                    ]
-                );
+                return [
+                    'title' => (string) Arr::get($e, 'title'),
+                    'description' => Arr::get($e, 'description'),
+                    'status' => $this->normalizeStatus(Arr::get($e, 'status')),
+                    'starting_at' => Carbon::parse((string) Arr::get($e, 'startingAt')),
+                    'ending_at' => Carbon::parse((string) Arr::get($e, 'endingAt')),
+                    'event_link' => Arr::get($e, 'eventLink'),
+                    'event_password' => Arr::get($e, 'eventPassword'),
+                    'open_for_attendance' => (bool) Arr::get($e, 'openForAttendance', false),
+                    'strict_attendance' => (bool) Arr::get($e, 'strictAttendance', false),
+                    'type' => $this->normalizeType(Arr::get($e, 'type')),
+                    'participation_scope' => $this->normalizeParticipation(Arr::get($e, 'participationScope')),
+                    'created_at' => $createdAt ? Carbon::parse($createdAt) : now(),
+                    'updated_at' => $updatedAt ? Carbon::parse($updatedAt) : now(),
+                ];
             });
-        }
 
-        // For events without a link, fall back to updateOrInsert using title + starting_at as key
-        if ($withoutLink->isNotEmpty()) {
-            $this->info('Inserting/Updating '.$withoutLink->count().' events without links...');
-            $withoutLink->each(function ($row) {
-                DB::table('events')->updateOrInsert(
-                    [
-                        'title' => $row['title'],
-                        'starting_at' => $row['starting_at'],
-                    ],
-                    [
-                        'description' => $row['description'],
-                        'status' => $row['status'],
-                        'ending_at' => $row['ending_at'],
-                        'event_link' => $row['event_link'], // null
-                        'event_password' => $row['event_password'],
-                        'open_for_attendance' => $row['open_for_attendance'],
-                        'strict_attendance' => $row['strict_attendance'],
-                        'type' => $row['type'],
-                        'participation_scope' => $row['participation_scope'],
-                        'created_at' => $row['created_at'],
-                        'updated_at' => $row['updated_at'],
-                    ]
-                );
-            });
-        }
+            $withLink = $rows->filter(fn ($r) => filled($r['event_link']))->values();
+            $withoutLink = $rows->reject(fn ($r) => filled($r['event_link']))->values();
 
+            if ($dryRun) {
+                $this->info("Would process {$withLink->count()} events with links and {$withoutLink->count()} events without links");
+            } else {
+                // Upsert by unique event_link first
+                if ($withLink->isNotEmpty()) {
+                    $this->info('Upserting '.$withLink->count().' events with links...');
+                    $withLink->chunk(500)->each(function ($chunk) {
+                        Event::query()->upsert(
+                            $chunk->all(),
+                            uniqueBy: ['event_link'],
+                            update: [
+                                'title',
+                                'description',
+                                'status',
+                                'starting_at',
+                                'ending_at',
+                                'event_password',
+                                'open_for_attendance',
+                                'strict_attendance',
+                                'type',
+                                'participation_scope',
+                                'created_at',
+                                'updated_at',
+                            ]
+                        );
+                    });
+                }
+
+                // For events without a link, fall back to updateOrInsert using title + starting_at as key
+                if ($withoutLink->isNotEmpty()) {
+                    $this->info('Inserting/Updating '.$withoutLink->count().' events without links...');
+                    $withoutLink->each(function ($row) {
+                        DB::table('events')->updateOrInsert(
+                            [
+                                'title' => $row['title'],
+                                'starting_at' => $row['starting_at'],
+                            ],
+                            [
+                                'description' => $row['description'],
+                                'status' => $row['status'],
+                                'ending_at' => $row['ending_at'],
+                                'event_link' => $row['event_link'], // null
+                                'event_password' => $row['event_password'],
+                                'open_for_attendance' => $row['open_for_attendance'],
+                                'strict_attendance' => $row['strict_attendance'],
+                                'type' => $row['type'],
+                                'participation_scope' => $row['participation_scope'],
+                                'created_at' => $row['created_at'],
+                                'updated_at' => $row['updated_at'],
+                            ]
+                        );
+                    });
+                }
+            }
+
+            // Process attendance data
+            $this->processAttendanceData($events, $dryRun);
+
+            return true;
+        } catch (\Exception $e) {
+            $this->error('Error processing events page: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    protected function processAttendanceData(array $events, bool $dryRun): void
+    {
         // Build attendance payloads from source to preserve timestamps
-        $sourceEvents = Arr::get($payload, 'events', []);
-
         $attendanceByLink = [];
         $attendanceByComposite = [];
         $allEmails = collect();
 
-        foreach ($sourceEvents as $e) {
+        foreach ($events as $e) {
             $attendees = Arr::get($e, 'attendees', []);
-            if (! is_array($attendees) || empty($attendees)) {
+            if (!is_array($attendees) || empty($attendees)) {
                 continue;
             }
 
@@ -162,6 +224,15 @@ class ImportLegacyEvents extends Command
             }
         }
 
+        if ($allEmails->isEmpty()) {
+            return;
+        }
+
+        if ($dryRun) {
+            $this->info("Would process attendance for {$allEmails->unique()->count()} unique attendees");
+            return;
+        }
+
         // Resolve users by email in bulk
         $emailToId = User::query()
             ->whereIn('email', $allEmails->unique()->filter()->values())
@@ -170,7 +241,7 @@ class ImportLegacyEvents extends Command
 
         // Resolve events by link
         $linkToId = [];
-        if (! empty($attendanceByLink)) {
+        if (!empty($attendanceByLink)) {
             $linkToId = Event::query()
                 ->whereIn('event_link', array_keys($attendanceByLink))
                 ->pluck('id', 'event_link')
@@ -179,7 +250,7 @@ class ImportLegacyEvents extends Command
 
         // Resolve events by (title, starting_at)
         $compositeToId = [];
-        if (! empty($attendanceByComposite)) {
+        if (!empty($attendanceByComposite)) {
             $titles = collect(array_keys($attendanceByComposite))
                 ->map(fn ($k) => explode('||', $k)[0])
                 ->unique()
@@ -204,16 +275,14 @@ class ImportLegacyEvents extends Command
 
         foreach ($attendanceByLink as $link => $list) {
             $eventId = $linkToId[$link] ?? null;
-            if (! $eventId) {
+            if (!$eventId) {
                 $this->error('Event not found for attendance by link: '.$link);
-
                 continue;
             }
             foreach ($list as $att) {
                 $uid = $emailToId[$att['email']] ?? null;
-                if (! $uid) {
+                if (!$uid) {
                     $this->error('User not found for attendance: '.$att['email'].' (event_link: '.$link.')');
-
                     continue;
                 }
                 $pivotRows->push([
@@ -227,16 +296,14 @@ class ImportLegacyEvents extends Command
 
         foreach ($attendanceByComposite as $key => $list) {
             $eventId = $compositeToId[$key] ?? null;
-            if (! $eventId) {
+            if (!$eventId) {
                 $this->error('Event not found for attendance by composite key: '.$key);
-
                 continue;
             }
             foreach ($list as $att) {
                 $uid = $emailToId[$att['email']] ?? null;
-                if (! $uid) {
+                if (!$uid) {
                     $this->error('User not found for attendance: '.$att['email'].' (by composite: '.$key.')');
-
                     continue;
                 }
                 $pivotRows->push([
@@ -251,6 +318,7 @@ class ImportLegacyEvents extends Command
         if ($pivotRows->isNotEmpty()) {
             $this->info('Upserting '.$pivotRows->count().' attendance records...');
             $pivotRows->chunk(1000)->each(function ($chunk) {
+                // Note: Adjust table name if different in your Laravel app
                 DB::table('event_attendance')->upsert(
                     $chunk->all(),
                     uniqueBy: ['event_id', 'user_id'],
@@ -258,10 +326,6 @@ class ImportLegacyEvents extends Command
                 );
             });
         }
-
-        $this->info('Event import complete.');
-
-        return self::SUCCESS;
     }
 
     protected function normalizeStatus(mixed $value): string
@@ -269,9 +333,9 @@ class ImportLegacyEvents extends Command
         $v = strtolower((string) $value);
 
         return match ($v) {
-            'published', 'public' => 'public',
+            'published', 'public' => 'published',
             'draft' => 'draft',
-            default => 'public',
+            default => 'published',
         };
     }
 

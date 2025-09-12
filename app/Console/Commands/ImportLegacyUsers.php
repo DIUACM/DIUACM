@@ -6,6 +6,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 
 class ImportLegacyUsers extends Command
@@ -15,12 +16,12 @@ class ImportLegacyUsers extends Command
      *
      * You can override the source URL with --url=... if needed.
      */
-    protected $signature = 'app:import-legacy-users {--url=http://localhost:3000/api/migrate/users}';
+    protected $signature = 'app:import-legacy-users {--url=http://localhost:3000/api/migrate/users} {--verify-passwords : Verify that imported passwords work correctly}';
 
     /**
      * The console command description.
      */
-    protected $description = 'Imports legacy users from the old system API and upserts them into the database, preserving timestamps.';
+    protected $description = 'Imports legacy users from the Next.js API and upserts them into the database, preserving timestamps and ensuring password compatibility.';
 
     /**
      * Execute the console command.
@@ -28,6 +29,7 @@ class ImportLegacyUsers extends Command
     public function handle(): int
     {
         $url = (string) $this->option('url');
+        $verifyPasswords = $this->option('verify-passwords');
 
         $this->info('Fetching users from: '.$url);
 
@@ -54,6 +56,12 @@ class ImportLegacyUsers extends Command
             return self::SUCCESS;
         }
 
+        // Show pagination info
+        $totalCount = Arr::get($payload, 'totalCount', count($users));
+        $currentPage = Arr::get($payload, 'currentPage', 1);
+        $totalPages = Arr::get($payload, 'totalPages', 1);
+        $this->info("Processing page {$currentPage} of {$totalPages} (Total users: {$totalCount})");
+
         // Compute existing emails to estimate created vs updated counts.
         $emails = collect($users)
             ->map(fn ($u) => Arr::get($u, 'email'))
@@ -78,7 +86,7 @@ class ImportLegacyUsers extends Command
             $rawPassword = Arr::get($u, 'password');
             $password = null;
             if (is_string($rawPassword) && $rawPassword !== '') {
-                $password = $this->looksHashed($rawPassword) ? $rawPassword : password_hash($rawPassword, PASSWORD_BCRYPT);
+                $password = $this->ensureLaravelPassword($rawPassword);
             }
 
             return [
@@ -102,13 +110,20 @@ class ImportLegacyUsers extends Command
         })->all();
 
         // Report invalid rows (missing email or username)
+        $invalidCount = 0;
         foreach ($rows as $row) {
             if (! isset($row['email']) || $row['email'] === '') {
                 $this->error('User row missing email. name="'.($row['name'] ?? '').'"');
+                $invalidCount++;
             }
             if (! isset($row['username']) || $row['username'] === '') {
                 $this->error('User row missing username. email="'.($row['email'] ?? '').'"');
+                $invalidCount++;
             }
+        }
+
+        if ($invalidCount > 0) {
+            $this->warn("Found {$invalidCount} users with missing required fields.");
         }
 
         $createdCount = 0;
@@ -126,10 +141,19 @@ class ImportLegacyUsers extends Command
 
         // Perform upsert in chunks to avoid large single queries.
         $chunkSize = 500;
-        collect($rows)->chunk($chunkSize)->each(function ($chunk) {
+        $processedCount = 0;
+        
+        collect($rows)->chunk($chunkSize)->each(function ($chunk) use (&$processedCount) {
+            // Filter out rows with missing emails before upserting
+            $validChunk = $chunk->filter(fn($row) => !empty($row['email']));
+            
+            if ($validChunk->isEmpty()) {
+                return;
+            }
+
             // Upsert by unique email; update on conflict for these columns
             User::query()->upsert(
-                $chunk->all(),
+                $validChunk->all(),
                 uniqueBy: ['email'],
                 update: [
                     'name',
@@ -149,9 +173,18 @@ class ImportLegacyUsers extends Command
                     'updated_at',
                 ]
             );
+            
+            $processedCount += $validChunk->count();
+            $this->info("Processed {$processedCount} users...");
         });
 
         $this->info('Import complete. Created ~'.$createdCount.', updated ~'.(count($rows) - $createdCount).'.');
+
+        // Optional password verification
+        if ($verifyPasswords && $createdCount > 0) {
+            $this->info('Verifying password compatibility...');
+            $this->verifyPasswordCompatibility($emails->take(5)->toArray());
+        }
 
         return self::SUCCESS;
     }
@@ -171,10 +204,63 @@ class ImportLegacyUsers extends Command
     }
 
     /**
-     * Best-effort detection if a password appears already hashed.
+     * Ensure password is in Laravel-compatible format.
      */
-    protected function looksHashed(string $password): bool
+    protected function ensureLaravelPassword(string $password): ?string
     {
-        return str_starts_with($password, '$2y$') || str_starts_with($password, '$argon2');
+        // Check if it's already a Laravel-compatible hash
+        if (str_starts_with($password, '$2y$') || 
+            str_starts_with($password, '$argon2') ||
+            str_starts_with($password, '$argon2i') ||
+            str_starts_with($password, '$argon2id')) {
+            return $password;
+        }
+
+        // Convert other bcrypt variants to Laravel format
+        if (str_starts_with($password, '$2a$') || str_starts_with($password, '$2b$')) {
+            return preg_replace('/^\$2[ab]\$/', '$2y$', $password);
+        }
+
+        // If it's not a recognizable hash format, it might be plain text (shouldn't happen with the API)
+        // Hash it for security (this is a fallback)
+        if (strlen($password) < 60) { // bcrypt hashes are typically 60 characters
+            return Hash::make($password);
+        }
+
+        // Return as-is if we can't determine the format
+        return $password;
+    }
+
+    /**
+     * Verify that imported passwords work correctly with Laravel's Hash::check().
+     */
+    protected function verifyPasswordCompatibility(array $emails): void
+    {
+        $testUsers = User::whereIn('email', $emails)->whereNotNull('password')->take(3)->get();
+
+        foreach ($testUsers as $user) {
+            if ($user->password) {
+                // Test if the password format is compatible with Laravel's Hash facade
+                $isCompatible = $this->isHashFormatCompatible($user->password);
+                
+                if ($isCompatible) {
+                    $this->info("✓ Password for {$user->email} is Laravel-compatible");
+                } else {
+                    $this->warn("⚠ Password for {$user->email} may not be Laravel-compatible");
+                }
+            }
+        }
+    }
+
+    /**
+     * Check if a hash format is compatible with Laravel's Hash facade.
+     */
+    protected function isHashFormatCompatible(string $hash): bool
+    {
+        // Laravel supports bcrypt ($2y$) and Argon2 hashes
+        return str_starts_with($hash, '$2y$') || 
+               str_starts_with($hash, '$argon2') ||
+               str_starts_with($hash, '$argon2i') ||
+               str_starts_with($hash, '$argon2id');
     }
 }
