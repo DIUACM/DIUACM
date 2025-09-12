@@ -79,7 +79,7 @@ class TrackerResource extends Resource
             'index' => ListTrackers::route('/'),
             'create' => CreateTracker::route('/create'),
             'edit' => EditTracker::route('/{record}/edit'),
-            'rank-lists' => \App\Filament\Resources\Trackers\Pages\ManageTrackerRankLists::route('/{record}/rank-lists')
+            'rank-lists' => \App\Filament\Resources\Trackers\Pages\ManageTrackerRankLists::route('/{record}/rank-lists'),
         ];
     }
 }

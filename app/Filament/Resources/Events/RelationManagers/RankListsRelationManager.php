@@ -38,7 +38,7 @@ class RankListsRelationManager extends RelationManager
                     ->label('Keyword')
                     ->searchable()
                     ->sortable(),
-    
+
                 TextColumn::make('pivot.weight')
                     ->label('Weight')
                     ->numeric(2)

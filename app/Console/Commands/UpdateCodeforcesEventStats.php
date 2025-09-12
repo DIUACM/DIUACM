@@ -141,9 +141,6 @@ class UpdateCodeforcesEventStats extends Command
                     return $handle === strtolower((string) $user->codeforces_handle) && in_array($type, ['CONTESTANT', 'OUT_OF_COMPETITION'], true);
                 });
 
-
-
-
                 $practiceRow = $rows->first(function ($row) use ($user) {
                     $handle = strtolower($row['party']['members'][0]['handle'] ?? '');
                     $type = $row['party']['participantType'] ?? '';

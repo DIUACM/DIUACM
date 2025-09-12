@@ -1,4 +1,5 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
+import type { PageProps as InertiaPageProps } from '@inertiajs/core';
 import { toast } from 'sonner';
 import { User } from 'lucide-react';
 import MainLayout from '@/layouts/main-layout';
@@ -27,9 +28,8 @@ interface ProfileData {
     student_id?: string;
 }
 
-interface PageProps {
+interface PageProps extends InertiaPageProps {
     user: ProfileData;
-    [key: string]: any;
 }
 
 export default function EditProfile() {

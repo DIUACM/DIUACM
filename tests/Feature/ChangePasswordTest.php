@@ -44,7 +44,7 @@ it('validates current password is correct', function () {
     ]);
 
     $response->assertSessionHasErrors(['current_password']);
-    
+
     $user->refresh();
     expect(Hash::check('correctpassword', $user->password))->toBeTrue();
 });

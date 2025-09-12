@@ -1,4 +1,3 @@
-import { Head } from '@inertiajs/react';
 import { Trophy, Book, Users } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import MainLayout from '@/layouts/main-layout';

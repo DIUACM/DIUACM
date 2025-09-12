@@ -27,7 +27,7 @@ class UserFactory extends Factory
         $name = fake()->name();
         $email = fake()->unique()->safeEmail();
         $baseUsername = Str::slug(Str::before($email, '@')) ?: Str::slug($name);
-        $username = $baseUsername . '_' . fake()->unique()->numerify('####');
+        $username = $baseUsername.'_'.fake()->unique()->numerify('####');
 
         return [
             'name' => $name,
