@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Request;
 
 class VJudgeController extends Controller
 {
@@ -39,10 +40,17 @@ class VJudgeController extends Controller
         }
     }
 
-    public function processContestData(int $eventId, ProcessVJudgeDataRequest $request): JsonResponse
+    public function processContestData(int $eventId): JsonResponse
     {
         try {
-            $payload = $request->validated();
+            $payload = request()->getContent();
+            $payload = json_decode($payload, true);
+            if (! $payload || ! is_array($payload)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid JSON payload',
+                ], 400);
+            }
 
             // Get event with strict_attendance setting
             $event = Event::select('id', 'strict_attendance')
