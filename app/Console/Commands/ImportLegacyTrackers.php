@@ -33,20 +33,22 @@ class ImportLegacyTrackers extends Command
         $currentPage = $page;
 
         do {
-            $pageUrl = $url . "?page={$currentPage}&limit={$limit}";
+            $pageUrl = $url."?page={$currentPage}&limit={$limit}";
             $this->info("Fetching trackers from: {$pageUrl}");
 
             $response = Http::timeout(120)->acceptJson()->get($pageUrl);
-            
-            if (!$response->ok()) {
+
+            if (! $response->ok()) {
                 $this->error("Failed to fetch trackers. HTTP status: {$response->status()}");
+
                 return self::FAILURE;
             }
 
             $payload = $response->json();
-            
-            if (!is_array($payload) || !Arr::get($payload, 'success')) {
+
+            if (! is_array($payload) || ! Arr::get($payload, 'success')) {
                 $this->error('Unexpected response shape or success=false.');
+
                 return self::FAILURE;
             }
 
@@ -55,9 +57,10 @@ class ImportLegacyTrackers extends Command
             $totalPages = Arr::get($payload, 'totalPages', 1);
             $hasNextPage = Arr::get($payload, 'hasNextPage', false);
 
-            if (!is_array($trackers) || empty($trackers)) {
+            if (! is_array($trackers) || empty($trackers)) {
                 if ($currentPage === 1) {
                     $this->warn('No trackers found to import.');
+
                     return self::SUCCESS;
                 } else {
                     $this->info('No more trackers to process.');
@@ -66,11 +69,12 @@ class ImportLegacyTrackers extends Command
             }
 
             $this->info("Processing page {$currentPage} of {$totalPages} ({$totalCount} total trackers)");
-            
+
             $result = $this->processTrackersPage($trackers, $dryRun);
-            
-            if (!$result) {
+
+            if (! $result) {
                 $this->error('Failed to process trackers page.');
+
                 return self::FAILURE;
             }
 
@@ -81,7 +85,7 @@ class ImportLegacyTrackers extends Command
         } while ($hasNextPage && $currentPage <= $totalPages);
 
         $this->info("Tracker import complete. Processed {$totalProcessed} trackers total.");
-        
+
         if ($dryRun) {
             $this->warn('DRY RUN completed - no actual changes were made.');
         }
@@ -111,7 +115,7 @@ class ImportLegacyTrackers extends Command
 
             if ($dryRun) {
                 $this->info("Would process {$trackerRows->count()} trackers");
-                $rankListCount = collect($trackers)->sum(fn($t) => count(Arr::get($t, 'rankLists', [])));
+                $rankListCount = collect($trackers)->sum(fn ($t) => count(Arr::get($t, 'rankLists', [])));
                 $this->info("Would process {$rankListCount} rank lists");
             } else {
                 $this->info('Upserting '.$trackerRows->count().' trackers...');
@@ -129,7 +133,8 @@ class ImportLegacyTrackers extends Command
 
             return true;
         } catch (\Exception $e) {
-            $this->error('Error processing trackers page: ' . $e->getMessage());
+            $this->error('Error processing trackers page: '.$e->getMessage());
+
             return false;
         }
     }
@@ -147,11 +152,12 @@ class ImportLegacyTrackers extends Command
         foreach ($trackers as $t) {
             $slug = (string) Arr::get($t, 'slug');
             $trackerId = $slugToId[$slug] ?? null;
-            if (!$trackerId) {
+            if (! $trackerId) {
                 $this->error("Tracker not found for slug: {$slug}");
+
                 continue;
             }
-            
+
             $trackerStatus = $this->normalizeStatus(Arr::get($t, 'status'));
             foreach ((array) Arr::get($t, 'rankLists', []) as $rl) {
                 $createdAt = Arr::get($rl, 'createdAt');
@@ -173,11 +179,13 @@ class ImportLegacyTrackers extends Command
 
         if ($rankListRows->isEmpty()) {
             $this->info('No rank lists to import.');
+
             return;
         }
 
         if ($dryRun) {
             $this->info("Would process {$rankListRows->count()} rank lists");
+
             return;
         }
 
@@ -211,6 +219,7 @@ class ImportLegacyTrackers extends Command
             ->get(['id', 'tracker_id', 'keyword'])
             ->reduce(function ($carry, $item) {
                 $carry[$item->tracker_id.'||'.$item->keyword] = $item->id;
+
                 return $carry;
             }, []);
 
@@ -221,14 +230,15 @@ class ImportLegacyTrackers extends Command
 
         foreach ($trackers as $t) {
             $trackerId = $slugToId[(string) Arr::get($t, 'slug')] ?? null;
-            if (!$trackerId) {
+            if (! $trackerId) {
                 continue;
             }
-            
+
             foreach ((array) Arr::get($t, 'rankLists', []) as $rl) {
                 $rankListId = $rankListKeyed[$trackerId.'||'.(string) Arr::get($rl, 'keyword')] ?? null;
-                if (!$rankListId) {
-                    $this->error('RankList not found for keyword: ' . Arr::get($rl, 'keyword') . ' in tracker: ' . Arr::get($t, 'slug'));
+                if (! $rankListId) {
+                    $this->error('RankList not found for keyword: '.Arr::get($rl, 'keyword').' in tracker: '.Arr::get($t, 'slug'));
+
                     continue;
                 }
 
@@ -251,12 +261,13 @@ class ImportLegacyTrackers extends Command
                     $link = Arr::get($e, 'eventLink');
                     $start = (string) Arr::get($e, 'startingAt');
                     $weight = (float) Arr::get($e, 'weight', 1.0);
-                    
-                    if ($title === '' || !$link || $start === '') {
+
+                    if ($title === '' || ! $link || $start === '') {
                         $this->warn("Skipping incomplete event data: title='{$title}', link='{$link}', start='{$start}'");
+
                         continue;
                     }
-                    
+
                     $eventAttachTuples[] = [
                         'rank_list_id' => $rankListId,
                         'title' => $title,
@@ -270,7 +281,8 @@ class ImportLegacyTrackers extends Command
 
         if ($dryRun) {
             $this->info("Would process {$pivotUserRows->count()} user-ranklist relationships");
-            $this->info("Would process " . count($eventAttachTuples) . " event-ranklist relationships");
+            $this->info('Would process '.count($eventAttachTuples).' event-ranklist relationships');
+
             return;
         }
 
@@ -280,7 +292,7 @@ class ImportLegacyTrackers extends Command
         }
 
         // Process event relationships
-        if (!empty($eventAttachTuples)) {
+        if (! empty($eventAttachTuples)) {
             $this->processEventRelationships($eventAttachTuples);
         }
     }
@@ -296,7 +308,7 @@ class ImportLegacyTrackers extends Command
         $this->info('Upserting '.$pivotUserRows->count().' rank list users...');
 
         $missingUsers = $pivotUserRows
-            ->filter(fn ($row) => !isset($emailToId[$row['email']]))
+            ->filter(fn ($row) => ! isset($emailToId[$row['email']]))
             ->values();
 
         foreach ($missingUsers as $mu) {
@@ -306,7 +318,7 @@ class ImportLegacyTrackers extends Command
         $validUserRows = $pivotUserRows
             ->map(function ($row) use ($emailToId) {
                 $userId = $emailToId[$row['email']] ?? null;
-                if (!$userId) {
+                if (! $userId) {
                     return null;
                 }
 
@@ -334,19 +346,20 @@ class ImportLegacyTrackers extends Command
         $this->info('Linking events to rank lists...');
         $pivotEventRows = collect();
         $missingEvents = [];
-        
+
         foreach ($eventAttachTuples as $tuple) {
             $eventId = Event::query()
                 ->where('title', $tuple['title'])
                 ->where('event_link', $tuple['link'])
                 ->where('starting_at', $tuple['starting_at'])
                 ->value('id');
-                
-            if (!$eventId) {
+
+            if (! $eventId) {
                 $missingEvents[] = $tuple;
+
                 continue;
             }
-            
+
             $pivotEventRows->push([
                 'event_id' => $eventId,
                 'rank_list_id' => $tuple['rank_list_id'],

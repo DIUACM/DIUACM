@@ -142,11 +142,11 @@ class ImportLegacyUsers extends Command
         // Perform upsert in chunks to avoid large single queries.
         $chunkSize = 500;
         $processedCount = 0;
-        
+
         collect($rows)->chunk($chunkSize)->each(function ($chunk) use (&$processedCount) {
             // Filter out rows with missing emails before upserting
-            $validChunk = $chunk->filter(fn($row) => !empty($row['email']));
-            
+            $validChunk = $chunk->filter(fn ($row) => ! empty($row['email']));
+
             if ($validChunk->isEmpty()) {
                 return;
             }
@@ -173,7 +173,7 @@ class ImportLegacyUsers extends Command
                     'updated_at',
                 ]
             );
-            
+
             $processedCount += $validChunk->count();
             $this->info("Processed {$processedCount} users...");
         });
@@ -209,7 +209,7 @@ class ImportLegacyUsers extends Command
     protected function ensureLaravelPassword(string $password): ?string
     {
         // Check if it's already a Laravel-compatible hash
-        if (str_starts_with($password, '$2y$') || 
+        if (str_starts_with($password, '$2y$') ||
             str_starts_with($password, '$argon2') ||
             str_starts_with($password, '$argon2i') ||
             str_starts_with($password, '$argon2id')) {
@@ -242,7 +242,7 @@ class ImportLegacyUsers extends Command
             if ($user->password) {
                 // Test if the password format is compatible with Laravel's Hash facade
                 $isCompatible = $this->isHashFormatCompatible($user->password);
-                
+
                 if ($isCompatible) {
                     $this->info("✓ Password for {$user->email} is Laravel-compatible");
                 } else {
@@ -258,7 +258,7 @@ class ImportLegacyUsers extends Command
     protected function isHashFormatCompatible(string $hash): bool
     {
         // Laravel supports bcrypt ($2y$) and Argon2 hashes
-        return str_starts_with($hash, '$2y$') || 
+        return str_starts_with($hash, '$2y$') ||
                str_starts_with($hash, '$argon2') ||
                str_starts_with($hash, '$argon2i') ||
                str_starts_with($hash, '$argon2id');

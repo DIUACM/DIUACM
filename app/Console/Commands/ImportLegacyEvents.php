@@ -37,20 +37,22 @@ class ImportLegacyEvents extends Command
         $currentPage = $page;
 
         do {
-            $pageUrl = $url . "?page={$currentPage}&limit={$limit}";
+            $pageUrl = $url."?page={$currentPage}&limit={$limit}";
             $this->info("Fetching events from: {$pageUrl}");
 
             $response = Http::timeout(120)->acceptJson()->get($pageUrl);
-            
-            if (!$response->ok()) {
+
+            if (! $response->ok()) {
                 $this->error("Failed to fetch events. HTTP status: {$response->status()}");
+
                 return self::FAILURE;
             }
 
             $payload = $response->json();
-            
-            if (!is_array($payload) || !Arr::get($payload, 'success')) {
+
+            if (! is_array($payload) || ! Arr::get($payload, 'success')) {
                 $this->error('Unexpected response shape or success=false.');
+
                 return self::FAILURE;
             }
 
@@ -59,9 +61,10 @@ class ImportLegacyEvents extends Command
             $totalPages = Arr::get($payload, 'totalPages', 1);
             $hasNextPage = Arr::get($payload, 'hasNextPage', false);
 
-            if (!is_array($events) || empty($events)) {
+            if (! is_array($events) || empty($events)) {
                 if ($currentPage === 1) {
                     $this->warn('No events found to import.');
+
                     return self::SUCCESS;
                 } else {
                     $this->info('No more events to process.');
@@ -70,11 +73,12 @@ class ImportLegacyEvents extends Command
             }
 
             $this->info("Processing page {$currentPage} of {$totalPages} ({$totalCount} total events)");
-            
+
             $result = $this->processEventsPage($events, $dryRun);
-            
-            if (!$result) {
+
+            if (! $result) {
                 $this->error('Failed to process events page.');
+
                 return self::FAILURE;
             }
 
@@ -85,7 +89,7 @@ class ImportLegacyEvents extends Command
         } while ($hasNextPage && $currentPage <= $totalPages);
 
         $this->info("Event import complete. Processed {$totalProcessed} events total.");
-        
+
         if ($dryRun) {
             $this->warn('DRY RUN completed - no actual changes were made.');
         }
@@ -181,7 +185,8 @@ class ImportLegacyEvents extends Command
 
             return true;
         } catch (\Exception $e) {
-            $this->error('Error processing events page: ' . $e->getMessage());
+            $this->error('Error processing events page: '.$e->getMessage());
+
             return false;
         }
     }
@@ -195,7 +200,7 @@ class ImportLegacyEvents extends Command
 
         foreach ($events as $e) {
             $attendees = Arr::get($e, 'attendees', []);
-            if (!is_array($attendees) || empty($attendees)) {
+            if (! is_array($attendees) || empty($attendees)) {
                 continue;
             }
 
@@ -230,6 +235,7 @@ class ImportLegacyEvents extends Command
 
         if ($dryRun) {
             $this->info("Would process attendance for {$allEmails->unique()->count()} unique attendees");
+
             return;
         }
 
@@ -241,7 +247,7 @@ class ImportLegacyEvents extends Command
 
         // Resolve events by link
         $linkToId = [];
-        if (!empty($attendanceByLink)) {
+        if (! empty($attendanceByLink)) {
             $linkToId = Event::query()
                 ->whereIn('event_link', array_keys($attendanceByLink))
                 ->pluck('id', 'event_link')
@@ -250,7 +256,7 @@ class ImportLegacyEvents extends Command
 
         // Resolve events by (title, starting_at)
         $compositeToId = [];
-        if (!empty($attendanceByComposite)) {
+        if (! empty($attendanceByComposite)) {
             $titles = collect(array_keys($attendanceByComposite))
                 ->map(fn ($k) => explode('||', $k)[0])
                 ->unique()
@@ -275,14 +281,16 @@ class ImportLegacyEvents extends Command
 
         foreach ($attendanceByLink as $link => $list) {
             $eventId = $linkToId[$link] ?? null;
-            if (!$eventId) {
+            if (! $eventId) {
                 $this->error('Event not found for attendance by link: '.$link);
+
                 continue;
             }
             foreach ($list as $att) {
                 $uid = $emailToId[$att['email']] ?? null;
-                if (!$uid) {
+                if (! $uid) {
                     $this->error('User not found for attendance: '.$att['email'].' (event_link: '.$link.')');
+
                     continue;
                 }
                 $pivotRows->push([
@@ -296,14 +304,16 @@ class ImportLegacyEvents extends Command
 
         foreach ($attendanceByComposite as $key => $list) {
             $eventId = $compositeToId[$key] ?? null;
-            if (!$eventId) {
+            if (! $eventId) {
                 $this->error('Event not found for attendance by composite key: '.$key);
+
                 continue;
             }
             foreach ($list as $att) {
                 $uid = $emailToId[$att['email']] ?? null;
-                if (!$uid) {
+                if (! $uid) {
                     $this->error('User not found for attendance: '.$att['email'].' (by composite: '.$key.')');
+
                     continue;
                 }
                 $pivotRows->push([

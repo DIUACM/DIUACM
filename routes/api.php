@@ -1,8 +1,16 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\VJudgeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+
+
+Route::get('/user', [AuthController::class, 'session'])->middleware('auth:sanctum');
+
+Route::get('/events/vjudge', [VJudgeController::class, 'getActiveContests'])
+->middleware('auth:sanctum');
+Route::post('/events/{eventId}/vjudge', [VJudgeController::class, 'processContestData'])
+    ->middleware('auth:sanctum')
+    ->where('eventId', '[0-9]+');
