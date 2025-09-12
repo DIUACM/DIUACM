@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 
@@ -13,7 +14,7 @@ class ChangePasswordRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return Auth::check();
     }
 
     /**
@@ -25,7 +26,7 @@ class ChangePasswordRequest extends FormRequest
     {
         return [
             'current_password' => ['required', 'string', function ($attribute, $value, $fail) {
-                if (! Hash::check($value, $this->user()?->password)) {
+                if (! Hash::check($value, Auth::user()?->password)) {
                     $fail('The current password is incorrect.');
                 }
             }],

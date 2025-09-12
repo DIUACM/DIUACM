@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\Gender;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class UpdateProfileRequest extends FormRequest
@@ -13,7 +14,7 @@ class UpdateProfileRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return Auth::check();
     }
 
     /**
@@ -30,7 +31,7 @@ class UpdateProfileRequest extends FormRequest
                 'string',
                 'max:255',
                 'alpha_dash',
-                Rule::unique('users', 'username')->ignore($this->user()?->id),
+                Rule::unique('users', 'username')->ignore(Auth::id()),
             ],
             'gender' => ['nullable', Rule::enum(Gender::class)],
             'phone' => ['nullable', 'string', 'max:20'],
