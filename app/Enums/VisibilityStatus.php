@@ -8,13 +8,13 @@ use Filament\Support\Contracts\HasLabel;
 
 enum VisibilityStatus: string implements HasColor, HasIcon, HasLabel
 {
-    case PUBLIC = 'published';
+    case PUBLISHED = 'published';
     case DRAFT = 'draft';
 
     public function getLabel(): ?string
     {
         return match ($this) {
-            self::PUBLIC => 'Published',
+            self::PUBLISHED => 'Published',
             self::DRAFT => 'Draft',
         };
     }
@@ -22,7 +22,7 @@ enum VisibilityStatus: string implements HasColor, HasIcon, HasLabel
     public function getColor(): string|array|null
     {
         return match ($this) {
-            self::PUBLIC => 'success',
+            self::PUBLISHED => 'success',
             self::DRAFT => 'warning',
         };
     }
@@ -30,7 +30,7 @@ enum VisibilityStatus: string implements HasColor, HasIcon, HasLabel
     public function getIcon(): ?string
     {
         return match ($this) {
-            self::PUBLIC => 'heroicon-m-eye',
+            self::PUBLISHED => 'heroicon-m-eye',
             self::DRAFT => 'heroicon-m-document-text',
         };
     }

@@ -97,7 +97,7 @@ class CreateEvent extends CreateRecord
                             'ending_at' => Carbon::createFromTimestamp($contest['startTimeSeconds'] + $contest['durationSeconds'])->toDateTimeString(),
                             'event_link' => $contest_link,
                             'type' => EventType::CONTEST,
-                            'status' => VisibilityStatus::PUBLIC,
+                            'status' => VisibilityStatus::PUBLISHED,
                             'participation_scope' => ParticipationScope::OPEN_FOR_ALL,
                             'open_for_attendance' => true,
                         ]);
@@ -156,7 +156,7 @@ class CreateEvent extends CreateRecord
                         'ending_at' => Carbon::createFromTimestamp($contest['end'] / 1000)->toDateTimeString(),
                         'event_link' => $contest_link,
                         'type' => EventType::CONTEST,
-                        'status' => VisibilityStatus::PUBLIC,
+                        'status' => VisibilityStatus::PUBLISHED,
                         'participation_scope' => ParticipationScope::OPEN_FOR_ALL,
                         'open_for_attendance' => true,
                     ]);

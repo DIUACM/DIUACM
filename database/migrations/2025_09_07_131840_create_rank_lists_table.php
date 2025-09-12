@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\VisibilityStatus;
 use App\Models\Tracker;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -18,7 +19,7 @@ return new class extends Migration
             $table->string('keyword');
             $table->text('description')->nullable();
             $table->float('weight_of_upsolve')->default(0.25);
-            $table->string('status')->default('draft');
+            $table->enum('status', VisibilityStatus::cases())->default('draft');
             $table->integer('order')->default(0);
             $table->boolean('is_active')->default(true);
             $table->boolean('consider_strict_attendance')->default(true);
