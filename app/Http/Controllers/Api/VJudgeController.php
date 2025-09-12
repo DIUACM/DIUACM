@@ -7,155 +7,108 @@ use App\Models\Event;
 use App\Models\EventUserStat;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class VJudgeController extends Controller
 {
     public function getActiveContests(): JsonResponse
     {
-        try {
-            // Fetch events that have 'vjudge.net' in the event_link and have active ranklists
-            $activeContests = Event::select('id', 'title', 'event_link as eventLink', 'starting_at')
-                ->where('event_link', 'like', '%vjudge.net%')
-                ->whereHas('rankLists', function ($query) {
-                    $query->where('is_active', true);
-                })
-                ->orderBy('starting_at', 'desc')
-                ->get();
+        // Fetch events that have 'vjudge.net' in the event_link and have active ranklists
+        $activeContests = Event::select('id', 'title', 'event_link as eventLink', 'starting_at')
+            ->where('event_link', 'like', '%vjudge.net%')
+            ->whereHas('rankLists', function ($query) {
+                $query->where('is_active', true);
+            })
+            ->orderBy('starting_at', 'desc')
+            ->get();
 
-            return response()->json([
-                'success' => true,
-                'data' => $activeContests,
-            ], 200);
-        } catch (\Exception $error) {
-            Log::error('Error fetching active contests:', ['error' => $error->getMessage()]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch active contests',
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => $activeContests,
+        ]);
     }
 
     public function processContestData(int $eventId): JsonResponse
     {
-        try {
-            $payload = request()->getContent();
-            $payload = json_decode($payload, true);
-            if (! $payload || ! is_array($payload)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid JSON payload',
-                ], 400);
-            }
+        $payload = request()->getContent();
+        $payload = json_decode($payload, true);
 
-            // Get event with strict_attendance setting
-            $event = Event::select('id', 'strict_attendance')
-                ->where('id', $eventId)
-                ->first();
-
-            if (! $event) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Event not found',
-                ], 404);
-            }
-
-            // Get attendances for this event if strict attendance is enabled
-            $attendeeUserIds = [];
-            if ($event->strict_attendance) {
-                $attendeeUserIds = DB::table('event_attendance')
-                    ->where('event_id', $eventId)
-                    ->pluck('user_id')
-                    ->toArray();
-            }
-
-            // Get ranklists associated with this event
-            $rankListIds = DB::table('event_rank_list')
-                ->where('event_id', $eventId)
-                ->pluck('rank_list_id')
-                ->toArray();
-
-            if (empty($rankListIds)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No ranklists found for this event',
-                ], 400);
-            }
-
-            // Get users from ranklists with their vjudge handles
-            $users = User::select('id', 'vjudge_handle', 'username')
-                ->whereIn('id', function ($query) use ($rankListIds) {
-                    $query->select('user_id')
-                        ->from('rank_list_user')
-                        ->whereIn('rank_list_id', $rankListIds);
-                })
-                ->whereNotNull('vjudge_handle')
-                ->get();
-
-            if ($users->isEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No users with VJudge handles found in the ranklists',
-                ], 400);
-            }
-
-            // Process the VJudge data
-            $processedData = $this->processVjudgeData($payload);
-
-            // Delete existing solve stats for this event
-            EventUserStat::where('event_id', $eventId)->delete();
-
-            // Process users in chunks to avoid memory issues
-            $insertData = [];
-
-            foreach ($users as $user) {
-                $stats = $processedData[$user->vjudge_handle] ?? null;
-
-                $finalSolveCount = $stats['solveCount'] ?? 0;
-                $finalUpsolveCount = $stats['upSolveCount'] ?? 0;
-
-                // If strict attendance is enabled and user is not in attendees
-                if ($event->strict_attendance && ! in_array($user->id, $attendeeUserIds)) {
-                    $finalUpsolveCount += $finalSolveCount; // Move solves to upsolves
-                    $finalSolveCount = 0;
-                }
-
-                $insertData[] = [
-                    'user_id' => $user->id,
-                    'event_id' => $eventId,
-                    'solves_count' => $finalSolveCount,
-                    'upsolves_count' => $finalUpsolveCount,
-                    'participation' => $event->strict_attendance
-                        ? in_array($user->id, $attendeeUserIds)
-                        : ! ($stats['absent'] ?? true),
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-            }
-
-            if (! empty($insertData)) {
-                EventUserStat::insert($insertData);
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => 'VJudge data processed and database updated successfully',
-                'data' => $processedData,
-            ], 200);
-        } catch (\Exception $error) {
-            Log::error('Error processing VJudge data:', [
-                'error' => $error->getMessage(),
-                'trace' => $error->getTraceAsString(),
-            ]);
-
+        if (! $payload || ! is_array($payload)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to process VJudge data',
-                'error' => $error->getMessage(),
-            ], 500);
+                'message' => 'Invalid JSON payload',
+            ], 400);
         }
+
+        // Get event with strict_attendance setting
+        $event = Event::select('id', 'strict_attendance')
+            ->findOrFail($eventId);
+
+        // Get attendances for this event if strict attendance is enabled
+        $attendeeUserIds = [];
+        if ($event->strict_attendance) {
+            $attendeeUserIds = $event->attendees()->pluck('users.id')->toArray();
+        }
+
+        // Get users from ranklists associated with this event who have vjudge handles
+        $users = User::select('id', 'vjudge_handle', 'username')
+            ->whereHas('rankLists', function ($query) use ($eventId) {
+                $query->whereHas('events', function ($subQuery) use ($eventId) {
+                    $subQuery->where('events.id', $eventId);
+                });
+            })
+            ->whereNotNull('vjudge_handle')
+            ->get();
+
+        if ($users->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No users with VJudge handles found in the ranklists',
+            ], 400);
+        }
+
+        // Process the VJudge data
+        $processedData = $this->processVjudgeData($payload);
+
+        // Delete existing solve stats for this event
+        EventUserStat::where('event_id', $eventId)->delete();
+
+        // Process users and prepare insert data
+        $insertData = [];
+
+        foreach ($users as $user) {
+            $stats = $processedData[$user->vjudge_handle] ?? null;
+
+            $finalSolveCount = $stats['solveCount'] ?? 0;
+            $finalUpsolveCount = $stats['upSolveCount'] ?? 0;
+
+            // If strict attendance is enabled and user is not in attendees
+            if ($event->strict_attendance && ! in_array($user->id, $attendeeUserIds)) {
+                $finalUpsolveCount += $finalSolveCount; // Move solves to upsolves
+                $finalSolveCount = 0;
+            }
+
+            $insertData[] = [
+                'user_id' => $user->id,
+                'event_id' => $eventId,
+                'solves_count' => $finalSolveCount,
+                'upsolves_count' => $finalUpsolveCount,
+                'participation' => $event->strict_attendance
+                    ? in_array($user->id, $attendeeUserIds)
+                    : ! ($stats['absent'] ?? true),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        if (! empty($insertData)) {
+            EventUserStat::insert($insertData);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'VJudge data processed and database updated successfully',
+            'data' => $processedData,
+        ]);
     }
 
     private function processVjudgeData(array $data): array
