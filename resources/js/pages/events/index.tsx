@@ -187,11 +187,15 @@ function EventsList({ items }: { items: EventItem[] }) {
     )
 }
 
-function Pager({ page, pages, total }: { page: number; pages: number; total: number }) {
+function Pager({ page, pages, total, filters }: { page: number; pages: number; total: number; filters?: { title?: string | null } }) {
     const go = (n: number) => {
-        const url = new URL(window.location.href)
-        url.searchParams.set('page', String(n))
-        window.location.assign(url.toString())
+        const data: Record<string, string | number> = { page: n }
+        if (filters?.title) data.title = filters.title
+        router.get(window.location.pathname, data, {
+            preserveScroll: true,
+            preserveState: true,
+            replace: false,
+        })
     }
 
     if (pages <= 1) return null
@@ -311,7 +315,7 @@ export default function EventsIndex() {
                         <EventsList items={events} />
                         {pagination.pages > 1 && (
                             <div className="flex justify-center mt-8">
-                                <Pager page={pagination.page} pages={pagination.pages} total={pagination.total} />
+                                <Pager page={pagination.page} pages={pagination.pages} total={pagination.total} filters={filters} />
                             </div>
                         )}
                     </>
