@@ -1,13 +1,12 @@
 import MainLayout from '@/layouts/main-layout'
-import { Head, Link, usePage } from '@inertiajs/react'
+import { Head, Link, usePage, router } from '@inertiajs/react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination'
-import { CalendarDays, Clock, Filter, Search as SearchIcon, Tag, Users, ArrowUpRight } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { CalendarDays, Clock, Search as SearchIcon, Users, ArrowUpRight } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import type React from 'react'
 
 type EventItem = {
@@ -25,8 +24,7 @@ type EventItem = {
 type PageProps = {
     events: EventItem[]
     pagination: { page: number; pages: number; total: number; limit: number }
-    filters: { category?: string | null; scope?: string | null; title?: string | null }
-    scopes: { id: string; name: string }[]
+    filters: { title?: string | null }
 }
 
 function formatDate(dateStr: string) {
@@ -60,129 +58,74 @@ function scopeLabel(s: EventItem['participation_scope']) {
     }
 }
 
+function StatusBadge({ start, end }: { start: string; end: string }) {
+    const now = new Date()
+    const s = new Date(start)
+    const e = new Date(end)
+    let label = 'Upcoming'
+    let cls = 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800/30'
+    if (now >= s && now <= e) {
+        label = 'Running'
+        cls = 'bg-gradient-to-r from-blue-500/20 to-cyan-500/20 border-blue-300/70 dark:border-blue-700/70 text-blue-700 dark:text-blue-300'
+    } else if (now > e) {
+        label = 'In Past'
+        cls = 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+    }
+    return (
+        <Badge variant="outline" className={cls}>
+            {label}
+        </Badge>
+    )
+}
+
 function EventsFilters({ current }: { current: PageProps['filters'] }) {
     const [search, setSearch] = useState<string>(current.title ?? '')
+    const mounted = useRef(false)
 
     useEffect(() => {
         setSearch(current.title ?? '')
     }, [current.title])
 
-    const updateQuery = (updates: Record<string, string | null>) => {
-        const url = new URL(window.location.href)
-        Object.entries(updates).forEach(([k, v]) => {
-            if (v === null || v === '') {
-                url.searchParams.delete(k)
-            } else {
-                url.searchParams.set(k, v)
-            }
-        })
-        url.searchParams.delete('page')
-        window.location.assign(url.toString())
-    }
+    // Debounced live search using Inertia router
+    useEffect(() => {
+        if (!mounted.current) {
+            mounted.current = true
+            return
+        }
+        const id = setTimeout(() => {
+            const q = search.trim()
+            const data = q ? { title: q } : {}
+            router.get(window.location.pathname, data, {
+                replace: true,
+                preserveScroll: true,
+                preserveState: true,
+            })
+        }, 400)
+        return () => clearTimeout(id)
+    }, [search])
 
     return (
         <div>
             <Card className="border-slate-200 dark:border-slate-700 mb-4">
-                <CardContent>
-                    <div className="flex flex-col gap-4">
-                        <div className="flex flex-col md:flex-row md:items-center gap-4">
-                            <div className="w-full md:flex-1">
-                                <form
-                                    onSubmit={(e) => {
-                                        e.preventDefault()
-                                        updateQuery({ title: search || null })
-                                    }}
-                                    className="relative"
-                                >
-                                    <Input placeholder="Search events..." value={search} onChange={(e) => setSearch(e.target.value)} className="pr-10 w-full" />
-                                    <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-                                        <SearchIcon className="h-4 w-4" />
-                                    </button>
-                                </form>
-                            </div>
-
-                            <div className="flex flex-wrap gap-2">
-                                <Select
-                                    value={current.category ?? 'all'}
-                                    onValueChange={(value) => updateQuery({ category: value === 'all' ? null : value })}
-                                >
-                                    <SelectTrigger className="w-[160px] md:w-[180px]">
-                                        <div className="flex items-center overflow-hidden">
-                                            <Tag className="mr-2 h-4 w-4 flex-shrink-0 text-slate-500" />
-                                            <SelectValue className="truncate" placeholder="Event Type" />
-                                        </div>
-                                    </SelectTrigger>
-                                    <SelectContent className="max-h-[300px] overflow-y-auto">
-                                        <SelectItem value="all">All Event Types</SelectItem>
-                                        <SelectItem value="contest">Contest</SelectItem>
-                                        <SelectItem value="class">Class</SelectItem>
-                                        <SelectItem value="other">Other</SelectItem>
-                                    </SelectContent>
-                                </Select>
-
-                                <Select
-                                    value={current.scope ?? 'all'}
-                                    onValueChange={(value) => updateQuery({ scope: value === 'all' ? null : value })}
-                                >
-                                    <SelectTrigger className="w-[160px] md:w-[180px]">
-                                        <div className="flex items-center overflow-hidden">
-                                            <Users className="mr-2 h-4 w-4 flex-shrink-0 text-slate-500" />
-                                            <SelectValue className="truncate" placeholder="Scope" />
-                                        </div>
-                                    </SelectTrigger>
-                                    <SelectContent className="max-h-[300px] overflow-y-auto">
-                                        <SelectItem value="all">All Scopes</SelectItem>
-                                        <SelectItem value="open_for_all">Open for All</SelectItem>
-                                        <SelectItem value="only_girls">Only Girls</SelectItem>
-                                        <SelectItem value="junior_programmers">Junior Programmers</SelectItem>
-                                        <SelectItem value="selected_persons">Selected Persons</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                <CardContent className="pt-6">
+                    <div className="grid grid-cols-1">
+                        <div className="relative">
+                            <Input
+                                type="search"
+                                placeholder="Search events..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="pr-10 w-full"
+                                aria-label="Search events"
+                            />
+                            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                                <SearchIcon className="h-4 w-4" />
+                            </span>
                         </div>
                     </div>
                 </CardContent>
             </Card>
-
-            {(current.category || current.scope || current.title) && (
-                <div className="flex flex-wrap items-center gap-2 mb-4 bg-slate-50 dark:bg-slate-800/50 px-4 py-2 rounded-lg border border-slate-100 dark:border-slate-700">
-                    <div className="flex items-center justify-between w-full">
-                        <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center mr-1">
-                                <Filter className="mr-1 h-3 w-3" /> Filters:
-                            </span>
-
-                            {current.title && (
-                                <Badge variant="secondary" className="flex items-center gap-1 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                                    "{current.title}"
-                                </Badge>
-                            )}
-
-                            {current.category && (
-                                <Badge variant="secondary" className="flex items-center gap-1 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-                                    {typeLabel(current.category as EventItem['type'])}
-                                </Badge>
-                            )}
-
-                            {current.scope && (
-                                <Badge variant="secondary" className="flex items-center gap-1 bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300">
-                                    {scopeLabel(current.scope as EventItem['participation_scope'])}
-                                </Badge>
-                            )}
-                        </div>
-
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => updateQuery({ category: null, scope: null, title: null })}
-                            className="h-7 text-xs py-1 px-2 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                            title="Clear all filters"
-                        >
-                            Clear all
-                        </Button>
-                    </div>
-                </div>
-            )}
+            {/* Active filters UI removed per request */}
         </div>
     )
 }
@@ -216,9 +159,7 @@ function EventsList({ items }: { items: EventItem[] }) {
                             </div>
 
                             <div className="sm:self-start">
-                                <Badge variant="outline" className="bg-white/60 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700">
-                                    {typeLabel(event.type)}
-                                </Badge>
+                                <StatusBadge start={event.starting_at} end={event.ending_at} />
                             </div>
                         </div>
 
@@ -333,7 +274,7 @@ export default function EventsIndex() {
     const { events, pagination, filters } = props
 
     const hasResults = events.length > 0
-    const hasActive = !!(filters.category || filters.scope || filters.title)
+    const hasActive = !!filters.title
 
     return (
         <MainLayout title="Events">

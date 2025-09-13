@@ -14,8 +14,6 @@ class EventController extends Controller
     public function index(Request $request): Response
     {
         $validated = $request->validate([
-            'category' => ['nullable', 'in:contest,class,other'],
-            'scope' => ['nullable', 'in:open_for_all,only_girls,junior_programmers,selected_persons'],
             'title' => ['nullable', 'string', 'max:255'],
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
@@ -24,8 +22,6 @@ class EventController extends Controller
 
         $query = Event::query()
             ->where('status', VisibilityStatus::PUBLISHED)
-            ->when($validated['category'] ?? null, fn ($q, $type) => $q->where('type', $type))
-            ->when($validated['scope'] ?? null, fn ($q, $scope) => $q->where('participation_scope', $scope))
             ->when($validated['title'] ?? null, function ($q, $title) {
                 $q->where('title', 'like', "%{$title}%");
             })
@@ -43,14 +39,8 @@ class EventController extends Controller
                 'limit' => $paginator->perPage(),
             ],
             'filters' => [
-                'category' => $validated['category'] ?? null,
-                'scope' => $validated['scope'] ?? null,
                 'title' => $validated['title'] ?? null,
             ],
-            'scopes' => collect(ParticipationScope::cases())->map(fn ($c) => [
-                'id' => $c->value,
-                'name' => $c->getLabel(),
-            ])->values(),
         ]);
     }
 }
