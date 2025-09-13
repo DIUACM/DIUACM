@@ -1,7 +1,6 @@
 import MainLayout from '@/layouts/main-layout'
-import { Head, Link, usePage, router } from '@inertiajs/react'
+import { Link, usePage, router } from '@inertiajs/react'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination'
@@ -187,7 +186,7 @@ function EventsList({ items }: { items: EventItem[] }) {
     )
 }
 
-function Pager({ page, pages, total, filters }: { page: number; pages: number; total: number; filters?: { title?: string | null } }) {
+function Pager({ page, pages, filters }: { page: number; pages: number; filters?: { title?: string | null } }) {
     const go = (n: number) => {
         const data: Record<string, string | number> = { page: n }
         if (filters?.title) data.title = filters.title
@@ -282,7 +281,6 @@ export default function EventsIndex() {
 
     return (
         <MainLayout title="Events">
-            <Head title="Events - DIU ACM" />
 
             <div className="container mx-auto px-4 py-16">
                 <div className="mb-8">
@@ -315,16 +313,14 @@ export default function EventsIndex() {
                         <EventsList items={events} />
                         {pagination.pages > 1 && (
                             <div className="flex justify-center mt-8">
-                                <Pager page={pagination.page} pages={pagination.pages} total={pagination.total} filters={filters} />
+                                <Pager page={pagination.page} pages={pagination.pages} filters={filters} />
                             </div>
                         )}
                     </>
                 ) : (
                     <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm p-8 md:p-16 text-center transition-all duration-300">
                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+                            <SearchIcon className="h-8 w-8 text-slate-500 dark:text-slate-400" />
                         </div>
                         <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">No events found</h3>
                         <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto">
