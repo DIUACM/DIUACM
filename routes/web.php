@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -23,6 +24,9 @@ Route::get('/privacy-policy', function () {
 Route::get('/terms-and-conditions', function () {
     return Inertia::render('terms-and-conditions');
 })->name('terms-and-conditions');
+
+// Events listing
+Route::get('/events', [EventController::class, 'index'])->name('events.index');
 
 // Profile routes - require authentication
 Route::middleware('auth')->group(function () {
