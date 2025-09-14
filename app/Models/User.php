@@ -61,6 +61,22 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
+    /**
+     * Get the profile image URL for the user.
+     */
+    public function getImageUrlAttribute(): string
+    {
+        if (is_null($this->image)) {
+            return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=7F9CF5&background=EBF4FF';
+        }
+
+        if (filter_var($this->image, FILTER_VALIDATE_URL)) {
+            return $this->image;
+        }
+
+        return asset('storage/' . $this->image);
+    }
+
     public function attendedEvents()
     {
         return $this->belongsToMany(Event::class, 'event_attendance')->withTimestamps();
