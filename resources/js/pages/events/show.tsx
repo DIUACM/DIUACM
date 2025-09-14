@@ -505,18 +505,20 @@ export default function EventShow() {
                         )}
                     </div>
 
-                    {/* Full Width Attendance List */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Users className="h-5 w-5" />
-                                Attendees ({event.attendees_count})
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <AttendeesList attendees={event.attendees} />
-                        </CardContent>
-                    </Card>
+                    {/* Full Width Attendance List - Only show if attendance is enabled */}
+                    {event.open_for_attendance && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Users className="h-5 w-5" />
+                                    Attendees ({event.attendees_count})
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <AttendeesList attendees={event.attendees} />
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             </div>
         </MainLayout>
