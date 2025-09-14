@@ -27,6 +27,12 @@ Route::get('/terms-and-conditions', function () {
 
 // Events listing
 Route::get('/events', [EventController::class, 'index'])->name('events.index');
+Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
+
+// Event attendance - requires authentication
+Route::middleware('auth')->group(function () {
+    Route::post('/events/{event}/attend', [EventController::class, 'attend'])->name('events.attend');
+});
 
 // Profile routes - require authentication
 Route::middleware('auth')->group(function () {
