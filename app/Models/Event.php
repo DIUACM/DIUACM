@@ -39,6 +39,27 @@ class Event extends Model
         ];
     }
 
+    /**
+     * Determine if the attendance window is currently enabled for the event.
+     *
+     * The window opens 15 minutes before `starting_at` and closes 20 minutes after `ending_at`.
+     */
+    public function isAttendanceWindowEnabled(): bool
+    {
+        if (! $this->open_for_attendance) {
+            return false;
+        }
+
+        if ($this->starting_at === null || $this->ending_at === null) {
+            return false;
+        }
+
+        $windowStart = $this->starting_at->copy()->subMinutes(15);
+        $windowEnd = $this->ending_at->copy()->addMinutes(20);
+
+        return now()->between($windowStart, $windowEnd, true);
+    }
+
     public function attendees()
     {
         return $this->belongsToMany(User::class, 'event_attendance')->withTimestamps();
