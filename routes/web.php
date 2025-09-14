@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\ProgrammerController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -27,6 +28,10 @@ Route::get('/terms-and-conditions', function () {
 
 // Events listing
 Route::get('/events', [EventController::class, 'index'])->name('events.index');
+
+// Programmers listing and details
+Route::get('/programmers', [ProgrammerController::class, 'index'])->name('programmers.index');
+Route::get('/programmers/{programmer}', [ProgrammerController::class, 'show'])->name('programmers.show');
 
 // Profile routes - require authentication
 Route::middleware('auth')->group(function () {

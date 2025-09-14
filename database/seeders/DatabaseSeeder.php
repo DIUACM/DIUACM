@@ -25,5 +25,8 @@ class DatabaseSeeder extends Seeder
 
         // Create 100 events
         Event::factory(100)->create();
+
+        // Create programmers
+        $this->call(ProgrammerSeeder::class);
     }
 }

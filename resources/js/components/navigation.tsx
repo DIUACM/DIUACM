@@ -23,7 +23,8 @@ import {
     Mail, 
     Calendar, 
     BookOpen,
-    KeyRound 
+    KeyRound,
+    Code
 } from 'lucide-react';
 import { 
     DropdownMenu, 
@@ -40,6 +41,7 @@ const menuItems = [
     { name: "About", href: "/about", icon: Info },
     { name: "Contact", href: "/contact", icon: Mail },
     { name: "Events", href: "/events", icon: Calendar },
+    { name: "Programmers", href: "/programmers", icon: Code },
     { name: "Community", href: "/community", icon: Users },
     { name: "Resources", href: "/resources", icon: BookOpen },
 ];
