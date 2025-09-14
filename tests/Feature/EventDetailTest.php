@@ -2,6 +2,8 @@
 
 use App\Enums\VisibilityStatus;
 use App\Models\Event;
+use App\Models\RankList;
+use App\Models\Tracker;
 use App\Models\User;
 
 uses()->group('events');
@@ -184,4 +186,58 @@ it('validates password field is required', function () {
 
     $response->assertRedirect()
         ->assertSessionHasErrors(['password']);
+});
+
+it('shows ranklist information correctly', function () {
+    $tracker = Tracker::factory()->create([
+        'title' => 'Programming Contest Tracker',
+        'status' => VisibilityStatus::PUBLISHED,
+    ]);
+
+    $rankList = RankList::factory()->create([
+        'tracker_id' => $tracker->id,
+        'keyword' => 'acm-contest',
+        'description' => 'ACM Programming Contest Rankings',
+        'status' => VisibilityStatus::PUBLISHED,
+    ]);
+
+    $event = Event::factory()->create([
+        'status' => VisibilityStatus::PUBLISHED,
+        'title' => 'Programming Contest',
+    ]);
+
+    // Attach the ranklist to the event with a weight
+    $event->rankLists()->attach($rankList->id, ['weight' => 1.5]);
+
+    $response = $this->get(route('events.show', $event));
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('events/show')
+            ->has('event.rank_lists', 1)
+            ->has('event.rank_lists.0', fn ($rankListData) => $rankListData
+                ->where('keyword', 'acm-contest')
+                ->where('description', 'ACM Programming Contest Rankings')
+                ->where('weight', 1.5)
+                ->has('tracker', fn ($trackerData) => $trackerData
+                    ->where('title', 'Programming Contest Tracker')
+                    ->etc()
+                )
+                ->etc()
+            )
+        );
+});
+
+it('shows empty ranklist when no ranklists are associated', function () {
+    $event = Event::factory()->create([
+        'status' => VisibilityStatus::PUBLISHED,
+    ]);
+
+    $response = $this->get(route('events.show', $event));
+
+    $response->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('events/show')
+            ->has('event.rank_lists', 0)
+        );
 });

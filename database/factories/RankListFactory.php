@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\VisibilityStatus;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -21,7 +22,7 @@ class RankListFactory extends Factory
             'keyword' => fake()->unique()->slug(2),
             'description' => fake()->sentence(),
             'weight_of_upsolve' => fake()->randomFloat(2, 0.1, 1.0),
-            'status' => fake()->randomElement(['draft', 'public']),
+            'status' => fake()->randomElement([VisibilityStatus::DRAFT, VisibilityStatus::PUBLISHED]),
             'order' => fake()->numberBetween(0, 100),
             'is_active' => fake()->boolean(80), // 80% chance of being active
             'consider_strict_attendance' => fake()->boolean(70), // 70% chance of strict attendance

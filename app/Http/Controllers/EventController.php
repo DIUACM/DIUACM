@@ -62,6 +62,9 @@ class EventController extends Controller
                     ->orderByDesc('event_user_stats.solves_count')
                     ->orderByDesc('event_user_stats.upsolves_count');
             },
+            'rankLists.tracker' => function ($query) {
+                $query->select('id', 'title');
+            },
         ]);
 
         $userHasAttended = false;
@@ -102,6 +105,18 @@ class EventController extends Controller
                         'solves_count' => $user->pivot->solves_count ?? 0,
                         'upsolves_count' => $user->pivot->upsolves_count ?? 0,
                         'participation' => $user->pivot->participation ?? null,
+                    ];
+                }),
+                'rank_lists' => $event->rankLists->map(function ($rankList) {
+                    return [
+                        'id' => $rankList->id,
+                        'keyword' => $rankList->keyword,
+                        'description' => $rankList->description,
+                        'weight' => $rankList->pivot->weight ?? 1,
+                        'tracker' => [
+                            'id' => $rankList->tracker->id,
+                            'title' => $rankList->tracker->title,
+                        ],
                     ];
                 }),
                 'is_attendance_window_enabled' => $event->isAttendanceWindowEnabled(),

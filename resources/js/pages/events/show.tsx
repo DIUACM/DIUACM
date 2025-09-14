@@ -22,7 +22,8 @@ import {
     ArrowLeft,
     AlertTriangle,
     Trophy,
-    Target
+    Target,
+    List
 } from 'lucide-react'
 
 type EventAttendee = {
@@ -45,6 +46,17 @@ type EventUserWithStats = {
     participation: string | null
 }
 
+type EventRankList = {
+    id: number
+    keyword: string
+    description: string | null
+    weight: number
+    tracker: {
+        id: number
+        title: string
+    }
+}
+
 type EventData = {
     id: number
     title: string
@@ -59,6 +71,7 @@ type EventData = {
     attendees_count: number
     attendees: EventAttendee[]
     users_with_stats: EventUserWithStats[]
+    rank_lists: EventRankList[]
     is_attendance_window_enabled: boolean
     has_password: boolean
 }
@@ -563,6 +576,33 @@ export default function EventShow() {
                                             <ExternalLink className="h-4 w-4" />
                                             {event.event_link}
                                         </a>
+                                    </div>
+                                )}
+
+                                {event.rank_lists && event.rank_lists.length > 0 && (
+                                    <div>
+                                        <Label className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                                            Rated for
+                                        </Label>
+                                        <div className="flex flex-wrap gap-2 mt-1">
+                                            {event.rank_lists.map((rankList) => (
+                                                <div
+                                                    key={rankList.id}
+                                                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700"
+                                                >
+                                                    <List className="h-3 w-3 text-slate-500 dark:text-slate-400" />
+                                                    <span className="text-sm font-medium text-slate-900 dark:text-white">
+                                                        {rankList.tracker.title}
+                                                    </span>
+                                                    <Badge variant="secondary" className="text-xs font-mono">
+                                                        {rankList.keyword}
+                                                    </Badge>
+                                                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                                                        {rankList.weight}x
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </CardContent>

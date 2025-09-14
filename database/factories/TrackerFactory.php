@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\VisibilityStatus;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -22,7 +23,7 @@ class TrackerFactory extends Factory
             'title' => $title,
             'slug' => str($title)->slug(),
             'description' => fake()->paragraph(),
-            'status' => fake()->randomElement(['draft', 'public']),
+            'status' => fake()->randomElement([VisibilityStatus::DRAFT, VisibilityStatus::PUBLISHED]),
             'order' => fake()->numberBetween(0, 100),
         ];
     }
