@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import {
     Calendar,
@@ -19,7 +20,9 @@ import {
     CheckCircle,
     ExternalLink,
     ArrowLeft,
-    AlertTriangle
+    AlertTriangle,
+    Trophy,
+    Target
 } from 'lucide-react'
 
 type EventAttendee = {
@@ -29,6 +32,17 @@ type EventAttendee = {
     department: string | null
     student_id: string | null
     attended_at: string
+}
+
+type EventUserWithStats = {
+    id: number
+    name: string
+    image_url: string
+    department: string | null
+    student_id: string | null
+    solves_count: number
+    upsolves_count: number
+    participation: string | null
 }
 
 type EventData = {
@@ -44,6 +58,7 @@ type EventData = {
     participation_scope: 'open_for_all' | 'only_girls' | 'junior_programmers' | 'selected_persons'
     attendees_count: number
     attendees: EventAttendee[]
+    users_with_stats: EventUserWithStats[]
     is_attendance_window_enabled: boolean
     has_password: boolean
 }
@@ -350,6 +365,89 @@ function AttendeesList({ attendees }: { attendees: EventAttendee[] }) {
     )
 }
 
+function UsersWithStatsList({ users }: { users: EventUserWithStats[] }) {
+    if (users.length === 0) {
+        return (
+            <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+                <Trophy className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                <h3 className="text-lg font-medium mb-2">No performance data yet</h3>
+                <p className="text-sm">Statistics will appear here once participants submit solutions.</p>
+            </div>
+        )
+    }
+
+    return (
+        <div className="space-y-4">
+            {/* Grid layout for user stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {users.map((user, index) => (
+                    <div
+                        key={user.id}
+                        className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-slate-200 dark:border-slate-700"
+                    >
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                            <Avatar className="h-10 w-10">
+                                <AvatarImage src={user.image_url} alt={user.name} />
+                                <AvatarFallback className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-sm font-medium">
+                                    {user.name.slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                            </Avatar>
+                            {index < 3 && (
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                                    index === 0 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                    index === 1 ? 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300' :
+                                    'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+                                }`}>
+                                    {index + 1}
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="font-medium text-slate-900 dark:text-white truncate text-sm">
+                                {user.name}
+                            </p>
+                            <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+                                {user.department && (
+                                    <span className="truncate">{user.department}</span>
+                                )}
+                                {user.student_id && (
+                                    <>
+                                        {user.department && <span>•</span>}
+                                        <span className="truncate">{user.student_id}</span>
+                                    </>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-3 mt-1">
+                                <div className="flex items-center gap-1 text-xs">
+                                    <Trophy className="h-3 w-3 text-green-600 dark:text-green-400" />
+                                    <span className="font-medium text-green-700 dark:text-green-400">
+                                        {user.solves_count}
+                                    </span>
+                                    <span className="text-slate-500 dark:text-slate-400">solves</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-xs">
+                                    <Target className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                                    <span className="font-medium text-blue-700 dark:text-blue-400">
+                                        {user.upsolves_count}
+                                    </span>
+                                    <span className="text-slate-500 dark:text-slate-400">upsolves</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+            
+            {/* Summary footer */}
+            <div className="text-center pt-4 border-t border-slate-200 dark:border-slate-700">
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                    Total: <span className="font-medium">{users.length}</span> participant{users.length !== 1 ? 's' : ''} with performance data
+                </p>
+            </div>
+        </div>
+    )
+}
+
 export default function EventShow() {
     const { props } = usePage<PageProps>()
     const { event, user_has_attended, auth } = props
@@ -469,56 +567,83 @@ export default function EventShow() {
                                 )}
                             </CardContent>
                         </Card>
-
-                        {/* Attendance Requirements */}
-                        {event.open_for_attendance && (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Lock className="h-5 w-5" />
-                                        Attendance Information
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-3">
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <div className={`h-2 w-2 rounded-full ${event.has_password ? 'bg-green-500' : 'bg-red-500'}`} />
-                                        <span className={event.has_password ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'}>
-                                            {event.has_password ? 'Password protected' : 'No password set (contact admin)'}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-sm">
-                                        <div className={`h-2 w-2 rounded-full ${event.is_attendance_window_enabled ? 'bg-green-500' : 'bg-slate-400'}`} />
-                                        <span className={event.is_attendance_window_enabled ? 'text-green-700 dark:text-green-400' : 'text-slate-600 dark:text-slate-400'}>
-                                            {event.is_attendance_window_enabled ? 'Attendance window open' : 'Attendance window closed'}
-                                        </span>
-                                    </div>
-                                    {event.strict_attendance && (
-                                        <div className="flex items-center gap-2 text-sm">
-                                            <div className="h-2 w-2 rounded-full bg-orange-500" />
-                                            <span className="text-orange-700 dark:text-orange-400">
-                                                Strict attendance policy
-                                            </span>
-                                        </div>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        )}
                     </div>
 
-                    {/* Full Width Attendance List - Only show if attendance is enabled */}
-                    {event.open_for_attendance && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Users className="h-5 w-5" />
-                                    Attendees ({event.attendees_count})
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <AttendeesList attendees={event.attendees} />
-                            </CardContent>
-                        </Card>
-                    )}
+                    {/* Attendance and Performance Statistics Tabs */}
+                    {(() => {
+                        const hasAttendance = event.open_for_attendance
+                        const hasStats = event.users_with_stats && event.users_with_stats.length > 0
+                        
+                        if (!hasAttendance && !hasStats) {
+                            return null
+                        }
+                        
+                        if (hasAttendance && hasStats) {
+                            // Show tabs when both are available
+                            return (
+                                <Card>
+                                    <CardContent className="p-0">
+                                        <Tabs defaultValue="performance" className="w-full">
+                                            <div className="px-6 pt-6">
+                                                <TabsList className="grid w-full grid-cols-2">
+                                                    <TabsTrigger value="performance" className="flex items-center gap-2">
+                                                        <Trophy className="h-4 w-4" />
+                                                        Performance ({event.users_with_stats.length})
+                                                    </TabsTrigger>
+                                                    <TabsTrigger value="attendance" className="flex items-center gap-2">
+                                                        <Users className="h-4 w-4" />
+                                                        Attendees ({event.attendees_count})
+                                                    </TabsTrigger>
+                                                </TabsList>
+                                            </div>
+                                            <TabsContent value="performance" className="px-6 pb-6 mt-6">
+                                                <UsersWithStatsList users={event.users_with_stats} />
+                                            </TabsContent>
+                                            <TabsContent value="attendance" className="px-6 pb-6 mt-6">
+                                                <AttendeesList attendees={event.attendees} />
+                                            </TabsContent>
+                                        </Tabs>
+                                    </CardContent>
+                                </Card>
+                            )
+                        }
+                        
+                        if (hasAttendance) {
+                            // Show only attendance
+                            return (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Users className="h-5 w-5" />
+                                            Attendees ({event.attendees_count})
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <AttendeesList attendees={event.attendees} />
+                                    </CardContent>
+                                </Card>
+                            )
+                        }
+                        
+                        if (hasStats) {
+                            // Show only performance statistics
+                            return (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Trophy className="h-5 w-5" />
+                                            Performance Statistics
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <UsersWithStatsList users={event.users_with_stats} />
+                                    </CardContent>
+                                </Card>
+                            )
+                        }
+                        
+                        return null
+                    })()}
                 </div>
             </div>
         </MainLayout>

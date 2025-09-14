@@ -57,6 +57,11 @@ class EventController extends Controller
                 $query->select('users.id', 'users.name', 'users.image', 'users.department', 'users.student_id')
                     ->orderBy('event_attendance.created_at');
             },
+            'usersWithStats' => function ($query) {
+                $query->select('users.id', 'users.name', 'users.image', 'users.department', 'users.student_id')
+                    ->orderByDesc('event_user_stats.solves_count')
+                    ->orderByDesc('event_user_stats.upsolves_count');
+            },
         ]);
 
         $userHasAttended = false;
@@ -85,6 +90,18 @@ class EventController extends Controller
                         'department' => $user->department,
                         'student_id' => $user->student_id,
                         'attended_at' => $user->pivot->created_at,
+                    ];
+                }),
+                'users_with_stats' => $event->usersWithStats->map(function ($user) {
+                    return [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'image_url' => $user->image_url,
+                        'department' => $user->department,
+                        'student_id' => $user->student_id,
+                        'solves_count' => $user->pivot->solves_count ?? 0,
+                        'upsolves_count' => $user->pivot->upsolves_count ?? 0,
+                        'participation' => $user->pivot->participation ?? null,
                     ];
                 }),
                 'is_attendance_window_enabled' => $event->isAttendanceWindowEnabled(),
