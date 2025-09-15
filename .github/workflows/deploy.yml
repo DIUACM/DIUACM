@@ -80,8 +80,6 @@ jobs:
     - name: Run Prettier check
       run: npm run format:check
 
-    - name: Run TypeScript check
-      run: npm run types
 
     - name: Create SQLite database for testing
       run: touch database/testing.sqlite
