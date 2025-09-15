@@ -7,16 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Separator } from '@/components/ui/separator'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import {
     Calendar,
     Clock,
     Users,
-    MapPin,
-    Lock,
     CheckCircle,
     ExternalLink,
     ArrowLeft,
@@ -80,7 +77,11 @@ type PageProps = {
     event: EventData
     user_has_attended: boolean
     auth?: {
-        user: any
+        user: {
+            id: number
+            name: string
+            email: string
+        }
     }
 }
 

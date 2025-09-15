@@ -1,7 +1,7 @@
 import React from 'react'
 import MainLayout from '@/layouts/main-layout'
 import { usePage, Link } from '@inertiajs/react'
-import { BarChart3, Calendar, Trophy, Users, ArrowLeft, TrendingUp, Info, Shield } from 'lucide-react'
+import { BarChart3, Users, ArrowLeft, TrendingUp, Info, Shield } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -52,7 +52,7 @@ type PageProps = {
   selectedRankList: RankList | null
 }
 
-function StatCell({ stat, event, isStrictEvent }: { stat: EventStat; event?: Event; isStrictEvent?: boolean }) {
+function StatCell({ stat }: { stat: EventStat }) {
   if (stat === null) {
     return (
       <div className="px-4 py-3">
@@ -313,8 +313,6 @@ export default function TrackersShow() {
                               <td key={event.id}>
                                 <StatCell 
                                   stat={user.event_stats[event.id] || null} 
-                                  event={event}
-                                  isStrictEvent={selectedRankList.consider_strict_attendance && event.strict_attendance}
                                 />
                               </td>
                             ))}
