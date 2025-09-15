@@ -32,7 +32,7 @@ class GalleryResource extends Resource
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['title', 'description'];
+        return ['title', 'slug', 'description'];
     }
 
     public static function getGlobalSearchResultDetails(Model $record): array

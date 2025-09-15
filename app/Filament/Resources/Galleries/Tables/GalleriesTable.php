@@ -41,6 +41,13 @@ class GalleriesTable
                 TextColumn::make('title')
                     ->searchable()
                     ->limit(40),
+                TextColumn::make('slug')
+                    ->label('Slug')
+                    ->searchable()
+                    ->limit(30)
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->copyable()
+                    ->copyMessage('Slug copied to clipboard'),
                 TextColumn::make('description')
                     ->label('Description')
                     ->toggleable()

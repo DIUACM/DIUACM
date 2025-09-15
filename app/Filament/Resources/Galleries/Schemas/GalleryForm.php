@@ -28,7 +28,22 @@ class GalleryForm
                                     ->maxLength(120)
                                     ->required()
                                     ->autocomplete(false)
-                                    ->placeholder('Enter a concise gallery title'),
+                                    ->placeholder('Enter a concise gallery title')
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(function (string $operation, $state, $set) {
+                                        if ($operation !== 'create') {
+                                            return;
+                                        }
+                                        $set('slug', \Illuminate\Support\Str::slug($state));
+                                    }),
+                                TextInput::make('slug')
+                                    ->label('Slug')
+                                    ->required()
+                                    ->unique(ignoreRecord: true)
+                                    ->maxLength(255)
+                                    ->autocomplete(false)
+                                    ->placeholder('auto-generated-from-title')
+                                    ->helperText('URL-friendly version of the title. Auto-generated but can be customized.'),
                                 Select::make('status')
                                     ->label('Status')
                                     ->options(VisibilityStatus::class)
