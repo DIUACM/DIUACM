@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ContactFormRequest;
 use App\Mail\ContactFormMail;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
