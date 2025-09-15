@@ -39,15 +39,8 @@ class VJudgeController extends Controller
             ], 400);
         }
 
-        // Get event with strict_attendance setting
-        $event = Event::select('id', 'strict_attendance')
-            ->findOrFail($eventId);
-
-        // Get attendances for this event if strict attendance is enabled
-        $attendeeUserIds = [];
-        if ($event->strict_attendance) {
-            $attendeeUserIds = $event->attendees()->pluck('users.id')->toArray();
-        }
+        // Get event
+        $event = Event::findOrFail($eventId);
 
         // Get users from ranklists associated with this event who have vjudge handles
         $users = User::select('id', 'vjudge_handle', 'username')
@@ -81,20 +74,12 @@ class VJudgeController extends Controller
             $finalSolveCount = $stats['solveCount'] ?? 0;
             $finalUpsolveCount = $stats['upSolveCount'] ?? 0;
 
-            // If strict attendance is enabled and user is not in attendees
-            if ($event->strict_attendance && ! in_array($user->id, $attendeeUserIds)) {
-                $finalUpsolveCount += $finalSolveCount; // Move solves to upsolves
-                $finalSolveCount = 0;
-            }
-
             $insertData[] = [
                 'user_id' => $user->id,
                 'event_id' => $eventId,
                 'solves_count' => $finalSolveCount,
                 'upsolves_count' => $finalUpsolveCount,
-                'participation' => $event->strict_attendance
-                    ? in_array($user->id, $attendeeUserIds)
-                    : ! ($stats['absent'] ?? true),
+                'participation' => ! ($stats['absent'] ?? true),
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
