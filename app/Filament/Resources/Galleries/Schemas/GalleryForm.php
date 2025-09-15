@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\Galleries\Schemas;
 
+use App\Enums\VisibilityStatus;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
@@ -27,6 +29,13 @@ class GalleryForm
                                     ->required()
                                     ->autocomplete(false)
                                     ->placeholder('Enter a concise gallery title'),
+                                Select::make('status')
+                                    ->label('Status')
+                                    ->options(VisibilityStatus::class)
+                                    ->default(VisibilityStatus::DRAFT)
+                                    ->required()
+                                    ->native(false)
+                                    ->helperText('Set to Draft while preparing; Published makes it visible.'),
                             ]),
                         Grid::make()
                             ->schema([

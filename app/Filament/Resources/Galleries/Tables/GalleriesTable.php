@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Galleries\Tables;
 
+use App\Enums\VisibilityStatus;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -18,6 +19,14 @@ class GalleriesTable
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([
+                TextColumn::make('status')
+                    ->label('Status')
+                    ->formatStateUsing(fn (?VisibilityStatus $state): ?string => $state?->getLabel())
+                    ->color(fn (?VisibilityStatus $state): string|array|null => $state?->getColor())
+                    ->icon(fn (?VisibilityStatus $state): ?string => $state?->getIcon())
+                    ->sortable()
+                    ->badge()
+                    ->toggleable(isToggledHiddenByDefault: false),
                 TextColumn::make('attachments')
                     ->label('Cover')
                     ->formatStateUsing(function ($state) {
@@ -65,6 +74,13 @@ class GalleriesTable
                 Filter::make('has_images')
                     ->label('Has Images')
                     ->query(fn ($query) => $query->whereNotNull('attachments')->whereJsonLength('attachments', '>', 0)),
+                Filter::make('status')
+                    ->form([
+                        \Filament\Forms\Components\Select::make('status')
+                            ->label('Status')
+                            ->options(VisibilityStatus::class),
+                    ])
+                    ->query(fn ($query, array $data) => $query->when($data['status'] ?? null, fn ($q, $status) => $q->where('status', $status))),
             ])
             ->recordActions([
                 EditAction::make(),

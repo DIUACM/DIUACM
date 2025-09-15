@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\VisibilityStatus;
 use Illuminate\Database\Eloquent\Model;
 
 class Gallery extends Model
@@ -9,6 +10,7 @@ class Gallery extends Model
     protected $fillable = [
         'title',
         'description',
+        'status',
         'attachments',
     ];
 
@@ -16,6 +18,7 @@ class Gallery extends Model
     {
         return [
             'attachments' => 'array',
+            'status' => VisibilityStatus::class,
         ];
     }
 }
