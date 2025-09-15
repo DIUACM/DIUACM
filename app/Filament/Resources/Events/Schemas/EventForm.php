@@ -114,6 +114,11 @@ class EventForm
                                 Checkbox::make('strict_attendance')
                                     ->label('Strict Attendance')
                                     ->helperText('If enabled then the users who didn\'t give attendance their solve count won\'t be counted.'),
+
+                                Checkbox::make('auto_update_score')
+                                    ->label('Auto Update Score')
+                                    ->default(true)
+                                    ->helperText('Automatically update user scores from VJudge. Disable to prevent score updates for this event.'),
                             ]),
                     ]),
 

@@ -32,6 +32,7 @@ class EventFactory extends Factory
             'event_password' => fake()->optional(0.3)->password(8, 12),
             'open_for_attendance' => fake()->boolean(80),
             'strict_attendance' => fake()->boolean(30),
+            'auto_update_score' => true,
             'type' => fake()->randomElement(EventType::cases()),
             'participation_scope' => fake()->randomElement(ParticipationScope::cases()),
         ];

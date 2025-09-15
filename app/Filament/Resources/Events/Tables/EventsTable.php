@@ -83,6 +83,15 @@ class EventsTable
                     ->falseColor('success')
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                IconColumn::make('auto_update_score')
+                    ->label('Auto Score')
+                    ->boolean()
+                    ->trueIcon('heroicon-m-arrow-path')
+                    ->falseIcon('heroicon-m-pause')
+                    ->trueColor('success')
+                    ->falseColor('gray')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('event_link')
                     ->label('Link')
                     ->url(fn ($record): ?string => $record->event_link ?: null, shouldOpenInNewTab: true)
@@ -129,6 +138,12 @@ class EventsTable
                     ->placeholder('All events')
                     ->trueLabel('Strict')
                     ->falseLabel('Not Strict'),
+
+                TernaryFilter::make('auto_update_score')
+                    ->label('Auto Update Score')
+                    ->placeholder('All events')
+                    ->trueLabel('Enabled')
+                    ->falseLabel('Disabled'),
             ])
             ->recordActions([
                 EditAction::make(),

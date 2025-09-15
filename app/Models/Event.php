@@ -22,6 +22,7 @@ class Event extends Model
         'event_password',
         'open_for_attendance',
         'strict_attendance',
+        'auto_update_score',
         'type',
         'participation_scope',
     ];
@@ -33,6 +34,7 @@ class Event extends Model
             'ending_at' => 'datetime',
             'open_for_attendance' => 'boolean',
             'strict_attendance' => 'boolean',
+            'auto_update_score' => 'boolean',
             'type' => EventType::class,
             'participation_scope' => ParticipationScope::class,
             'status' => VisibilityStatus::class,

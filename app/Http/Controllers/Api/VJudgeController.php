@@ -42,6 +42,14 @@ class VJudgeController extends Controller
         // Get event
         $event = Event::findOrFail($eventId);
 
+        // Check if auto update score is enabled for this event
+        if (! $event->auto_update_score) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Auto update score is disabled for this event',
+            ], 400);
+        }
+
         // Get users from ranklists associated with this event who have vjudge handles
         $users = User::select('id', 'vjudge_handle', 'username')
             ->whereHas('rankLists', function ($query) use ($eventId) {
