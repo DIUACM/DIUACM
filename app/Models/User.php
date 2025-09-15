@@ -99,4 +99,9 @@ class User extends Authenticatable implements MustVerifyEmail
             ->withPivot(['solves_count', 'upsolves_count', 'participation'])
             ->withTimestamps();
     }
+
+    public function teams()
+    {
+        return $this->belongsToMany(Team::class, 'team_member');
+    }
 }
