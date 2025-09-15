@@ -18,9 +18,24 @@ class GalleryResource extends Resource
 {
     protected static ?string $model = Gallery::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::Photo;
 
     protected static ?string $recordTitleAttribute = 'title';
+
+ 
+    protected static ?int $navigationSort = 3;
+
+   
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) Gallery::query()->count();
+    }
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['title', 'description'];
+    }
 
     public static function form(Schema $schema): Schema
     {
