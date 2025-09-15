@@ -7,16 +7,6 @@ on:
 jobs:
   build-test-deploy:
     runs-on: ubuntu-latest
-    
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: laravel_test
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
     - name: Checkout code
@@ -38,15 +28,12 @@ jobs:
     - name: Copy .env.example to .env
       run: cp .env.example .env
 
+
     - name: Configure environment for testing
       run: |
         echo "APP_ENV=testing" >> .env
-        echo "DB_CONNECTION=mysql" >> .env
-        echo "DB_HOST=127.0.0.1" >> .env
-        echo "DB_PORT=3306" >> .env
-        echo "DB_DATABASE=laravel_test" >> .env
-        echo "DB_USERNAME=root" >> .env
-        echo "DB_PASSWORD=password" >> .env
+        echo "DB_CONNECTION=sqlite" >> .env
+        echo "DB_DATABASE=database/testing.sqlite" >> .env
 
     - name: Get Composer Cache Directory
       id: composer-cache
