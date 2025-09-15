@@ -59,8 +59,8 @@ jobs:
         key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
         restore-keys: ${{ runner.os }}-composer-
 
-    - name: Install Composer dependencies
-      run: composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction
+    - name: Install Composer dependencies (with dev)
+      run: composer install --prefer-dist --optimize-autoloader --no-interaction
 
     - name: Install NPM dependencies
       run: npm ci
@@ -91,6 +91,9 @@ jobs:
 
     - name: Run Pest tests
       run: php artisan test --env=testing
+
+    - name: Reinstall Composer dependencies (production only)
+      run: composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction
 
     - name: Prepare deployment files
       run: |
