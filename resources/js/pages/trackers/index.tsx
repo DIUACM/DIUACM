@@ -38,29 +38,26 @@ export default function TrackersIndex() {
           <div className="mb-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {trackers.map((t) => (
-                <Card key={t.id} className="h-full">
-                  <CardContent className="p-6 h-full">
-                    <div className="flex flex-col h-full">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
-                            <BarChart3 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                <Link key={t.id} href={`/trackers/${t.slug}`}>
+                  <Card className="h-full hover:shadow-lg transition-shadow duration-200 cursor-pointer">
+                    <CardContent className="p-6 h-full">
+                      <div className="flex flex-col h-full">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+                              <BarChart3 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t.title}</h3>
                           </div>
-                          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{t.title}</h3>
+                          <Badge variant="secondary">{t.ranklists_count} lists</Badge>
                         </div>
-                        <Badge variant="secondary">{t.ranklists_count} lists</Badge>
+                        {t.description && (
+                          <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3">{t.description}</p>
+                        )}
                       </div>
-                      {t.description && (
-                        <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-3 mb-4">{t.description}</p>
-                      )}
-                      <div className="mt-auto">
-                        <Link href={`/trackers/${t.slug}`} className="inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline font-medium">
-                          View details
-                        </Link>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           </div>
