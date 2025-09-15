@@ -23,7 +23,8 @@ import {
     Mail, 
     Calendar, 
     BookOpen,
-    KeyRound 
+    KeyRound,
+    BarChart3
 } from 'lucide-react';
 import { 
     DropdownMenu, 
@@ -37,9 +38,10 @@ import {
 // Menu items for better organization and maintainability
 const menuItems = [
     { name: "Home", href: "/", icon: Home },
+    { name: "Trackers", href: "/trackers", icon: BarChart3 },
+    { name: "Events", href: "/events", icon: Calendar },
     { name: "About", href: "/about", icon: Info },
     { name: "Contact", href: "/contact", icon: Mail },
-    { name: "Events", href: "/events", icon: Calendar },
     { name: "Community", href: "/community", icon: Users },
     { name: "Resources", href: "/resources", icon: BookOpen },
 ];
