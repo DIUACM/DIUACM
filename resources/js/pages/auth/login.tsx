@@ -42,7 +42,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             resetOnError={false}
                             className="flex flex-col gap-6"
                         >
-                            {({ processing, errors, hasErrors, wasSuccessful }) => (
+                            {({ processing, errors }) => (
                                 <>
                                     <div className="grid gap-6">
                                         <div className="grid gap-2">
