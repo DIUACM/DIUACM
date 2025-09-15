@@ -136,7 +136,7 @@ export default function TrackersShow() {
 
           {/* Ranklist Navigation and Stats */}
           <Card>
-            <CardContent>
+            <CardContent className='pt-4'>
               <div className="flex flex-col gap-4">
                 {/* Ranklist Navigation */}
                 {tracker.rankLists.length > 1 && (
