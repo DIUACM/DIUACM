@@ -152,7 +152,7 @@ class TrackerController extends Controller
             }
         }
 
-        return response()->json([
+        return Inertia::render('trackers/show', [
             'tracker' => $tracker,
             'selectedRankList' => $selectedRankList,
         ]);
