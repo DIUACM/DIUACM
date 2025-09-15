@@ -6,6 +6,7 @@ use App\Enums\VisibilityStatus;
 use App\Models\Tracker;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\Request;
 
 class TrackerController extends Controller
 {
@@ -28,5 +29,35 @@ class TrackerController extends Controller
         return Inertia::render('trackers/index', [
             'trackers' => $trackers,
         ]);
+    }
+     public function show(Request $request, string $slug, ?string $keyword = null)
+    {
+        $tracker = Tracker::where('slug', $slug)
+            ->where('status', VisibilityStatus::PUBLISHED)
+            ->with(['rankLists:id,tracker_id,keyword'])
+            ->select('id','title')
+            ->firstOrFail();
+
+        $selectedRankList = null;
+        if ($keyword) {
+            $selectedRankList = $tracker->rankLists->firstWhere('keyword', $keyword);
+        }
+        if (! $selectedRankList) {
+            $selectedRankList = $tracker->rankLists->first();
+        }
+
+        $selectedRankList->loadMissing([
+            'events' => function ($query) {
+            $query->where('status', VisibilityStatus::PUBLISHED)
+                  ->select('events.id', 'events.title');
+            }
+            ,'users'=> function ($query) {
+                $query->select('users.id', 'users.name', 'users.username','users.image_url');
+            },
+        ]);
+        
+
+
+        dump($selectedRankList->toArray());
     }
 }
