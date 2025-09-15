@@ -92,7 +92,7 @@ export default function Navigation() {
                     <div className="flex justify-between items-center h-16">
                         {/* Logo and brand */}
                         <div className="flex-shrink-0 flex items-center">
-                            <Link href="/" className="flex items-center gap-2">
+                            <Link href="/" className="flex items-center gap-2" prefetch="hover">
                                 <div className="w-8 h-8 rounded-lg flex items-center justify-center">
                                     <img
                                         src="/logo.svg"
@@ -119,6 +119,7 @@ export default function Navigation() {
                                         <Link
                                             key={item.name}
                                             href={item.href}
+                                            prefetch="hover"
                                             className={cn(
                                                 "px-2.5 py-1.5 text-xs lg:text-sm rounded-md flex items-center gap-1 transition-all duration-200",
                                                 isActive
@@ -328,6 +329,7 @@ export default function Navigation() {
                                     <Link
                                         key={item.name}
                                         href={item.href}
+                                        prefetch="hover"
                                         className={cn(
                                             "px-4 py-3 text-base rounded-md flex items-center transition-all duration-200",
                                             isActive

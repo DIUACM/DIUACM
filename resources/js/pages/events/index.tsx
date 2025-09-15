@@ -85,7 +85,7 @@ function EventsFilters({ current }: { current: PageProps['filters'] }) {
         setSearch(current.title ?? '')
     }, [current.title])
 
-    // Debounced live search using Inertia router
+    // Debounced live search using Inertia router with better state preservation
     useEffect(() => {
         if (!mounted.current) {
             mounted.current = true
@@ -98,6 +98,7 @@ function EventsFilters({ current }: { current: PageProps['filters'] }) {
                 replace: true,
                 preserveScroll: true,
                 preserveState: true,
+                only: ['events', 'pagination', 'filters'],
             })
         }, 400)
         return () => clearTimeout(id)
@@ -133,7 +134,12 @@ function EventsList({ items }: { items: EventItem[] }) {
     return (
         <div className="space-y-4 mb-8">
             {items.map((event) => (
-                <Link key={event.id} href={`/events/${event.id}`} className="relative block bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 transition-all overflow-hidden group hover:shadow-lg">
+                <Link 
+                    key={event.id} 
+                    href={`/events/${event.id}`} 
+                    prefetch="hover"
+                    className="relative block bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 transition-all overflow-hidden group hover:shadow-lg"
+                >
                     <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-purple-500/10 rounded-xl opacity-0 group-hover:opacity-70 transition-opacity duration-300 -z-10" />
                     <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-slate-50 dark:from-slate-800 dark:to-slate-900 opacity-50 -z-10" />
                     <div className="absolute -bottom-10 -right-10 h-24 w-24 rounded-full bg-blue-100/40 dark:bg-blue-900/20 -z-10" />
@@ -194,6 +200,7 @@ function Pager({ page, pages, filters }: { page: number; pages: number; filters?
             preserveScroll: true,
             preserveState: true,
             replace: false,
+            only: ['events', 'pagination'],
         })
     }
 

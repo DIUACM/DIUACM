@@ -42,6 +42,8 @@ class EventController extends Controller
             'filters' => [
                 'title' => $validated['title'] ?? null,
             ],
+        ])->withViewData([
+            'title' => ($validated['title'] ?? null) ? "Events: {$validated['title']}" : 'Events',
         ]);
     }
 
@@ -123,6 +125,8 @@ class EventController extends Controller
                 'has_password' => ! empty($event->event_password),
             ],
             'user_has_attended' => $userHasAttended,
+        ])->withViewData([
+            'title' => $event->title,
         ]);
     }
 
@@ -135,34 +139,34 @@ class EventController extends Controller
 
         // Check if attendance is open
         if (! $event->open_for_attendance) {
-            return back()->withErrors(['message' => 'Attendance is not enabled for this event.']);
+            return redirect()->back()->withErrors(['message' => 'Attendance is not enabled for this event.']);
         }
 
         // Check if attendance window is enabled
         if (! $event->isAttendanceWindowEnabled()) {
-            return back()->withErrors(['message' => 'Attendance window is closed.']);
+            return redirect()->back()->withErrors(['message' => 'Attendance window is closed.']);
         }
 
         // Check if event has password
         if (empty($event->event_password)) {
-            return back()->withErrors(['message' => 'Please ask the admin to set a password for this event.']);
+            return redirect()->back()->withErrors(['message' => 'Please ask the admin to set a password for this event.']);
         }
 
         // Validate password
         $validated = $request->validated();
 
         if ($validated['password'] !== $event->event_password) {
-            return back()->withErrors(['password' => 'Invalid event password.']);
+            return redirect()->back()->withErrors(['password' => 'Invalid event password.']);
         }
 
         // Check if user already attended
         if ($event->attendees()->where('user_id', Auth::id())->exists()) {
-            return back()->withErrors(['message' => 'You have already marked attendance for this event.']);
+            return redirect()->back()->withErrors(['message' => 'You have already marked attendance for this event.']);
         }
 
         // Mark attendance
         $event->attendees()->attach(Auth::id());
 
-        return back()->with('success', 'Attendance marked successfully!');
+        return redirect()->back()->with('success', 'Attendance marked successfully!');
     }
 }

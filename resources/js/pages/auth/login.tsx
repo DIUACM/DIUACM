@@ -36,8 +36,13 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                     <div className="px-4 md:px-6 pb-4 md:pb-6">
                         {status && <div className="mb-4 rounded-md bg-primary/10 p-3 text-center text-sm font-medium text-primary">{status}</div>}
 
-                        <Form {...AuthenticatedSessionController.store.form()} resetOnSuccess={['password']} className="flex flex-col gap-6">
-                            {({ processing, errors }) => (
+                        <Form 
+                            {...AuthenticatedSessionController.store.form()} 
+                            resetOnSuccess={['password']} 
+                            resetOnError={false}
+                            className="flex flex-col gap-6"
+                        >
+                            {({ processing, errors, hasErrors, wasSuccessful }) => (
                                 <>
                                     <div className="grid gap-6">
                                         <div className="grid gap-2">

@@ -35,7 +35,7 @@ interface PageProps extends InertiaPageProps {
 export default function EditProfile() {
     const { user } = usePage<PageProps>().props;
     
-    const { data, setData, patch, processing, errors } = useForm({
+    const { data, setData, patch, processing, errors, isDirty } = useForm('profile-edit', {
         name: user.name || '',
         username: user.username || '',
         gender: user.gender || '',
@@ -51,6 +51,7 @@ export default function EditProfile() {
         e.preventDefault();
         
         patch('/profile', {
+            preserveScroll: true,
             onSuccess: () => {
                 toast.success('Profile updated successfully!');
             },
@@ -272,8 +273,8 @@ export default function EditProfile() {
                                 </a>
                                 <Button
                                     type="submit"
-                                    disabled={processing}
-                                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all"
+                                    disabled={processing || !isDirty}
+                                    className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all disabled:opacity-50"
                                 >
                                     {processing ? 'Updating...' : 'Update Profile'}
                                 </Button>

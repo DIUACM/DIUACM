@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, Link } from '@inertiajs/react';
 import { toast } from 'sonner';
 import { Lock } from 'lucide-react';
 import MainLayout from '@/layouts/main-layout';
@@ -8,7 +8,7 @@ import { PasswordInput } from '@/components/ui/password-input';
 import InputError from '@/components/input-error';
 
 export default function ChangePassword() {
-    const { data, setData, patch, processing, errors, reset } = useForm({
+    const { data, setData, patch, processing, errors, reset, isDirty } = useForm('change-password', {
         current_password: '',
         password: '',
         password_confirmation: '',
@@ -18,6 +18,7 @@ export default function ChangePassword() {
         e.preventDefault();
         
         patch('/profile/change-password', {
+            preserveScroll: true,
             onSuccess: () => {
                 toast.success('Password changed successfully!');
                 reset();
@@ -110,20 +111,21 @@ export default function ChangePassword() {
                             <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
                                 <Button
                                     type="submit"
-                                    disabled={processing}
-                                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all"
+                                    disabled={processing || !isDirty}
+                                    className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all disabled:opacity-50"
                                 >
                                     {processing ? 'Changing Password...' : 'Change Password'}
                                 </Button>
                             </div>
 
                             <div className="text-center">
-                                <a
+                                <Link
                                     href="/profile/edit"
                                     className="text-sm text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                    prefetch="hover"
                                 >
                                     ← Back to Edit Profile
-                                </a>
+                                </Link>
                             </div>
                         </form>
                     </div>

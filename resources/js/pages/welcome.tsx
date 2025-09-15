@@ -213,7 +213,7 @@ function HeroSection() {
                                 size="lg"
                                 className="rounded-full px-8 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600 min-w-[200px] font-medium"
                             >
-                                <Link href="/about">
+                                <Link href="/about" prefetch="hover">
                                     <Trophy className="mr-2 h-4 w-4" />
                                     Join Contests
                                 </Link>
@@ -225,7 +225,7 @@ function HeroSection() {
                                 variant="outline"
                                 className="rounded-full px-8 bg-white/80 hover:bg-white text-blue-600 hover:text-blue-700 border border-slate-200 hover:border-blue-200 shadow-md hover:shadow-xl transition-all dark:bg-slate-800/80 dark:hover:bg-slate-800 dark:text-blue-400 dark:hover:text-blue-300 dark:border-slate-700 dark:hover:border-slate-600 min-w-[200px] font-medium backdrop-blur-sm"
                             >
-                                <Link href="/about">
+                                <Link href="/about" prefetch="hover">
                                     <ArrowRight className="mr-2 h-4 w-4" />
                                     Learn More
                                 </Link>
@@ -581,7 +581,7 @@ export default function Welcome() {
                                 size="lg"
                                 className="rounded-full px-8 bg-white hover:bg-slate-50 text-blue-600 hover:text-blue-700 border border-slate-200 hover:border-blue-200 shadow-md hover:shadow-xl transition-all dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-blue-400 dark:hover:text-blue-300 dark:border-slate-700 dark:hover:border-slate-600 font-medium"
                             >
-                                <Link href="/contact">
+                                <Link href="/contact" prefetch="hover">
                                     <MessageSquare className="mr-2 h-4 w-4" />
                                     Contact Us
                                 </Link>

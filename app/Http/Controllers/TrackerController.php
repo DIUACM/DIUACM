@@ -31,6 +31,8 @@ class TrackerController extends Controller
 
         return Inertia::render('trackers/index', [
             'trackers' => $trackers,
+        ])->withViewData([
+            'title' => 'Trackers',
         ]);
     }
 
@@ -98,6 +100,8 @@ class TrackerController extends Controller
         return Inertia::render('trackers/show', [
             'tracker' => $this->transformTrackerData($tracker),
             'selectedRankList' => $selectedRankList ? $this->transformRankListData($selectedRankList) : null,
+        ])->withViewData([
+            'title' => $tracker->title,
         ]);
     }
 

@@ -66,6 +66,7 @@ export default function Contact() {
                                 <Form 
                                     action="/contact" 
                                     method="post" 
+                                    key="contact-form"
                                     className="flex flex-col gap-6"
                                     onSuccess={() => {
                                         toast.success("Message sent successfully!", {
@@ -96,7 +97,7 @@ export default function Contact() {
                                         }
                                     }}
                                 >
-                                    {({ processing, errors }) => (
+                                    {({ processing, errors, isDirty }) => (
                                         <>
                                             <div className="grid gap-6">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -108,10 +109,12 @@ export default function Contact() {
                                                             placeholder="Your name"
                                                             required
                                                             autoFocus
-                                                            className="bg-slate-50 dark:bg-slate-700/40 border-slate-200 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400"
+                                                            aria-describedby={errors.name ? "name-error" : undefined}
+                                                            aria-invalid={errors.name ? "true" : "false"}
+                                                            className={`bg-slate-50 dark:bg-slate-700/40 border-slate-200 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400 ${errors.name ? 'border-red-500 dark:border-red-400' : ''}`}
                                                         />
                                                         <div className="min-h-[20px]">
-                                                            <InputError message={errors.name} />
+                                                            <InputError message={errors.name} id="name-error" />
                                                         </div>
                                                     </div>
 
@@ -123,10 +126,12 @@ export default function Contact() {
                                                             type="email"
                                                             placeholder="Your email address"
                                                             required
-                                                            className="bg-slate-50 dark:bg-slate-700/40 border-slate-200 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400"
+                                                            aria-describedby={errors.email ? "email-error" : undefined}
+                                                            aria-invalid={errors.email ? "true" : "false"}
+                                                            className={`bg-slate-50 dark:bg-slate-700/40 border-slate-200 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400 ${errors.email ? 'border-red-500 dark:border-red-400' : ''}`}
                                                         />
                                                         <div className="min-h-[20px]">
-                                                            <InputError message={errors.email} />
+                                                            <InputError message={errors.email} id="email-error" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -146,19 +151,21 @@ export default function Contact() {
                                                         id="message"
                                                         name="message"
                                                         placeholder="How can we help you?"
-                                                        className="min-h-[120px] resize-none bg-slate-50 dark:bg-slate-700/40 border-slate-200 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400"
+                                                        aria-describedby={errors.message ? "message-error" : undefined}
+                                                        aria-invalid={errors.message ? "true" : "false"}
+                                                        className={`min-h-[120px] resize-none bg-slate-50 dark:bg-slate-700/40 border-slate-200 dark:border-slate-600 focus:border-blue-500 dark:focus:border-blue-400 ${errors.message ? 'border-red-500 dark:border-red-400' : ''}`}
                                                         required
                                                     />
-                                                    <InputError message={errors.message} />
+                                                    <InputError message={errors.message} id="message-error" />
                                                 </div>
 
                                                 <Button
                                                     type="submit"
-                                                    disabled={processing}
-                                                    className="mt-2 w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
+                                                    disabled={processing || !isDirty}
+                                                    className="mt-2 w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600 disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
                                                     {processing && <LoaderCircle className="h-4 w-4 animate-spin mr-2" />}
-                                                    Send Message
+                                                    {processing ? 'Sending...' : 'Send Message'}
                                                 </Button>
                                             </div>
                                         </>

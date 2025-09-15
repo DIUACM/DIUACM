@@ -185,6 +185,7 @@ function AttendanceModal({ event, userHasAttended, isAuthenticated, onSuccess }:
         }
 
         post(`/events/${event.id}/attend`, {
+            preserveScroll: true,
             onSuccess: () => {
                 toast.success('Attendance marked successfully!')
                 setIsOpen(false)
