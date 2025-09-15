@@ -54,6 +54,9 @@ class TrackerController extends Controller
         if (! $selectedRankList) {
             $selectedRankList = $tracker->rankLists->first();
         }
+        if(!$selectedRankList){
+            abort(404);
+        }
 
         if ($selectedRankList) {
             $selectedRankList = RankList::query()
