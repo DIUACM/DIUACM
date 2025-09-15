@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class GalleryResource extends Resource
 {
@@ -22,10 +23,7 @@ class GalleryResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'title';
 
- 
     protected static ?int $navigationSort = 3;
-
-   
 
     public static function getNavigationBadge(): ?string
     {
@@ -35,6 +33,15 @@ class GalleryResource extends Resource
     public static function getGloballySearchableAttributes(): array
     {
         return ['title', 'description'];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        $attachments = is_array($record->attachments) ? count($record->attachments) : 0;
+
+        return [
+            'Images' => $attachments.' image'.($attachments === 1 ? '' : 's'),
+        ];
     }
 
     public static function form(Schema $schema): Schema
