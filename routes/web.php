@@ -3,6 +3,7 @@
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\TrackerController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -28,6 +29,13 @@ Route::get('/terms-and-conditions', function () {
 // Events listing
 Route::get('/events', [EventController::class, 'index'])->name('events.index');
 Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
+
+// Trackers
+Route::get('/trackers', [TrackerController::class, 'index'])
+    ->name('trackers.index');
+Route::get('/trackers/{slug}/{keyword?}', [TrackerController::class, 'show'])
+    ->where(['slug' => '[A-Za-z0-9\-]([A-Za-z0-9\-])*', 'keyword' => '.*'])
+    ->name('trackers.show');
 
 // Event attendance - requires authentication
 Route::middleware('auth')->group(function () {
