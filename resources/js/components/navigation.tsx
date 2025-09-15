@@ -16,13 +16,11 @@ import {
     Menu, 
     X, 
     Home, 
-    Users, 
     Info, 
     LogOut, 
     User, 
     Mail, 
     Calendar, 
-    BookOpen,
     KeyRound,
     BarChart3
 } from 'lucide-react';
@@ -42,8 +40,6 @@ const menuItems = [
     { name: "Events", href: "/events", icon: Calendar },
     { name: "About", href: "/about", icon: Info },
     { name: "Contact", href: "/contact", icon: Mail },
-    { name: "Community", href: "/community", icon: Users },
-    { name: "Resources", href: "/resources", icon: BookOpen },
 ];
 
 export default function Navigation() {
