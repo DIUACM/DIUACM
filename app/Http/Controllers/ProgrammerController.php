@@ -34,7 +34,8 @@ class ProgrammerController extends Controller
             });
         }
 
-        $programmers = $query->orderBy('name')
+        $programmers = $query->orderByDesc('max_cf_rating')
+            ->orderBy('name')
             ->paginate($perPage)
             ->withQueryString();
 

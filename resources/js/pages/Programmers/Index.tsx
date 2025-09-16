@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/pagination';
 import MainLayout from '@/layouts/main-layout';
 import { Link, router, usePage } from '@inertiajs/react';
-import { ArrowUpRight, GraduationCap, MapPin, Search as SearchIcon, Trophy, User } from 'lucide-react';
+import { ArrowUpRight, MapPin, Search as SearchIcon, User } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -128,16 +128,13 @@ function ProgrammerCard({ programmer }: { programmer: ProgrammerItem }) {
         <Link
             href={`/programmers/${programmer.username}`}
             prefetch="hover"
-            className="group relative block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md transition-all hover:shadow-lg dark:border-slate-700 dark:bg-slate-900"
+            className="group relative block overflow-hidden rounded-lg border border-slate-200 bg-white p-4 shadow-sm transition-all hover:shadow-md hover:border-blue-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-blue-600"
         >
-            <div className="absolute -inset-1 -z-10 rounded-xl bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-purple-500/10 opacity-0 transition-opacity duration-300 group-hover:opacity-70" />
-            <div className="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 to-slate-50 opacity-50 dark:from-slate-800 dark:to-slate-900" />
-            <div className="absolute -right-10 -bottom-10 -z-10 h-24 w-24 rounded-full bg-blue-100/40 dark:bg-blue-900/20" />
-
-            <div className="relative z-10 p-5">
-                {/* Avatar and Basic Info */}
-                <div className="mb-4 flex items-center gap-4">
-                    <div className="relative h-16 w-16 overflow-hidden rounded-full ring-2 ring-slate-200 dark:ring-slate-700">
+            {/* Main Content */}
+            <div className="flex items-start gap-3">
+                {/* Avatar */}
+                <div className="flex-shrink-0">
+                    <div className="relative h-12 w-12 overflow-hidden rounded-full ring-2 ring-slate-100 dark:ring-slate-600">
                         {programmer.image ? (
                             <img
                                 src={programmer.image}
@@ -145,74 +142,78 @@ function ProgrammerCard({ programmer }: { programmer: ProgrammerItem }) {
                                 className="h-full w-full object-cover"
                             />
                         ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-cyan-500 text-lg font-semibold text-white">
+                            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-purple-500 text-sm font-medium text-white">
                                 {initials}
                             </div>
                         )}
                     </div>
+                </div>
 
-                    <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-slate-900 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
-                            {programmer.name}
-                        </h3>
-                        <p className="text-sm text-slate-600 dark:text-slate-300">
-                            @{programmer.username}
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-slate-900 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400 truncate">
+                        {programmer.name}
+                    </h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
+                        @{programmer.username}
+                    </p>
+                    
+                    {/* Student ID if available */}
+                    {programmer.student_id && (
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 truncate">
+                            {programmer.student_id}
                         </p>
-                    </div>
+                    )}
                 </div>
 
                 {/* Rating Badge */}
-                {programmer.max_cf_rating && programmer.max_cf_rating > -1 && (
-                    <div className="mb-3">
+                <div className="flex-shrink-0">
+                    {programmer.max_cf_rating && programmer.max_cf_rating > -1 ? (
                         <Badge
-                            className={`${getRatingColor(
-                                programmer.max_cf_rating
-                            )} text-white text-xs px-2 py-1`}
+                            className={`${getRatingColor(programmer.max_cf_rating)} text-white text-xs px-2 py-1`}
                         >
-                            <Trophy className="w-3 h-3 mr-1" />
-                            {programmer.max_cf_rating} • {getRatingTitle(programmer.max_cf_rating)}
+                            {programmer.max_cf_rating}
                         </Badge>
-                    </div>
-                )}
-
-                {/* Additional Info */}
-                <div className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
-                    {programmer.student_id && (
-                        <div className="flex items-center gap-2">
-                            <GraduationCap className="w-4 h-4 text-blue-500" />
-                            <span>{programmer.student_id}</span>
-                        </div>
-                    )}
-                    {programmer.department && (
-                        <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-blue-500" />
-                            <span>{programmer.department}</span>
-                        </div>
+                    ) : (
+                        <Badge variant="outline" className="text-xs px-2 py-1 text-slate-500">
+                            Unrated
+                        </Badge>
                     )}
                 </div>
+            </div>
 
-                {/* Platform Handles */}
-                <div className="mt-4 flex flex-wrap gap-1">
+            {/* Department */}
+            {programmer.department && (
+                <div className="mt-3 text-xs text-slate-500 dark:text-slate-400 truncate">
+                    <MapPin className="w-3 h-3 inline mr-1" />
+                    {programmer.department}
+                </div>
+            )}
+
+            {/* Platform Handles - Only show if they exist */}
+            {(programmer.codeforces_handle || programmer.atcoder_handle || programmer.vjudge_handle) && (
+                <div className="mt-3 flex gap-1">
                     {programmer.codeforces_handle && (
-                        <Badge variant="outline" className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-xs">
+                        <Badge variant="outline" className="text-xs px-1.5 py-0.5 text-blue-600 dark:text-blue-400">
                             CF
                         </Badge>
                     )}
                     {programmer.atcoder_handle && (
-                        <Badge variant="outline" className="bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 text-xs">
+                        <Badge variant="outline" className="text-xs px-1.5 py-0.5 text-orange-600 dark:text-orange-400">
                             AC
                         </Badge>
                     )}
                     {programmer.vjudge_handle && (
-                        <Badge variant="outline" className="bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-xs">
+                        <Badge variant="outline" className="text-xs px-1.5 py-0.5 text-green-600 dark:text-green-400">
                             VJ
                         </Badge>
                     )}
                 </div>
+            )}
 
-                <div className="absolute right-4 bottom-4 flex h-8 w-8 transform items-center justify-center rounded-full bg-blue-100 opacity-0 transition-all duration-300 group-hover:translate-x-1 group-hover:opacity-100 dark:bg-blue-900/50">
-                    <ArrowUpRight className="h-4 w-4 text-blue-700 dark:text-blue-400" />
-                </div>
+            {/* Hover indicator */}
+            <div className="absolute right-2 top-2 flex h-6 w-6 transform items-center justify-center rounded-full bg-blue-50 opacity-0 transition-all duration-200 group-hover:opacity-100 dark:bg-blue-900/50">
+                <ArrowUpRight className="h-3 w-3 text-blue-600 dark:text-blue-400" />
             </div>
         </Link>
     );
@@ -220,7 +221,7 @@ function ProgrammerCard({ programmer }: { programmer: ProgrammerItem }) {
 
 function ProgrammersList({ items }: { items: ProgrammerItem[] }) {
     return (
-        <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {items.map((programmer) => (
                 <ProgrammerCard key={programmer.id} programmer={programmer} />
             ))}
