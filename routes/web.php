@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GalleryController;
@@ -27,6 +28,10 @@ Route::get('/privacy-policy', function () {
 Route::get('/terms-and-conditions', function () {
     return Inertia::render('terms-and-conditions');
 })->name('terms-and-conditions');
+
+// Blogs
+Route::get('/blogs', [BlogController::class, 'index'])->name('blogs.index');
+Route::get('/blogs/{blog:slug}', [BlogController::class, 'show'])->name('blogs.show');
 
 // Events listing
 Route::get('/events', [EventController::class, 'index'])->name('events.index');
