@@ -29,6 +29,7 @@ jobs:
 
       # 3. Deploy to Server
       - name: Deploy
+      
         env:
           SSH_USER: ${{ secrets.SSH_USER }} # e.g., 'deployer'
           SSH_HOST: ${{ secrets.SSH_HOST }} # e.g., your droplet IP
@@ -51,13 +52,21 @@ jobs:
             echo "🔥 Running deployment scripts on server..."
             cd $RELEASE_PATH
 
+            # Set the correct ownership for storage and cache directories
+            echo "Setting ownership..."
+            sudo chown -R sourov:www-data $RELEASE_PATH/storage $RELEASE_PATH/bootstrap/cache
+
+            # Set the correct permissions
+            echo "Setting permissions..."
+            sudo chmod -R 775 $RELEASE_PATH/storage $RELEASE_PATH/bootstrap/cache
+
             # Symlink the .env file from the shared directory
             echo "Linking .env file..."
             ln -nfs $DEPLOY_PATH/shared/.env .env
 
-            # Symlink the storage directory
+            # Symlink the main storage directory for user uploads, etc.
             echo "Linking storage directory..."
-            ln -nfs $DEPLOY_PATH/shared/storage storage
+            ln -nfs $DEPLOY_PATH/shared/storage public/storage
 
             # Install composer dependencies
             echo "Installing composer dependencies..."
