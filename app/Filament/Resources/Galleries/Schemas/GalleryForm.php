@@ -68,7 +68,7 @@ class GalleryForm
                         FileUpload::make('attachments')
                             ->label('Images')
                             ->helperText('Upload up to 12 images (JPEG, PNG, WebP, max 2MB each). Drag to reorder.')
-                            ->disk('public')
+                            ->disk('s3')
                             ->directory('gallery-images')
                             ->visibility('public')
                             ->image()

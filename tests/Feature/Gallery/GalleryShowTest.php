@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Gallery;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('can display gallery show page for published gallery', function () {
@@ -55,9 +56,9 @@ test('gallery show page displays correct image paths', function () {
     $response->assertSuccessful();
     $response->assertInertia(fn (Assert $page) => $page->component('galleries/show')
         ->has('gallery.images', 3)
-        ->where('gallery.images.0', '/storage/gallery-images/image1.jpg')
-        ->where('gallery.images.1', '/storage/gallery-images/image2.png')
-        ->where('gallery.images.2', '/storage/gallery-images/image3.webp')
+        ->where('gallery.images.0', Storage::disk('s3')->url('gallery-images/image1.jpg'))
+        ->where('gallery.images.1', Storage::disk('s3')->url('gallery-images/image2.png'))
+        ->where('gallery.images.2', Storage::disk('s3')->url('gallery-images/image3.webp'))
     );
 });
 

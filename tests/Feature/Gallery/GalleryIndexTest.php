@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Gallery;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('can display gallery index page', function () {
@@ -87,5 +88,39 @@ test('gallery index shows correct image count', function () {
         ->has('galleries', 2)
         ->where('galleries.0.images_count', 0) // without images (newest first)
         ->where('galleries.1.images_count', 6) // with many images
+    );
+});
+
+test('gallery index shows s3 cover image urls', function () {
+    $gallery = Gallery::factory()->published()->create([
+        'title' => 'Gallery with S3 Images',
+        'attachments' => [
+            'gallery-images/cover.jpg',
+            'gallery-images/other.jpg',
+        ],
+    ]);
+
+    $response = test()->get('/galleries');
+
+    $response->assertSuccessful();
+    $response->assertInertia(fn (Assert $page) => $page->component('galleries/index')
+        ->has('galleries', 1)
+        ->where('galleries.0.cover_image', Storage::disk('s3')->url('gallery-images/cover.jpg'))
+        ->where('galleries.0.images_count', 2)
+    );
+});
+
+test('gallery index handles null cover image for galleries without attachments', function () {
+    $gallery = Gallery::factory()->published()->withoutImages()->create([
+        'title' => 'Gallery without Images',
+    ]);
+
+    $response = test()->get('/galleries');
+
+    $response->assertSuccessful();
+    $response->assertInertia(fn (Assert $page) => $page->component('galleries/index')
+        ->has('galleries', 1)
+        ->where('galleries.0.cover_image', null)
+        ->where('galleries.0.images_count', 0)
     );
 });

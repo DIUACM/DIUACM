@@ -97,6 +97,7 @@ class BlogPostForm
                                 '4:3',
                                 '1:1',
                             ])
+                            ->disk('s3')
                             ->directory('blog/featured-images')
                             ->visibility('public')
                             ->helperText('Recommended size: 1200x675px (16:9 aspect ratio)'),

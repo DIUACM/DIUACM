@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\VisibilityStatus;
 use App\Models\Gallery;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,7 +23,7 @@ class GalleryController extends Controller
                 'description' => $gallery->description,
                 'images_count' => is_array($gallery->attachments) ? count($gallery->attachments) : 0,
                 'cover_image' => is_array($gallery->attachments) && ! empty($gallery->attachments)
-                    ? '/storage/'.$gallery->attachments[0]
+                    ? Storage::disk('s3')->url($gallery->attachments[0])
                     : null,
             ]);
 
@@ -46,7 +47,7 @@ class GalleryController extends Controller
             'slug' => $gallery->slug,
             'description' => $gallery->description,
             'images' => is_array($gallery->attachments)
-                ? array_map(fn ($attachment) => '/storage/'.$attachment, $gallery->attachments)
+                ? array_map(fn ($attachment) => Storage::disk('s3')->url($attachment), $gallery->attachments)
                 : [],
         ];
 
