@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -39,6 +40,15 @@ class ProgrammerController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
+        // Transform image URLs to S3 URLs
+        $programmers->getCollection()->transform(function ($programmer) {
+            $programmer->image = $programmer->image
+                ? Storage::disk('s3')->url($programmer->image)
+                : null;
+
+            return $programmer;
+        });
+
         return Inertia::render('Programmers/Index', [
             'programmers' => $programmers,
             'filters' => [
@@ -73,11 +83,17 @@ class ProgrammerController extends Controller
                         'rank' => $team->rank,
                         'solve_count' => $team->solve_count,
                         'members' => $team->members->map(function ($member) {
+                            $memberData = $member->only([
+                                'id', 'name', 'username', 'image', 'student_id',
+                            ]);
+                            // Transform image URL to S3 URL
+                            $memberData['image'] = $memberData['image']
+                                ? Storage::disk('s3')->url($memberData['image'])
+                                : null;
+
                             return [
                                 'id' => $member->id,
-                                'user' => $member->only([
-                                    'id', 'name', 'username', 'image', 'student_id',
-                                ]),
+                                'user' => $memberData,
                             ];
                         }),
                     ],
@@ -107,11 +123,17 @@ class ProgrammerController extends Controller
             })
             ->values();
 
+        // Prepare programmer data with S3 image URL
+        $programmerData = $user->only([
+            'id', 'name', 'username', 'image', 'department', 'student_id',
+            'max_cf_rating', 'codeforces_handle', 'atcoder_handle', 'vjudge_handle',
+        ]);
+        $programmerData['image'] = $programmerData['image']
+            ? Storage::disk('s3')->url($programmerData['image'])
+            : null;
+
         return Inertia::render('Programmers/Show', [
-            'programmer' => $user->only([
-                'id', 'name', 'username', 'image', 'department', 'student_id',
-                'max_cf_rating', 'codeforces_handle', 'atcoder_handle', 'vjudge_handle',
-            ]),
+            'programmer' => $programmerData,
             'contest_participations' => $contestParticipations,
             'tracker_performances' => $trackerPerformances,
         ]);

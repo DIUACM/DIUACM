@@ -5,6 +5,7 @@ use App\Models\RankList;
 use App\Models\Team;
 use App\Models\Tracker;
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 it('renders programmer show page', function () {
@@ -160,4 +161,67 @@ it('shows multiple platform handles', function () {
         ->where('programmer.atcoder_handle', 'john_ac')
         ->where('programmer.vjudge_handle', 'john_vj')
     );
+});
+
+it('transforms programmer image to s3 url in show page', function () {
+    $user = User::factory()->create([
+        'name' => 'John Doe',
+        'username' => 'johndoe',
+        'email' => 'john@example.com',
+        'image' => 'profile-images/john-avatar.jpg',
+    ]);
+
+    test()->get("/programmers/{$user->username}")
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Programmers/Show')
+            ->where('programmer.image', Storage::disk('s3')->url('profile-images/john-avatar.jpg'))
+        );
+});
+
+it('handles null programmer image in show page', function () {
+    $user = User::factory()->create([
+        'name' => 'Jane Doe',
+        'username' => 'janedoe',
+        'email' => 'jane@example.com',
+        'image' => null,
+    ]);
+
+    test()->get("/programmers/{$user->username}")
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Programmers/Show')
+            ->where('programmer.image', null)
+        );
+});
+
+it('transforms team member images to s3 urls', function () {
+    $user1 = User::factory()->create([
+        'username' => 'johndoe',
+        'email' => 'john@example.com',
+        'image' => 'profile-images/john.jpg',
+    ]);
+
+    $user2 = User::factory()->create([
+        'username' => 'janedoe',
+        'email' => 'jane@example.com',
+        'image' => 'profile-images/jane.jpg',
+    ]);
+
+    $contest = Contest::factory()->create();
+    $team = Team::factory()->create();
+    $team->contest()->associate($contest);
+    $team->save();
+
+    $team->members()->attach([$user1->id, $user2->id]);
+
+    test()->get("/programmers/{$user1->username}")
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Programmers/Show')
+            ->has('contest_participations', 1)
+            ->has('contest_participations.0.team.members', 2)
+            ->where('contest_participations.0.team.members.0.user.image', Storage::disk('s3')->url('profile-images/john.jpg'))
+            ->where('contest_participations.0.team.members.1.user.image', Storage::disk('s3')->url('profile-images/jane.jpg'))
+        );
 });

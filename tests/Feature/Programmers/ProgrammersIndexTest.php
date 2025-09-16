@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 it('renders programmers index with pagination', function () {
@@ -134,23 +135,25 @@ it('shows only users with usernames', function () {
         );
 });
 
-it('orders programmers by name', function () {
+it('orders programmers by max_cf_rating desc then by name', function () {
     User::factory()->create([
         'name' => 'Zoe',
         'username' => 'zoe',
         'email' => 'zoe@example.com',
+        'max_cf_rating' => 1200,
     ]);
     User::factory()->create([
         'name' => 'Alpha',
         'username' => 'alpha',
         'email' => 'alpha@example.com',
+        'max_cf_rating' => 1500,
     ]);
 
     test()->get('/programmers')
         ->assertSuccessful()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Programmers/Index')
-            ->where('programmers.data.0.name', 'Alpha')
+            ->where('programmers.data.0.name', 'Alpha') // Higher rating first
             ->where('programmers.data.1.name', 'Zoe')
         );
 });
@@ -167,5 +170,39 @@ it('returns empty result when no programmers match search', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('Programmers/Index')
             ->has('programmers.data', 0)
+        );
+});
+
+it('transforms user images to s3 urls in index', function () {
+    $user = User::factory()->create([
+        'name' => 'John Doe',
+        'username' => 'johndoe',
+        'email' => 'john@example.com',
+        'image' => 'profile-images/john.jpg',
+    ]);
+
+    test()->get('/programmers')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Programmers/Index')
+            ->has('programmers.data', 1)
+            ->where('programmers.data.0.image', Storage::disk('s3')->url('profile-images/john.jpg'))
+        );
+});
+
+it('handles null images in index', function () {
+    User::factory()->create([
+        'name' => 'Jane Doe',
+        'username' => 'janedoe',
+        'email' => 'jane@example.com',
+        'image' => null,
+    ]);
+
+    test()->get('/programmers')
+        ->assertSuccessful()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Programmers/Index')
+            ->has('programmers.data', 1)
+            ->where('programmers.data.0.image', null)
         );
 });
