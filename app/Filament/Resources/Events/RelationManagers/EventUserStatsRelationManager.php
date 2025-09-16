@@ -34,7 +34,11 @@ class EventUserStatsRelationManager extends RelationManager
                     ->searchable(['name', 'email', 'username', 'student_id'])
                     ->preload()
                     ->required()
-                    ->columnSpanFull(),
+                    ->columnSpanFull()
+                    ->unique('event_user_stats', 'user_id', modifyRuleUsing: function ($rule, $get, $record) {
+                        return $rule->where('event_id', $this->getOwnerRecord()->id)
+                            ->ignore($record?->id);
+                    }),
 
                 TextInput::make('solves_count')
                     ->label('Solves Count')
