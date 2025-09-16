@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TrackerController;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,10 @@ Route::get('/terms-and-conditions', function () {
 // Events listing
 Route::get('/events', [EventController::class, 'index'])->name('events.index');
 Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
+
+// Gallery
+Route::get('/galleries', [GalleryController::class, 'index'])->name('gallery.index');
+Route::get('/galleries/{gallery:slug}', [GalleryController::class, 'show'])->name('gallery.show');
 
 // Trackers
 Route::get('/trackers', [TrackerController::class, 'index'])
