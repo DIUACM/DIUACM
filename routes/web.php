@@ -4,6 +4,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProgrammerController;
 use App\Http\Controllers\TrackerController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -34,6 +35,10 @@ Route::get('/events/{event}', [EventController::class, 'show'])->name('events.sh
 // Gallery
 Route::get('/galleries', [GalleryController::class, 'index'])->name('gallery.index');
 Route::get('/galleries/{gallery:slug}', [GalleryController::class, 'show'])->name('gallery.show');
+
+// Programmers
+Route::get('/programmers', [ProgrammerController::class, 'index'])->name('programmers.index');
+Route::get('/programmers/{user:username}', [ProgrammerController::class, 'show'])->name('programmers.show');
 
 // Trackers
 Route::get('/trackers', [TrackerController::class, 'index'])

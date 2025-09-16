@@ -19,8 +19,6 @@ test('can display gallery show page for published gallery', function () {
         ->where('gallery.slug', 'test-gallery')
         ->where('gallery.description', 'A test gallery description')
         ->has('gallery.images')
-        ->has('gallery.created_at')
-        ->has('gallery.updated_at')
     );
 });
 

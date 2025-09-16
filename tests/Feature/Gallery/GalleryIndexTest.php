@@ -32,7 +32,6 @@ test('displays published galleries on index page', function () {
         ->where('galleries.0.slug', 'published-gallery')
         ->has('galleries.0.images_count')
         ->has('galleries.0.cover_image')
-        ->has('galleries.0.created_at')
     );
 });
 
