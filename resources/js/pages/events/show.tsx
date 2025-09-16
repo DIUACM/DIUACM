@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MainLayout from '@/layouts/main-layout';
-import { router, useForm, usePage } from '@inertiajs/react';
+import { router, useForm, usePage, Link } from '@inertiajs/react';
 import { AlertTriangle, ArrowLeft, Calendar, CheckCircle, Clock, ExternalLink, List, Target, Trophy, Users } from 'lucide-react';
 import React, { useState } from 'react';
 import { toast } from 'sonner';
@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 type EventAttendee = {
     id: number;
     name: string;
+    username: string;
     image_url: string;
     department: string | null;
     student_id: string | null;
@@ -24,6 +25,7 @@ type EventAttendee = {
 type EventUserWithStats = {
     id: number;
     name: string;
+    username: string;
     image_url: string;
     department: string | null;
     student_id: string | null;
@@ -310,9 +312,10 @@ function AttendeesList({ attendees }: { attendees: EventAttendee[] }) {
             {/* Grid layout optimized for full width */}
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {attendees.map((attendee) => (
-                    <div
+                    <Link
                         key={attendee.id}
-                        className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800"
+                        href={`/programmers/${attendee.username}`}
+                        className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 transition-colors hover:bg-slate-100 hover:border-blue-300 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800 dark:hover:border-blue-600 group"
                     >
                         <Avatar className="h-10 w-10 flex-shrink-0">
                             <AvatarImage src={attendee.image_url} alt={attendee.name} />
@@ -321,7 +324,7 @@ function AttendeesList({ attendees }: { attendees: EventAttendee[] }) {
                             </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-slate-900 dark:text-white">{attendee.name}</p>
+                            <p className="truncate text-sm font-medium text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{attendee.name}</p>
                             <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                                 {attendee.department && <span className="truncate">{attendee.department}</span>}
                                 {attendee.student_id && (
@@ -340,7 +343,7 @@ function AttendeesList({ attendees }: { attendees: EventAttendee[] }) {
                                 })}
                             </div>
                         </div>
-                    </div>
+                    </Link>
                 ))}
             </div>
 
@@ -370,9 +373,10 @@ function UsersWithStatsList({ users }: { users: EventUserWithStats[] }) {
             {/* Grid layout for user stats */}
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {users.map((user, index) => (
-                    <div
+                    <Link
                         key={user.id}
-                        className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800"
+                        href={`/programmers/${user.username}`}
+                        className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 transition-colors hover:bg-slate-100 hover:border-blue-300 dark:border-slate-700 dark:bg-slate-800/50 dark:hover:bg-slate-800 dark:hover:border-blue-600 group"
                     >
                         <div className="flex flex-shrink-0 items-center gap-2">
                             <Avatar className="h-10 w-10">
@@ -396,7 +400,7 @@ function UsersWithStatsList({ users }: { users: EventUserWithStats[] }) {
                             )}
                         </div>
                         <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-slate-900 dark:text-white">{user.name}</p>
+                            <p className="truncate text-sm font-medium text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{user.name}</p>
                             <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                                 {user.department && <span className="truncate">{user.department}</span>}
                                 {user.student_id && (
@@ -419,7 +423,7 @@ function UsersWithStatsList({ users }: { users: EventUserWithStats[] }) {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </Link>
                 ))}
             </div>
 

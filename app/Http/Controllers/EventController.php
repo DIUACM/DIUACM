@@ -56,11 +56,11 @@ class EventController extends Controller
 
         $event->load([
             'attendees' => function ($query) {
-                $query->select('users.id', 'users.name', 'users.image', 'users.department', 'users.student_id')
+                $query->select('users.id', 'users.name', 'users.username', 'users.image', 'users.department', 'users.student_id')
                     ->orderBy('event_attendance.created_at');
             },
             'usersWithStats' => function ($query) {
-                $query->select('users.id', 'users.name', 'users.image', 'users.department', 'users.student_id')
+                $query->select('users.id', 'users.name', 'users.username', 'users.image', 'users.department', 'users.student_id')
                     ->orderByDesc('event_user_stats.solves_count')
                     ->orderByDesc('event_user_stats.upsolves_count');
             },
@@ -91,6 +91,7 @@ class EventController extends Controller
                     return [
                         'id' => $user->id,
                         'name' => $user->name,
+                        'username' => $user->username,
                         'image_url' => $user->image_url,
                         'department' => $user->department,
                         'student_id' => $user->student_id,
@@ -101,6 +102,7 @@ class EventController extends Controller
                     return [
                         'id' => $user->id,
                         'name' => $user->name,
+                        'username' => $user->username,
                         'image_url' => $user->image_url,
                         'department' => $user->department,
                         'student_id' => $user->student_id,
