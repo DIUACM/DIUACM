@@ -1,13 +1,12 @@
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+// Removed unused Badge, Button after PhotoSwipe integration
 import { Card } from '@/components/ui/card';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+// Removed unused Dialog components
 import MainLayout from '@/layouts/main-layout';
-import { Link, usePage } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, Download, Image, Share2, X } from 'lucide-react';
+import { usePage } from '@inertiajs/react';
+import { Image } from 'lucide-react';
 import PhotoSwipeLightbox from 'photoswipe/lightbox';
 import 'photoswipe/style.css';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 type Gallery = {
     id: number;
@@ -28,8 +27,6 @@ export default function GalleryShow() {
     const { gallery } = props;
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
     const [isLightboxOpen, setIsLightboxOpen] = useState(false); // still used for Dialog fallback and thumbnails strip
-    const touchStartX = useRef<number | null>(null);
-    const touchEndX = useRef<number | null>(null);
     const pswpRef = useRef<PhotoSwipeLightbox | null>(null);
     const [imageDimensions, setImageDimensions] = useState<Array<{ w: number; h: number }>>([]);
     // Detect natural dimensions to avoid stretching in PhotoSwipe
@@ -79,46 +76,7 @@ export default function GalleryShow() {
         setIsLightboxOpen(true);
     };
 
-    const nextImage = useCallback(() => {
-        setSelectedImageIndex((current) => {
-            if (current === null) { return current; }
-            if (current < gallery.images.length - 1) { return current + 1; }
-            return current; // no wrap to keep UX predictable
-        });
-    }, [gallery.images.length]);
-
-    const prevImage = useCallback(() => {
-        setSelectedImageIndex((current) => {
-            if (current === null) { return current; }
-            if (current > 0) { return current - 1; }
-            return current;
-        });
-    }, []);
-
-    const downloadImage = (imageUrl: string, fileName: string) => {
-        const link = document.createElement('a');
-        link.href = imageUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    };
-
-    const shareImage = async () => {
-        if (selectedImageIndex === null) { return; }
-        const url = gallery.images[selectedImageIndex];
-        const title = gallery.title;
-        try {
-            if (navigator.share) {
-                await navigator.share({ title, url });
-            } else if (navigator.clipboard) {
-                await navigator.clipboard.writeText(url);
-                // Optional: toast/notification system could be integrated here
-            }
-        } catch (_) {
-            // swallow errors (user cancel)
-        }
-    };
+    // Navigation helpers removed; PhotoSwipe provides internal navigation.
 
     // Cleanup PhotoSwipe on unmount
     useEffect(() => {
@@ -141,18 +99,7 @@ export default function GalleryShow() {
         preload(selectedImageIndex - 1);
     }, [selectedImageIndex, gallery.images]);
 
-    // Touch swipe support
-    const onTouchStart = (e: React.TouchEvent) => {
-        touchStartX.current = e.changedTouches[0].clientX;
-    };
-    const onTouchEnd = (e: React.TouchEvent) => {
-        touchEndX.current = e.changedTouches[0].clientX;
-        if (touchStartX.current === null || touchEndX.current === null) { return; }
-        const delta = touchEndX.current - touchStartX.current;
-        const threshold = 40; // px
-        if (delta > threshold) { prevImage(); }
-        if (delta < -threshold) { nextImage(); }
-    };
+    // (Swipe handlers removed; PhotoSwipe supplies gesture navigation)
 
     return (
         <MainLayout title={gallery.title}>
