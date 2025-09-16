@@ -39,30 +39,52 @@ class VJudgeController extends Controller
             ], 400);
         }
 
-        // Get event with strict_attendance setting
-        $event = Event::select('id', 'strict_attendance')
-            ->findOrFail($eventId);
+        // Get event
+        $event = Event::findOrFail($eventId);
 
-        // Get attendances for this event if strict attendance is enabled
-        $attendeeUserIds = [];
-        if ($event->strict_attendance) {
-            $attendeeUserIds = $event->attendees()->pluck('users.id')->toArray();
+        // Check if auto update score is enabled for this event
+        if (! $event->auto_update_score) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Auto update score is disabled for this event',
+            ], 400);
+        }
+
+        // Extract VJudge usernames from payload
+        $vjudgeUsernames = [];
+        if (isset($payload['participants']) && is_array($payload['participants'])) {
+            foreach ($payload['participants'] as $participant) {
+                if (isset($participant[0])) {
+                    $vjudgeUsernames[] = $participant[0];
+                }
+            }
         }
 
         // Get users from ranklists associated with this event who have vjudge handles
+        // OR users whose vjudge_handle match VJudge usernames in the payload
         $users = User::select('id', 'vjudge_handle', 'username')
-            ->whereHas('rankLists', function ($query) use ($eventId) {
-                $query->whereHas('events', function ($subQuery) use ($eventId) {
-                    $subQuery->where('events.id', $eventId);
+            ->where(function ($query) use ($eventId, $vjudgeUsernames) {
+                // Users from ranklists with vjudge handles
+                $query->whereHas('rankLists', function ($subQuery) use ($eventId) {
+                    $subQuery->whereHas('events', function ($nestedQuery) use ($eventId) {
+                        $nestedQuery->where('events.id', $eventId);
+                    });
                 });
+
+                // OR users whose vjudge_handle match VJudge usernames
+                if (! empty($vjudgeUsernames)) {
+                    $query->orWhere(function ($subQuery) use ($vjudgeUsernames) {
+                        $subQuery->whereIn('vjudge_handle', $vjudgeUsernames)
+                            ->whereNotNull('vjudge_handle');
+                    });
+                }
             })
-            ->whereNotNull('vjudge_handle')
             ->get();
 
         if ($users->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'No users with VJudge handles found in the ranklists',
+                'message' => 'No users with VJudge handles found in the ranklists or matching VJudge usernames',
             ], 400);
         }
 
@@ -76,25 +98,18 @@ class VJudgeController extends Controller
         $insertData = [];
 
         foreach ($users as $user) {
-            $stats = $processedData[$user->vjudge_handle] ?? null;
+            // Only match by vjudge_handle
+            $stats = $processedData[$user->vjudge_handle??"nousername"] ?? null;
 
             $finalSolveCount = $stats['solveCount'] ?? 0;
             $finalUpsolveCount = $stats['upSolveCount'] ?? 0;
-
-            // If strict attendance is enabled and user is not in attendees
-            if ($event->strict_attendance && ! in_array($user->id, $attendeeUserIds)) {
-                $finalUpsolveCount += $finalSolveCount; // Move solves to upsolves
-                $finalSolveCount = 0;
-            }
 
             $insertData[] = [
                 'user_id' => $user->id,
                 'event_id' => $eventId,
                 'solves_count' => $finalSolveCount,
                 'upsolves_count' => $finalUpsolveCount,
-                'participation' => $event->strict_attendance
-                    ? in_array($user->id, $attendeeUserIds)
-                    : ! ($stats['absent'] ?? true),
+                'participation' => ! ($stats['absent'] ?? true),
                 'created_at' => now(),
                 'updated_at' => now(),
             ];

@@ -13,6 +13,7 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - inertiajs/inertia-laravel (INERTIA) - v2
 - laravel/framework (LARAVEL) - v12
 - laravel/prompts (PROMPTS) - v0
+- laravel/sanctum (SANCTUM) - v4
 - laravel/wayfinder (WAYFINDER) - v0
 - livewire/livewire (LIVEWIRE) - v3
 - laravel/pint (PINT) - v1
@@ -334,7 +335,7 @@ Route::get('/users', function () {
 
 ## Livewire Core
 - Use the `search-docs` tool to find exact version specific documentation for how to write Livewire & Livewire tests.
-- Use the `php artisan make:livewire [Posts\CreatePost]` artisan command to create new components
+- Use the `php artisan make:livewire [Posts\\CreatePost]` artisan command to create new components
 - State should live on the server, with the UI reflecting it.
 - All Livewire requests hit the Laravel backend, they're like regular HTTP requests. Always validate form data, and run authorization checks in Livewire actions.
 

@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('event_password')->nullable();
             $table->boolean('open_for_attendance');
             $table->boolean('strict_attendance');
+            $table->boolean('auto_update_score')->default(true);
             $table->enum('type', EventType::cases());
             $table->enum('participation_scope', ParticipationScope::cases());
             $table->timestamps();

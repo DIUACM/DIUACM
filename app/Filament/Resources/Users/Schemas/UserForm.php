@@ -47,7 +47,7 @@ class UserForm
                         Grid::make()
                             ->schema([
                                 FileUpload::make('image')
-                                    ->disk('public')
+                                    ->disk('s3')
                                     ->directory('profile-images')
                                     ->visibility('public')
                                     ->avatar()
@@ -55,7 +55,6 @@ class UserForm
                                     ->image(),
                                 DateTimePicker::make('email_verified_at')
                                     ->label('Email verified at')
-                                    ->seconds(false)
                                     ->displayFormat('M j, Y g:i A')
                                     ->timezone('Asia/Dhaka'),
                                 TextInput::make('password')

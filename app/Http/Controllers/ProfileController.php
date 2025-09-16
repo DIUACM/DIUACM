@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,10 +15,12 @@ class ProfileController extends Controller
     /**
      * Show the edit profile form.
      */
-    public function edit(Request $request): Response
+    public function edit(): Response
     {
         return Inertia::render('profile/edit', [
-            'user' => $request->user(),
+            'user' => Auth::user(),
+        ])->withViewData([
+            'title' => 'Edit Profile',
         ]);
     }
 
@@ -27,7 +29,7 @@ class ProfileController extends Controller
      */
     public function update(UpdateProfileRequest $request): RedirectResponse
     {
-        $user = $request->user();
+        $user = Auth::user();
 
         $validated = $request->validated();
 
@@ -40,9 +42,11 @@ class ProfileController extends Controller
     /**
      * Show the change password form.
      */
-    public function showChangePasswordForm(Request $request): Response
+    public function showChangePasswordForm(): Response
     {
-        return Inertia::render('profile/change-password');
+        return Inertia::render('profile/change-password')->withViewData([
+            'title' => 'Change Password',
+        ]);
     }
 
     /**
@@ -50,7 +54,7 @@ class ProfileController extends Controller
      */
     public function changePassword(ChangePasswordRequest $request): RedirectResponse
     {
-        $user = $request->user();
+        $user = Auth::user();
 
         $user->update([
             'password' => Hash::make($request->validated()['password']),
