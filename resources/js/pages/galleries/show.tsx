@@ -1,11 +1,13 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import MainLayout from '@/layouts/main-layout';
 import { Link, usePage } from '@inertiajs/react';
-import { ChevronLeft, ChevronRight, Download, Image, X } from 'lucide-react';
-import { useState } from 'react';
+import { ChevronLeft, ChevronRight, Download, Image, Share2, X } from 'lucide-react';
+import PhotoSwipeLightbox from 'photoswipe/lightbox';
+import 'photoswipe/style.css';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 type Gallery = {
     id: number;
@@ -25,24 +27,73 @@ export default function GalleryShow() {
     const { props } = usePage<PageProps>();
     const { gallery } = props;
     const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
-    const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+    const [isLightboxOpen, setIsLightboxOpen] = useState(false); // still used for Dialog fallback and thumbnails strip
+    const touchStartX = useRef<number | null>(null);
+    const touchEndX = useRef<number | null>(null);
+    const pswpRef = useRef<PhotoSwipeLightbox | null>(null);
+    const [imageDimensions, setImageDimensions] = useState<Array<{ w: number; h: number }>>([]);
+    // Detect natural dimensions to avoid stretching in PhotoSwipe
+    useEffect(() => {
+        let isCancelled = false;
+        const dims: Array<{ w: number; h: number }> = [];
+        const loaders = gallery.images.map((src, index) => {
+            return new Promise<void>((resolve) => {
+                const img = document.createElement('img');
+                img.onload = () => {
+                    if (!isCancelled) {
+                        dims[index] = { w: img.naturalWidth, h: img.naturalHeight };
+                    }
+                    resolve();
+                };
+                img.onerror = () => resolve();
+                img.src = src;
+            });
+        });
+        Promise.all(loaders).then(() => {
+            if (!isCancelled) {
+                setImageDimensions(dims);
+            }
+        });
+        return () => { isCancelled = true; };
+    }, [gallery.images]);
+
+    const hasImages = gallery.images.length > 0;
 
     const openLightbox = (index: number) => {
         setSelectedImageIndex(index);
+        // Initialize (lazy) PhotoSwipe and load
+        if (!pswpRef.current) {
+            pswpRef.current = new PhotoSwipeLightbox({
+                gallery: '#gallery-grid',
+                children: 'a[data-pswp-item]',
+                pswpModule: () => import('photoswipe'),
+                showHideAnimationType: 'zoom',
+                padding: { top: 32, bottom: 32, left: 16, right: 16 },
+            });
+            pswpRef.current.init();
+        }
+        // Programmatically open
+        setTimeout(() => {
+            pswpRef.current?.loadAndOpen(index);
+        }, 0);
         setIsLightboxOpen(true);
     };
 
-    const nextImage = () => {
-        if (selectedImageIndex !== null && selectedImageIndex < gallery.images.length - 1) {
-            setSelectedImageIndex(selectedImageIndex + 1);
-        }
-    };
+    const nextImage = useCallback(() => {
+        setSelectedImageIndex((current) => {
+            if (current === null) { return current; }
+            if (current < gallery.images.length - 1) { return current + 1; }
+            return current; // no wrap to keep UX predictable
+        });
+    }, [gallery.images.length]);
 
-    const prevImage = () => {
-        if (selectedImageIndex !== null && selectedImageIndex > 0) {
-            setSelectedImageIndex(selectedImageIndex - 1);
-        }
-    };
+    const prevImage = useCallback(() => {
+        setSelectedImageIndex((current) => {
+            if (current === null) { return current; }
+            if (current > 0) { return current - 1; }
+            return current;
+        });
+    }, []);
 
     const downloadImage = (imageUrl: string, fileName: string) => {
         const link = document.createElement('a');
@@ -51,6 +102,56 @@ export default function GalleryShow() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    };
+
+    const shareImage = async () => {
+        if (selectedImageIndex === null) { return; }
+        const url = gallery.images[selectedImageIndex];
+        const title = gallery.title;
+        try {
+            if (navigator.share) {
+                await navigator.share({ title, url });
+            } else if (navigator.clipboard) {
+                await navigator.clipboard.writeText(url);
+                // Optional: toast/notification system could be integrated here
+            }
+        } catch (_) {
+            // swallow errors (user cancel)
+        }
+    };
+
+    // Cleanup PhotoSwipe on unmount
+    useEffect(() => {
+        return () => {
+            pswpRef.current?.destroy();
+            pswpRef.current = null;
+        };
+    }, []);
+
+    // Preload adjacent images for smoother navigation
+    useEffect(() => {
+        if (selectedImageIndex === null) { return; }
+        const preload = (index: number) => {
+            if (index < 0 || index >= gallery.images.length) { return; }
+            if (typeof document === 'undefined') { return; }
+            const img = document.createElement('img');
+            img.src = gallery.images[index];
+        };
+        preload(selectedImageIndex + 1);
+        preload(selectedImageIndex - 1);
+    }, [selectedImageIndex, gallery.images]);
+
+    // Touch swipe support
+    const onTouchStart = (e: React.TouchEvent) => {
+        touchStartX.current = e.changedTouches[0].clientX;
+    };
+    const onTouchEnd = (e: React.TouchEvent) => {
+        touchEndX.current = e.changedTouches[0].clientX;
+        if (touchStartX.current === null || touchEndX.current === null) { return; }
+        const delta = touchEndX.current - touchStartX.current;
+        const threshold = 40; // px
+        if (delta > threshold) { prevImage(); }
+        if (delta < -threshold) { nextImage(); }
     };
 
     return (
@@ -69,29 +170,42 @@ export default function GalleryShow() {
                 </div>
 
                 {/* Images Grid */}
-                {gallery.images.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {hasImages ? (
+                    <div id="gallery-grid" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" role="list" aria-label="Gallery images">
                         {gallery.images.map((image, index) => (
-                            <Card
+                            <a
                                 key={index}
-                                className="group cursor-pointer overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-                                onClick={() => openLightbox(index)}
+                                data-pswp-item
+                                href={image}
+                                data-pswp-width={imageDimensions[index]?.w || 1200}
+                                data-pswp-height={imageDimensions[index]?.h || 800}
+                                aria-label={`Open image ${index + 1} of ${gallery.images.length}`}
+                                onClick={(e) => { e.preventDefault(); openLightbox(index); }}
+                                className="group block cursor-zoom-in overflow-hidden rounded outline-none focus-visible:ring focus-visible:ring-blue-500"
                             >
-                                <div className="relative aspect-square overflow-hidden bg-slate-100 dark:bg-slate-800">
-                                    <img
-                                        src={image}
-                                        alt={`${gallery.title} - Image ${index + 1}`}
-                                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                        loading="lazy"
-                                    />
-                                    <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/20" />
-                                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                                        <div className="rounded-full bg-white/90 p-2 dark:bg-slate-800/90">
-                                            <Image className="h-5 w-5 text-slate-700 dark:text-slate-300" />
+                                <Card
+                                    role="button"
+                                    tabIndex={0}
+                                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLightbox(index); } }}
+                                    className="overflow-hidden border-0 bg-transparent p-0"
+                                >
+                                    <div className="relative aspect-square overflow-hidden rounded bg-slate-100 dark:bg-slate-800">
+                                        <img
+                                            src={image}
+                                            alt={`${gallery.title} - Image ${index + 1}`}
+                                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                            loading="lazy"
+                                            decoding="async"
+                                        />
+                                        <div className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/20" />
+                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                                            <div className="rounded-full bg-white/90 p-2 dark:bg-slate-800/90">
+                                                <Image className="h-5 w-5 text-slate-700 dark:text-slate-300" />
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </Card>
+                                </Card>
+                            </a>
                         ))}
                     </div>
                 ) : (
@@ -106,76 +220,24 @@ export default function GalleryShow() {
                     </div>
                 )}
 
-                {/* Lightbox Modal */}
-                <Dialog open={isLightboxOpen} onOpenChange={setIsLightboxOpen}>
-                    <DialogContent className="max-w-6xl p-0">
-                        {selectedImageIndex !== null && (
-                            <div className="relative">
-                                {/* Close button */}
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute right-2 top-2 z-10 rounded-full bg-black/50 text-white hover:bg-black/70"
-                                    onClick={() => setIsLightboxOpen(false)}
+                {/* Thumbnail strip (outside PhotoSwipe) */}
+                {isLightboxOpen && selectedImageIndex !== null && gallery.images.length > 1 && (
+                    <div className="mt-10" aria-label="Selected image thumbnails">
+                        <h2 className="mb-2 text-sm font-medium text-slate-600 dark:text-slate-300">Quick navigation</h2>
+                        <div className="flex max-w-full snap-x gap-2 overflow-x-auto pb-2" aria-label="Image thumbnails">
+                            {gallery.images.map((thumb, i) => (
+                                <button
+                                    key={i}
+                                    aria-label={`View image ${i + 1}`}
+                                    onClick={() => openLightbox(i)}
+                                    className={`relative h-16 w-16 flex-shrink-0 overflow-hidden rounded border ${i === selectedImageIndex ? 'border-blue-500 ring-2 ring-blue-500' : 'border-slate-300 dark:border-slate-600'}`}
                                 >
-                                    <X className="h-4 w-4" />
-                                </Button>
-
-                                {/* Download button */}
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="absolute right-12 top-2 z-10 rounded-full bg-black/50 text-white hover:bg-black/70"
-                                    onClick={() =>
-                                        downloadImage(
-                                            gallery.images[selectedImageIndex],
-                                            `${gallery.title}-${selectedImageIndex + 1}.jpg`
-                                        )
-                                    }
-                                >
-                                    <Download className="h-4 w-4" />
-                                </Button>
-
-                                {/* Navigation buttons */}
-                                {selectedImageIndex > 0 && (
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70"
-                                        onClick={prevImage}
-                                    >
-                                        <ChevronLeft className="h-6 w-6" />
-                                    </Button>
-                                )}
-                                
-                                {selectedImageIndex < gallery.images.length - 1 && (
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/50 text-white hover:bg-black/70"
-                                        onClick={nextImage}
-                                    >
-                                        <ChevronRight className="h-6 w-6" />
-                                    </Button>
-                                )}
-
-                                {/* Image */}
-                                <div className="relative">
-                                    <img
-                                        src={gallery.images[selectedImageIndex]}
-                                        alt={`${gallery.title} - Image ${selectedImageIndex + 1}`}
-                                        className="max-h-[80vh] w-full object-contain"
-                                    />
-                                    
-                                    {/* Image counter */}
-                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-3 py-1 text-sm text-white">
-                                        {selectedImageIndex + 1} of {gallery.images.length}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </DialogContent>
-                </Dialog>
+                                    <img src={thumb} alt="" className="h-full w-full object-cover" loading="lazy" />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </MainLayout>
     );
