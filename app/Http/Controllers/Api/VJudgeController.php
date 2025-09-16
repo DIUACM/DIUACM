@@ -50,20 +50,41 @@ class VJudgeController extends Controller
             ], 400);
         }
 
+        // Extract VJudge usernames from payload
+        $vjudgeUsernames = [];
+        if (isset($payload['participants']) && is_array($payload['participants'])) {
+            foreach ($payload['participants'] as $participant) {
+                if (isset($participant[0])) {
+                    $vjudgeUsernames[] = $participant[0];
+                }
+            }
+        }
+
         // Get users from ranklists associated with this event who have vjudge handles
+        // OR users whose vjudge_handle match VJudge usernames in the payload
         $users = User::select('id', 'vjudge_handle', 'username')
-            ->whereHas('rankLists', function ($query) use ($eventId) {
-                $query->whereHas('events', function ($subQuery) use ($eventId) {
-                    $subQuery->where('events.id', $eventId);
+            ->where(function ($query) use ($eventId, $vjudgeUsernames) {
+                // Users from ranklists with vjudge handles
+                $query->whereHas('rankLists', function ($subQuery) use ($eventId) {
+                    $subQuery->whereHas('events', function ($nestedQuery) use ($eventId) {
+                        $nestedQuery->where('events.id', $eventId);
+                    });
                 });
+
+                // OR users whose vjudge_handle match VJudge usernames
+                if (! empty($vjudgeUsernames)) {
+                    $query->orWhere(function ($subQuery) use ($vjudgeUsernames) {
+                        $subQuery->whereIn('vjudge_handle', $vjudgeUsernames)
+                            ->whereNotNull('vjudge_handle');
+                    });
+                }
             })
-            ->whereNotNull('vjudge_handle')
             ->get();
 
         if ($users->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'No users with VJudge handles found in the ranklists',
+                'message' => 'No users with VJudge handles found in the ranklists or matching VJudge usernames',
             ], 400);
         }
 
@@ -77,7 +98,8 @@ class VJudgeController extends Controller
         $insertData = [];
 
         foreach ($users as $user) {
-            $stats = $processedData[$user->vjudge_handle] ?? null;
+            // Only match by vjudge_handle
+            $stats = $processedData[$user->vjudge_handle??"nousername"] ?? null;
 
             $finalSolveCount = $stats['solveCount'] ?? 0;
             $finalUpsolveCount = $stats['upSolveCount'] ?? 0;
