@@ -316,7 +316,7 @@ export default function ProgrammerShow() {
                                                 <Link
                                                     key={rankList.rank_list.id}
                                                     href={`/trackers/${tracker.tracker.slug}/${rankList.rank_list.keyword}`}
-                                                    className="block p-4 rounded-lg bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100/80 dark:hover:bg-slate-700/50 transition-colors border border-slate-200/60 dark:border-slate-600/40 backdrop-blur-sm"
+                                                    className="block p-4 rounded-lg bg-slate-50/50 dark:bg-slate-800/30 hover:bg-slate-100/80 dark:hover:bg-slate-700/50 transition-colors border border-slate-200/60 dark:border-slate-600/40"
                                                 >
                                                     <div className="flex items-center justify-between mb-3">
                                                         <h4 className="font-medium text-slate-900 dark:text-white">

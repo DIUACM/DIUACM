@@ -11,7 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BarChart3, Calendar, Home, Info, KeyRound, LogOut, Mail, Menu, User, X, Images } from 'lucide-react';
+import { BarChart3, Calendar, Home, Info, KeyRound, LogOut, Mail, Menu, User, X, Images, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppearanceToggleDropdown from './appearance-dropdown';
 
@@ -25,9 +25,10 @@ const CONTAINER_CLASS = 'container mx-auto px-4';
 // Menu items for better organization and maintainability
 const menuItems = [
     { name: 'Home', href: '/', icon: Home },
-    { name: 'Galleries', href: '/galleries', icon: Images },
-    { name: 'Trackers', href: '/trackers', icon: BarChart3 },
     { name: 'Events', href: '/events', icon: Calendar },
+    { name: 'Trackers', href: '/trackers', icon: BarChart3 },
+    { name: 'Galleries', href: '/galleries', icon: Images },
+    { name: 'Programmers', href: '/programmers', icon: Users },
     { name: 'About', href: '/about', icon: Info },
     { name: 'Contact', href: '/contact', icon: Mail },
 ];
