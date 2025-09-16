@@ -11,7 +11,6 @@ type GalleryItem = {
     description: string | null;
     images_count: number;
     cover_image: string | null;
-    created_at: string;
 };
 
 type PageProps = {
@@ -22,13 +21,7 @@ export default function GalleryIndex() {
     const { props } = usePage<PageProps>();
     const galleries = props.galleries || [];
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        });
-    };
+    // Date removed from backend payload; if reintroduced, re-add formatting helper.
 
     return (
         <MainLayout title="Gallery">
@@ -82,10 +75,7 @@ export default function GalleryIndex() {
                                             </p>
                                         )}
                                         
-                                        <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
-                                            <Calendar className="h-3 w-3" />
-                                            {formatDate(gallery.created_at)}
-                                        </div>
+                                        {/* Date removed from payload; placeholder reserved for potential future meta info */}
                                     </CardContent>
                                 </Card>
                             </Link>

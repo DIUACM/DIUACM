@@ -24,8 +24,6 @@ class GalleryController extends Controller
                 'cover_image' => is_array($gallery->attachments) && ! empty($gallery->attachments)
                     ? '/storage/'.$gallery->attachments[0]
                     : null,
-                'created_at' => $gallery->created_at?->toISOString(),
-                'updated_at' => $gallery->updated_at?->toISOString(),
             ]);
 
         return Inertia::render('galleries/index', [
@@ -50,8 +48,6 @@ class GalleryController extends Controller
             'images' => is_array($gallery->attachments)
                 ? array_map(fn ($attachment) => '/storage/'.$attachment, $gallery->attachments)
                 : [],
-            'created_at' => $gallery->created_at?->toISOString(),
-            'updated_at' => $gallery->updated_at?->toISOString(),
         ];
 
         return Inertia::render('galleries/show', [

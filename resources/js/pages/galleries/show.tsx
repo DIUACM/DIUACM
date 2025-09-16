@@ -14,8 +14,6 @@ type Gallery = {
     slug: string;
     description: string | null;
     images: string[];
-    created_at: string;
-    updated_at: string;
 };
 
 type PageProps = {
