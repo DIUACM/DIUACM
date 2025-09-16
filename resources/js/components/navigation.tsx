@@ -79,7 +79,7 @@ export default function Navigation() {
                         <div className="flex flex-shrink-0 items-center">
                             <Link href="/" className="flex items-center gap-2" prefetch="hover">
                                 <div className="flex h-8 w-8 items-center justify-center rounded-lg">
-                                    <img src="/logo.svg" alt="DIU ACM Logo" className="rounded-lg object-cover" width={32} height={32} />
+                                    <img src="/images/diuacm-logo-rounded.webp" alt="DIU ACM Logo" className="rounded-lg object-cover" width={32} height={32} />
                                 </div>
                                 <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-xl font-bold text-transparent dark:from-blue-400 dark:to-cyan-300">
                                     DIU ACM
