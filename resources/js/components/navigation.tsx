@@ -172,7 +172,7 @@ export default function Navigation() {
                                         asChild
                                         className="rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white shadow-lg transition-all hover:from-blue-700 hover:to-cyan-600 hover:shadow-xl dark:from-blue-700 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-400"
                                     >
-                                        <Link href={register()}>Sign Up</Link>
+                                        <Link href={login()}>Log In</Link>
                                     </Button>
                                 )}
                             </div>
