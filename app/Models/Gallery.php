@@ -35,7 +35,7 @@ class Gallery extends Model implements HasMedia
     {
         $this
             ->addMediaCollection('gallery_images')
-            ->useDisk(diskName: 'media')
+            ->useDisk(diskName: 'public')
             ->registerMediaConversions(function (?Media $media = null) {
                 $this
                     ->addMediaConversion('thumb')
