@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
 
 class DatabaseSeeder extends Seeder
 {
@@ -20,5 +21,31 @@ class DatabaseSeeder extends Seeder
             'email' => 'sourov2305101004@diu.edu.bd',
 
         ]);
+
+        $this->command->info('Creating a temporary dummy image...');
+        $imageName = 'dummy-image.png';
+        $imagePath = storage_path('app/' . $imageName);
+        if (file_exists($imagePath)) {
+            unlink($imagePath);
+        }
+        $image = imagecreatetruecolor(1024, 768);
+        imagepng($image, $imagePath);
+        imagedestroy($image);
+
+        \App\Models\Gallery::factory(20)
+            ->create()
+            ->each(function ($gallery) use ($imagePath) {
+                for ($i = 0; $i < 5; $i++) {
+                    $gallery
+                        ->addMedia($imagePath)
+                        ->preservingOriginal()
+                        ->toMediaCollection('gallery_images');
+                }
+            });
+
+        $this->command->info('Cleaning up temporary image...');
+        if (file_exists($imagePath)) {
+            unlink($imagePath);
+        }
     }
 }
