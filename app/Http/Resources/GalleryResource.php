@@ -16,6 +16,7 @@ class GalleryResource extends JsonResource
     {
         if ($request->routeIs('galleries.index')) {
             $coverImage = $this->getFirstMedia('gallery_images');
+
             return [
                 'id' => $this->id,
                 'title' => $this->title,

@@ -8,7 +8,6 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-
 Route::apiResource('galleries', GalleryController::class)->only([
-    'index', 'show'
+    'index', 'show',
 ]);

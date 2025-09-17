@@ -14,8 +14,9 @@ class GalleryController extends Controller
     public function index()
     {
         $galleries = Gallery::published()
-            ->with('media', fn ($query) => $query->where('collection_name', 'gallery_images'))
-            ->get();
+            ->select('id', 'title', 'slug')
+            ->with(['media' => fn ($query) => $query->where('collection_name', 'gallery_images')->orderBy('order_column')->limit(1)])
+            ->paginate(10);
 
         return GalleryResource::collection($galleries);
     }
@@ -29,6 +30,7 @@ class GalleryController extends Controller
             abort(404);
         }
         $gallery->load(['media' => fn ($query) => $query->where('collection_name', 'gallery_images')]);
+
         return new GalleryResource($gallery);
     }
 }

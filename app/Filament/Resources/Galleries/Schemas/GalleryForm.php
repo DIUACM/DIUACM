@@ -3,10 +3,10 @@
 namespace App\Filament\Resources\Galleries\Schemas;
 
 use App\Enums\VisibilityStatus;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -44,12 +44,11 @@ class GalleryForm
                                     ->autocomplete(false)
                                     ->placeholder('auto-generated-from-title')
                                     ->helperText('URL-friendly version of the title. Auto-generated but can be customized.'),
-                                Select::make('status')
-                                    ->label('Status')
+                                ToggleButtons::make('status')
                                     ->options(VisibilityStatus::class)
                                     ->default(VisibilityStatus::DRAFT)
+                                    ->inline()
                                     ->required()
-                                    ->native(false)
                                     ->helperText('Set to Draft while preparing; Published makes it visible.'),
                             ]),
                         Grid::make()
