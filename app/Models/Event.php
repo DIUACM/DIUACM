@@ -28,6 +28,14 @@ class Event extends Model
         'participation_scope',
     ];
 
+     /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'event_password',
+    ];
     protected function casts(): array
     {
         return [

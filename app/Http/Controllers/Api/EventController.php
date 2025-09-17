@@ -31,7 +31,7 @@ class EventController extends Controller
         if ($event->status !== \App\Enums\VisibilityStatus::PUBLISHED) {
             abort(404);
         }
-
+    
         return new EventResource($event);
     }
 }
