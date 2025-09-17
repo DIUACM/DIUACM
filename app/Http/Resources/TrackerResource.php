@@ -22,6 +22,7 @@ class TrackerResource extends JsonResource
             ];
         }
 
+        $selectedRankList = $this->selectedRankList;
         return [
             'title' => $this->title,
             'slug' => $this->slug,
@@ -31,6 +32,33 @@ class TrackerResource extends JsonResource
                     'keyword' => $rankList->keyword,
                 ];
             }),
+            'selected_rank_list' => [
+                'keyword' => $selectedRankList->keyword,
+                'consider_strict_attendance' => $selectedRankList->consider_strict_attendance,
+                'events' => $selectedRankList->events->map(function ($event) use ($selectedRankList) {
+                    $eventData = [
+                        'id' => $event->id,
+                        'title' => $event->title,
+                        'starting_at' => $event->starting_at,
+                    ];
+
+                    if ($selectedRankList->consider_strict_attendance) {
+                        $eventData['strict_attendance'] = $event->strict_attendance;
+                    }
+
+                    return $eventData;
+                }),
+                'users' => $selectedRankList->users->map(function ($user) {
+                    return [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'username' => $user->username,
+                        'score' => $user->pivot->score ?? 0,
+                        'profile_picture' => $user->media->first()?->getUrl(),
+                        'event_stats' => $user->getAttribute('event_stats'),
+                    ];
+                }),
+            ],
         ];
     }
 }

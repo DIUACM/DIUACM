@@ -78,8 +78,11 @@ class TrackerController extends Controller
         }
 
         $selectedRankList->setRelation('users', $selectedRankList->users->sortByDesc(fn ($u) => (float) ($u->pivot->score ?? 0))->values());
-        
-        return new TrackerResource($tracker,);
+
+        // Attach the selected rank list to the tracker for the resource
+        $tracker->setRelation('selectedRankList', $selectedRankList);
+
+        return new TrackerResource($tracker);
     }
 
     private function processEventStats(RankList $selectedRankList, $userIds, $eventIds): void
