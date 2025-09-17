@@ -29,7 +29,6 @@ class TrackerResource extends JsonResource
             'rank_lists' => $this->rankLists->map(function ($rankList) {
                 return [
                     'keyword' => $rankList->keyword,
-                    'description' => $rankList->description,
                 ];
             }),
         ];
