@@ -99,7 +99,7 @@ class VJudgeController extends Controller
 
         foreach ($users as $user) {
             // Only match by vjudge_handle
-            $stats = $processedData[$user->vjudge_handle??"nousername"] ?? null;
+            $stats = $processedData[$user->vjudge_handle ?? 'nousername'] ?? null;
 
             $finalSolveCount = $stats['solveCount'] ?? 0;
             $finalUpsolveCount = $stats['upSolveCount'] ?? 0;
@@ -107,8 +107,8 @@ class VJudgeController extends Controller
             $insertData[] = [
                 'user_id' => $user->id,
                 'event_id' => $eventId,
-                'solves_count' => $finalSolveCount,
-                'upsolves_count' => $finalUpsolveCount,
+                'solve_count' => $finalSolveCount,
+                'upsolve_count' => $finalUpsolveCount,
                 'participation' => ! ($stats['absent'] ?? true),
                 'created_at' => now(),
                 'updated_at' => now(),

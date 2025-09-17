@@ -23,6 +23,7 @@ class TrackerResource extends JsonResource
         }
 
         $selectedRankList = $this->selectedRankList;
+
         return [
             'title' => $this->title,
             'slug' => $this->slug,
@@ -49,14 +50,14 @@ class TrackerResource extends JsonResource
                     return $eventData;
                 }),
                 'users' => $selectedRankList->users->map(function ($user) {
-                   
-                     return array_merge(
+
+                    return array_merge(
                         (new UserResource($user))->toArray(request()),
                         [
-                          'event_stats' => $user->getAttribute('event_stats'),
+                            'event_stats' => $user->getAttribute('event_stats'),
                         ]
                     );
-                   
+
                 }),
             ],
         ];

@@ -88,6 +88,12 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
             });
     }
 
+    public function rankLists()
+    {
+        return $this->belongsToMany(RankList::class, 'rank_list_user')
+            ->withPivot('score');
+    }
+
     public function teams()
     {
         return $this->belongsToMany(Team::class, 'team_member');

@@ -5,9 +5,9 @@ use App\Http\Controllers\Api\ContestController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\GalleryController;
 use App\Http\Controllers\Api\TrackerController;
+use App\Http\Controllers\Api\VJudgeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\VJudgeController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -18,7 +18,7 @@ Route::get('/events/vjudge', [VJudgeController::class, 'getActiveContests'])
 Route::post('/events/{eventId}/vjudge-update', [VJudgeController::class, 'processContestData'])
     ->middleware('auth:sanctum')
     ->where('eventId', '[0-9]+');
-    
+
 Route::apiResource('galleries', GalleryController::class)->only([
     'index', 'show',
 ]);
@@ -41,6 +41,3 @@ Route::apiResource('trackers', TrackerController::class)->only([
 
 Route::post('/events/{event}/attend', [EventController::class, 'attend'])
     ->middleware('auth:sanctum');
-
-
-
