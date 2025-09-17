@@ -13,6 +13,12 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+Route::get('/events/vjudge', [VJudgeController::class, 'getActiveContests'])
+    ->middleware('auth:sanctum');
+Route::post('/events/{eventId}/vjudge-update', [VJudgeController::class, 'processContestData'])
+    ->middleware('auth:sanctum')
+    ->where('eventId', '[0-9]+');
+    
 Route::apiResource('galleries', GalleryController::class)->only([
     'index', 'show',
 ]);
@@ -37,8 +43,4 @@ Route::post('/events/{event}/attend', [EventController::class, 'attend'])
     ->middleware('auth:sanctum');
 
 
-Route::get('/events/vjudge', [VJudgeController::class, 'getActiveContests'])
-    ->middleware('auth:sanctum');
-Route::post('/events/{eventId}/vjudge-update', [VJudgeController::class, 'processContestData'])
-    ->middleware('auth:sanctum')
-    ->where('eventId', '[0-9]+');
+
