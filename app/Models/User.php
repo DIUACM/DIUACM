@@ -117,6 +117,26 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
     }
 
     /**
+     * Scope a query to search users by various fields.
+     */
+    public function scopeSearch($query, ?string $search)
+    {
+        if (empty($search)) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+                ->orWhere('username', 'like', "%{$search}%")
+                ->orWhere('student_id', 'like', "%{$search}%")
+                ->orWhere('department', 'like', "%{$search}%")
+                ->orWhere('codeforces_handle', 'like', "%{$search}%")
+                ->orWhere('atcoder_handle', 'like', "%{$search}%")
+                ->orWhere('vjudge_handle', 'like', "%{$search}%");
+        });
+    }
+
+    /**
      * Get the route key for the model.
      */
     public function getRouteKeyName(): string

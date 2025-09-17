@@ -13,26 +13,11 @@ class ProgrammerController extends Controller
      */
     public function index()
     {
-        $query = User::query()
-            ->select('id', 'name', 'username', 'student_id', 'department', 'max_cf_rating')
-            ->with(['media' => fn ($query) => $query->where('collection_name', 'profile_picture')->limit(1)]);
-
-        // Search functionality
-        if (request('search')) {
-            $search = request('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('username', 'like', "%{$search}%")
-                    ->orWhere('student_id', 'like', "%{$search}%")
-                    ->orWhere('department', 'like', "%{$search}%")
-                    ->orWhere('codeforces_handle', 'like', "%{$search}%")
-                    ->orWhere('atcoder_handle', 'like', "%{$search}%")
-                    ->orWhere('vjudge_handle', 'like', "%{$search}%");
-            });
-        }
-
-        // Order by max CF rating (desc) and then by name
-        $programmers = $query->orderByDesc('max_cf_rating')
+        $programmers = User::query()
+            ->select('id', 'name', 'username', 'student_id', 'department', 'codeforces_handle', 'atcoder_handle', 'vjudge_handle', 'max_cf_rating')
+            ->with(['media' => fn ($query) => $query->where('collection_name', 'profile_picture')->limit(1)])
+            ->search(request('search'))
+            ->orderByDesc('max_cf_rating')
             ->orderBy('name')
             ->paginate(15);
 
