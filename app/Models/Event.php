@@ -67,4 +67,16 @@ class Event extends Model
     {
         return $this->belongsToMany(User::class, 'event_attendance')->withTimestamps();
     }
+
+    public function eventUserStats()
+    {
+        return $this->hasMany(EventUserStat::class);
+    }
+
+    public function usersWithStats()
+    {
+        return $this->belongsToMany(User::class, 'event_user_stats')
+            ->withPivot(['solves_count', 'upsolves_count', 'participation'])
+            ->withTimestamps();
+    }
 }
