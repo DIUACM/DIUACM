@@ -33,13 +33,13 @@ class ContestResource extends JsonResource
             'description' => $this->description,
             'standings_url' => $this->standings_url,
             'gallery' => new GalleryResource($this->gallery),
-            'teams' => $this->when($this->relationLoaded('teams'), $this->teams->map(function ($team) {
+            'teams' => $this->teams->map(function ($team) {
                 return [
                     'id' => $team->id,
                     'name' => $team->name,
                     'rank' => $team->rank,
                     'solve_count' => $team->solve_count,
-                    'members' => $team->relationLoaded('members') ? $team->members->map(function ($member) {
+                    'members' => $team->members->map(function ($member) {
                         return [
                             'id' => $member->id,
                             'name' => $member->name,
@@ -48,9 +48,9 @@ class ContestResource extends JsonResource
                             'department' => $member->department,
                             'profile_picture' => $member->getFirstMediaUrl('profile_picture'),
                         ];
-                    }) : [],
+                    }),
                 ];
-            })),
+            }),
         ];
     }
 }
