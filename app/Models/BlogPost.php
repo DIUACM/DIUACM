@@ -44,8 +44,11 @@ class BlogPost extends Model implements HasMedia, HasRichContent
     public function setUpRichContent(): void
     {
         $this->registerRichContent('content')
+            ->fileAttachmentsVisibility('public')
+
             ->fileAttachmentProvider(
                 SpatieMediaLibraryFileAttachmentProvider::make()
+
                     ->collection('content-file-attachments'),
             );
     }
@@ -85,6 +88,7 @@ class BlogPost extends Model implements HasMedia, HasRichContent
     {
         $this
             ->addMediaCollection('featured_image')
+            ->useFallbackUrl(url: asset('images/fallback-gallery-image.jpeg'))
             ->singleFile()
             ->useDisk(diskName: 'media')
             ->registerMediaConversions(function (?Media $media = null) {

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\BlogPostController;
 use App\Http\Controllers\Api\GalleryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -9,5 +10,9 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::apiResource('galleries', GalleryController::class)->only([
+    'index', 'show',
+]);
+
+Route::apiResource('blog-posts', BlogPostController::class)->only([
     'index', 'show',
 ]);

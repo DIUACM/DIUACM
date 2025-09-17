@@ -15,7 +15,6 @@ class GalleryResource extends JsonResource
     public function toArray(Request $request): array
     {
         if ($request->routeIs('galleries.index')) {
-        ;
 
             return [
                 'title' => $this->title,

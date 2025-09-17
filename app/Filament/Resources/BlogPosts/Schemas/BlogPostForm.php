@@ -55,8 +55,7 @@ class BlogPostForm
                                 ['blockquote', 'codeBlock', 'bulletList', 'orderedList'],
                                 ['table', 'attachFiles'],
                                 ['undo', 'redo'],
-                            ])->fileAttachmentsVisibility('public')
-
+                            ])
                             ->json()
                             ->placeholder('Write your blog post content here...'),
                     ]),
@@ -102,7 +101,7 @@ class BlogPostForm
                                 '4:3',
                                 '1:1',
                             ])
-                            ->visibility('public')
+                            ->visibility(visibility: 'public')
                             ->helperText('Recommended size: 1200x675px (16:9 aspect ratio)'),
                     ]),
 

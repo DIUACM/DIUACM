@@ -41,7 +41,7 @@ class Gallery extends Model implements HasMedia
     {
         $this
             ->addMediaCollection('gallery_images')
-            ->useFallbackUrl(asset('images/fallback-gallery-image.jpeg'))
+            ->useFallbackUrl(url: asset('images/fallback-gallery-image.jpeg'))
             ->useDisk(diskName: 'public')
             ->registerMediaConversions(function (?Media $media = null) {
                 $this
