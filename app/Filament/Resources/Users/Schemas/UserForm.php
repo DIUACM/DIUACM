@@ -49,7 +49,6 @@ class UserForm
                                 SpatieMediaLibraryFileUpload::make('image')
                                     ->collection('profile_picture')
                                     ->visibility('public')
-
                                     ->avatar()
                                     ->imageEditor()
                                     ->image(),
