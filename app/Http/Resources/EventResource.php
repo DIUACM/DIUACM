@@ -42,6 +42,18 @@ class EventResource extends JsonResource
             'participation_scope' => $this->participation_scope->getLabel(),
             'event_link' => $this->event_link,
             'open_for_attendance' => $this->open_for_attendance,
+            'user_stats' => $this->eventUserStats->map(function ($stat) {
+                return [
+                    'user_name' => $stat->user->name,
+                    'username' => $stat->user->username,
+                    'student_id' => $stat->user->student_id,
+                    'department' => $stat->user->department,
+                    'profile_picture' => $stat->user->getFirstMediaUrl('profile_picture'),
+                    'solves_count' => $stat->solves_count,
+                    'upsolves_count' => $stat->upsolves_count,
+                    'participation' => $stat->participation,
+                ];
+            }),
         ];
     }
 }

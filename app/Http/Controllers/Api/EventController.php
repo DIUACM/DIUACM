@@ -31,7 +31,9 @@ class EventController extends Controller
         if ($event->status !== \App\Enums\VisibilityStatus::PUBLISHED) {
             abort(404);
         }
-    
+
+        $event->load(['eventUserStats.user:id,name,username,student_id,department', 'eventUserStats.user.media']);
+
         return new EventResource($event);
     }
 }
