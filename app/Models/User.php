@@ -86,4 +86,9 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
                     ->nonQueued();
             });
     }
+
+    public function teams()
+    {
+        return $this->belongsToMany(Team::class, 'team_member');
+    }
 }
