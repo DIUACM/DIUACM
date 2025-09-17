@@ -80,6 +80,46 @@ class Event extends Model
         return $query->where('status', VisibilityStatus::PUBLISHED);
     }
 
+    /**
+     * Scope a query to search events by title, description, or event link.
+     */
+    public function scopeSearch($query, ?string $searchTerm)
+    {
+        if (empty($searchTerm)) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($searchTerm) {
+            $q->where('title', 'like', '%'.$searchTerm.'%')
+                ->orWhere('description', 'like', '%'.$searchTerm.'%')
+                ->orWhere('event_link', 'like', '%'.$searchTerm.'%');
+        });
+    }
+
+    /**
+     * Scope a query to filter events by type.
+     */
+    public function scopeOfType($query, ?string $type)
+    {
+        if (empty($type)) {
+            return $query;
+        }
+
+        return $query->where('type', $type);
+    }
+
+    /**
+     * Scope a query to filter events by participation scope.
+     */
+    public function scopeForParticipationScope($query, ?string $participationScope)
+    {
+        if (empty($participationScope)) {
+            return $query;
+        }
+
+        return $query->where('participation_scope', $participationScope);
+    }
+
     public function attendees()
     {
         return $this->belongsToMany(User::class, 'event_attendance')->withTimestamps();

@@ -16,6 +16,9 @@ class EventController extends Controller
         $events = Event::published()
             ->select('id', 'title', 'type', 'status', 'starting_at', 'ending_at', 'participation_scope', 'open_for_attendance')
             ->withCount('attendees')
+            ->search(request('search'))
+            ->ofType(request('type'))
+            ->forParticipationScope(request('participation_scope'))
             ->orderBy('starting_at', 'desc')
             ->paginate(10);
 
