@@ -19,14 +19,14 @@ class EventUserStatFactory extends Factory
     public function definition(): array
     {
         $participation = fake()->boolean(85); // 85% chance of participation
-        $solvesCount = $participation ? fake()->numberBetween(0, 12) : 0;
-        $upsolvesCount = $participation ? fake()->numberBetween(0, max(0, 15 - $solvesCount)) : 0;
+        $solveCount = $participation ? fake()->numberBetween(0, 12) : 0;
+        $upsolveCount = $participation ? fake()->numberBetween(0, max(0, 15 - $solveCount)) : 0;
 
         return [
             'event_id' => Event::factory(),
             'user_id' => User::factory(),
-            'solve_count' => $solvesCount,
-            'upsolve_count' => $upsolvesCount,
+            'solve_count' => $solveCount,
+            'upsolve_count' => $upsolveCount,
             'participation' => $participation,
         ];
     }

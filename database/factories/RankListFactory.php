@@ -98,7 +98,7 @@ class RankListFactory extends Factory
     }
 
     /**
-     * Set a specific weight for upsolves.
+     * Set a specific weight for upsolve.
      */
     public function upsolveWeight(float $weight): static
     {

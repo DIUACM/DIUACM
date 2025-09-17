@@ -82,14 +82,14 @@ class EventUserStatsRelationManager extends RelationManager
                     ->sortable(),
 
                 TextColumn::make('solve_count')
-                    ->label('Solves')
+                    ->label('Solve')
                     ->numeric()
                     ->sortable()
                     ->badge()
                     ->color('success'),
 
                 TextColumn::make('upsolve_count')
-                    ->label('Upsolves')
+                    ->label('Upsolve')
                     ->numeric()
                     ->sortable()
                     ->badge()

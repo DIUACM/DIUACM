@@ -222,7 +222,7 @@ class RankListScoreService
                     $solveScore = $userStat->solve_count * $eventWeight;
                     $upsolveScore = $userStat->upsolve_count * $eventWeight * $weightOfUpsolve;
                 } else {
-                    // If strict attendance is enforced and user hasn't attended, treat all solves as upsolves
+                    // If strict attendance is enforced and user hasn't attended, treat all solve as upsolve
                     $solveScore = 0;
                     $upsolveScore = ($userStat->solve_count + $userStat->upsolve_count) * $eventWeight * $weightOfUpsolve;
                 }
