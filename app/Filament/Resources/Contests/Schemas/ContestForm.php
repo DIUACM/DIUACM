@@ -22,6 +22,7 @@ class ContestForm
                     ->columnSpanFull()
                     ->schema([
                         TextInput::make('name')
+                        ->unique(ignoreRecord: true)
                             ->required()
                             ->maxLength(255),
 
