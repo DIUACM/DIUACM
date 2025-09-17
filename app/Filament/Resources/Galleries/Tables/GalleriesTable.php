@@ -12,6 +12,7 @@ use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class GalleriesTable
 {
@@ -51,9 +52,9 @@ class GalleriesTable
                     ->toggleable()
                     ->limit(60)
                     ->searchable(),
-                TextColumn::make('attachments')
+                TextColumn::make('gallery_images')
                     ->label('Images')
-                    ->formatStateUsing(fn ($state) => is_array($state) ? count($state) : 0)
+                    ->getStateUsing(fn (Model $record): int => $record->getMedia('gallery_images')->count())
                     ->badge()
                     ->color(fn ($state) => $state > 0 ? 'success' : 'gray'),
                 TextColumn::make('created_at')
@@ -78,7 +79,7 @@ class GalleriesTable
                     }),
                 Filter::make('has_images')
                     ->label('Has Images')
-                    ->query(fn ($query) => $query->whereNotNull('attachments')->whereJsonLength('attachments', '>', 0)),
+                    ->query(fn ($query) => $query->whereHas('media', fn ($q) => $q->where('collection_name', 'gallery_images'))),
                 Filter::make('status')
                     ->form([
                         \Filament\Forms\Components\Select::make('status')
