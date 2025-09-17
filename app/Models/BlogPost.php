@@ -2,26 +2,29 @@
 
 namespace App\Models;
 
+use App\Enums\VisibilityStatus;
+use Filament\Forms\Components\RichEditor\FileAttachmentProviders\SpatieMediaLibraryFileAttachmentProvider;
+use Filament\Forms\Components\RichEditor\Models\Concerns\InteractsWithRichContent;
+use Filament\Forms\Components\RichEditor\Models\Contracts\HasRichContent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Enums\VisibilityStatus;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class BlogPost extends Model implements HasMedia
+class BlogPost extends Model implements HasMedia, HasRichContent
 {
     /** @use HasFactory<\Database\Factories\BlogPostFactory> */
     use HasFactory;
+
     use InteractsWithMedia;
-
-
+    use InteractsWithRichContent;
 
     protected $fillable = [
         'title',
         'slug',
-        'author',
+        'user_id',
         'content',
         'status',
         'published_at',
@@ -34,9 +37,19 @@ class BlogPost extends Model implements HasMedia
             'published_at' => 'datetime',
             'is_featured' => 'boolean',
             'status' => VisibilityStatus::class,
+            'content' => 'array',
         ];
     }
-    
+
+    public function setUpRichContent(): void
+    {
+        $this->registerRichContent('content')
+            ->fileAttachmentProvider(
+                SpatieMediaLibraryFileAttachmentProvider::make()
+                    ->collection('content-file-attachments'),
+            );
+    }
+
     /**
      * Scope to get only published blog posts.
      */
@@ -46,6 +59,7 @@ class BlogPost extends Model implements HasMedia
             ->whereNotNull('published_at')
             ->where('published_at', '<=', now());
     }
+
     /**
      * Scope to get featured blog posts.
      */
@@ -53,6 +67,7 @@ class BlogPost extends Model implements HasMedia
     {
         return $query->where('is_featured', true);
     }
+
     /**
      * Get the route key for the model.
      */
@@ -60,12 +75,13 @@ class BlogPost extends Model implements HasMedia
     {
         return 'slug';
     }
+
     public function author()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
-     public function registerMediaCollections(): void
+    public function registerMediaCollections(): void
     {
         $this
             ->addMediaCollection('featured_image')
@@ -78,5 +94,4 @@ class BlogPost extends Model implements HasMedia
                     ->nonQueued();
             });
     }
-
 }

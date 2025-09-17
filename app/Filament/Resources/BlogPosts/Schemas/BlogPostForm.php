@@ -5,9 +5,9 @@ namespace App\Filament\Resources\BlogPosts\Schemas;
 use App\Enums\VisibilityStatus;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Infolists\Components\TextEntry;
@@ -37,7 +37,7 @@ class BlogPostForm
                             ->unique(ignoreRecord: true)
                             ->rules(['alpha_dash'])
                             ->helperText('URL-friendly version of the title'),
-                        
+
                         Select::make('user_id')
                             ->label('Author')
                             ->relationship('author', 'name')
@@ -50,16 +50,14 @@ class BlogPostForm
                             ->required()
                             ->columnSpanFull()
                             ->toolbarButtons([
-                                'bold',
-                                'italic',
-                                'link',
-                                'bulletList',
-                                'orderedList',
-                                'h2',
-                                'h3',
-                                'blockquote',
-                                'codeBlock',
-                            ])
+                                ['bold', 'italic', 'underline', 'strike', 'subscript', 'superscript', 'link'],
+                                ['h2', 'h3', 'alignStart', 'alignCenter', 'alignEnd'],
+                                ['blockquote', 'codeBlock', 'bulletList', 'orderedList'],
+                                ['table', 'attachFiles'],
+                                ['undo', 'redo'],
+                            ])->fileAttachmentsVisibility('public')
+
+                            ->json()
                             ->placeholder('Write your blog post content here...'),
                     ]),
 
@@ -98,6 +96,7 @@ class BlogPostForm
                             ->collection('featured_image')
                             ->image()
                             ->imageEditor()
+                            ->openable()
                             ->imageEditorAspectRatios([
                                 '16:9',
                                 '4:3',
