@@ -66,7 +66,7 @@ class TrackerController extends Controller
                     ->select($columns);
             },
             'users' => function ($query) {
-                $query->select('users.id', 'users.name', 'users.username');
+                $query->select('users.id', 'users.name', 'users.username','users.department','users.student_id');
             },
             'users.media',
         ]);
