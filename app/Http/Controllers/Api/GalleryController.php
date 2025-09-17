@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\GalleryResource;
 use App\Models\Gallery;
-use Illuminate\Http\Request;
 
 class GalleryController extends Controller
 {
@@ -14,15 +13,11 @@ class GalleryController extends Controller
      */
     public function index()
     {
-        return GalleryResource::collection(Gallery::published()->with('media')->get());
-    }
+        $galleries = Gallery::published()
+            ->with('media', fn ($query) => $query->where('collection_name', 'gallery_images'))
+            ->get();
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
+        return GalleryResource::collection($galleries);
     }
 
     /**
@@ -33,23 +28,7 @@ class GalleryController extends Controller
         if ($gallery->status !== \App\Enums\VisibilityStatus::PUBLISHED) {
             abort(404);
         }
-        $gallery->load('media');
+        $gallery->load(['media' => fn ($query) => $query->where('collection_name', 'gallery_images')]);
         return new GalleryResource($gallery);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
     }
 }

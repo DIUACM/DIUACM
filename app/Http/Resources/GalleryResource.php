@@ -31,12 +31,10 @@ class GalleryResource extends JsonResource
             'title' => $this->title,
             'slug' => $this->slug,
             'description' => $this->description,
-            'media' => $this->whenLoaded('media', function () {
-                return $this->getMedia('gallery_images')->map(function ($media) {
-                    return [
-                        'url' => $media->getFullUrl(),
-                    ];
-                });
+            'media' => $this->getMedia('gallery_images')->map(function ($media) {
+                return [
+                    'url' => $media->getFullUrl(),
+                ];
             }),
         ];
     }
