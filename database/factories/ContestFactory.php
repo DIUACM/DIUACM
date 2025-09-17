@@ -51,7 +51,7 @@ class ContestFactory extends Factory
         $baseContestName = fake()->randomElement($contestTypes);
         $year = fake()->year();
         $month = fake()->monthName();
-        $uniqueId = fake()->unique()->randomNumber(4);
+        $uniqueId = fake()->randomNumber(4);
 
         // Create unique name by combining base name, year, month and unique ID
         $name = $baseContestName.' '.$month.' '.$year.' #'.$uniqueId;
@@ -76,7 +76,7 @@ class ContestFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'contest_type' => ContestType::ICPCRegional,
-            'name' => 'ICPC Regional Contest '.fake()->monthName().' '.fake()->year().' #'.fake()->unique()->randomNumber(4),
+            'name' => 'ICPC Regional Contest '.fake()->monthName().' '.fake()->year().' #'.fake()->randomNumber(4),
             'location' => fake()->randomElement(['DIU Auditorium', 'Main Campus']),
         ]);
     }
@@ -88,7 +88,7 @@ class ContestFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'contest_type' => ContestType::IUPC,
-            'name' => 'IUPC '.fake()->monthName().' '.fake()->year().' #'.fake()->unique()->randomNumber(4),
+            'name' => 'IUPC '.fake()->monthName().' '.fake()->year().' #'.fake()->randomNumber(4),
             'location' => fake()->randomElement(['Computer Lab 1', 'Computer Lab 2']),
         ]);
     }

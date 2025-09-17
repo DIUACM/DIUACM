@@ -25,9 +25,10 @@ class UserFactory extends Factory
     public function definition(): array
     {
         $name = fake()->name();
-        $email = fake()->unique()->safeEmail();
+        $baseEmail = fake()->userName();
+        $email = $baseEmail.fake()->randomNumber(4).'@example.org';
         $baseUsername = Str::slug(Str::before($email, '@')) ?: Str::slug($name);
-        $username = $baseUsername.'_'.fake()->unique()->numerify('####');
+        $username = $baseUsername.'_'.fake()->numerify('####');
 
         return [
             'name' => $name,
@@ -37,12 +38,12 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'gender' => fake()->randomElement(Gender::cases()),
-            'phone' => fake()->unique()->e164PhoneNumber(),
+            'phone' => fake()->phoneNumber(),
             'codeforces_handle' => fake()->optional(0.5)->bothify('cf_????_##'),
             'atcoder_handle' => fake()->optional(0.5)->bothify('ac_????_##'),
             'vjudge_handle' => fake()->optional(0.5)->bothify('vj_????_##'),
             'department' => strtoupper(fake()->randomElement(['CSE', 'EEE', 'SWE', 'BBA', 'CE'])),
-            'student_id' => fake()->unique()->bothify('DIU-########'),
+            'student_id' => 'DIU-'.fake()->numberBetween(10000000, 99999999),
             'max_cf_rating' => fake()->numberBetween(800, 3500),
         ];
     }

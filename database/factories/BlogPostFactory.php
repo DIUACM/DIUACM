@@ -64,7 +64,7 @@ class BlogPostFactory extends Factory
 
         return [
             'title' => $title,
-            'slug' => Str::slug($title).'-'.fake()->unique()->randomNumber(4),
+            'slug' => Str::slug($title).'-'.fake()->randomNumber(5).'-'.time(),
             'user_id' => User::factory(),
             'content' => [
                 'type' => 'doc',

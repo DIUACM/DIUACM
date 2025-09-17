@@ -22,8 +22,6 @@ class TrackerResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;
 
-   
-
     protected static ?string $recordTitleAttribute = 'title';
 
     protected static ?int $navigationSort = 2;

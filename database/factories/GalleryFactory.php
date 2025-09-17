@@ -58,7 +58,7 @@ class GalleryFactory extends Factory
 
         return [
             'title' => $title,
-            'slug' => Str::slug($title).'-'.fake()->unique()->randomNumber(3),
+            'slug' => Str::slug($title).'-'.fake()->randomNumber(5).'-'.time(),
             'description' => fake()->randomElement($descriptions),
             'status' => fake()->randomElement(VisibilityStatus::cases()),
         ];

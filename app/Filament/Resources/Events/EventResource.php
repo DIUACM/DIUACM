@@ -22,11 +22,7 @@ class EventResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCalendarDays;
 
-
-
     protected static ?string $recordTitleAttribute = 'title';
-
-
 
     public static function getNavigationBadge(): ?string
     {

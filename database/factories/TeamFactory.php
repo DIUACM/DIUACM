@@ -54,7 +54,7 @@ class TeamFactory extends Factory
 
         $baseName = fake()->randomElement($teamNameFormats);
         $university = fake()->randomElement($universities);
-        $uniqueId = fake()->unique()->randomNumber(4);
+        $uniqueId = fake()->randomNumber(4);
 
         // Create unique name by combining university, base name and unique ID
         $teamName = $university.' '.$baseName.' #'.$uniqueId;
@@ -105,7 +105,7 @@ class TeamFactory extends Factory
         ];
 
         return $this->state(fn (array $attributes) => [
-            'name' => fake()->randomElement($diuTeamNames).' #'.fake()->unique()->randomNumber(4),
+            'name' => fake()->randomElement($diuTeamNames).' #'.fake()->randomNumber(4),
         ]);
     }
 

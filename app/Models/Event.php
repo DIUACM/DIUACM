@@ -67,7 +67,8 @@ class Event extends Model
     {
         return $this->belongsToMany(User::class, 'event_attendance')->withTimestamps();
     }
-     public function rankLists()
+
+    public function rankLists()
     {
         return $this->belongsToMany(RankList::class, 'event_rank_list')
             ->withPivot('weight');
