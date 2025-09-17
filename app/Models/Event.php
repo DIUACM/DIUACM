@@ -2,18 +2,18 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use App\Enums\EventType;
 use App\Enums\ParticipationScope;
 use App\Enums\VisibilityStatus;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Event extends Model
 {
     /** @use HasFactory<\Database\Factories\EventFactory> */
     use HasFactory;
 
-     protected $fillable = [
+    protected $fillable = [
         'title',
         'description',
         'status',
@@ -28,7 +28,7 @@ class Event extends Model
         'participation_scope',
     ];
 
-     protected function casts(): array
+    protected function casts(): array
     {
         return [
             'starting_at' => 'datetime',
@@ -42,7 +42,7 @@ class Event extends Model
         ];
     }
 
-     /**
+    /**
      * Determine if the attendance window is currently enabled for the event.
      *
      * The window opens 15 minutes before `starting_at` and closes 20 minutes after `ending_at`.
@@ -63,9 +63,8 @@ class Event extends Model
         return now()->between($windowStart, $windowEnd, true);
     }
 
-     public function attendees()
+    public function attendees()
     {
         return $this->belongsToMany(User::class, 'event_attendance')->withTimestamps();
     }
-    
 }
