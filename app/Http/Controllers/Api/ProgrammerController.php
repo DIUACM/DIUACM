@@ -29,7 +29,9 @@ class ProgrammerController extends Controller
      */
     public function show(User $programmer)
     {
-        $programmer->load(['media' => fn ($query) => $query->where('collection_name', 'profile_picture')]);
+        $programmer->load(['media' => fn ($query) => $query->where('collection_name', 'profile_picture')->limit(1)]);
+
+        $programmer->load(['teams:id,name,contest_id,rank,solve_count', 'teams.contest:id,name,date', 'teams.members', 'teams.members.media']);
 
         return new ProgrammerResource($programmer);
     }
