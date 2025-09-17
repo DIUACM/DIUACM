@@ -44,7 +44,7 @@ class EventResource extends JsonResource
             'open_for_attendance' => $this->open_for_attendance,
             'user_stats' => $this->eventUserStats->map(function ($stat) {
                 return [
-                    'user_name' => $stat->user->name,
+                    'name' => $stat->user->name,
                     'username' => $stat->user->username,
                     'student_id' => $stat->user->student_id,
                     'department' => $stat->user->department,
