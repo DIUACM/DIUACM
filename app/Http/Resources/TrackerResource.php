@@ -23,20 +23,13 @@ class TrackerResource extends JsonResource
         }
 
         return [
-            'id' => $this->id,
             'title' => $this->title,
             'slug' => $this->slug,
             'description' => $this->description,
-            'order' => $this->order,
             'rank_lists' => $this->rankLists->map(function ($rankList) {
                 return [
-                    'id' => $rankList->id,
                     'keyword' => $rankList->keyword,
                     'description' => $rankList->description,
-                    'weight_of_upsolve' => $rankList->weight_of_upsolve,
-                    'order' => $rankList->order,
-                    'is_active' => $rankList->is_active,
-                    'consider_strict_attendance' => $rankList->consider_strict_attendance,
                 ];
             }),
         ];

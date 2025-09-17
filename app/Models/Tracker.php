@@ -40,7 +40,7 @@ class Tracker extends Model
         return $query->where('status', VisibilityStatus::PUBLISHED);
     }
 
-     /**
+    /**
      * Get the route key for the model.
      */
     public function getRouteKeyName(): string
