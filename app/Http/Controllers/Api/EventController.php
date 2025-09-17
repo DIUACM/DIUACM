@@ -34,6 +34,10 @@ class EventController extends Controller
 
         $event->load(['eventUserStats.user:id,name,username,student_id,department', 'eventUserStats.user.media']);
 
+        if ($event->open_for_attendance) {
+            $event->load(['attendees:id,name,username,student_id,department', 'attendees.media']);
+        }
+
         return new EventResource($event);
     }
 }

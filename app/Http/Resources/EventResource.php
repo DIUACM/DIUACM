@@ -43,16 +43,24 @@ class EventResource extends JsonResource
             'event_link' => $this->event_link,
             'open_for_attendance' => $this->open_for_attendance,
             'user_stats' => $this->eventUserStats->map(function ($stat) {
-                return [
-                    'name' => $stat->user->name,
-                    'username' => $stat->user->username,
-                    'student_id' => $stat->user->student_id,
-                    'department' => $stat->user->department,
-                    'profile_picture' => $stat->user->getFirstMediaUrl('profile_picture'),
-                    'solve_count' => $stat->solve_count,
-                    'upsolve_count' => $stat->upsolve_count,
-                    'participation' => $stat->participation,
-                ];
+                return array_merge(
+                    (new UserResource($stat->user))->toArray(request()),
+                    [
+                        'solve_count' => $stat->solve_count,
+                        'upsolve_count' => $stat->upsolve_count,
+                        'participation' => $stat->participation,
+                    ]
+                );
+            }),
+            'attendees' => $this->when($this->open_for_attendance, function () {
+                return $this->attendees->map(function ($attendee) {
+                    return array_merge(
+                        (new UserResource($attendee))->toArray(request()),
+                        [
+                            'attendance_time' => $attendee->pivot->created_at->toISOString(),
+                        ]
+                    );
+                });
             }),
         ];
     }
