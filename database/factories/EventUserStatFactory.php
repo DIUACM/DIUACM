@@ -25,8 +25,8 @@ class EventUserStatFactory extends Factory
         return [
             'event_id' => Event::factory(),
             'user_id' => User::factory(),
-            'solves_count' => $solvesCount,
-            'upsolves_count' => $upsolvesCount,
+            'solve_count' => $solvesCount,
+            'upsolve_count' => $upsolvesCount,
             'participation' => $participation,
         ];
     }
@@ -38,8 +38,8 @@ class EventUserStatFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'participation' => true,
-            'solves_count' => fake()->numberBetween(1, 12),
-            'upsolves_count' => fake()->numberBetween(0, 8),
+            'solve_count' => fake()->numberBetween(1, 12),
+            'upsolve_count' => fake()->numberBetween(0, 8),
         ]);
     }
 
@@ -50,8 +50,8 @@ class EventUserStatFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'participation' => false,
-            'solves_count' => 0,
-            'upsolves_count' => 0,
+            'solve_count' => 0,
+            'upsolve_count' => 0,
         ]);
     }
 
@@ -62,8 +62,8 @@ class EventUserStatFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'participation' => true,
-            'solves_count' => fake()->numberBetween(8, 12),
-            'upsolves_count' => fake()->numberBetween(3, 10),
+            'solve_count' => fake()->numberBetween(8, 12),
+            'upsolve_count' => fake()->numberBetween(3, 10),
         ]);
     }
 
@@ -73,7 +73,7 @@ class EventUserStatFactory extends Factory
     public function solveCount(int $count): static
     {
         return $this->state(fn (array $attributes) => [
-            'solves_count' => $count,
+            'solve_count' => $count,
             'participation' => $count > 0,
         ]);
     }
@@ -84,7 +84,7 @@ class EventUserStatFactory extends Factory
     public function upsolveCount(int $count): static
     {
         return $this->state(fn (array $attributes) => [
-            'upsolves_count' => $count,
+            'upsolve_count' => $count,
         ]);
     }
 }

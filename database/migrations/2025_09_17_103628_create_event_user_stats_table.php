@@ -17,8 +17,8 @@ return new class extends Migration
             $table->id();
             $table->foreignIdFor(Event::class)->constrained()->cascadeOnDelete();
             $table->foreignIdFor(User::class)->constrained()->cascadeOnDelete();
-            $table->unsignedInteger('solves_count')->default(0);
-            $table->unsignedInteger('upsolves_count')->default(0);
+            $table->unsignedInteger('solve_count')->default(0);
+            $table->unsignedInteger('upsolve_count')->default(0);
             $table->boolean('participation');
             $table->timestamps();
         });

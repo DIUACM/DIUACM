@@ -106,7 +106,7 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
     public function eventsWithStats()
     {
         return $this->belongsToMany(Event::class, 'event_user_stats')
-            ->withPivot(['solves_count', 'upsolves_count', 'participation'])
+            ->withPivot(['solve_count', 'upsolve_count', 'participation'])
             ->withTimestamps();
     }
 }

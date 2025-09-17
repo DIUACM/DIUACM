@@ -28,7 +28,7 @@ class Event extends Model
         'participation_scope',
     ];
 
-     /**
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>
@@ -36,6 +36,7 @@ class Event extends Model
     protected $hidden = [
         'event_password',
     ];
+
     protected function casts(): array
     {
         return [
@@ -98,7 +99,7 @@ class Event extends Model
     public function usersWithStats()
     {
         return $this->belongsToMany(User::class, 'event_user_stats')
-            ->withPivot(['solves_count', 'upsolves_count', 'participation'])
+            ->withPivot(['solve_count', 'upsolve_count', 'participation'])
             ->withTimestamps();
     }
 }

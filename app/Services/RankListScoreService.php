@@ -218,13 +218,13 @@ class RankListScoreService
                                 isset($attendanceMap[$user->id.'_'.$event->id]);
 
                 if ($hasAttendance) {
-                    // Regular calculation: solves_count * weight + upsolves_count * weight * weightOfUpsolve
-                    $solveScore = $userStat->solves_count * $eventWeight;
-                    $upsolveScore = $userStat->upsolves_count * $eventWeight * $weightOfUpsolve;
+                    // Regular calculation: solve_count * weight + upsolve_count * weight * weightOfUpsolve
+                    $solveScore = $userStat->solve_count * $eventWeight;
+                    $upsolveScore = $userStat->upsolve_count * $eventWeight * $weightOfUpsolve;
                 } else {
                     // If strict attendance is enforced and user hasn't attended, treat all solves as upsolves
                     $solveScore = 0;
-                    $upsolveScore = ($userStat->solves_count + $userStat->upsolves_count) * $eventWeight * $weightOfUpsolve;
+                    $upsolveScore = ($userStat->solve_count + $userStat->upsolve_count) * $eventWeight * $weightOfUpsolve;
                 }
 
                 $eventScore = $solveScore + $upsolveScore;

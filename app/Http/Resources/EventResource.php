@@ -49,8 +49,8 @@ class EventResource extends JsonResource
                     'student_id' => $stat->user->student_id,
                     'department' => $stat->user->department,
                     'profile_picture' => $stat->user->getFirstMediaUrl('profile_picture'),
-                    'solves_count' => $stat->solves_count,
-                    'upsolves_count' => $stat->upsolves_count,
+                    'solve_count' => $stat->solve_count,
+                    'upsolve_count' => $stat->upsolve_count,
                     'participation' => $stat->participation,
                 ];
             }),
