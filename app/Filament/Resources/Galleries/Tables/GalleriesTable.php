@@ -68,7 +68,7 @@ class GalleriesTable
             ])
             ->filters([
                 Filter::make('created_between')
-                    ->form([
+                    ->schema([
                         DatePicker::make('created_from')->label('Created From'),
                         DatePicker::make('created_until')->label('Created Until'),
                     ])
@@ -81,7 +81,7 @@ class GalleriesTable
                     ->label('Has Images')
                     ->query(fn ($query) => $query->whereHas('media', fn ($q) => $q->where('collection_name', 'gallery_images'))),
                 Filter::make('status')
-                    ->form([
+                    ->schema([
                         \Filament\Forms\Components\Select::make('status')
                             ->label('Status')
                             ->options(VisibilityStatus::class),
