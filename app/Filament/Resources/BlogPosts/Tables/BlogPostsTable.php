@@ -50,7 +50,6 @@ class BlogPostsTable
                     ->collection('featured_image')
                     ->conversion('thumb')
                     ->label('Featured')
-                    ->circular()
                     ->placeholder('No image')
                     ->toggleable(),
 
