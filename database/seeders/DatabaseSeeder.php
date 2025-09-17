@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,40 +11,32 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->command->info('🚀 Starting database seeding...');
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'sourov2305101004@diu.edu.bd',
+        // Seed in proper order due to relationships
+        $this->command->info('📊 Seeding Users (1000 users)...');
+        $this->call(UserSeeder::class);
 
-        ]);
+        $this->command->info('🖼️ Seeding Galleries (100 galleries)...');
+        $this->call(GallerySeeder::class);
 
+        $this->command->info('🏆 Seeding Contests (100 contests)...');
+        $this->call(ContestSeeder::class);
+
+        $this->command->info('👥 Seeding Teams (2-10 teams per contest)...');
+        $this->call(TeamSeeder::class);
+
+        $this->command->info('📝 Seeding Blog Posts (100 posts)...');
         $this->call(BlogPostSeeder::class);
 
-        $this->command->info('Creating a temporary dummy image...');
-        $imageName = 'dummy-image.png';
-        $imagePath = storage_path('app/'.$imageName);
-        if (file_exists($imagePath)) {
-            unlink($imagePath);
-        }
-        $image = imagecreatetruecolor(1024, 768);
-        imagepng($image, $imagePath);
-        imagedestroy($image);
-
-        \App\Models\Gallery::factory(20)
-            ->create()
-            ->each(function ($gallery) use ($imagePath) {
-                for ($i = 0; $i < 5; $i++) {
-                    $gallery
-                        ->addMedia($imagePath)
-                        ->preservingOriginal()
-                        ->toMediaCollection('gallery_images');
-                }
-            });
-
-        $this->command->info('Cleaning up temporary image...');
-        if (file_exists($imagePath)) {
-            unlink($imagePath);
-        }
+        $this->command->info('✅ Database seeding completed successfully!');
+        $this->command->info('📈 Summary:');
+        $this->command->info('   - 1000 Users created');
+        $this->command->info('   - 100 Blog Posts created');
+        $this->command->info('   - 100 Galleries created');
+        $this->command->info('   - 100 Contests created');
+        $this->command->info('   - Variable Teams created (2-10 per contest)');
+        $this->command->info('');
+        $this->command->info('🎉 Your DIU ACM application is now ready with realistic demo data!');
     }
 }

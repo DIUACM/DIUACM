@@ -13,27 +13,44 @@ class BlogPostSeeder extends Seeder
      */
     public function run(): void
     {
-        // Ensure we have at least one user to associate posts with
-        $user = User::first() ?? User::factory()->create();
+        $this->command->info('Creating 100 blog posts...');
 
-        // Create 50 blog posts with a mix of published/draft and featured posts
+        // Get random users to be authors
+        $users = User::inRandomOrder()->limit(20)->get();
+
+        if ($users->isEmpty()) {
+            $this->command->warn('No users found, creating some users first...');
+            $users = User::factory(5)->create();
+        }
+
+        // Create 70 published blog posts
         BlogPost::factory()
-            ->count(35)
+            ->count(70)
             ->published()
-            ->for($user, 'author')
-            ->create();
+            ->create()
+            ->each(function ($post) use ($users) {
+                $post->update(['user_id' => $users->random()->id]);
+            });
 
+        // Create 20 draft blog posts
+        BlogPost::factory()
+            ->count(20)
+            ->draft()
+            ->create()
+            ->each(function ($post) use ($users) {
+                $post->update(['user_id' => $users->random()->id]);
+            });
+
+        // Create 10 featured published blog posts
         BlogPost::factory()
             ->count(10)
-            ->draft()
-            ->for($user, 'author')
-            ->create();
-
-        BlogPost::factory()
-            ->count(5)
             ->published()
             ->featured()
-            ->for($user, 'author')
-            ->create();
+            ->create()
+            ->each(function ($post) use ($users) {
+                $post->update(['user_id' => $users->random()->id]);
+            });
+
+        $this->command->info('Created 100 blog posts successfully!');
     }
 }
