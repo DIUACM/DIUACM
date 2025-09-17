@@ -25,7 +25,11 @@ class ContestController extends Controller
      */
     public function show(Contest $contest)
     {
-        $contest->load(['gallery:id,title,slug', 'teams:id,name,contest_id']);
+        $contest->load([
+            'gallery:id,title,slug',
+            'teams:id,name,contest_id,rank,solve_count',
+            'teams.members:id,name,username,student_id,department',
+        ]);
 
         return new ContestResource($contest);
     }

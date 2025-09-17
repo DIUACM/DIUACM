@@ -76,6 +76,7 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
     {
         $this
             ->addMediaCollection('profile_picture')
+            ->useFallbackUrl(url: asset('images/fallback-gallery-image.jpeg'))
             ->singleFile()
             ->useDisk(diskName: 'media')
             ->registerMediaConversions(function (?Media $media = null) {

@@ -37,6 +37,18 @@ class ContestResource extends JsonResource
                 return [
                     'id' => $team->id,
                     'name' => $team->name,
+                    'rank' => $team->rank,
+                    'solve_count' => $team->solve_count,
+                    'members' => $team->relationLoaded('members') ? $team->members->map(function ($member) {
+                        return [
+                            'id' => $member->id,
+                            'name' => $member->name,
+                            'username' => $member->username,
+                            'student_id' => $member->student_id,
+                            'department' => $member->department,
+                            'profile_picture' => $member->getFirstMediaUrl('profile_picture'),
+                        ];
+                    }) : [],
                 ];
             })),
         ];
