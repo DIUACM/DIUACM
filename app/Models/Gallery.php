@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\VisibilityStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Image\Enums\Fit;
@@ -29,6 +30,11 @@ class Gallery extends Model implements HasMedia
         return [
             'status' => VisibilityStatus::class,
         ];
+    }
+
+    public function scopePublished(Builder $query): void
+    {
+        $query->where('status', VisibilityStatus::PUBLISHED);
     }
 
     public function registerMediaCollections(): void
