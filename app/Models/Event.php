@@ -63,6 +63,14 @@ class Event extends Model
         return now()->between($windowStart, $windowEnd, true);
     }
 
+    /**
+     * Scope a query to only include published events.
+     */
+    public function scopePublished($query)
+    {
+        return $query->where('status', VisibilityStatus::PUBLISHED);
+    }
+
     public function attendees()
     {
         return $this->belongsToMany(User::class, 'event_attendance')->withTimestamps();
