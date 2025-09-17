@@ -31,4 +31,20 @@ class Tracker extends Model
     {
         return $this->hasMany(RankList::class);
     }
+
+    /**
+     * Scope a query to only include published trackers.
+     */
+    public function scopePublished($query)
+    {
+        return $query->where('status', VisibilityStatus::PUBLISHED);
+    }
+
+     /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
 }

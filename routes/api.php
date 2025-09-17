@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\BlogPostController;
 use App\Http\Controllers\Api\ContestController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\GalleryController;
+use App\Http\Controllers\Api\TrackerController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +25,10 @@ Route::apiResource('contests', ContestController::class)->only([
 ]);
 
 Route::apiResource('events', EventController::class)->only([
+    'index', 'show',
+]);
+
+Route::apiResource('trackers', TrackerController::class)->only([
     'index', 'show',
 ]);
 
