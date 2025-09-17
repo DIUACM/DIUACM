@@ -26,3 +26,6 @@ Route::apiResource('contests', ContestController::class)->only([
 Route::apiResource('events', EventController::class)->only([
     'index', 'show',
 ]);
+
+Route::post('/events/{event}/attend', [EventController::class, 'attend'])
+    ->middleware('auth:sanctum');

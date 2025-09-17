@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\AttendEventRequest;
 use App\Http\Resources\EventResource;
 use App\Models\Event;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 
 class EventController extends Controller
 {
@@ -42,5 +45,60 @@ class EventController extends Controller
         }
 
         return new EventResource($event);
+    }
+
+    /**
+     * Mark attendance for the specified event.
+     */
+    public function attend(AttendEventRequest $request, Event $event): JsonResponse
+    {
+        // Check if the event is published
+        if ($event->status !== \App\Enums\VisibilityStatus::PUBLISHED) {
+            return response()->json([
+                'message' => 'Event not found.',
+            ], 404);
+        }
+
+        // Check if the event is open for attendance
+        if (! $event->open_for_attendance) {
+            return response()->json([
+                'message' => 'This event is not open for attendance.',
+            ], 403);
+        }
+
+        // Check if the attendance window is currently enabled
+        if (! $event->isAttendanceWindowEnabled()) {
+            return response()->json([
+                'message' => 'Attendance window is currently closed for this event.',
+            ], 403);
+        }
+
+        // Verify the event password
+        if ($request->validated()['event_password'] !== $event->event_password) {
+            return response()->json([
+                'message' => 'Invalid event password.',
+            ], 403);
+        }
+
+        $user = Auth::user();
+
+        // Check if the user has already attended this event
+        if ($event->attendees()->where('user_id', $user->id)->exists()) {
+            return response()->json([
+                'message' => 'You have already marked attendance for this event.',
+            ], 409);
+        }
+
+        // Mark attendance
+        $event->attendees()->attach($user->id);
+
+        return response()->json([
+            'message' => 'Attendance marked successfully.',
+            'data' => [
+                'event_id' => $event->id,
+                'user_id' => $user->id,
+                'attended_at' => now()->toISOString(),
+            ],
+        ]);
     }
 }
