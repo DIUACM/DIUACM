@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\BlogPostController;
 use App\Http\Controllers\Api\ContestController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\GalleryController;
+use App\Http\Controllers\Api\ProgrammerController;
 use App\Http\Controllers\Api\TrackerController;
 use App\Http\Controllers\Api\VJudgeController;
 use Illuminate\Http\Request;
@@ -36,6 +37,10 @@ Route::apiResource('events', EventController::class)->only([
 ]);
 
 Route::apiResource('trackers', TrackerController::class)->only([
+    'index', 'show',
+]);
+
+Route::apiResource('programmers', ProgrammerController::class)->only([
     'index', 'show',
 ]);
 

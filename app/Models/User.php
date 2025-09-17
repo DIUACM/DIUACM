@@ -115,4 +115,12 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
             ->withPivot(['solve_count', 'upsolve_count', 'participation'])
             ->withTimestamps();
     }
+
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'username';
+    }
 }
