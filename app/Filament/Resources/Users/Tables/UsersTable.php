@@ -23,6 +23,7 @@ class UsersTable
                 SpatieMediaLibraryImageColumn::make('Avatar')
                     ->collection('profile_picture')
                     ->conversion('thumb')
+                    ->visibility('public')
                     ->circular()
                     ->imageSize(36),
 

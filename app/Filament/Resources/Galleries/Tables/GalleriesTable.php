@@ -32,6 +32,7 @@ class GalleriesTable
                 SpatieMediaLibraryImageColumn::make('Preview')
                     ->collection('gallery_images')
                     ->conversion('thumb')
+
                     ->imageHeight(40)
                     ->circular()
                     ->stacked()

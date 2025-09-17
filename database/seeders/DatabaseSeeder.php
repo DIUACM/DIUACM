@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Storage;
 
 class DatabaseSeeder extends Seeder
 {
@@ -24,7 +23,7 @@ class DatabaseSeeder extends Seeder
 
         $this->command->info('Creating a temporary dummy image...');
         $imageName = 'dummy-image.png';
-        $imagePath = storage_path('app/' . $imageName);
+        $imagePath = storage_path('app/'.$imageName);
         if (file_exists($imagePath)) {
             unlink($imagePath);
         }
