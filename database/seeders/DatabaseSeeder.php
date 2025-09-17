@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
 
         ]);
 
+        $this->call(BlogPostSeeder::class);
+
         $this->command->info('Creating a temporary dummy image...');
         $imageName = 'dummy-image.png';
         $imagePath = storage_path('app/'.$imageName);
