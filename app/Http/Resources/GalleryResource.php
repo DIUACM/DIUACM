@@ -18,7 +18,6 @@ class GalleryResource extends JsonResource
             $coverImage = $this->getFirstMedia('gallery_images');
 
             return [
-                'id' => $this->id,
                 'title' => $this->title,
                 'slug' => $this->slug,
                 'cover_image' => $coverImage ? [
@@ -28,7 +27,6 @@ class GalleryResource extends JsonResource
         }
 
         return [
-            'id' => $this->id,
             'title' => $this->title,
             'slug' => $this->slug,
             'description' => $this->description,

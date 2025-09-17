@@ -49,4 +49,11 @@ class Gallery extends Model implements HasMedia
                     ->queued();
             });
     }
+    /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
 }
