@@ -15,14 +15,12 @@ class GalleryResource extends JsonResource
     public function toArray(Request $request): array
     {
         if ($request->routeIs('galleries.index')) {
-            $coverImage = $this->getFirstMedia('gallery_images');
+        ;
 
             return [
                 'title' => $this->title,
                 'slug' => $this->slug,
-                'cover_image' => $coverImage ? [
-                    'url' => $coverImage->getFullUrl(),
-                ] : null,
+                'cover_image' => $this->getFirstMediaUrl('gallery_images'), // will return fallback if no image
             ];
         }
 
