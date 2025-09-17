@@ -34,7 +34,7 @@ class Gallery extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this
-            ->addMediaCollection('attatchments')
+            ->addMediaCollection('gallery_images')
             ->useDisk(diskName: 'media')
             ->registerMediaConversions(function (?Media $media = null) {
                 $this
