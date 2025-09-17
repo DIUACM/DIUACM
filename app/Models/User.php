@@ -92,4 +92,8 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
     {
         return $this->belongsToMany(Team::class, 'team_member');
     }
+     public function attendedEvents()
+    {
+        return $this->belongsToMany(Event::class, 'event_attendance')->withTimestamps();
+    }
 }
