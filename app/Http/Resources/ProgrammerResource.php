@@ -14,7 +14,7 @@ class ProgrammerResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        if ($request->routeIs('galleries.index')) {
+        if ($request->routeIs('programmers.index')) {
 
             return [
                 ...new UserResource($this)->toArray($request),
