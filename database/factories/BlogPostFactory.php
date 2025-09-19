@@ -66,20 +66,7 @@ class BlogPostFactory extends Factory
             'title' => $title,
             'slug' => Str::slug($title).'-'.fake()->randomNumber(5).'-'.time(),
             'user_id' => User::factory(),
-            'content' => [
-                'type' => 'doc',
-                'content' => [
-                    [
-                        'type' => 'paragraph',
-                        'content' => [
-                            [
-                                'type' => 'text',
-                                'text' => $contentText,
-                            ],
-                        ],
-                    ],
-                ],
-            ],
+            'content' => $contentText,
             'status' => $isPublished ? VisibilityStatus::PUBLISHED : VisibilityStatus::DRAFT,
             'published_at' => $isPublished ? fake()->dateTimeBetween('-1 year', 'now') : null,
             'is_featured' => fake()->boolean(15), // 15% chance of being featured
