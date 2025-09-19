@@ -132,12 +132,11 @@ GET /api/events/1
     "open_for_attendance": true,
     "user_stats": [
       {
-        "id": 1,
         "name": "John Doe",
         "username": "johndoe",
         "student_id": "CSE-2021-001",
         "department": "CSE",
-        "profile_photo_url": "https://example.com/photos/1.jpg",
+        "profile_picture": "https://example.com/photos/1.jpg",
         "solve_count": 5,
         "upsolve_count": 2,
         "participation": true
@@ -145,12 +144,11 @@ GET /api/events/1
     ],
     "attendees": [
       {
-        "id": 1,
         "name": "John Doe",
         "username": "johndoe",
         "student_id": "CSE-2021-001",
         "department": "CSE",
-        "profile_photo_url": "https://example.com/photos/1.jpg",
+        "profile_picture": "https://example.com/photos/1.jpg",
         "attendance_time": "2025-09-20T09:50:00.000000Z"
       }
     ]
@@ -179,12 +177,11 @@ GET /api/events/1
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | integer | User ID |
 | `name` | string | User's full name |
 | `username` | string | User's username |
 | `student_id` | string | Student ID |
 | `department` | string | User's department |
-| `profile_photo_url` | string | URL to profile photo |
+| `profile_picture` | string | URL to profile photo |
 | `solve_count` | integer | Number of problems solved during contest |
 | `upsolve_count` | integer | Number of problems upsolved after contest |
 | `participation` | boolean | Whether user participated in the event |
@@ -193,12 +190,11 @@ GET /api/events/1
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | integer | User ID |
 | `name` | string | User's full name |
 | `username` | string | User's username |
 | `student_id` | string | Student ID |
 | `department` | string | User's department |
-| `profile_photo_url` | string | URL to profile photo |
+| `profile_picture` | string | URL to profile photo |
 | `attendance_time` | string (ISO 8601) | When the user marked attendance |
 
 ---
