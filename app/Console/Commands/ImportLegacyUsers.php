@@ -291,6 +291,7 @@ class ImportLegacyUsers extends Command
      */
     protected function handleProfilePictures($userChunk): void
     {
+        return;
         foreach ($userChunk as $userData) {
             $imageUrl = $userData['image_url'] ?? null;
             $email = $userData['email'] ?? null;
