@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('title')->index();
             $table->string('slug')->unique();
             $table->foreignIdFor(App\Models\User::class)->constrained();
-            $table->json('content')->nullable();
+            $table->text('content')->nullable();
             $table->enum('status', VisibilityStatus::cases());
             $table->timestamp('published_at')->nullable();
             $table->boolean('is_featured')->default(false);
