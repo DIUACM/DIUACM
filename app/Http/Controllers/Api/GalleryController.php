@@ -16,6 +16,7 @@ class GalleryController extends Controller
         $galleries = Gallery::published()
             ->select('id', 'title', 'slug')
             ->with(['media' => fn ($query) => $query->where('collection_name', 'gallery_images')->orderBy('order_column')->limit(1)])
+            ->withCount(['media as media_count' => fn ($query) => $query->where('collection_name', 'gallery_images')])
             ->paginate(10);
 
         return GalleryResource::collection($galleries);

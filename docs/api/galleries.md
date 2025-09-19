@@ -45,17 +45,20 @@ GET /api/galleries?page=1
     {
       "title": "ICPC Regional Contest 2024",
       "slug": "icpc-regional-contest-2024-12345-1726787200",
-      "cover_image": "https://example.com/storage/gallery_images/1/cover.jpg"
+      "cover_image": "https://example.com/storage/gallery_images/1/cover.jpg",
+      "media_count": 15
     },
     {
       "title": "DIU Programming Marathon",
       "slug": "diu-programming-marathon-67890-1726787260",
-      "cover_image": "https://example.com/storage/gallery_images/2/cover.jpg"
+      "cover_image": "https://example.com/storage/gallery_images/2/cover.jpg",
+      "media_count": 8
     },
     {
       "title": "ACM Training Session",
       "slug": "acm-training-session-11111-1726787320",
-      "cover_image": "https://example.com/images/fallback-gallery-image.jpeg"
+      "cover_image": "https://example.com/images/fallback-gallery-image.jpeg",
+      "media_count": 0
     }
   ],
   "links": {
@@ -82,6 +85,7 @@ GET /api/galleries?page=1
 | `title` | string | Gallery title |
 | `slug` | string | Unique URL-friendly identifier |
 | `cover_image` | string | URL to cover image (first image or fallback) |
+| `media_count` | integer | Total number of images in the gallery |
 
 ---
 

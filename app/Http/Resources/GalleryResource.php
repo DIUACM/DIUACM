@@ -20,6 +20,7 @@ class GalleryResource extends JsonResource
                 'title' => $this->title,
                 'slug' => $this->slug,
                 'cover_image' => $this->getFirstMediaUrl('gallery_images'), // will return fallback if no image
+                'media_count' => $this->media_count,
             ];
         }
 
