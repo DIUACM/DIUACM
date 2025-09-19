@@ -33,6 +33,17 @@ class ProgrammerController extends Controller
 
         $programmer->load(['teams:id,name,contest_id,rank,solve_count', 'teams.contest:id,name,date', 'teams.members', 'teams.members.media']);
 
+        // Load tracker performance data
+        $programmer->load([
+            'rankLists' => function ($query) {
+                $query->select('rank_lists.id', 'rank_lists.tracker_id', 'rank_lists.keyword', 'rank_lists.description')
+                    ->with([
+                        'tracker:id,title,slug',
+                        'events:id,title',
+                    ]);
+            },
+        ]);
+
         return new ProgrammerResource($programmer);
     }
 }
