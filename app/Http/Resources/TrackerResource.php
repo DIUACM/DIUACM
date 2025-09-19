@@ -54,6 +54,7 @@ class TrackerResource extends JsonResource
                     return array_merge(
                         (new UserResource($user))->toArray(request()),
                         [
+                            'score' => $user->pivot->score,
                             'event_stats' => $user->getAttribute('event_stats'),
                         ]
                     );
