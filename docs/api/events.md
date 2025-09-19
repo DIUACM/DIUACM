@@ -9,14 +9,12 @@ GET /api/events
 
 ## Authentication
 - **Events Index & Show**: No authentication required (public endpoints)
-- **Event Attendance**: Requires authentication via Sanctum token
 
 ## Table of Contents
 1. [List Events](#list-events)
 2. [Show Event](#show-event)
-3. [Mark Event Attendance](#mark-event-attendance)
-4. [Response Schemas](#response-schemas)
-5. [Error Responses](#error-responses)
+3. [Response Schemas](#response-schemas)
+4. [Error Responses](#error-responses)
 
 ---
 
@@ -197,62 +195,6 @@ GET /api/events/1
 | `profile_picture` | string | URL to profile photo |
 | `attendance_time` | string (ISO 8601) | When the user marked attendance |
 
----
-
-## Mark Event Attendance
-
-Mark attendance for a specific event. Requires authentication.
-
-### Endpoint
-```http
-POST /api/events/{id}/attend
-```
-
-### Authentication
-Requires `Authorization: Bearer {token}` header with a valid Sanctum token.
-
-### Path Parameters
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `id` | integer | Yes | Event ID |
-
-### Request Body
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `event_password` | string | Yes | Event password provided by organizers |
-
-### Example Request
-```http
-POST /api/events/1/attend
-Authorization: Bearer 1|abc123def456...
-Content-Type: application/json
-
-{
-  "event_password": "contest2025"
-}
-```
-
-### Success Response (201)
-```json
-{
-  "message": "Attendance marked successfully.",
-  "data": {
-    "event_id": 1,
-    "user_id": 123,
-    "attended_at": "2025-09-20T09:45:00.000000Z"
-  }
-}
-```
-
-### Attendance Window Rules
-- Attendance window opens **15 minutes before** the event start time
-- Attendance window closes **20 minutes after** the event end time
-- Users can only mark attendance once per event
-- Event must be published and open for attendance
-
----
 
 ## Response Schemas
 
@@ -298,26 +240,6 @@ Content-Type: application/json
 }
 ```
 
-#### 403 Forbidden (Event Not Open for Attendance)
-```json
-{
-  "message": "This event is not open for attendance."
-}
-```
-
-#### 403 Forbidden (Attendance Window Closed)
-```json
-{
-  "message": "Attendance window is currently closed for this event."
-}
-```
-
-#### 403 Forbidden (Invalid Password)
-```json
-{
-  "message": "Invalid event password."
-}
-```
 
 #### 404 Not Found
 ```json
@@ -326,24 +248,17 @@ Content-Type: application/json
 }
 ```
 
-#### 409 Conflict (Already Attended)
-```json
-{
-  "message": "You have already marked attendance for this event."
-}
-```
 
 ### HTTP Status Codes
 
 | Code | Description |
 |------|-------------|
 | 200 | Success (GET requests) |
-| 201 | Created (attendance marked) |
 | 400 | Bad Request (validation errors) |
 | 401 | Unauthorized (missing/invalid token) |
 | 403 | Forbidden (access denied) |
 | 404 | Not Found (event doesn't exist or not published) |
-| 409 | Conflict (duplicate attendance) |
+| 409 | Conflict |
 | 422 | Unprocessable Entity (validation failed) |
 | 500 | Internal Server Error |
 
@@ -353,12 +268,7 @@ Content-Type: application/json
 
 1. **Pagination**: The index endpoint returns paginated results with 10 items per page by default.
 
-2. **Attendance Window**: The attendance feature has specific timing rules:
-   - Opens 15 minutes before event start
-   - Closes 20 minutes after event end
-   - Only available for events where `open_for_attendance` is true
-
-3. **Event Visibility**: Only published events are accessible through the API. Draft or archived events will return 404.
+2. **Event Visibility**: Only published events are accessible through the API. Draft or archived events will return 404.
 
 4. **Search Functionality**: The search parameter performs a case-insensitive search across event title, description, and event link fields.
 
@@ -366,4 +276,4 @@ Content-Type: application/json
 
 6. **User Stats vs Attendees**: 
    - `user_stats` shows performance data for users who participated in the event
-   - `attendees` shows users who marked attendance (only visible if attendance is enabled)
+  - `attendees` shows users who marked attendance (only visible if attendance is enabled)
