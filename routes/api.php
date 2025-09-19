@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\BlogPostController;
+use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\ContestController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\GalleryController;
@@ -46,3 +47,5 @@ Route::apiResource('programmers', ProgrammerController::class)->only([
 
 Route::post('/events/{event}/attend', [EventController::class, 'attend'])
     ->middleware('auth:sanctum');
+
+Route::post('/contact', [ContactController::class, 'store']);
