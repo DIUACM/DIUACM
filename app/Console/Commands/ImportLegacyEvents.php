@@ -352,8 +352,13 @@ class ImportLegacyEvents extends Command
     protected function normalizeType(mixed $value): string
     {
         $v = strtolower((string) $value);
+        $allowed = ['contest', 'class', 'other'];
 
-        return in_array($v, ['contest', 'class', 'other'], true) ? $v : 'other';
+        if (! in_array($v, $allowed, true)) {
+            throw new \InvalidArgumentException("Invalid event type value: '{$value}'. Allowed values are: ".implode(', ', $allowed));
+        }
+
+        return $v;
     }
 
     protected function normalizeParticipation(mixed $value): string
@@ -366,6 +371,10 @@ class ImportLegacyEvents extends Command
             'selected_persons',
         ];
 
-        return in_array($v, $allowed, true) ? $v : 'open_for_all';
+        if (! in_array($v, $allowed, true)) {
+            throw new \InvalidArgumentException("Invalid participation scope value: '{$value}'. Allowed values are: ".implode(', ', $allowed));
+        }
+
+        return $v;
     }
 }

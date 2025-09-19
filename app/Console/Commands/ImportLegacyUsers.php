@@ -211,13 +211,18 @@ class ImportLegacyUsers extends Command
      */
     protected function normalizeGender(mixed $value): ?string
     {
-        if ($value === null) {
+        if ($value === null || $value === '') {
             return null;
         }
 
         $v = strtolower((string) $value);
+        $allowed = ['male', 'female', 'other'];
 
-        return in_array($v, ['male', 'female', 'other'], true) ? $v : null;
+        if (! in_array($v, $allowed, true)) {
+            throw new \InvalidArgumentException("Invalid gender value: '{$value}'. Allowed values are: ".implode(', ', $allowed).', or null');
+        }
+
+        return $v;
     }
 
     /**
