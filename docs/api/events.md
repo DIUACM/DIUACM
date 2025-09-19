@@ -1,6 +1,6 @@
-# Event API Documentation
+# Events API Documentation
 
-This document provides comprehensive documentation for the Event API endpoints including listing events, viewing event details, and marking attendance.
+This document provides comprehensive documentation for the Events API endpoints including listing events, viewing event details, and marking attendance.
 
 ## Base URL
 ```
@@ -52,8 +52,8 @@ GET /api/events?search=programming&type=contest&page=1
       "title": "Programming Contest 2025",
       "starting_at": "2025-09-20T10:00:00.000000Z",
       "ending_at": "2025-09-20T14:00:00.000000Z",
-      "participation_scope": "Open for All",
-      "event_type": "Contest",
+      "participation_scope": "open_for_all",
+      "event_type": "contest",
       "attendance_count": 45
     },
     {
@@ -61,8 +61,8 @@ GET /api/events?search=programming&type=contest&page=1
       "title": "Algorithm Class",
       "starting_at": "2025-09-22T09:00:00.000000Z",
       "ending_at": "2025-09-22T11:00:00.000000Z",
-      "participation_scope": "Junior Programmers",
-      "event_type": "Class"
+      "participation_scope": "junior_programmers",
+      "event_type": "class"
     }
   ],
   "links": {
@@ -90,8 +90,8 @@ GET /api/events?search=programming&type=contest&page=1
 | `title` | string | Event title |
 | `starting_at` | string (ISO 8601) | Event start time |
 | `ending_at` | string (ISO 8601) | Event end time |
-| `participation_scope` | string | Human-readable participation scope |
-| `event_type` | string | Human-readable event type |
+| `participation_scope` | string | Participation scope (raw enum value) |
+| `event_type` | string | Event type (raw enum value) |
 | `attendance_count` | integer | Number of attendees (only if attendance is open) |
 
 ---
@@ -123,11 +123,11 @@ GET /api/events/1
     "id": 1,
     "title": "Programming Contest 2025",
     "description": "Annual programming contest for all skill levels. Solve algorithmic problems and compete for prizes!",
-    "type": "Contest",
-    "status": "Published",
+    "type": "contest",
+    "status": "published",
     "starting_at": "2025-09-20T10:00:00.000000Z",
     "ending_at": "2025-09-20T14:00:00.000000Z",
-    "participation_scope": "Open for All",
+    "participation_scope": "open_for_all",
     "event_link": "https://vjudge.net/contest/123456",
     "open_for_attendance": true,
     "user_stats": [
@@ -163,11 +163,11 @@ GET /api/events/1
 | `id` | integer | Unique event identifier |
 | `title` | string | Event title |
 | `description` | string | Detailed event description |
-| `type` | string | Human-readable event type |
-| `status` | string | Human-readable event status |
+| `type` | string | Event type (raw enum value) |
+| `status` | string | Event status (raw enum value) |
 | `starting_at` | string (ISO 8601) | Event start time |
 | `ending_at` | string (ISO 8601) | Event end time |
-| `participation_scope` | string | Human-readable participation scope |
+| `participation_scope` | string | Participation scope (raw enum value) |
 | `event_link` | string | External event link (e.g., VJudge contest) |
 | `open_for_attendance` | boolean | Whether attendance tracking is enabled |
 | `user_stats` | array | Array of user statistics for the event |
@@ -256,21 +256,22 @@ Content-Type: application/json
 
 ## Response Schemas
 
-### Event Types
-- `contest` → "Contest"
-- `class` → "Class"  
-- `other` → "Other"
+### Event Types (Raw Values)
+- `contest` - Programming contests and competitions
+- `class` - Educational classes and workshops  
+- `other` - Other types of events
 
-### Participation Scopes
-- `open_for_all` → "Open for All"
-- `only_girls` → "Only Girls"
-- `junior_programmers` → "Junior Programmers"
-- `selected_persons` → "Selected Persons"
+### Participation Scopes (Raw Values)
+- `open_for_all` - Open to all participants
+- `only_girls` - Restricted to female participants
+- `junior_programmers` - For junior/beginner programmers
+- `selected_persons` - Invitation-only events
 
-### Event Status
-- `published` → "Published"
-- `draft` → "Draft"
-- `archived` → "Archived"
+### Event Status (Raw Values)
+- `published` - Event is live and visible to users
+- `draft` - Event is in draft mode (not publicly visible)
+
+**Note**: All enum fields now return raw string values instead of human-readable labels for better API consistency and machine processing.
 
 ---
 
