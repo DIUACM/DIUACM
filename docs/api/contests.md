@@ -47,21 +47,24 @@ GET /api/contests?page=1
       "name": "ICPC Regional Contest September 2025 #1234",
       "contest_type": "icpc_regional",
       "location": "DIU Auditorium",
-      "date": "2025-09-20T10:00:00.000000Z"
+      "date": "2025-09-20T10:00:00.000000Z",
+      "best_rank": 1
     },
     {
       "id": 2,
       "name": "IUPC Programming Contest August 2025 #5678",
       "contest_type": "iupc",
       "location": "Computer Lab 1",
-      "date": "2025-08-15T09:00:00.000000Z"
+      "date": "2025-08-15T09:00:00.000000Z",
+      "best_rank": 2
     },
     {
       "id": 3,
       "name": "DIU Training Contest July 2025 #9012",
       "contest_type": "other",
       "location": "Online",
-      "date": "2025-07-10T14:00:00.000000Z"
+      "date": "2025-07-10T14:00:00.000000Z",
+      "best_rank": null
     }
   ],
   "links": {
@@ -90,6 +93,7 @@ GET /api/contests?page=1
 | `contest_type` | string | Contest type (raw enum value) |
 | `location` | string\|null | Contest location (physical or "Online") |
 | `date` | string (ISO 8601)\|null | Contest date and time |
+| `best_rank` | integer\|null | Best (minimum) rank achieved by any team in this contest |
 
 ---
 

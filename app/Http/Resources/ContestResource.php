@@ -21,6 +21,7 @@ class ContestResource extends JsonResource
                 'contest_type' => $this->contest_type->value,
                 'location' => $this->location,
                 'date' => $this->date?->toISOString(),
+                'best_rank' => $this->teams_min_rank,
             ];
         }
 

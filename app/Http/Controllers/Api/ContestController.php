@@ -14,6 +14,7 @@ class ContestController extends Controller
     public function index()
     {
         $contests = Contest::select('id', 'name', 'contest_type', 'location', 'date')
+            ->withMin('teams', 'rank')
             ->orderBy('date', 'desc')
             ->paginate(10);
 
