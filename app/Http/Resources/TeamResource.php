@@ -19,7 +19,7 @@ class TeamResource extends JsonResource
             'name' => $this->name,
             'rank' => $this->rank,
             'solve_count' => $this->solve_count,
-            'members' => UserResource::collection($this->members),
+            'members' => PublicUserResource::collection($this->members),
         ];
     }
 }

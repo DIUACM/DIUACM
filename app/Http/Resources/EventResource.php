@@ -44,7 +44,7 @@ class EventResource extends JsonResource
             'open_for_attendance' => $this->open_for_attendance,
             'user_stats' => $this->eventUserStats->map(function ($stat) {
                 return array_merge(
-                    (new UserResource($stat->user))->toArray(request()),
+                    (new PublicUserResource($stat->user))->toArray(request()),
                     [
                         'solve_count' => $stat->solve_count,
                         'upsolve_count' => $stat->upsolve_count,
@@ -55,7 +55,7 @@ class EventResource extends JsonResource
             'attendees' => $this->when($this->open_for_attendance, function () {
                 return $this->attendees->map(function ($attendee) {
                     return array_merge(
-                        (new UserResource($attendee))->toArray(request()),
+                        (new PublicUserResource($attendee))->toArray(request()),
                         [
                             'attendance_time' => $attendee->pivot->created_at->toISOString(),
                         ]

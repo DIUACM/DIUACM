@@ -17,13 +17,13 @@ class ProgrammerResource extends JsonResource
         if ($request->routeIs('programmers.index')) {
 
             return [
-                ...new UserResource($this)->toArray($request),
+                ...new PublicUserResource($this)->toArray($request),
                 'max_cf_rating' => $this->max_cf_rating,
             ];
         }
 
         return [
-            ...new UserResource($this)->toArray($request),
+            ...new PublicUserResource($this)->toArray($request),
             'max_cf_rating' => $this->max_cf_rating,
             'codeforces_handle' => $this->codeforces_handle,
             'atcoder_handle' => $this->atcoder_handle,
@@ -35,7 +35,7 @@ class ProgrammerResource extends JsonResource
                 'team_name' => $team->name,
                 'rank' => $team->rank,
                 'solve_count' => $team->solve_count,
-                'members' => UserResource::collection($team->members),
+                'members' => PublicUserResource::collection($team->members),
             ]),
             'tracker_performance' => $this->formatTrackerPerformance(),
         ];
