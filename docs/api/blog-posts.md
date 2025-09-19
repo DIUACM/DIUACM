@@ -112,76 +112,7 @@ GET /api/blog-posts/getting-started-with-competitive-programming
   "data": {
     "title": "Getting Started with Competitive Programming",
     "slug": "getting-started-with-competitive-programming",
-    "content": [
-      {
-        "type": "heading",
-        "attrs": {
-          "level": 2
-        },
-        "content": [
-          {
-            "type": "text",
-            "text": "Introduction"
-          }
-        ]
-      },
-      {
-        "type": "paragraph",
-        "content": [
-          {
-            "type": "text",
-            "text": "Competitive programming is an exciting field that combines algorithmic thinking with coding skills..."
-          }
-        ]
-      },
-      {
-        "type": "paragraph",
-        "content": [
-          {
-            "type": "text",
-            "marks": [
-              {
-                "type": "bold"
-              }
-            ],
-            "text": "Key concepts to master:"
-          }
-        ]
-      },
-      {
-        "type": "bulletList",
-        "content": [
-          {
-            "type": "listItem",
-            "content": [
-              {
-                "type": "paragraph",
-                "content": [
-                  {
-                    "type": "text",
-                    "text": "Data structures (arrays, trees, graphs)"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "type": "listItem",
-            "content": [
-              {
-                "type": "paragraph",
-                "content": [
-                  {
-                    "type": "text",
-                    "text": "Algorithms (sorting, searching, dynamic programming)"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ],
+    "content": "<h2>Introduction</h2><p>Competitive programming is an exciting field that combines algorithmic thinking with coding skills...</p><p><strong>Key concepts to master:</strong></p><ul><li><p>Data structures (arrays, trees, graphs)</p></li><li><p>Algorithms (sorting, searching, dynamic programming)</p></li></ul>",
     "published_at": "2025-09-15T10:30:00.000000Z",
     "is_featured": true,
     "author": "John Doe",
@@ -196,7 +127,7 @@ GET /api/blog-posts/getting-started-with-competitive-programming
 |-------|------|-------------|
 | `title` | string | Blog post title |
 | `slug` | string | URL-friendly blog post identifier |
-| `content` | array | Rich content structure (Tiptap/ProseMirror JSON format) |
+| `content` | string | Rich HTML content |
 | `published_at` | string (ISO 8601) | When the blog post was published |
 | `is_featured` | boolean | Whether this blog post is marked as featured |
 | `author` | string | Author's full name |
@@ -212,23 +143,17 @@ GET /api/blog-posts/getting-started-with-competitive-programming
 
 ### Content Structure
 
-The `content` field contains rich text content in Tiptap/ProseMirror JSON format. This is a structured document format that represents formatted text with various elements:
+The `content` field contains rich HTML content that includes formatted text, headings, lists, links, and other HTML elements. This HTML content is generated from the rich text editor and provides semantic markup for easy rendering in web applications.
 
-#### Common Content Types
-- **paragraph** - Regular text paragraphs
-- **heading** - Headings with levels 1-6
-- **bulletList** / **orderedList** - Lists with list items
-- **blockquote** - Quote blocks
-- **codeBlock** - Code blocks with syntax highlighting
-- **image** - Embedded images
-- **link** - Hyperlinks
-
-#### Text Marks
-Text can have various formatting marks:
-- **bold** - Bold text
-- **italic** - Italic text
-- **code** - Inline code
-- **link** - Hyperlinks with href attribute
+#### Common HTML Elements
+- **`<p>`** - Paragraphs
+- **`<h1>` to `<h6>`** - Headings
+- **`<ul>`, `<ol>`, `<li>`** - Lists
+- **`<blockquote>`** - Quote blocks
+- **`<pre>`, `<code>`** - Code blocks and inline code
+- **`<img>`** - Images
+- **`<a>`** - Links
+- **`<strong>`, `<em>`** - Bold and italic text
 
 ### Featured Images
 
@@ -281,7 +206,7 @@ A blog post is considered "published" and accessible via the API only if:
 
 3. **Ordering**: Blog posts are ordered by `published_at` in descending order (newest first).
 
-4. **Rich Content**: The content field uses Tiptap/ProseMirror JSON format, which provides structured, semantic content that can be easily rendered in various front-end frameworks.
+4. **Rich Content**: The content field uses HTML format, which provides structured, semantic content that can be easily rendered in various front-end frameworks and browsers.
 
 5. **Media Handling**: 
    - Featured images are served through Laravel's media library

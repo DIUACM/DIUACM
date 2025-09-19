@@ -37,7 +37,6 @@ class BlogPost extends Model implements HasMedia, HasRichContent
             'published_at' => 'datetime',
             'is_featured' => 'boolean',
             'status' => VisibilityStatus::class,
-            'content' => 'array',
         ];
     }
 

@@ -56,7 +56,6 @@ class BlogPostForm
                                 ['table', 'attachFiles'],
                                 ['undo', 'redo'],
                             ])
-                            ->json()
                             ->placeholder('Write your blog post content here...'),
                     ]),
 
