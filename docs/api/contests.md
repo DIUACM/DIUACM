@@ -87,7 +87,7 @@ GET /api/contests?page=1
 |-------|------|-------------|
 | `id` | integer | Unique contest identifier |
 | `name` | string | Contest name |
-| `contest_type` | string | Contest type enum value |
+| `contest_type` | string | Contest type (raw enum value) |
 | `location` | string\|null | Contest location (physical or "Online") |
 | `date` | string (ISO 8601)\|null | Contest date and time |
 
@@ -192,7 +192,7 @@ GET /api/contests/1
 |-------|------|-------------|
 | `id` | integer | Unique contest identifier |
 | `name` | string | Contest name |
-| `contest_type` | string | Contest type enum value |
+| `contest_type` | string | Contest type (raw enum value) |
 | `location` | string\|null | Contest location |
 | `date` | string (ISO 8601)\|null | Contest date and time |
 | `description` | string\|null | Detailed contest description |
@@ -233,14 +233,16 @@ GET /api/contests/1
 ## Response Schemas
 
 ### Contest Types
-The system supports the following contest types:
+The system supports the following contest types as raw enum values:
 
-| Value | Label | Description |
-|-------|-------|-------------|
+| Raw Value | Label | Description |
+|-----------|-------|-------------|
 | `icpc_regional` | ICPC Regional | International Collegiate Programming Contest Regional |
 | `icpc_asia_west` | ICPC Asia West | ICPC Asia West Continental Contest |
 | `iupc` | IUPC | Inter University Programming Contest |
 | `other` | Other | General programming contests and training events |
+
+**Note**: The API returns raw enum values (e.g., `"icpc_regional"`) for better consistency and machine processing.
 
 ### Contest Locations
 Common locations used in the system:
