@@ -8,13 +8,15 @@ GET /api/events
 ```
 
 ## Authentication
-- **Events Index & Show**: No authentication required (public endpoints)
+- `GET /api/events` and `GET /api/events/{id}`: Public, no authentication required
+- `POST /api/events/{id}/attend`: Requires authentication via Sanctum bearer token
 
 ## Table of Contents
 1. [List Events](#list-events)
 2. [Show Event](#show-event)
-3. [Response Schemas](#response-schemas)
-4. [Error Responses](#error-responses)
+3. [Mark Attendance](#mark-attendance)
+4. [Response Schemas](#response-schemas)
+5. [Error Responses](#error-responses)
 
 ---
 
@@ -194,6 +196,107 @@ GET /api/events/1
 | `department` | string | User's department |
 | `profile_picture` | string | URL to profile photo |
 | `attendance_time` | string (ISO 8601) | When the user marked attendance |
+
+
+## Mark Attendance
+
+Mark your attendance for a published event that has attendance enabled and an open attendance window.
+
+### Endpoint
+```http
+POST /api/events/{id}/attend
+```
+
+### Authentication
+- Requires Sanctum bearer token: set `Authorization: Bearer <token>`
+
+### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | integer | Yes | Event ID |
+
+### Request Headers
+- `Authorization: Bearer <token>`
+- `Content-Type: application/json`
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `event_password` | string | Yes | The event's attendance password |
+
+### Example Request
+```bash
+curl -X POST \
+  "http://localhost:8000/api/events/1/attend" \
+  -H "Authorization: Bearer <your_api_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event_password": "attend-123"
+  }'
+```
+
+### Example Success Response
+```json
+{
+  "message": "Attendance marked successfully.",
+  "data": {
+    "event_id": 1,
+    "user_id": 42,
+    "attended_at": "2025-09-20T09:50:00.000000Z"
+  }
+}
+```
+
+### Possible Errors
+
+#### 401 Unauthenticated
+```json
+{ "message": "Unauthenticated." }
+```
+
+#### 403 Forbidden (attendance not available)
+```json
+{ "message": "This event is not open for attendance." }
+```
+
+#### 403 Forbidden (attendance window closed)
+```json
+{ "message": "Attendance window is currently closed for this event." }
+```
+
+#### 403 Forbidden (invalid password)
+```json
+{ "message": "Invalid event password." }
+```
+
+#### 404 Not Found
+```json
+{ "message": "Event not found." }
+```
+
+#### 409 Conflict (already attended)
+```json
+{ "message": "You have already marked attendance for this event." }
+```
+
+#### 422 Unprocessable Entity (validation failed)
+```json
+{
+  "message": "The event password field is required.",
+  "errors": {
+    "event_password": [
+      "Event password is required to mark attendance."
+    ]
+  }
+}
+```
+
+### Notes
+- Attendance window: opens 15 minutes before `starting_at` and closes 20 minutes after `ending_at`.
+- Only events with `status: published` and `open_for_attendance: true` accept attendance.
+- The `event_password` is never returned by the API.
 
 
 ## Response Schemas
