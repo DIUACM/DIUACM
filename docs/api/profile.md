@@ -48,7 +48,7 @@ present.
 Request Body (JSON):
 - `name`: string, min 3, max 255
 - `username`: string, min 3, max 255, unique (ignores your current user)
-- `gender`: one of `male`, `female`, `other`
+- `gender`: string, one of `male`, `female`, `other`, nullable
 - `phone`: string, max 50, nullable
 - `codeforces_handle`: string, max 255, nullable
 - `atcoder_handle`: string, max 255, nullable
@@ -137,6 +137,7 @@ Notes
   remain unchanged.
 - The `email` and `max_cf_rating` fields are prohibited on this endpoint and
   will produce a 422 validation error if sent.
+- To clear an existing value for a nullable field (e.g., `gender`, `phone`), send the field with a JSON `null` value.
 
 ---
 
