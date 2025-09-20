@@ -15,31 +15,33 @@ class ProgrammerResource extends JsonResource
     public function toArray(Request $request): array
     {
         if ($request->routeIs('programmers.index')) {
-
-            return [
-                ...new PublicUserResource($this)->toArray($request),
-                'max_cf_rating' => $this->max_cf_rating,
-            ];
+            return array_merge(
+                (new PublicUserResource($this))->toArray($request),
+                [
+                    'max_cf_rating' => $this->max_cf_rating,
+                ]
+            );
         }
 
-        return [
-            ...new PublicUserResource($this)->toArray($request),
-            'max_cf_rating' => $this->max_cf_rating,
-            'codeforces_handle' => $this->codeforces_handle,
-            'atcoder_handle' => $this->atcoder_handle,
-            'vjudge_handle' => $this->vjudge_handle,
-            'contests' => $this->teams->map(fn ($team) => [
-                'id' => $team->contest->id,
-                'name' => $team->contest->name,
-                'date' => $team->contest->date->toISOString(),
-                'team_name' => $team->name,
-                'rank' => $team->rank,
-                'solve_count' => $team->solve_count,
-                'members' => PublicUserResource::collection($team->members),
-            ]),
-            'tracker_performance' => $this->formatTrackerPerformance(),
-        ];
-
+        return array_merge(
+            (new PublicUserResource($this))->toArray($request),
+            [
+                'max_cf_rating' => $this->max_cf_rating,
+                'codeforces_handle' => $this->codeforces_handle,
+                'atcoder_handle' => $this->atcoder_handle,
+                'vjudge_handle' => $this->vjudge_handle,
+                'contests' => $this->teams->map(fn ($team) => [
+                    'id' => $team->contest->id,
+                    'name' => $team->contest->name,
+                    'date' => $team->contest->date->toISOString(),
+                    'team_name' => $team->name,
+                    'rank' => $team->rank,
+                    'solve_count' => $team->solve_count,
+                    'members' => PublicUserResource::collection($team->members),
+                ]),
+                'tracker_performance' => $this->formatTrackerPerformance(),
+            ]
+        );
     }
 
     /**
