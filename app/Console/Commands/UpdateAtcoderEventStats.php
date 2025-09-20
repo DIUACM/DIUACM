@@ -22,7 +22,7 @@ class UpdateAtcoderEventStats extends Command
     /**
      * The console command description.
      */
-    protected $description = 'Update EventUserStat for AtCoder contests (solves, upsolves, and presence)';
+    protected $description = 'Update EventUserStat for AtCoder contests (solve, upsolve, and presence)';
 
     /**
      * cURL handle instance.
@@ -167,8 +167,8 @@ class UpdateAtcoderEventStats extends Command
                 'event_id' => $eventId,
                 'user_id' => $user->id,
             ], [
-                'solves_count' => 0,
-                'upsolves_count' => 0,
+                'solve_count' => 0,
+                'upsolve_count' => 0,
                 'participation' => false,
             ]);
             $this->line("  · {$user->name} — no AtCoder handle, set absent");
@@ -222,8 +222,8 @@ class UpdateAtcoderEventStats extends Command
                 'event_id' => $eventId,
                 'user_id' => $user->id,
             ], [
-                'solves_count' => count($solved),
-                'upsolves_count' => count($upsolved),
+                'solve_count' => count($solved),
+                'upsolve_count' => count($upsolved),
                 'participation' => $present,
             ]);
 

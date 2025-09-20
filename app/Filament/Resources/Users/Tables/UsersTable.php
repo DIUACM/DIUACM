@@ -7,7 +7,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Support\Colors\Color;
-use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
@@ -20,9 +20,10 @@ class UsersTable
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([
-                ImageColumn::make('image')
-                    ->disk('public')
-                    ->label('Avatar')
+                SpatieMediaLibraryImageColumn::make('Avatar')
+                    ->collection('profile_picture')
+                    ->conversion('thumb')
+                    ->visibility('public')
                     ->circular()
                     ->imageSize(36),
 

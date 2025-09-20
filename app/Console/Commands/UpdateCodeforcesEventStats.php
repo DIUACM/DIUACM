@@ -21,7 +21,7 @@ class UpdateCodeforcesEventStats extends Command
     /**
      * The console command description.
      */
-    protected $description = 'Update EventUserStat for Codeforces contests (solves, upsolves, and presence)';
+    protected $description = 'Update EventUserStat for Codeforces contests (solve, upsolve, and presence)';
 
     public function handle(): int
     {
@@ -98,8 +98,8 @@ class UpdateCodeforcesEventStats extends Command
                     'event_id' => $event->id,
                     'user_id' => $user->id,
                 ], [
-                    'solves_count' => 0,
-                    'upsolves_count' => 0,
+                    'solve_count' => 0,
+                    'upsolve_count' => 0,
                     'participation' => false,
                 ]);
                 $this->line("  · {$user->name} — no Codeforces handle, set absent");
@@ -133,7 +133,7 @@ class UpdateCodeforcesEventStats extends Command
             $rows = collect($payload['result']['rows'] ?? []);
 
             foreach ($withHandles as $user) {
-                // Find the contest row (participation) and practice row (upsolves)
+                // Find the contest row (participation) and practice row (upsolve)
                 $contestRow = $rows->first(function ($row) use ($user) {
                     $handle = strtolower($row['party']['members'][0]['handle'] ?? '');
                     $type = $row['party']['participantType'] ?? '';
@@ -149,8 +149,8 @@ class UpdateCodeforcesEventStats extends Command
                         && $type === 'PRACTICE';
                 });
 
-                // Calculate stats similar to the TS reference: points > 0 counts as solved; upsolves exclude problems solved in contest
-                [$solves, $upsolves] = $this->calculateUserStats(
+                // Calculate stats similar to the TS reference: points > 0 counts as solved; upsolve exclude problems solved in contest
+                [$solve, $upsolve] = $this->calculateUserStats(
                     is_array($contestRow) ? $contestRow : null,
                     is_array($practiceRow) ? $practiceRow : null,
                 );
@@ -159,16 +159,16 @@ class UpdateCodeforcesEventStats extends Command
                     'event_id' => $event->id,
                     'user_id' => $user->id,
                 ], [
-                    'solves_count' => $solves,
-                    'upsolves_count' => $upsolves,
+                    'solve_count' => $solve,
+                    'upsolve_count' => $upsolve,
                     'participation' => is_array($contestRow),
                 ]);
 
                 $this->line(sprintf(
                     '  · %s — solved: %d, upsolved: %d, present: %s',
                     $user->name,
-                    $solves,
-                    $upsolves,
+                    $solve,
+                    $upsolve,
                     is_array($contestRow) ? 'yes' : 'no'
                 ));
             }
@@ -193,10 +193,10 @@ class UpdateCodeforcesEventStats extends Command
     }
 
     /**
-     * Calculate contest solves and upsolves from Codeforces rows.
+     * Calculate contest solve and upsolve from Codeforces rows.
      * Mirrors the TS calculateUserStats implementation:
      * - A problem counts as solved if points > 0.
-     * - Upsolves are PRACTICE solves excluding problems solved during the contest.
+     * - Upsolve are PRACTICE solve excluding problems solved during the contest.
      *
      * @param  array<string,mixed>|null  $contestRow
      * @param  array<string,mixed>|null  $practiceRow

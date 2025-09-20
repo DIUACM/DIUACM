@@ -40,15 +40,15 @@ class EventUserStatsRelationManager extends RelationManager
                             ->ignore($record?->id);
                     }),
 
-                TextInput::make('solves_count')
-                    ->label('Solves Count')
+                TextInput::make('solve_count')
+                    ->label('Solve Count')
                     ->numeric()
                     ->default(0)
                     ->minValue(0)
                     ->required(),
 
-                TextInput::make('upsolves_count')
-                    ->label('Upsolves Count')
+                TextInput::make('upsolve_count')
+                    ->label('Upsolve Count')
                     ->numeric()
                     ->default(0)
                     ->minValue(0)
@@ -81,15 +81,15 @@ class EventUserStatsRelationManager extends RelationManager
                     ->searchable()
                     ->sortable(),
 
-                TextColumn::make('solves_count')
-                    ->label('Solves')
+                TextColumn::make('solve_count')
+                    ->label('Solve')
                     ->numeric()
                     ->sortable()
                     ->badge()
                     ->color('success'),
 
-                TextColumn::make('upsolves_count')
-                    ->label('Upsolves')
+                TextColumn::make('upsolve_count')
+                    ->label('Upsolve')
                     ->numeric()
                     ->sortable()
                     ->badge()
@@ -138,6 +138,6 @@ class EventUserStatsRelationManager extends RelationManager
                         ->label('Delete Selected'),
                 ]),
             ])
-            ->defaultSort('solves_count', 'desc');
+            ->defaultSort('solve_count', 'desc');
     }
 }

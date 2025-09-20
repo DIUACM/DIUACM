@@ -13,16 +13,16 @@ class EventUserStat extends Model
     protected $fillable = [
         'event_id',
         'user_id',
-        'solves_count',
-        'upsolves_count',
+        'solve_count',
+        'upsolve_count',
         'participation',
     ];
 
     protected function casts(): array
     {
         return [
-            'solves_count' => 'integer',
-            'upsolves_count' => 'integer',
+            'solve_count' => 'integer',
+            'upsolve_count' => 'integer',
             'participation' => 'boolean',
         ];
     }

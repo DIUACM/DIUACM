@@ -20,17 +20,9 @@ class BlogPostResource extends Resource
 {
     protected static ?string $model = BlogPost::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-
-    protected static ?string $navigationLabel = 'Blog Posts';
-
-    protected static ?string $modelLabel = 'Blog Post';
-
-    protected static ?string $pluralModelLabel = 'Blog Posts';
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 
     protected static ?string $recordTitleAttribute = 'title';
-
-    protected static ?int $navigationSort = 5;
 
     public static function getNavigationBadge(): ?string
     {
@@ -44,13 +36,13 @@ class BlogPostResource extends Resource
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['title', 'slug', 'author', 'content'];
+        return ['title', 'slug', 'content'];
     }
 
     public static function getGlobalSearchResultDetails(Model $record): array
     {
         return [
-            'Author' => $record->author,
+            'Author' => $record->author->name,
             'Status' => $record->status?->getLabel(),
             'Published' => $record->published_at?->setTimezone('Asia/Dhaka')?->format('M j, Y g:i A') ?? 'Unpublished',
         ];

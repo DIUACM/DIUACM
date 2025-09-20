@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RankList extends Model
 {
+    /** @use HasFactory<\Database\Factories\RankListFactory> */
     use HasFactory;
 
     protected $fillable = [

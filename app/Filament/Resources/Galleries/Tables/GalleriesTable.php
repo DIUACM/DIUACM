@@ -8,9 +8,11 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class GalleriesTable
 {
@@ -27,16 +29,14 @@ class GalleriesTable
                     ->sortable()
                     ->badge()
                     ->toggleable(isToggledHiddenByDefault: false),
-                TextColumn::make('attachments')
-                    ->label('Cover')
-                    ->formatStateUsing(function ($state) {
-                        if (is_array($state) && isset($state[0])) {
-                            return '🖼️';
-                        }
+                SpatieMediaLibraryImageColumn::make('Preview')
+                    ->collection('gallery_images')
+                    ->conversion('thumb')
 
-                        return '—';
-                    })
-                    ->tooltip(fn ($record) => is_array($record->attachments) ? implode(', ', array_slice($record->attachments, 0, 3)) : null)
+                    ->imageHeight(40)
+                    ->circular()
+                    ->stacked()
+                    ->limit(3)
                     ->toggleable(),
                 TextColumn::make('title')
                     ->searchable()
@@ -53,9 +53,9 @@ class GalleriesTable
                     ->toggleable()
                     ->limit(60)
                     ->searchable(),
-                TextColumn::make('attachments')
+                TextColumn::make('gallery_images')
                     ->label('Images')
-                    ->formatStateUsing(fn ($state) => is_array($state) ? count($state) : 0)
+                    ->getStateUsing(fn (Model $record): int => $record->getMedia('gallery_images')->count())
                     ->badge()
                     ->color(fn ($state) => $state > 0 ? 'success' : 'gray'),
                 TextColumn::make('created_at')
@@ -69,7 +69,7 @@ class GalleriesTable
             ])
             ->filters([
                 Filter::make('created_between')
-                    ->form([
+                    ->schema([
                         DatePicker::make('created_from')->label('Created From'),
                         DatePicker::make('created_until')->label('Created Until'),
                     ])
@@ -80,9 +80,9 @@ class GalleriesTable
                     }),
                 Filter::make('has_images')
                     ->label('Has Images')
-                    ->query(fn ($query) => $query->whereNotNull('attachments')->whereJsonLength('attachments', '>', 0)),
+                    ->query(fn ($query) => $query->whereHas('media', fn ($q) => $q->where('collection_name', 'gallery_images'))),
                 Filter::make('status')
-                    ->form([
+                    ->schema([
                         \Filament\Forms\Components\Select::make('status')
                             ->label('Status')
                             ->options(VisibilityStatus::class),

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Contest extends Model
 {
+    /** @use HasFactory<\Database\Factories\ContestFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -37,6 +38,4 @@ class Contest extends Model
     {
         return $this->hasMany(Team::class);
     }
-
-    // A contest has many teams. Users are related to contests through teams pivot (team_user).
 }

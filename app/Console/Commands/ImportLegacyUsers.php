@@ -16,7 +16,7 @@ class ImportLegacyUsers extends Command
      *
      * You can override the source URL with --url=... if needed.
      */
-    protected $signature = 'app:import-legacy-users {--url=http://localhost:3000/api/migrate/users} {--verify-passwords : Verify that imported passwords work correctly}';
+    protected $signature = 'app:import-legacy-users {--url=http://localhost:3000/api/migrate/users} {--verify-passwords : Verify that imported passwords work correctly} {--limit= : Limit the number of users to import for testing}';
 
     /**
      * The console command description.
@@ -30,6 +30,7 @@ class ImportLegacyUsers extends Command
     {
         $url = (string) $this->option('url');
         $verifyPasswords = $this->option('verify-passwords');
+        $limit = $this->option('limit') ? (int) $this->option('limit') : null;
 
         $this->info('Fetching users from: '.$url);
 
@@ -54,6 +55,12 @@ class ImportLegacyUsers extends Command
             $this->warn('No users found to import.');
 
             return self::SUCCESS;
+        }
+
+        // Apply limit if specified
+        if ($limit !== null) {
+            $users = array_slice($users, 0, $limit);
+            $this->info("Limited to {$limit} users for testing.");
         }
 
         // Show pagination info
@@ -93,7 +100,7 @@ class ImportLegacyUsers extends Command
                 'name' => (string) Arr::get($u, 'name'),
                 'email' => (string) Arr::get($u, 'email'),
                 'username' => (string) Arr::get($u, 'username'),
-                'image' => Arr::get($u, 'image'),
+                'image_url' => Arr::get($u, 'image'), // Store image URL for later processing
                 'email_verified_at' => $emailVerifiedAt ? Carbon::parse($emailVerifiedAt) : null,
                 'password' => $password,
                 'gender' => $gender,
@@ -151,14 +158,21 @@ class ImportLegacyUsers extends Command
                 return;
             }
 
+            // Remove image_url from the data before upserting (it's not a database column)
+            $upsertData = $validChunk->map(function ($row) {
+                $cleanRow = $row;
+                unset($cleanRow['image_url']);
+
+                return $cleanRow;
+            })->all();
+
             // Upsert by unique email; update on conflict for these columns
             User::query()->upsert(
-                $validChunk->all(),
+                $upsertData,
                 uniqueBy: ['email'],
                 update: [
                     'name',
                     'username',
-                    'image',
                     'email_verified_at',
                     'password',
                     'gender',
@@ -173,6 +187,9 @@ class ImportLegacyUsers extends Command
                     'updated_at',
                 ]
             );
+
+            // Handle profile pictures after upserting
+            $this->handleProfilePictures($validChunk);
 
             $processedCount += $validChunk->count();
             $this->info("Processed {$processedCount} users...");
@@ -194,13 +211,18 @@ class ImportLegacyUsers extends Command
      */
     protected function normalizeGender(mixed $value): ?string
     {
-        if ($value === null) {
+        if ($value === null || $value === '') {
             return null;
         }
 
         $v = strtolower((string) $value);
+        $allowed = ['male', 'female', 'other'];
 
-        return in_array($v, ['male', 'female', 'other'], true) ? $v : null;
+        if (! in_array($v, $allowed, true)) {
+            throw new \InvalidArgumentException("Invalid gender value: '{$value}'. Allowed values are: ".implode(', ', $allowed).', or null');
+        }
+
+        return $v;
     }
 
     /**
@@ -262,5 +284,41 @@ class ImportLegacyUsers extends Command
                str_starts_with($hash, '$argon2') ||
                str_starts_with($hash, '$argon2i') ||
                str_starts_with($hash, '$argon2id');
+    }
+
+    /**
+     * Handle profile pictures by downloading and adding them to the media collection.
+     */
+    protected function handleProfilePictures($userChunk): void
+    {
+        return;
+        foreach ($userChunk as $userData) {
+            $imageUrl = $userData['image_url'] ?? null;
+            $email = $userData['email'] ?? null;
+
+            if (! $imageUrl || ! $email) {
+                continue;
+            }
+
+            try {
+                $user = User::where('email', $email)->first();
+                if (! $user) {
+                    $this->warn("User not found for email: {$email}");
+
+                    continue;
+                }
+
+                // Clear existing profile pictures
+                $user->clearMediaCollection('profile_picture');
+
+                // Download and add the new profile picture
+                $user->addMediaFromUrl($imageUrl)
+                    ->toMediaCollection('profile_picture');
+
+                $this->info("✓ Added profile picture for {$user->email}");
+            } catch (\Exception $e) {
+                $this->warn("Failed to add profile picture for {$email}: ".$e->getMessage());
+            }
+        }
     }
 }

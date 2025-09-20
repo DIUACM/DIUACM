@@ -6,9 +6,10 @@ use App\Enums\VisibilityStatus;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\RichEditor\RichContentRenderer;
 use Filament\Support\Colors\Color;
 use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
@@ -24,7 +25,7 @@ class BlogPostsTable
                 TextColumn::make('title')
                     ->searchable()
                     ->sortable()
-                    ->description(fn ($record): string => str($record->content ?? '')->stripTags()->limit(50))
+                    ->description(fn ($record): string => str(RichContentRenderer::make($record->content)->toHtml() ?? '')->stripTags()->limit(50))
                     ->limit(40)
                     ->weight('medium'),
 
@@ -35,7 +36,7 @@ class BlogPostsTable
                     ->limit(30)
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('author')
+                TextColumn::make('author.name')
                     ->searchable()
                     ->sortable(),
 
@@ -45,9 +46,10 @@ class BlogPostsTable
                     ->color(fn (?VisibilityStatus $state): string|array|null => $state?->getColor())
                     ->icon(fn (?VisibilityStatus $state): ?string => $state?->getIcon()),
 
-                ImageColumn::make('featured_image')
+                SpatieMediaLibraryImageColumn::make('featured_image')
+                    ->collection('featured_image')
+                    ->conversion('thumb')
                     ->label('Featured')
-                    ->circular()
                     ->placeholder('No image')
                     ->toggleable(),
 
@@ -89,16 +91,6 @@ class BlogPostsTable
             ->filters([
                 SelectFilter::make('status')
                     ->options(VisibilityStatus::class)
-                    ->multiple(),
-
-                SelectFilter::make('author')
-                    ->options(function () {
-                        return \App\Models\BlogPost::distinct()
-                            ->pluck('author', 'author')
-                            ->filter()
-                            ->toArray();
-                    })
-                    ->searchable()
                     ->multiple(),
 
                 TernaryFilter::make('is_featured')

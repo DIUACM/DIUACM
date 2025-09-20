@@ -22,7 +22,6 @@ class VJudgeController extends Controller
             ->get();
 
         return response()->json([
-            'success' => true,
             'data' => $activeContests,
         ]);
     }
@@ -34,7 +33,6 @@ class VJudgeController extends Controller
 
         if (! $payload || ! is_array($payload)) {
             return response()->json([
-                'success' => false,
                 'message' => 'Invalid JSON payload',
             ], 400);
         }
@@ -45,7 +43,6 @@ class VJudgeController extends Controller
         // Check if auto update score is enabled for this event
         if (! $event->auto_update_score) {
             return response()->json([
-                'success' => false,
                 'message' => 'Auto update score is disabled for this event',
             ], 400);
         }
@@ -83,7 +80,6 @@ class VJudgeController extends Controller
 
         if ($users->isEmpty()) {
             return response()->json([
-                'success' => false,
                 'message' => 'No users with VJudge handles found in the ranklists or matching VJudge usernames',
             ], 400);
         }
@@ -99,7 +95,7 @@ class VJudgeController extends Controller
 
         foreach ($users as $user) {
             // Only match by vjudge_handle
-            $stats = $processedData[$user->vjudge_handle??"nousername"] ?? null;
+            $stats = $processedData[$user->vjudge_handle ?? 'nousername'] ?? null;
 
             $finalSolveCount = $stats['solveCount'] ?? 0;
             $finalUpsolveCount = $stats['upSolveCount'] ?? 0;
@@ -107,8 +103,8 @@ class VJudgeController extends Controller
             $insertData[] = [
                 'user_id' => $user->id,
                 'event_id' => $eventId,
-                'solves_count' => $finalSolveCount,
-                'upsolves_count' => $finalUpsolveCount,
+                'solve_count' => $finalSolveCount,
+                'upsolve_count' => $finalUpsolveCount,
                 'participation' => ! ($stats['absent'] ?? true),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -120,7 +116,6 @@ class VJudgeController extends Controller
         }
 
         return response()->json([
-            'success' => true,
             'message' => 'VJudge data processed and database updated successfully',
             'data' => $processedData,
         ]);

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\VisibilityStatus;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Gallery>
@@ -17,23 +18,54 @@ class GalleryFactory extends Factory
      */
     public function definition(): array
     {
-        $title = fake()->words(3, true);
+        $galleryTitles = [
+            'ICPC Regional Contest 2024',
+            'DIU Programming Marathon',
+            'ACM Training Session',
+            'Codeforces Contest Highlights',
+            'Team Building Workshop',
+            'Algorithm Study Group',
+            'Contest Prize Distribution',
+            'Programming Workshop Series',
+            'Hackathon Event Coverage',
+            'Tech Talk Series',
+            'Student Project Showcase',
+            'Orientation Program 2024',
+            'Industry Expert Session',
+            'Campus Programming Event',
+            'Contest Preparation Workshop',
+            'Alumni Meetup',
+            'Coding Bootcamp',
+            'Technical Seminar',
+            'Problem Solving Session',
+            'Awards Ceremony',
+        ];
+
+        $descriptions = [
+            'A comprehensive collection of moments captured during our latest programming contest.',
+            'Highlights from the annual DIU programming marathon showcasing student talent.',
+            'Training session photos featuring students preparing for upcoming contests.',
+            'Behind-the-scenes moments from our recent competitive programming event.',
+            'Students collaborating and solving complex algorithmic problems together.',
+            'Workshop sessions focusing on advanced programming concepts and techniques.',
+            'Celebration moments from our latest contest achievement and awards.',
+            'Interactive programming sessions with industry experts and mentors.',
+            'Documentation of our hackathon event featuring innovative student projects.',
+            'Educational workshop series covering various programming topics and skills.',
+        ];
+
+        $title = fake()->randomElement($galleryTitles);
 
         return [
             'title' => $title,
-            'slug' => str($title)->slug(),
-            'description' => fake()->optional()->paragraph(),
-            'status' => fake()->randomElement([VisibilityStatus::DRAFT, VisibilityStatus::PUBLISHED]),
-            'attachments' => [
-                'gallery-images/sample-image-1.jpg',
-                'gallery-images/sample-image-2.jpg',
-                'gallery-images/sample-image-3.jpg',
-            ],
+            'slug' => Str::slug($title).'-'.fake()->randomNumber(5).'-'.time(),
+            'description' => fake()->randomElement($descriptions),
+            'status' => fake()->randomElement(VisibilityStatus::cases()),
         ];
     }
 
     /**
-     * Indicate that the gallery is published.
+     * Indicate that the gallery should be published.
      */
     public function published(): static
     {
@@ -43,7 +75,7 @@ class GalleryFactory extends Factory
     }
 
     /**
-     * Indicate that the gallery is draft.
+     * Indicate that the gallery should be a draft.
      */
     public function draft(): static
     {
@@ -53,29 +85,22 @@ class GalleryFactory extends Factory
     }
 
     /**
-     * Create a gallery with no images.
+     * Create a contest-related gallery.
      */
-    public function withoutImages(): static
+    public function contestRelated(): static
     {
-        return $this->state(fn (array $attributes) => [
-            'attachments' => [],
-        ]);
-    }
+        $contestTitles = [
+            'ICPC Regional Contest 2024',
+            'DIU Programming Contest',
+            'ACM Contest Highlights',
+            'Codeforces Live Contest',
+            'IUPC Event Coverage',
+        ];
 
-    /**
-     * Create a gallery with many images.
-     */
-    public function withManyImages(): static
-    {
         return $this->state(fn (array $attributes) => [
-            'attachments' => [
-                'gallery-images/image-1.jpg',
-                'gallery-images/image-2.jpg',
-                'gallery-images/image-3.jpg',
-                'gallery-images/image-4.jpg',
-                'gallery-images/image-5.jpg',
-                'gallery-images/image-6.jpg',
-            ],
+            'title' => fake()->randomElement($contestTitles),
+            'description' => 'Photo gallery showcasing moments from our recent programming contest event.',
+            'status' => VisibilityStatus::PUBLISHED,
         ]);
     }
 }

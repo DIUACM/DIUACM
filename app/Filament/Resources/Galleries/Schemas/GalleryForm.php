@@ -3,10 +3,10 @@
 namespace App\Filament\Resources\Galleries\Schemas;
 
 use App\Enums\VisibilityStatus;
-use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -44,12 +44,11 @@ class GalleryForm
                                     ->autocomplete(false)
                                     ->placeholder('auto-generated-from-title')
                                     ->helperText('URL-friendly version of the title. Auto-generated but can be customized.'),
-                                Select::make('status')
-                                    ->label('Status')
+                                ToggleButtons::make('status')
                                     ->options(VisibilityStatus::class)
                                     ->default(VisibilityStatus::DRAFT)
+                                    ->inline()
                                     ->required()
-                                    ->native(false)
                                     ->helperText('Set to Draft while preparing; Published makes it visible.'),
                             ]),
                         Grid::make()
@@ -65,22 +64,22 @@ class GalleryForm
                 Section::make('Images')
                     ->columnSpanFull()
                     ->schema([
-                        FileUpload::make('attachments')
-                            ->label('Images')
+                        SpatieMediaLibraryFileUpload::make('gallery_images')
+
+                            ->collection('gallery_images')
                             ->helperText('Upload up to 12 images (JPEG, PNG, WebP, max 2MB each). Drag to reorder.')
-                            ->disk('s3')
-                            ->directory('gallery-images')
                             ->visibility('public')
                             ->image()
                             ->imageEditor()
                             ->panelLayout('grid')
                             ->multiple()
                             ->reorderable()
+                            ->appendFiles()
                             ->openable()
                             ->downloadable()
                             ->maxFiles(12)
                             ->maxSize(2048)
-                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->acceptedFileTypes(types: ['image/jpeg', 'image/png', 'image/webp'])
                             ->columnSpanFull(),
                     ]),
                 Section::make('Gallery History')

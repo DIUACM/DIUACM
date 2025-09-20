@@ -37,7 +37,8 @@ class GalleryResource extends Resource
 
     public static function getGlobalSearchResultDetails(Model $record): array
     {
-        $attachments = is_array($record->attachments) ? count($record->attachments) : 0;
+        /** @var \App\Models\Gallery $record */
+        $attachments = $record->getMedia('gallery_images')->count();
 
         return [
             'Images' => $attachments.' image'.($attachments === 1 ? '' : 's'),

@@ -9,54 +9,27 @@ use Illuminate\Validation\Rule;
 
 class UpdateProfileRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return Auth::check();
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
-        return [
-            'name' => ['required', 'string', 'max:255'],
-            'username' => [
-                'required',
-                'string',
-                'max:255',
-                'alpha_dash',
-                Rule::unique('users', 'username')->ignore(Auth::id()),
-            ],
-            'gender' => ['nullable', Rule::enum(Gender::class)],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'codeforces_handle' => ['nullable', 'string', 'max:255'],
-            'atcoder_handle' => ['nullable', 'string', 'max:255'],
-            'vjudge_handle' => ['nullable', 'string', 'max:255'],
-            'department' => ['nullable', 'string', 'max:255'],
-            'student_id' => ['nullable', 'string', 'max:255'],
-        ];
-    }
+        $userId = Auth::id();
 
-    /**
-     * Get custom error messages for validation rules.
-     *
-     * @return array<string, string>
-     */
-    public function messages(): array
-    {
         return [
-            'name.required' => 'Name is required.',
-            'name.max' => 'Name must not exceed 255 characters.',
-            'username.required' => 'Username is required.',
-            'username.unique' => 'This username is already taken.',
-            'username.alpha_dash' => 'Username may only contain letters, numbers, dashes, and underscores.',
-            'phone.max' => 'Phone number must not exceed 20 characters.',
+            'name' => ['sometimes', 'string', 'min:4', 'max:255'],
+            'username' => ['sometimes', 'string', 'min:4', 'max:255', Rule::unique('users', 'username')->ignore($userId)],
+            'email' => ['prohibited'],
+            'gender' => ['sometimes', 'nullable','string', 'in:'.implode(',', array_column(Gender::cases(), 'value'))],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'codeforces_handle' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'atcoder_handle' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'vjudge_handle' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'department' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'student_id' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'max_cf_rating' => ['prohibited'],
         ];
     }
 }

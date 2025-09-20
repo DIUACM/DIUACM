@@ -5,8 +5,8 @@ namespace App\Filament\Resources\Users\Schemas;
 use App\Enums\Gender;
 use App\Models\User;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
@@ -46,9 +46,8 @@ class UserForm
 
                         Grid::make()
                             ->schema([
-                                FileUpload::make('image')
-                                    ->disk('s3')
-                                    ->directory('profile-images')
+                                SpatieMediaLibraryFileUpload::make('image')
+                                    ->collection('profile_picture')
                                     ->visibility('public')
                                     ->avatar()
                                     ->imageEditor()

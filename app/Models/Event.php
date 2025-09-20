@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Event extends Model
 {
+    /** @use HasFactory<\Database\Factories\EventFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -25,6 +26,15 @@ class Event extends Model
         'auto_update_score',
         'type',
         'participation_scope',
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var list<string>
+     */
+    protected $hidden = [
+        'event_password',
     ];
 
     protected function casts(): array
@@ -62,6 +72,54 @@ class Event extends Model
         return now()->between($windowStart, $windowEnd, true);
     }
 
+    /**
+     * Scope a query to only include published events.
+     */
+    public function scopePublished($query)
+    {
+        return $query->where('status', VisibilityStatus::PUBLISHED);
+    }
+
+    /**
+     * Scope a query to search events by title, description, or event link.
+     */
+    public function scopeSearch($query, ?string $searchTerm)
+    {
+        if (empty($searchTerm)) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($searchTerm) {
+            $q->where('title', 'like', '%'.$searchTerm.'%')
+                ->orWhere('description', 'like', '%'.$searchTerm.'%')
+                ->orWhere('event_link', 'like', '%'.$searchTerm.'%');
+        });
+    }
+
+    /**
+     * Scope a query to filter events by type.
+     */
+    public function scopeOfType($query, ?string $type)
+    {
+        if (empty($type)) {
+            return $query;
+        }
+
+        return $query->where('type', $type);
+    }
+
+    /**
+     * Scope a query to filter events by participation scope.
+     */
+    public function scopeForParticipationScope($query, ?string $participationScope)
+    {
+        if (empty($participationScope)) {
+            return $query;
+        }
+
+        return $query->where('participation_scope', $participationScope);
+    }
+
     public function attendees()
     {
         return $this->belongsToMany(User::class, 'event_attendance')->withTimestamps();
@@ -81,7 +139,7 @@ class Event extends Model
     public function usersWithStats()
     {
         return $this->belongsToMany(User::class, 'event_user_stats')
-            ->withPivot(['solves_count', 'upsolves_count', 'participation'])
+            ->withPivot(['solve_count', 'upsolve_count', 'participation'])
             ->withTimestamps();
     }
 }
