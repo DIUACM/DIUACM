@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BlogPostController;
 use App\Http\Controllers\Api\ContactController;
 use App\Http\Controllers\Api\ContestController;
@@ -45,6 +46,11 @@ Route::post('/events/{event}/attend', [EventController::class, 'attend'])
     ->middleware('auth:sanctum');
 
 Route::post('/contact', [ContactController::class, 'store']);
+
+// Auth
+Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/logout', [AuthController::class, 'logout'])
+    ->middleware('auth:sanctum');
 
 // Profile update & picture upload
 Route::middleware('auth:sanctum')->group(function () {
