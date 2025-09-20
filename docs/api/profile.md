@@ -41,18 +41,22 @@ Example Response
 - URL: `/api/profile`
 - Auth: Required (Sanctum)
 
-Fields you can update. Email and `max_cf_rating` are not changeable via this API.
+Fields you can update (partial updates supported). The `email` and
+`max_cf_rating` fields are prohibited and will return a validation error if
+present.
 
 Request Body (JSON):
-- `name`: string, max 255
-- `username`: string, unique, max 255
+- `name`: string, min 3, max 255
+- `username`: string, min 3, max 255, unique (ignores your current user)
 - `gender`: one of `male`, `female`, `other`
 - `phone`: string, max 50, nullable
-- `codeforces_handle`: string, nullable
-- `atcoder_handle`: string, nullable
-- `vjudge_handle`: string, nullable
-- `department`: string, nullable
-- `student_id`: string, nullable
+- `codeforces_handle`: string, max 255, nullable
+- `atcoder_handle`: string, max 255, nullable
+- `vjudge_handle`: string, max 255, nullable
+- `department`: string, max 255, nullable
+- `student_id`: string, max 255, nullable
+- `email`: prohibited
+- `max_cf_rating`: prohibited
   
 
 Example Request
@@ -101,8 +105,38 @@ Validation Errors
 }
 ```
 
+Another Example (prohibited field)
+```json
+{
+  "message": "Validation failed",
+  "errors": {
+    "email": [
+      "The email field is prohibited."
+    ]
+  }
+}
+```
+
+Multiple Errors Example (min length)
+```json
+{
+  "message": "Validation failed",
+  "errors": {
+    "name": [
+      "The name field must be at least 3 characters."
+    ],
+    "username": [
+      "The username field must be at least 3 characters."
+    ]
+  }
+}
+```
+
 Notes
-- The `email` field is prohibited and cannot be changed through this endpoint.
+- Partial updates: only include fields you want to change. Unspecified fields
+  remain unchanged.
+- The `email` and `max_cf_rating` fields are prohibited on this endpoint and
+  will produce a 422 validation error if sent.
 
 ---
 

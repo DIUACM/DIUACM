@@ -19,8 +19,8 @@ class UpdateProfileRequest extends FormRequest
         $userId = Auth::id();
 
         return [
-            'name' => ['sometimes', 'string', 'max:255'],
-            'username' => ['sometimes', 'string', 'max:255', Rule::unique('users', 'username')->ignore($userId)],
+            'name' => ['sometimes', 'string', 'min:3', 'max:255'],
+            'username' => ['sometimes', 'string', 'min:3', 'max:255', Rule::unique('users', 'username')->ignore($userId)],
             'email' => ['prohibited'],
             'gender' => ['sometimes', 'string', 'in:'.implode(',', array_column(Gender::cases(), 'value'))],
             'phone' => ['sometimes', 'nullable', 'string', 'max:50'],
