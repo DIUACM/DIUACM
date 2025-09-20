@@ -7,7 +7,7 @@ use App\Enums\ParticipationScope;
 use App\Enums\VisibilityStatus;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\RichEditor;
+use Filament\Forms\Components\MarkdownEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Infolists\Components\TextEntry;
@@ -27,18 +27,8 @@ class EventForm
                         TextInput::make('title')
                             ->required(),
 
-                        RichEditor::make('description')
-                            ->toolbarButtons([
-                                'bold',
-                                'italic',
-                                'link',
-                                'bulletList',
-                                'orderedList',
-                                'h2',
-                                'h3',
-                                'blockquote',
-                                'codeBlock',
-                            ])
+                        MarkdownEditor::make('description')
+                         
                             ->placeholder('Enter event description'),
 
                         Grid::make()
