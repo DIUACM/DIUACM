@@ -28,7 +28,7 @@ class EventForm
                             ->required(),
 
                         MarkdownEditor::make('description')
-                         
+
                             ->placeholder('Enter event description'),
 
                         Grid::make()
