@@ -33,7 +33,7 @@
         @vite(['resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         @inertiaHead
     </head>
-    <body class="antialiased">
+    <body class="antialiased flex flex-col min-h-screen">
         @inertia
     </body>
 </html>
