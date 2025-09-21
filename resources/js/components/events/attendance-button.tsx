@@ -23,6 +23,7 @@ import {
   Shield
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { toast } from 'sonner';
 
 interface AttendanceButtonProps {
   eventId: number;
@@ -65,6 +66,29 @@ export function AttendanceButton({
       onSuccess: () => {
         setIsOpen(false);
         reset();
+        toast.success('Attendance confirmed successfully!', {
+          description: 'Your attendance has been recorded for this event.',
+          duration: 4000,
+        });
+      },
+      onError: (errors) => {
+        // Show error toast for attendance or password errors
+        if (errors.attendance) {
+          toast.error('Attendance Failed', {
+            description: errors.attendance,
+            duration: 5000,
+          });
+        } else if (errors.password) {
+          toast.error('Invalid Password', {
+            description: errors.password,
+            duration: 5000,
+          });
+        } else {
+          toast.error('Something went wrong', {
+            description: 'Please try again or contact support.',
+            duration: 5000,
+          });
+        }
       },
     });
   };
