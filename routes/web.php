@@ -21,3 +21,4 @@ Route::get('/terms-and-conditions', function () {
 })->name('terms-and-conditions');
 
 Route::get('/events', [EventController::class, 'index'])->name('events.index');
+Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
