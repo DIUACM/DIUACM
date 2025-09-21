@@ -10,11 +10,11 @@ interface MainLayoutProps {
 }
 
 export default function MainLayout({ children, title }: MainLayoutProps) {
-    const pageTitle = title ? `${title} | DIUACM` : 'DIUACM | A Community for ICPC Enthusiasts';
+;
 
     return (
         <>
-            <Head title={pageTitle} />
+            <Head title={title} />
             {/* Background elements */}
             <div className="fixed inset-0 -z-10">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-slate-100 dark:from-slate-900 dark:to-slate-950" />
