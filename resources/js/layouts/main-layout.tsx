@@ -1,20 +1,16 @@
 import Footer from '@/components/footer';
 import Navigation from '@/components/navigation';
-import { Head } from '@inertiajs/react';
 import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 
 interface MainLayoutProps {
     children: ReactNode;
-    title?: string;
 }
 
-export default function MainLayout({ children, title }: MainLayoutProps) {
-;
+export default function MainLayout({ children }: MainLayoutProps) {
 
     return (
         <>
-            <Head title={title} />
             {/* Background elements */}
             <div className="fixed inset-0 -z-10">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-slate-100 dark:from-slate-900 dark:to-slate-950" />
