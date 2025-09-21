@@ -8,7 +8,6 @@ interface MainLayoutProps {
 }
 
 export default function MainLayout({ children }: MainLayoutProps) {
-
     return (
         <>
             {/* Background elements */}

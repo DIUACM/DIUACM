@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\EventController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -18,3 +19,5 @@ Route::get('/privacy-policy', function () {
 Route::get('/terms-and-conditions', function () {
     return Inertia::render('terms-and-conditions');
 })->name('terms-and-conditions');
+
+Route::get('/events', [EventController::class, 'index'])->name('events.index');

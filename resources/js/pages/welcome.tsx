@@ -322,7 +322,7 @@ function HeroSection() {
 
 export default function Welcome() {
     return (
-        <MainLayout title="Home">
+        <MainLayout>
             {/* Hero */}
             <HeroSection />
 
