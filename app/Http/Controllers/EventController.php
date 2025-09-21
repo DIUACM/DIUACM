@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Event;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -47,87 +48,207 @@ class EventController extends Controller
 
     public function show(Event $event): Response
     {
-        // Load the event with basic details
+        // Load the event with optimized query - only select needed fields
         $event = Event::query()
+            ->select([
+                'id', 'title', 'description', 'status', 'starting_at', 'ending_at',
+                'event_link', 'event_password', 'open_for_attendance', 'strict_attendance',
+                'auto_update_score', 'type', 'participation_scope', 'created_at', 'updated_at',
+            ])
             ->where('id', $event->id)
             ->where('status', 'published') // Only show published events
             ->firstOrFail();
 
         $data = ['event' => $event];
 
-        // If attendance is enabled, load attendance data
-        if ($event->open_for_attendance) {
-            $attendees = $event->attendees()
-                ->select([
-                    'users.id',
-                    'users.name',
-                    'users.username',
-                    'users.student_id',
-                    'users.department',
-                ])
-                ->withPivot('created_at as attended_at')
-                ->orderBy('event_attendance.created_at', 'desc')
-                ->get()
-                ->map(function ($user) {
-                    // Get profile picture URL
-                    $profilePicture = $user->getFirstMediaUrl('profile_picture', 'thumb');
+        // Add authentication status
+        $user = Auth::user();
+        $data['auth'] = [
+            'user' => $user,
+        ];
 
-                    return [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'username' => $user->username,
-                        'student_id' => $user->student_id,
-                        'department' => $user->department,
-                        'profile_picture' => $profilePicture,
-                        'attended_at' => $user->pivot->attended_at,
-                    ];
-                });
+        // Check if attendance window is currently enabled
+        $isAttendanceWindowEnabled = $event->isAttendanceWindowEnabled();
 
-            $data['attendees'] = $attendees;
-            $data['attendees_count'] = $attendees->count();
+        // Calculate attendance window times only if attendance is open
+        $attendanceWindowStart = null;
+        $attendanceWindowEnd = null;
+        if ($event->open_for_attendance && $event->starting_at && $event->ending_at) {
+            $attendanceWindowStart = $event->starting_at->copy()->subMinutes(15);
+            $attendanceWindowEnd = $event->ending_at->copy()->addMinutes(20);
         }
 
-        // If it's a contest, load performance data
+        // Add attendance-related data for authenticated users
+        $userAlreadyAttended = false;
+        if ($user) {
+            $userAlreadyAttended = $event->attendees()
+                ->where('user_id', $user->id)
+                ->exists();
+        }
+
+        // Build attendance info with detailed state information
+        $attendanceInfo = [
+            'user_already_attended' => $userAlreadyAttended,
+            'attendance_window_enabled' => $isAttendanceWindowEnabled,
+            'attendance_window_start' => $attendanceWindowStart?->toISOString(),
+            'attendance_window_end' => $attendanceWindowEnd?->toISOString(),
+        ];
+
+        // Include password info when attendance is enabled (regardless of window timing)
+        if ($event->open_for_attendance) {
+            $attendanceInfo['has_password'] = ! empty($event->event_password);
+
+            // Add detailed timing state for better button logic
+            $now = now();
+            if ($now < $attendanceWindowStart) {
+                $attendanceInfo['state'] = 'before_window';
+            } elseif ($now > $attendanceWindowEnd) {
+                $attendanceInfo['state'] = 'after_window';
+            } else {
+                $attendanceInfo['state'] = 'during_window';
+            }
+        }
+
+        $data['attendance_info'] = $attendanceInfo;
+
+        // If attendance is enabled, load attendance data efficiently
+        if ($event->open_for_attendance) {
+            $data = array_merge($data, $this->getAttendanceData($event));
+        }
+
+        // If it's a contest, load performance data efficiently
         if ($event->type === \App\Enums\EventType::CONTEST) {
-            $performanceData = $event->eventUserStats()
-                ->with([
-                    'user' => function ($query) {
-                        $query->select([
-                            'id',
-                            'name',
-                            'username',
-                            'student_id',
-                            'department',
-                        ]);
-                    },
-                ])
-                ->orderBy('solve_count', 'desc')
-                ->orderBy('upsolve_count', 'desc')
-                ->get()
-                ->map(function ($stat) {
-                    // Get profile picture URL
-                    $profilePicture = $stat->user->getFirstMediaUrl('profile_picture', 'thumb');
-
-                    return [
-                        'user' => [
-                            'id' => $stat->user->id,
-                            'name' => $stat->user->name,
-                            'username' => $stat->user->username,
-                            'student_id' => $stat->user->student_id,
-                            'department' => $stat->user->department,
-                            'profile_picture' => $profilePicture,
-                        ],
-                        'solve_count' => $stat->solve_count,
-                        'upsolve_count' => $stat->upsolve_count,
-                        'participation' => $stat->participation,
-                        'total_count' => $stat->solve_count + $stat->upsolve_count,
-                    ];
-                });
-
-            $data['performance_data'] = $performanceData;
-            $data['performance_count'] = $performanceData->count();
+            $data = array_merge($data, $this->getPerformanceData($event));
         }
 
         return Inertia::render('events/show', $data);
+    }
+
+    /**
+     * Get preprocessed attendance data for the event.
+     */
+    private function getAttendanceData(Event $event): array
+    {
+        $attendees = $event->attendees()
+            ->select([
+                'users.id',
+                'users.name',
+                'users.username',
+                'users.student_id',
+                'users.department',
+            ])
+            ->withPivot('created_at as attended_at')
+            ->orderBy('event_attendance.created_at', 'desc')
+            ->get();
+
+        $processedAttendees = $attendees->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'username' => $user->username,
+                'student_id' => $user->student_id,
+                'department' => $user->department,
+                'profile_picture' => $user->getFirstMediaUrl('profile_picture', 'thumb'),
+                'attended_at' => $user->pivot->attended_at,
+            ];
+        });
+
+        return [
+            'attendees' => $processedAttendees,
+            'attendees_count' => $processedAttendees->count(),
+        ];
+    }
+
+    /**
+     * Get preprocessed performance data for the event.
+     */
+    private function getPerformanceData(Event $event): array
+    {
+        $performanceStats = $event->eventUserStats()
+            ->with([
+                'user:id,name,username,student_id,department',
+            ])
+            ->select([
+                'user_id',
+                'solve_count',
+                'upsolve_count',
+                'participation',
+            ])
+            ->orderBy('solve_count', 'desc')
+            ->orderBy('upsolve_count', 'desc')
+            ->get();
+
+        $processedPerformance = $performanceStats->map(function ($stat) {
+            return [
+                'user' => [
+                    'id' => $stat->user->id,
+                    'name' => $stat->user->name,
+                    'username' => $stat->user->username,
+                    'student_id' => $stat->user->student_id,
+                    'department' => $stat->user->department,
+                    'profile_picture' => $stat->user->getFirstMediaUrl('profile_picture', 'thumb'),
+                ],
+                'solve_count' => $stat->solve_count,
+                'upsolve_count' => $stat->upsolve_count,
+                'participation' => $stat->participation,
+                'total_count' => $stat->solve_count + $stat->upsolve_count,
+            ];
+        });
+
+        return [
+            'performance_data' => $processedPerformance,
+            'performance_count' => $processedPerformance->count(),
+        ];
+    }
+
+    /**
+     * Submit attendance for an event.
+     */
+    public function storeAttendance(Request $request, Event $event)
+    {
+        // Ensure user is authenticated
+        if (! Auth::check()) {
+            abort(401, 'You must be logged in to give attendance.');
+        }
+
+        // Validate that the event is published
+        if ($event->status !== \App\Enums\VisibilityStatus::PUBLISHED) {
+            abort(404, 'Event not found.');
+        }
+
+        // Check if attendance is enabled for this event
+        if (! $event->open_for_attendance) {
+            return back()->withErrors(['attendance' => 'Attendance is not enabled for this event.']);
+        }
+
+        // Check if attendance window is enabled
+        if (! $event->isAttendanceWindowEnabled()) {
+            return back()->withErrors(['attendance' => 'Attendance window is not currently open.']);
+        }
+
+        // Check if user already gave attendance
+        $userId = Auth::id();
+        if ($event->attendees()->where('user_id', $userId)->exists()) {
+            return back()->withErrors(['attendance' => 'You have already given attendance for this event.']);
+        }
+
+        // Only check password during attendance window - validate password exists and matches
+        if (empty($event->event_password)) {
+            return back()->withErrors(['attendance' => 'Event password is not set. Please contact the event organizer.']);
+        }
+
+        // Validate the password input
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        if ($request->password !== $event->event_password) {
+            return back()->withErrors(['password' => 'Invalid event password.']);
+        }
+
+        // Add the user to the attendance list
+        $event->attendees()->attach($userId);
+
+        return back()->with('success', 'Attendance confirmed successfully!');
     }
 }

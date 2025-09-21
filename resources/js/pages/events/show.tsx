@@ -1,4 +1,5 @@
 import { AttendanceTab } from '@/components/events/attendance-tab';
+import { AttendanceButton } from '@/components/events/attendance-button';
 import { PerformanceTab } from '@/components/events/performance-tab';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,15 @@ type PerformanceData = {
     total_count: number;
 };
 
+type AttendanceInfo = {
+    user_already_attended: boolean;
+    has_password: boolean;
+    attendance_window_enabled: boolean;
+    attendance_window_start: string | null;
+    attendance_window_end: string | null;
+    state?: 'before_window' | 'during_window' | 'after_window';
+};
+
 type Event = {
     id: number;
     title: string;
@@ -47,6 +57,10 @@ type EventDetailsPageProps = {
     attendees_count?: number;
     performance_data?: PerformanceData[];
     performance_count?: number;
+    attendance_info?: AttendanceInfo;
+    auth?: {
+        user: any;
+    };
 };
 
 export default function EventDetailsPage({
@@ -55,6 +69,8 @@ export default function EventDetailsPage({
     attendees_count = 0,
     performance_data = [],
     performance_count = 0,
+    attendance_info,
+    auth,
 }: EventDetailsPageProps) {
     // Time calculations
     const now = new Date();
@@ -206,7 +222,8 @@ export default function EventDetailsPage({
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-3">
+                    {/* Event Information - Badges */}
+                    <div className="flex flex-wrap gap-3 mb-4">
                         <Badge variant="default" className={`${getEventTypeBadgeStyle()} capitalize`}>
                             {event.type === 'class' && '📚 '}
                             {event.type === 'contest' && '🏆 '}
@@ -224,14 +241,34 @@ export default function EventDetailsPage({
                                 {attendees_count} {attendees_count === 1 ? 'attendee' : 'attendees'}
                             </Badge>
                         )}
+                    </div>
 
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap gap-3">
                         {event.event_link && (
                             <a href={event.event_link} target="_blank" rel="noopener noreferrer">
-                                <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-800/30 dark:bg-blue-900/20 dark:text-blue-400">
-                                    <MapPin className="mr-1 h-3 w-3" />
+                                <Button variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-800/30 dark:bg-blue-900/20 dark:text-blue-400 px-4 py-2">
+                                    <MapPin className="mr-2 h-4 w-4" />
                                     Event Link
-                                </Badge>
+                                </Button>
                             </a>
+                        )}
+
+                        {/* Attendance Button */}
+                        {attendance_info && (
+                            <AttendanceButton
+                                eventId={event.id}
+                                openForAttendance={event.open_for_attendance}
+                                hasPassword={attendance_info.has_password}
+                                userAlreadyAttended={attendance_info.user_already_attended}
+                                attendanceWindowEnabled={attendance_info.attendance_window_enabled}
+                                attendanceWindowStart={attendance_info.attendance_window_start}
+                                attendanceWindowEnd={attendance_info.attendance_window_end}
+                                startingAt={event.starting_at}
+                                endingAt={event.ending_at}
+                                isAuthenticated={!!auth?.user}
+                                state={attendance_info.state}
+                            />
                         )}
                     </div>
 

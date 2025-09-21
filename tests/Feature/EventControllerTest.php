@@ -4,6 +4,7 @@ use App\Models\Event;
 use App\Models\EventUserStat;
 use App\Models\User;
 
+use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
 
 it('loads events index page with only required fields', function () {
@@ -419,4 +420,172 @@ it('shows performance section without tabs when only performance is available', 
         ->missing('attendees')
         ->missing('attendees_count')
     );
+});
+
+// Attendance functionality tests
+
+it('includes attendance info for authenticated users', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create([
+        'status' => 'published',
+        'starting_at' => now()->addMinutes(10), // Event starts in 10 minutes
+        'ending_at' => now()->addMinutes(130), // Event ends in 130 minutes
+        'open_for_attendance' => true,
+        'event_password' => 'test123',
+    ]);
+
+    $response = actingAs($user)->get("/events/{$event->id}");
+
+    $response->assertSuccessful();
+    $response->assertInertia(fn ($page) => $page->component('events/show')
+        ->has('attendance_info')
+        ->where('attendance_info.user_already_attended', false)
+        ->where('attendance_info.has_password', true)
+        ->where('attendance_info.attendance_window_enabled', true)
+        ->has('attendance_info.attendance_window_start')
+        ->has('attendance_info.attendance_window_end')
+    );
+});
+
+it('shows user has already attended when they gave attendance', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create([
+        'status' => 'published',
+        'starting_at' => now()->addMinutes(10),
+        'ending_at' => now()->addMinutes(130),
+        'open_for_attendance' => true,
+        'event_password' => 'test123',
+    ]);
+
+    // User gives attendance
+    $event->attendees()->attach($user->id);
+
+    $response = $this->actingAs($user)->get("/events/{$event->id}");
+
+    $response->assertSuccessful();
+    $response->assertInertia(fn ($page) => $page->component('events/show')
+        ->where('attendance_info.user_already_attended', true)
+    );
+});
+
+it('allows attendance submission with correct password during window', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create([
+        'status' => 'published',
+        'starting_at' => now()->addMinutes(10),
+        'ending_at' => now()->addMinutes(130),
+        'open_for_attendance' => true,
+        'event_password' => 'test123',
+    ]);
+
+    $response = $this->actingAs($user)
+        ->post("/events/{$event->id}/attendance", [
+            'password' => 'test123',
+        ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHas('success');
+
+    $this->assertTrue($event->attendees()->where('user_id', $user->id)->exists());
+});
+
+it('rejects attendance submission with wrong password', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create([
+        'status' => 'published',
+        'starting_at' => now()->addMinutes(10),
+        'ending_at' => now()->addMinutes(130),
+        'open_for_attendance' => true,
+        'event_password' => 'test123',
+    ]);
+
+    $response = $this->actingAs($user)
+        ->post("/events/{$event->id}/attendance", [
+            'password' => 'wrong_password',
+        ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHasErrors(['password']);
+
+    $this->assertFalse($event->attendees()->where('user_id', $user->id)->exists());
+});
+
+it('rejects attendance when window is closed', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create([
+        'status' => 'published',
+        'starting_at' => now()->subHours(3), // Event started 3 hours ago
+        'ending_at' => now()->subHours(1), // Event ended 1 hour ago (window closes 20 min after end)
+        'open_for_attendance' => true,
+        'event_password' => 'test123',
+    ]);
+
+    $response = $this->actingAs($user)
+        ->post("/events/{$event->id}/attendance", [
+            'password' => 'test123',
+        ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHasErrors(['attendance']);
+
+    $this->assertFalse($event->attendees()->where('user_id', $user->id)->exists());
+});
+
+it('rejects duplicate attendance submission', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create([
+        'status' => 'published',
+        'starting_at' => now()->addMinutes(10),
+        'ending_at' => now()->addMinutes(130),
+        'open_for_attendance' => true,
+        'event_password' => 'test123',
+    ]);
+
+    // User gives attendance first time
+    $event->attendees()->attach($user->id);
+
+    $response = $this->actingAs($user)
+        ->post("/events/{$event->id}/attendance", [
+            'password' => 'test123',
+        ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHasErrors(['attendance']);
+});
+
+it('rejects attendance when event has no password', function () {
+    $user = User::factory()->create();
+    $event = Event::factory()->create([
+        'status' => 'published',
+        'starting_at' => now()->addMinutes(10),
+        'ending_at' => now()->addMinutes(130),
+        'open_for_attendance' => true,
+        'event_password' => null, // No password set
+    ]);
+
+    $response = $this->actingAs($user)
+        ->post("/events/{$event->id}/attendance", [
+            'password' => 'any_password',
+        ]);
+
+    $response->assertRedirect();
+    $response->assertSessionHasErrors(['attendance']);
+
+    $this->assertFalse($event->attendees()->where('user_id', $user->id)->exists());
+});
+
+it('rejects attendance for unauthenticated users', function () {
+    $event = Event::factory()->create([
+        'status' => 'published',
+        'starting_at' => now()->addMinutes(10),
+        'ending_at' => now()->addMinutes(130),
+        'open_for_attendance' => true,
+        'event_password' => 'test123',
+    ]);
+
+    $response = $this->post("/events/{$event->id}/attendance", [
+        'password' => 'test123',
+    ]);
+
+    $response->assertStatus(401);
 });
