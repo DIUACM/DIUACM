@@ -12,6 +12,14 @@ class EventController extends Controller
     public function index(Request $request): Response
     {
         $events = Event::query()
+            ->select([
+                'id',
+                'title',
+                'starting_at',
+                'ending_at',
+                'participation_scope',
+                'type',
+            ])
             ->published()
             ->search($request->get('search'))
             ->ofType($request->get('type'))
@@ -20,6 +28,9 @@ class EventController extends Controller
             ->orderBy('starting_at', 'desc')
             ->paginate(10)
             ->withQueryString();
+
+        // Hide fields that were only needed for query scopes
+        $events->getCollection()->makeHidden(['status', 'description', 'event_link']);
 
         return Inertia::render('events/index', [
             'events' => $events,
