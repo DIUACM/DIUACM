@@ -77,7 +77,7 @@ export default function Navigation() {
                     <div className="flex h-16 items-center justify-between">
                         {/* Logo and brand */}
                         <div className="flex flex-shrink-0 items-center">
-                            <Link href="/" className="flex items-center gap-2" prefetch="hover">
+                            <Link href="/" className="flex items-center gap-2">
                                 <div className="flex h-8 w-8 items-center justify-center rounded-lg">
                                     <img
                                         src="/images/diuacm-logo-rounded.webp"
@@ -103,7 +103,6 @@ export default function Navigation() {
                                         <Link
                                             key={item.name}
                                             href={item.href}
-                                            prefetch="hover"
                                             className={cn(
                                                 'flex items-center gap-1 rounded-md px-2.5 py-1.5 text-xs transition-all duration-200 lg:text-sm',
                                                 isActive
@@ -280,7 +279,6 @@ export default function Navigation() {
                                     <Link
                                         key={item.name}
                                         href={item.href}
-                                        prefetch="hover"
                                         className={cn(
                                             'flex items-center rounded-md px-4 py-3 text-base transition-all duration-200',
                                             isActive
