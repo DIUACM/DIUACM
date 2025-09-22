@@ -82,8 +82,7 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
                 $this
                     ->addMediaConversion('thumb')
                     ->fit(Fit::Contain, 300, 300)
-
-                    ->nonQueued();
+                    ->queued();
             });
     }
 
