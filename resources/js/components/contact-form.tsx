@@ -14,7 +14,7 @@ interface ContactFormData {
 }
 
 export function ContactForm() {
-    const { data, setData, post, processing, errors, reset } = useForm<ContactFormData>({
+    const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
         message: '',

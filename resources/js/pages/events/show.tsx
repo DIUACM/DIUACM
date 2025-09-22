@@ -263,8 +263,6 @@ export default function EventDetailsPage({
                                 attendanceWindowEnabled={attendance_info.attendance_window_enabled}
                                 attendanceWindowStart={attendance_info.attendance_window_start}
                                 attendanceWindowEnd={attendance_info.attendance_window_end}
-                                startingAt={event.starting_at}
-                                endingAt={event.ending_at}
                                 isAuthenticated={!!auth?.user}
                                 state={attendance_info.state}
                             />
