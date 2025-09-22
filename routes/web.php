@@ -71,3 +71,7 @@ Route::get('/api/events/vjudge', [VJudgeController::class, 'getActiveContests'])
 Route::post('/api/events/{eventId}/vjudge-update', [VJudgeController::class, 'processContestData'])
     ->middleware('auth')
     ->where('eventId', '[0-9]+');
+
+Route::get('/sanctum/csrf-cookie', function () {
+    return response()->json(['hi' ]);
+})->name('sanctum.csrf-cookie');
