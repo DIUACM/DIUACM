@@ -69,16 +69,34 @@ class AuthController extends Controller
             ]);
         }
 
+        // Check if email domain is allowed
+        $email = $googleUser->getEmail();
+        $allowedDomains = ['@diu.edu.bd', '@s.diu.edu.bd'];
+        $isAllowedDomain = false;
+
+        foreach ($allowedDomains as $domain) {
+            if (Str::endsWith($email, $domain)) {
+                $isAllowedDomain = true;
+                break;
+            }
+        }
+
+        if (! $isAllowedDomain) {
+            return redirect()->route('login')->withErrors([
+                'login' => 'Only DIU email addresses (@diu.edu.bd, @s.diu.edu.bd) are allowed to sign in.',
+            ]);
+        }
+
         // Check if user exists by email
-        $user = User::where('email', $googleUser->getEmail())->first();
+        $user = User::where('email', $email)->first();
 
         if (! $user) {
             // Create new user
-            $username = $this->generateUniqueUsername($googleUser->getName(), $googleUser->getEmail());
+            $username = $this->generateUniqueUsername($googleUser->getName(), $email);
 
             $user = User::create([
                 'name' => $googleUser->getName(),
-                'email' => $googleUser->getEmail(),
+                'email' => $email,
                 'username' => $username,
                 'password' => bcrypt(Str::random(24)), // Random password for OAuth users
             ]);
