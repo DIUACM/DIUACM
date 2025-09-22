@@ -28,6 +28,9 @@ class VJudgeController extends Controller
 
     public function processContestData(int $eventId): JsonResponse
     {
+        if(request()->user()->email!=='sourov2305101004@diu.edu.bd')
+            return response()->json(['message'=>'Unauthorized'],403);   
+        
         $payload = request()->getContent();
         $payload = json_decode($payload, true);
 
