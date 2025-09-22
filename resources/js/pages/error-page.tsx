@@ -42,16 +42,6 @@ export default function ErrorPage({ status }: ErrorPageProps) {
         <MainLayout>
             <div className="min-h-screen flex items-center justify-center px-4 py-12">
                 <div className="max-w-2xl w-full text-center">
-                    {/* Error Icon */}
-                    <div className="relative mb-8">
-                        <div className="absolute inset-0 -z-10">
-                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-32 w-32 rounded-full bg-red-100/60 blur-xl dark:bg-red-900/30" />
-                        </div>
-                        <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-red-100 border-4 border-red-200 dark:bg-red-900/30 dark:border-red-800/50">
-                            <Icon className="h-12 w-12 text-red-600 dark:text-red-400" />
-                        </div>
-                    </div>
-
                     {/* Error Content */}
                     <div className="mb-8">
                         <h1 className="mb-4 text-6xl font-bold text-slate-900 dark:text-white">
@@ -93,25 +83,6 @@ export default function ErrorPage({ status }: ErrorPageProps) {
                     </div>
 
                     {/* Additional Help */}
-                    {status === 404 && (
-                        <div className="mt-12 p-6 rounded-2xl border border-slate-200 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-800/50">
-                            <h3 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">
-                                Popular Pages
-                            </h3>
-                            <div className="flex flex-wrap justify-center gap-3">
-                                <Button asChild variant="link" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
-                                    <Link href="/about">About DIU ACM</Link>
-                                </Button>
-                                <Button asChild variant="link" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
-                                    <Link href="/events">Events</Link>
-                                </Button>
-                                <Button asChild variant="link" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
-                                    <Link href="/contact">Contact</Link>
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-
                     {status === 500 && (
                         <div className="mt-12 p-6 rounded-2xl border border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-900/20">
                             <p className="text-sm text-amber-700 dark:text-amber-300">
