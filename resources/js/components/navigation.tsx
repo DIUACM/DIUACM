@@ -27,15 +27,20 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppearanceToggleDropdown from './appearance-dropdown';
+import { home, about, contact, login, register, logout } from '@/routes';
+import events from '@/routes/events';
+import trackers from '@/routes/trackers';
+import programmers from '@/routes/programmers';
+import profile from '@/routes/profile';
 
 // Navigation items
 const menuItems = [
-    { name: 'Home', href: '/', icon: Home },
-    { name: 'Events', href: '/events', icon: Calendar },
-    { name: 'Trackers', href: '/trackers', icon: BarChart3 },
-    { name: 'Programmers', href: '/programmers', icon: Users },
-    { name: 'About', href: '/about', icon: Info },
-    { name: 'Contact', href: '/contact', icon: Mail },
+    { name: 'Home', href: home.url(), icon: Home },
+    { name: 'Events', href: events.index.url(), icon: Calendar },
+    { name: 'Trackers', href: trackers.index.url(), icon: BarChart3 },
+    { name: 'Programmers', href: programmers.index.url(), icon: Users },
+    { name: 'About', href: about.url(), icon: Info },
+    { name: 'Contact', href: contact.url(), icon: Mail },
 ];
 
 export default function Navigation() {
@@ -60,7 +65,7 @@ export default function Navigation() {
 
     // Check if menu item is active
     const isActive = (href: string) => {
-        return href === '/' ? currentPath === '/' : currentPath.startsWith(href);
+        return href === home.url() ? currentPath === home.url() : currentPath.startsWith(href);
     };
 
     // Get user initials
@@ -81,7 +86,7 @@ export default function Navigation() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-14">
                         {/* Logo */}
-                        <Link href="/" className="flex items-center space-x-2">
+                        <Link href={home.url()} className="flex items-center space-x-2">
                             <img
                                 src="/images/diuacm-logo-rounded.webp"
                                 alt="DIU ACM"
@@ -143,13 +148,13 @@ export default function Navigation() {
                                             <DropdownMenuSeparator />
                                             
                                             <DropdownMenuItem asChild>
-                                                <Link href="/profile/edit" className="flex items-center">
+                                                <Link href={profile.edit.url()} className="flex items-center">
                                                     <User className="mr-2 h-4 w-4" />
                                                     Edit Profile
                                                 </Link>
                                             </DropdownMenuItem>
                                             <DropdownMenuItem asChild>
-                                                <Link href="/profile/change-password" className="flex items-center">
+                                                <Link href={profile.editPassword.url()} className="flex items-center">
                                                     <KeyRound className="mr-2 h-4 w-4" />
                                                     Change Password
                                                 </Link>
@@ -158,7 +163,7 @@ export default function Navigation() {
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem asChild>
                                                 <Link
-                                                    href="/logout"
+                                                    href={logout.url()}
                                                     method="post"
                                                     as="button"
                                                     className="text-red-600 focus:bg-red-50 dark:text-red-400"
@@ -172,13 +177,13 @@ export default function Navigation() {
                                 ) : (
                                     <div className="flex items-center space-x-1">
                                         <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex h-8 px-3">
-                                            <Link href="/login">
+                                            <Link href={login.url()}>
                                                 <LogIn className="mr-1.5 h-3.5 w-3.5" />
                                                 Sign In
                                             </Link>
                                         </Button>
                                         <Button size="sm" asChild className="h-8 px-3 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600">
-                                            <Link href="/register">Sign Up</Link>
+                                            <Link href={register.url()}>Sign Up</Link>
                                         </Button>
                                     </div>
                                 )}
@@ -271,7 +276,7 @@ export default function Navigation() {
                                 {auth.user && (
                                     <div className="mt-6 pt-6 border-t space-y-1">
                                         <Link
-                                            href="/profile/edit"
+                                            href={profile.edit.url()}
                                             onClick={() => setIsMobileMenuOpen(false)}
                                             className="flex items-center space-x-3 px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                                         >
@@ -279,7 +284,7 @@ export default function Navigation() {
                                             <span>Edit Profile</span>
                                         </Link>
                                         <Link
-                                            href="/profile/change-password"
+                                            href={profile.editPassword.url()}
                                             onClick={() => setIsMobileMenuOpen(false)}
                                             className="flex items-center space-x-3 px-3 py-2 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
                                         >
@@ -287,7 +292,7 @@ export default function Navigation() {
                                             <span>Change Password</span>
                                         </Link>
                                         <Link
-                                            href="/logout"
+                                            href={logout.url()}
                                             method="post"
                                             as="button"
                                             onClick={() => setIsMobileMenuOpen(false)}
@@ -303,13 +308,13 @@ export default function Navigation() {
                                 {!auth.user && (
                                     <div className="mt-6 pt-6 border-t space-y-3">
                                         <Button variant="outline" className="w-full" asChild>
-                                            <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                                            <Link href={login.url()} onClick={() => setIsMobileMenuOpen(false)}>
                                                 <LogIn className="mr-2 h-4 w-4" />
                                                 Sign In
                                             </Link>
                                         </Button>
                                         <Button className="w-full" asChild>
-                                            <Link href="/register" onClick={() => setIsMobileMenuOpen(false)}>
+                                            <Link href={register.url()} onClick={() => setIsMobileMenuOpen(false)}>
                                                 Sign Up
                                             </Link>
                                         </Button>

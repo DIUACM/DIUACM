@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import MainLayout from '@/layouts/main-layout';
 import { Calendar, Database, Eye, Lock, Mail, Shield } from 'lucide-react';
+import { contact } from '@/routes';
 
 export default function PrivacyPolicyPage() {
     return (
@@ -217,7 +218,7 @@ export default function PrivacyPolicyPage() {
                                 </p>
                                 <p>
                                     Website:{' '}
-                                    <a href="/contact" className="text-blue-600 hover:underline dark:text-blue-400">
+                                    <a href={contact.url()} className="text-blue-600 hover:underline dark:text-blue-400">
                                         Contact Form
                                     </a>
                                 </p>

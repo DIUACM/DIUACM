@@ -5,6 +5,8 @@ import MainLayout from '@/layouts/main-layout';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
+import { login, register, privacyPolicy, termsAndConditions } from '@/routes';
+import auth from '@/routes/auth';
 
 export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
@@ -21,7 +23,7 @@ export default function Login() {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post('/login', {
+        post(login.url(), {
             onFinish: () => reset('password'),
         });
     };
@@ -43,7 +45,7 @@ export default function Login() {
                         {/* Google OAuth Button */}
                         <div className="mb-6">
                             <a
-                                href="/auth/google"
+                                href={auth.google.url()}
                                 className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-6 py-4 text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
                             >
                                 <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -172,7 +174,7 @@ export default function Login() {
                             <p className="text-sm text-slate-600 dark:text-slate-400">
                                 Don't have an account?{' '}
                                 <Link
-                                    href="/register"
+                                    href={register.url()}
                                     className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
                                 >
                                     Sign up
@@ -185,11 +187,11 @@ export default function Login() {
                     <div className="text-center">
                         <p className="text-xs text-slate-500 dark:text-slate-400">
                             By signing in, you agree to our{' '}
-                            <Link href="/terms-and-conditions" className="underline hover:text-slate-700 dark:hover:text-slate-300">
+                            <Link href={termsAndConditions.url()} className="underline hover:text-slate-700 dark:hover:text-slate-300">
                                 Terms and Conditions
                             </Link>{' '}
                             and{' '}
-                            <Link href="/privacy-policy" className="underline hover:text-slate-700 dark:hover:text-slate-300">
+                            <Link href={privacyPolicy.url()} className="underline hover:text-slate-700 dark:hover:text-slate-300">
                                 Privacy Policy
                             </Link>
                         </p>

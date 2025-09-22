@@ -1,5 +1,7 @@
 import MainLayout from '@/layouts/main-layout';
 import { Head, Link } from '@inertiajs/react';
+import { login, privacyPolicy, termsAndConditions } from '@/routes';
+import auth from '@/routes/auth';
 
 export default function Register() {
     return (
@@ -19,7 +21,7 @@ export default function Register() {
                         {/* Google OAuth Button */}
                         <div className="mb-6">
                             <a
-                                href="/auth/google"
+                                href={auth.google.url()}
                                 className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-6 py-4 text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
                             >
                                 <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -76,7 +78,7 @@ export default function Register() {
                             <p className="text-sm text-slate-600 dark:text-slate-400">
                                 Already have an account?{' '}
                                 <Link
-                                    href="/login"
+                                    href={login.url()}
                                     className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
                                 >
                                     Sign in
@@ -89,11 +91,11 @@ export default function Register() {
                     <div className="text-center">
                         <p className="text-xs text-slate-500 dark:text-slate-400">
                             By creating an account, you agree to our{' '}
-                            <Link href="/terms-and-conditions" className="underline hover:text-slate-700 dark:hover:text-slate-300">
+                            <Link href={termsAndConditions.url()} className="underline hover:text-slate-700 dark:hover:text-slate-300">
                                 Terms and Conditions
                             </Link>{' '}
                             and{' '}
-                            <Link href="/privacy-policy" className="underline hover:text-slate-700 dark:hover:text-slate-300">
+                            <Link href={privacyPolicy.url()} className="underline hover:text-slate-700 dark:hover:text-slate-300">
                                 Privacy Policy
                             </Link>
                         </p>

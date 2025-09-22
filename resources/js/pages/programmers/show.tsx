@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import MainLayout from '@/layouts/main-layout';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Calendar, GraduationCap, MapPin, Target, Trophy, Users } from 'lucide-react';
+import programmers from '@/routes/programmers';
 
 type ContestMember = {
     name: string;
@@ -368,7 +369,7 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
 
                 <div className="mt-8">
                     <Button asChild variant="ghost" className="px-2">
-                        <Link href="/programmers">
+                        <Link href={programmers.index.url()}>
                             <ArrowLeft className="mr-1 h-4 w-4" /> Back to Programmers
                         </Link>
                     </Button>

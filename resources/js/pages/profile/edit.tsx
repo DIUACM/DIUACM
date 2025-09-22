@@ -10,6 +10,8 @@ import { Link, useForm } from '@inertiajs/react';
 import { Camera, Loader2, UserIcon } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import profile from '@/routes/profile';
+import programmers from '@/routes/programmers';
 
 interface User {
     id: number;
@@ -302,11 +304,11 @@ export default function EditProfile({ user }: Props) {
                                 <div className="flex flex-col justify-between gap-4 border-t border-slate-200 pt-8 sm:flex-row dark:border-slate-700">
                                     <div className="order-2 flex flex-col gap-4 sm:order-1 sm:flex-row">
                                         <Button type="button" variant="outline" asChild disabled={processing || !user.username}>
-                                            <Link href={`/programmers/${user.username || ''}`}>View Profile</Link>
+                                            <Link href={programmers.show.url(user.username || '')}>View Profile</Link>
                                         </Button>
 
                                         <Button type="button" variant="secondary" asChild disabled={processing}>
-                                            <Link href="/profile/change-password">Change Password</Link>
+                                            <Link href={profile.editPassword.url()}>Change Password</Link>
                                         </Button>
                                     </div>
 

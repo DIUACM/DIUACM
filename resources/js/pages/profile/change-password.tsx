@@ -6,6 +6,7 @@ import MainLayout from '@/layouts/main-layout';
 import { Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, KeyIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import profile from '@/routes/profile';
 
 export default function ChangePassword() {
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -15,7 +16,7 @@ export default function ChangePassword() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/profile/change-password', {
+        post(profile.updatePassword.url(), {
             onSuccess: () => {
                 toast.success('Password updated successfully');
                 reset();
@@ -42,7 +43,7 @@ export default function ChangePassword() {
                         <CardContent className="p-6">
                             <div className="mb-6">
                                 <Button variant="outline" asChild>
-                                    <Link href="/profile">
+                                    <Link href={profile.edit.url()}>
                                         <ArrowLeft className="mr-2 h-4 w-4" />
                                         Back to Profile
                                     </Link>
@@ -101,7 +102,7 @@ export default function ChangePassword() {
 
                                 <div className="flex flex-col gap-4 border-t border-slate-200 pt-6 sm:flex-row dark:border-slate-700">
                                     <Button type="button" variant="outline" asChild disabled={processing} className="sm:order-1">
-                                        <Link href="/profile">Cancel</Link>
+                                        <Link href={profile.edit.url()}>Cancel</Link>
                                     </Button>
 
                                     <Button
