@@ -1,22 +1,15 @@
-import { useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { ImageCropper } from '@/components/image-cropper';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ImageCropper } from '@/components/image-cropper';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MainLayout from '@/layouts/main-layout';
+import { Link, useForm } from '@inertiajs/react';
 import { Camera, Loader2, UserIcon } from 'lucide-react';
+import { useState } from 'react';
 import { toast } from 'sonner';
-import { Link } from '@inertiajs/react';
 
 interface User {
     id: number;
@@ -58,17 +51,17 @@ export default function EditProfile({ user }: Props) {
             // Convert base64 to blob
             const response = await fetch(croppedImage);
             const blob = await response.blob();
-            
+
             // Create file from blob
             const file = new File([blob], 'profile-picture.jpg', { type: 'image/jpeg' });
-            
+
             // Create FormData for immediate upload
             const formData = new FormData();
             formData.append('profile_picture', file);
-            
+
             // Show loading state
             toast.loading('Uploading profile picture...');
-            
+
             // Upload immediately
             const uploadResponse = await fetch('/profile/picture', {
                 method: 'POST',
@@ -77,9 +70,9 @@ export default function EditProfile({ user }: Props) {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
                 },
             });
-            
+
             const result = await uploadResponse.json();
-            
+
             if (result.success) {
                 // Update the profile image displayed
                 setProfileImage(result.profile_picture_url);
@@ -120,11 +113,11 @@ export default function EditProfile({ user }: Props) {
     return (
         <MainLayout>
             <div className="container mx-auto px-4 py-16">
-                <div className="max-w-4xl mx-auto">
-                    <Card className="overflow-hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md">
+                <div className="mx-auto max-w-4xl">
+                    <Card className="overflow-hidden border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">
                         <CardHeader className="border-b border-slate-200 dark:border-slate-700">
                             <CardTitle className="flex items-center gap-3 text-xl text-slate-900 dark:text-white">
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600 flex items-center justify-center">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600">
                                     <UserIcon className="h-5 w-5 text-white" />
                                 </div>
                                 Edit Profile
@@ -133,22 +126,17 @@ export default function EditProfile({ user }: Props) {
                         <CardContent className="p-6">
                             <form onSubmit={handleSubmit} className="space-y-8">
                                 {/* Profile Picture Section */}
-                                <div className="flex flex-col items-center space-y-4 pb-6 border-b border-slate-200 dark:border-slate-700">
+                                <div className="flex flex-col items-center space-y-4 border-b border-slate-200 pb-6 dark:border-slate-700">
                                     <div className="relative">
                                         <Avatar className="h-32 w-32 ring-4 ring-slate-100 dark:ring-slate-800">
-                                            <AvatarImage
-                                                src={profileImage || undefined}
-                                                alt={user.name}
-                                            />
-                                            <AvatarFallback className="text-2xl font-semibold">
-                                                {getInitials(user.name)}
-                                            </AvatarFallback>
+                                            <AvatarImage src={profileImage || undefined} alt={user.name} />
+                                            <AvatarFallback className="text-2xl font-semibold">{getInitials(user.name)}</AvatarFallback>
                                         </Avatar>
                                         <Button
                                             type="button"
                                             size="sm"
                                             variant="outline"
-                                            className="absolute -bottom-2 -right-2 rounded-full p-3 shadow-lg"
+                                            className="absolute -right-2 -bottom-2 rounded-full p-3 shadow-lg"
                                             onClick={() => setShowImageCropper(true)}
                                             disabled={processing}
                                         >
@@ -156,20 +144,18 @@ export default function EditProfile({ user }: Props) {
                                         </Button>
                                     </div>
                                     <div className="text-center">
-                                        <p className="text-sm text-muted-foreground">
-                                            Click the camera icon to update your profile picture
-                                        </p>
+                                        <p className="text-sm text-muted-foreground">Click the camera icon to update your profile picture</p>
                                     </div>
                                 </div>
 
                                 {/* Basic Information Section */}
                                 <div className="space-y-6">
                                     <div>
-                                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                        <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
+                                            <div className="h-2 w-2 rounded-full bg-blue-500"></div>
                                             Basic Information
                                         </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                             <div className="space-y-2">
                                                 <Label htmlFor="name">Full Name *</Label>
                                                 <Input
@@ -179,9 +165,7 @@ export default function EditProfile({ user }: Props) {
                                                     disabled={processing}
                                                     className={errors.name ? 'border-red-500' : ''}
                                                 />
-                                                {errors.name && (
-                                                    <p className="text-sm text-red-500">{errors.name}</p>
-                                                )}
+                                                {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
                                             </div>
 
                                             <div className="space-y-2">
@@ -193,31 +177,18 @@ export default function EditProfile({ user }: Props) {
                                                     disabled={processing}
                                                     className={errors.username ? 'border-red-500' : ''}
                                                 />
-                                                {errors.username && (
-                                                    <p className="text-sm text-red-500">{errors.username}</p>
-                                                )}
+                                                {errors.username && <p className="text-sm text-red-500">{errors.username}</p>}
                                             </div>
 
                                             <div className="space-y-2">
                                                 <Label htmlFor="email">Email</Label>
-                                                <Input
-                                                    id="email"
-                                                    value={user.email}
-                                                    disabled
-                                                    className="bg-muted"
-                                                />
-                                                <p className="text-sm text-muted-foreground">
-                                                    Email cannot be changed
-                                                </p>
+                                                <Input id="email" value={user.email} disabled className="bg-muted" />
+                                                <p className="text-sm text-muted-foreground">Email cannot be changed</p>
                                             </div>
 
                                             <div className="space-y-2">
                                                 <Label htmlFor="gender">Gender</Label>
-                                                <Select
-                                                    value={data.gender}
-                                                    onValueChange={(value) => setData('gender', value)}
-                                                    disabled={processing}
-                                                >
+                                                <Select value={data.gender} onValueChange={(value) => setData('gender', value)} disabled={processing}>
                                                     <SelectTrigger className={errors.gender ? 'border-red-500' : ''}>
                                                         <SelectValue placeholder="Select gender" />
                                                     </SelectTrigger>
@@ -227,9 +198,7 @@ export default function EditProfile({ user }: Props) {
                                                         <SelectItem value="other">Other</SelectItem>
                                                     </SelectContent>
                                                 </Select>
-                                                {errors.gender && (
-                                                    <p className="text-sm text-red-500">{errors.gender}</p>
-                                                )}
+                                                {errors.gender && <p className="text-sm text-red-500">{errors.gender}</p>}
                                             </div>
 
                                             <div className="space-y-2">
@@ -241,22 +210,20 @@ export default function EditProfile({ user }: Props) {
                                                     disabled={processing}
                                                     className={errors.phone ? 'border-red-500' : ''}
                                                 />
-                                                {errors.phone && (
-                                                    <p className="text-sm text-red-500">{errors.phone}</p>
-                                                )}
+                                                {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Academic Information Section */}
-                                <div className="space-y-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                                <div className="space-y-6 border-t border-slate-200 pt-6 dark:border-slate-700">
                                     <div>
-                                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                        <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
+                                            <div className="h-2 w-2 rounded-full bg-green-500"></div>
                                             Academic Information
                                         </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                                             <div className="space-y-2">
                                                 <Label htmlFor="student_id">Student ID</Label>
                                                 <Input
@@ -266,9 +233,7 @@ export default function EditProfile({ user }: Props) {
                                                     disabled={processing}
                                                     className={errors.student_id ? 'border-red-500' : ''}
                                                 />
-                                                {errors.student_id && (
-                                                    <p className="text-sm text-red-500">{errors.student_id}</p>
-                                                )}
+                                                {errors.student_id && <p className="text-sm text-red-500">{errors.student_id}</p>}
                                             </div>
 
                                             <div className="space-y-2">
@@ -280,22 +245,20 @@ export default function EditProfile({ user }: Props) {
                                                     disabled={processing}
                                                     className={errors.department ? 'border-red-500' : ''}
                                                 />
-                                                {errors.department && (
-                                                    <p className="text-sm text-red-500">{errors.department}</p>
-                                                )}
+                                                {errors.department && <p className="text-sm text-red-500">{errors.department}</p>}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Competitive Programming Profiles Section */}
-                                <div className="space-y-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                                <div className="space-y-6 border-t border-slate-200 pt-6 dark:border-slate-700">
                                     <div>
-                                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                                            <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                                        <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
+                                            <div className="h-2 w-2 rounded-full bg-purple-500"></div>
                                             Competitive Programming Profiles
                                         </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                                             <div className="space-y-2">
                                                 <Label htmlFor="codeforces_handle">Codeforces Handle</Label>
                                                 <Input
@@ -305,9 +268,7 @@ export default function EditProfile({ user }: Props) {
                                                     disabled={processing}
                                                     className={errors.codeforces_handle ? 'border-red-500' : ''}
                                                 />
-                                                {errors.codeforces_handle && (
-                                                    <p className="text-sm text-red-500">{errors.codeforces_handle}</p>
-                                                )}
+                                                {errors.codeforces_handle && <p className="text-sm text-red-500">{errors.codeforces_handle}</p>}
                                             </div>
 
                                             <div className="space-y-2">
@@ -319,9 +280,7 @@ export default function EditProfile({ user }: Props) {
                                                     disabled={processing}
                                                     className={errors.atcoder_handle ? 'border-red-500' : ''}
                                                 />
-                                                {errors.atcoder_handle && (
-                                                    <p className="text-sm text-red-500">{errors.atcoder_handle}</p>
-                                                )}
+                                                {errors.atcoder_handle && <p className="text-sm text-red-500">{errors.atcoder_handle}</p>}
                                             </div>
 
                                             <div className="space-y-2">
@@ -333,34 +292,20 @@ export default function EditProfile({ user }: Props) {
                                                     disabled={processing}
                                                     className={errors.vjudge_handle ? 'border-red-500' : ''}
                                                 />
-                                                {errors.vjudge_handle && (
-                                                    <p className="text-sm text-red-500">{errors.vjudge_handle}</p>
-                                                )}
+                                                {errors.vjudge_handle && <p className="text-sm text-red-500">{errors.vjudge_handle}</p>}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Action Buttons */}
-                                <div className="flex flex-col sm:flex-row justify-between gap-4 pt-8 border-t border-slate-200 dark:border-slate-700">
-                                    <div className="flex flex-col sm:flex-row gap-4 order-2 sm:order-1">
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            asChild
-                                            disabled={processing || !user.username}
-                                        >
-                                            <Link href={`/programmers/${user.username || ''}`}>
-                                                View Profile
-                                            </Link>
+                                <div className="flex flex-col justify-between gap-4 border-t border-slate-200 pt-8 sm:flex-row dark:border-slate-700">
+                                    <div className="order-2 flex flex-col gap-4 sm:order-1 sm:flex-row">
+                                        <Button type="button" variant="outline" asChild disabled={processing || !user.username}>
+                                            <Link href={`/programmers/${user.username || ''}`}>View Profile</Link>
                                         </Button>
 
-                                        <Button
-                                            type="button"
-                                            variant="secondary"
-                                            asChild
-                                            disabled={processing}
-                                        >
+                                        <Button type="button" variant="secondary" asChild disabled={processing}>
                                             <Link href="/profile/change-password">Change Password</Link>
                                         </Button>
                                     </div>
@@ -369,7 +314,7 @@ export default function EditProfile({ user }: Props) {
                                         type="submit"
                                         disabled={processing}
                                         size="lg"
-                                        className="min-w-[140px] order-1 sm:order-2 rounded-full px-8 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md hover:shadow-xl transition-all dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600 font-medium"
+                                        className="order-1 min-w-[140px] rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-8 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl sm:order-2 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
                                     >
                                         {processing ? (
                                             <>
@@ -385,12 +330,7 @@ export default function EditProfile({ user }: Props) {
                         </CardContent>
                     </Card>
 
-                    {showImageCropper && (
-                        <ImageCropper
-                            onComplete={handleImageComplete}
-                            onCancel={() => setShowImageCropper(false)}
-                        />
-                    )}
+                    {showImageCropper && <ImageCropper onComplete={handleImageComplete} onCancel={() => setShowImageCropper(false)} />}
                 </div>
             </div>
         </MainLayout>

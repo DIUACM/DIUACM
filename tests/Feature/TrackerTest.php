@@ -44,7 +44,7 @@ it('allows searching trackers by title', function () {
         'status' => VisibilityStatus::PUBLISHED,
     ]);
 
-    $response = get('/trackers?search=Contest');
+    $response = get('/trackers?search=Programming Contest');
 
     $response->assertSuccessful();
     $response->assertInertia(function ($page) {
@@ -301,6 +301,7 @@ it('search scope is case insensitive', function () {
     Tracker::factory()->create([
         'title' => 'Programming Contest',
         'description' => 'ADVANCED programming challenges',
+        'status' => VisibilityStatus::PUBLISHED,
     ]);
 
     $upperCaseResults = Tracker::search('PROGRAMMING')->get();
