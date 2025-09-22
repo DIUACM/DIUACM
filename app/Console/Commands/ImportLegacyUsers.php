@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 class ImportLegacyUsers extends Command
 {
@@ -16,7 +17,7 @@ class ImportLegacyUsers extends Command
      *
      * You can override the source URL with --url=... if needed.
      */
-    protected $signature = 'app:import-legacy-users {--url=http://localhost:3000/api/migrate/users} {--verify-passwords : Verify that imported passwords work correctly} {--limit= : Limit the number of users to import for testing}';
+    protected $signature = 'app:import-legacy-users {--url=http://localhost:3000/api/migrate/users} {--verify-passwords : Verify that imported passwords work correctly} {--limit= : Limit the number of users to import for testing} {--clean-media : Clean the media S3 disk before importing}';
 
     /**
      * The console command description.
@@ -31,6 +32,12 @@ class ImportLegacyUsers extends Command
         $url = (string) $this->option('url');
         $verifyPasswords = $this->option('verify-passwords');
         $limit = $this->option('limit') ? (int) $this->option('limit') : null;
+        $cleanMedia = $this->option('clean-media');
+
+        // Clean media S3 disk if requested
+        if ($cleanMedia) {
+            $this->cleanMediaDisk();
+        }
 
         $this->info('Fetching users from: '.$url);
 
@@ -318,6 +325,55 @@ class ImportLegacyUsers extends Command
                 $this->info("✓ Added profile picture for {$user->email}");
             } catch (\Exception $e) {
                 $this->warn("Failed to add profile picture for {$email}: ".$e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Clean the media S3 disk by deleting all files.
+     */
+    protected function cleanMediaDisk(): void
+    {
+        $this->info('Cleaning media S3 disk...');
+
+        try {
+            $disk = Storage::disk('media');
+
+            // Get all files in the S3 bucket
+            $allFiles = $disk->allFiles();
+
+            if (empty($allFiles)) {
+                $this->info('Media disk is already empty.');
+
+                return;
+            }
+
+            $this->info('Found '.count($allFiles).' files to delete.');
+
+            // Confirm deletion
+            if (! $this->confirm('Are you sure you want to delete all files from the media S3 disk? This action cannot be undone.')) {
+                $this->warn('Media cleanup cancelled.');
+
+                return;
+            }
+
+            // Delete files in chunks to avoid memory issues
+            $chunks = array_chunk($allFiles, 1000);
+            $deletedCount = 0;
+
+            foreach ($chunks as $chunk) {
+                $disk->delete($chunk);
+                $deletedCount += count($chunk);
+                $this->info("Deleted {$deletedCount} / ".count($allFiles).' files...');
+            }
+
+            $this->info('✓ Successfully cleaned media S3 disk. Deleted '.$deletedCount.' files.');
+
+        } catch (\Exception $e) {
+            $this->error('Failed to clean media disk: '.$e->getMessage());
+
+            if (! $this->confirm('Continue with import despite media cleanup failure?')) {
+                throw $e;
             }
         }
     }
