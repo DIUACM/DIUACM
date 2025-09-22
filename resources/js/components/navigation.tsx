@@ -31,7 +31,8 @@ const menuItems = [
 ];
 
 export default function Navigation() {
-    const { auth } = usePage<SharedData>().props;
+    const pageProps = usePage<SharedData>().props;
+    const auth = pageProps?.auth || { user: null };
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
 
