@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import MainLayout from '@/layouts/main-layout';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
@@ -13,6 +13,11 @@ export default function Login() {
         password: '',
         remember: false as boolean,
     });
+
+    // Capture errors provided via Inertia page props (e.g., after OAuth redirect)
+    const page = usePage<{ errors?: Record<string, string> }>();
+    const pageErrors = (page.props?.errors as Record<string, string>) ?? {};
+    const allErrors = { ...pageErrors, ...errors };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
@@ -91,9 +96,9 @@ export default function Login() {
                                         value={data.login}
                                         onChange={(e) => setData('login', e.target.value)}
                                         placeholder="Enter your username or email"
-                                        className={errors.login ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
+                                        className={allErrors.login ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
                                     />
-                                    {errors.login && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.login}</p>}
+                                    {allErrors.login && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{allErrors.login}</p>}
                                 </div>
                             </div>
 
@@ -111,7 +116,7 @@ export default function Login() {
                                         value={data.password}
                                         onChange={(e) => setData('password', e.target.value)}
                                         placeholder="Enter your password"
-                                        className={`pr-10 ${errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                                        className={`pr-10 ${allErrors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                                     />
                                     <button
                                         type="button"
@@ -125,7 +130,7 @@ export default function Login() {
                                         )}
                                     </button>
                                 </div>
-                                {errors.password && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.password}</p>}
+                                {allErrors.password && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{allErrors.password}</p>}
                             </div>
 
                             <div className="flex items-center justify-between">
