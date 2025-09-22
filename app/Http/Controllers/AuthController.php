@@ -23,6 +23,14 @@ class AuthController extends Controller
     }
 
     /**
+     * Display the register view.
+     */
+    public function register(): Response
+    {
+        return Inertia::render('auth/register');
+    }
+
+    /**
      * Handle an incoming authentication request.
      */
     public function store(LoginRequest $request): RedirectResponse
