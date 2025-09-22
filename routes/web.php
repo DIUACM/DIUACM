@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\ProgrammerController;
 use App\Http\Controllers\TrackerController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -27,3 +28,5 @@ Route::post('/events/{event}/attendance', [EventController::class, 'storeAttenda
 
 Route::get('/trackers', [TrackerController::class, 'index'])->name('trackers.index');
 Route::get('/trackers/{tracker:slug}', [TrackerController::class, 'show'])->name('trackers.show');
+
+Route::get('/programmers', [ProgrammerController::class, 'index'])->name('programmers.index');
