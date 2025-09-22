@@ -141,3 +141,46 @@ it('requires password confirmation', function () {
         ])
         ->assertSessionHasErrors(['password']);
 });
+
+it('can upload profile picture', function () {
+    $user = User::factory()->create();
+
+    $file = \Illuminate\Http\UploadedFile::fake()->image('profile.jpg', 400, 400);
+
+    $this->actingAs($user)
+        ->post('/profile', [
+            'name' => $user->name,
+            'username' => $user->username,
+            'profile_picture' => $file,
+        ])
+        ->assertRedirect();
+
+    expect($user->fresh()->getFirstMediaUrl('profile_picture'))->not->toBeEmpty();
+});
+
+it('can upload profile picture via separate endpoint', function () {
+    $user = User::factory()->create();
+    $file = \Illuminate\Http\UploadedFile::fake()->image('profile.jpg', 400, 400);
+
+    $response = $this->actingAs($user)
+        ->post('/profile/picture', [
+            'profile_picture' => $file,
+        ])
+        ->assertOk()
+        ->assertJson([
+            'success' => true,
+            'message' => 'Profile picture updated successfully.',
+        ]);
+
+    expect($user->fresh()->getFirstMediaUrl('profile_picture'))->not->toBeEmpty();
+    expect($response['profile_picture_url'])->not->toBeEmpty();
+});
+
+it('requires profile picture for separate upload endpoint', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->post('/profile/picture', [])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['profile_picture']);
+});

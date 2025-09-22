@@ -44,6 +44,7 @@ Route::get('/programmers/{programmer:username}', [ProgrammerController::class, '
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/picture', [ProfileController::class, 'updateProfilePicture'])->name('profile.update-picture');
     Route::get('/profile/change-password', [ProfileController::class, 'editPassword'])->name('profile.edit-password');
     Route::post('/profile/change-password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
 });

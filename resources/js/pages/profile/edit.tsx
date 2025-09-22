@@ -51,7 +51,6 @@ export default function EditProfile({ user }: Props) {
         vjudge_handle: user.vjudge_handle || '',
         department: user.department || '',
         student_id: user.student_id || '',
-        profile_picture: null as File | null,
     });
 
     const handleImageComplete = async (croppedImage: string) => {
@@ -63,15 +62,37 @@ export default function EditProfile({ user }: Props) {
             // Create file from blob
             const file = new File([blob], 'profile-picture.jpg', { type: 'image/jpeg' });
             
-            // Update form data
-            setData('profile_picture', file);
-            setProfileImage(croppedImage);
-            setShowImageCropper(false);
+            // Create FormData for immediate upload
+            const formData = new FormData();
+            formData.append('profile_picture', file);
             
-            toast.success('Profile picture updated successfully');
+            // Show loading state
+            toast.loading('Uploading profile picture...');
+            
+            // Upload immediately
+            const uploadResponse = await fetch('/profile/picture', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+            });
+            
+            const result = await uploadResponse.json();
+            
+            if (result.success) {
+                // Update the profile image displayed
+                setProfileImage(result.profile_picture_url);
+                setShowImageCropper(false);
+                toast.dismiss();
+                toast.success('Profile picture updated successfully');
+            } else {
+                throw new Error(result.message || 'Upload failed');
+            }
         } catch (error) {
-            console.error('Error processing image:', error);
-            toast.error('Failed to process image');
+            console.error('Error uploading image:', error);
+            toast.dismiss();
+            toast.error('Failed to upload profile picture');
         }
     };
 

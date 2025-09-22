@@ -39,14 +39,56 @@ class ProfileController extends Controller
 
         $validated = $request->validated();
 
-        // TODO: Handle profile picture upload when image processing is needed
-        // For now, skip file upload handling
-
-        // Update user data (excluding profile picture from mass assignment)
+        // Remove profile picture from the validated data since it's handled separately
         unset($validated['profile_picture']);
+
+        // Update user data
         $user->update($validated);
 
         return back()->with('success', 'Profile updated successfully.');
+    }
+
+    /**
+     * Update the user's profile picture only.
+     */
+    public function updateProfilePicture(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'profile_picture' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $user = Auth::user();
+
+        $profilePicture = $request->file('profile_picture');
+        if ($profilePicture) {
+            // Clear existing profile picture
+            $user->clearMediaCollection('profile_picture');
+
+            // Add new profile picture
+            $user->addMedia($profilePicture)
+                ->toMediaCollection('profile_picture');
+
+            $profilePictureUrl = $user->getFirstMediaUrl('profile_picture');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile picture updated successfully.',
+                'profile_picture_url' => $profilePictureUrl,
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'No profile picture provided.',
+        ], 400);
     }
 
     /**
