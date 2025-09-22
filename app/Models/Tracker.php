@@ -41,6 +41,21 @@ class Tracker extends Model
     }
 
     /**
+     * Scope a query to search trackers by title or description.
+     */
+    public function scopeSearch($query, ?string $searchTerm)
+    {
+        if (empty($searchTerm)) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($searchTerm) {
+            $q->where('title', 'like', '%'.$searchTerm.'%')
+                ->orWhere('description', 'like', '%'.$searchTerm.'%');
+        });
+    }
+
+    /**
      * Get the route key for the model.
      */
     public function getRouteKeyName(): string
