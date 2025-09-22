@@ -12,7 +12,8 @@
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
-        "laravel/wayfinder": "^0.1.11"
+        "laravel/wayfinder": "^0.1.11",
+        "league/flysystem-aws-s3-v3": "^3.29"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.16",
