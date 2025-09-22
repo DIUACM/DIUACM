@@ -7,12 +7,6 @@ import { Loader2, Send } from 'lucide-react';
 import { FormEventHandler } from 'react';
 import { toast } from 'sonner';
 
-interface ContactFormData {
-    name: string;
-    email: string;
-    message: string;
-}
-
 export function ContactForm() {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
