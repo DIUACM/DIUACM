@@ -83,3 +83,36 @@ it('includes correct user data in response', function () {
             ->where('programmers.data.0.max_cf_rating', $user->max_cf_rating);
     });
 });
+
+it('displays programmer details page', function () {
+    $user = User::factory()->create([
+        'name' => 'John Doe',
+        'username' => 'johndoe',
+        'student_id' => 'DIU-12345',
+        'department' => 'CSE',
+        'max_cf_rating' => 1800,
+        'codeforces_handle' => 'johndoe_cf',
+    ]);
+
+    $response = $this->get("/programmers/{$user->username}");
+
+    $response->assertSuccessful();
+    $response->assertInertia(function ($page) use ($user) {
+        $page->component('programmers/show')
+            ->has('programmer')
+            ->where('programmer.name', $user->name)
+            ->where('programmer.username', $user->username)
+            ->where('programmer.student_id', $user->student_id)
+            ->where('programmer.department', $user->department)
+            ->where('programmer.max_cf_rating', $user->max_cf_rating)
+            ->where('programmer.codeforces_handle', $user->codeforces_handle)
+            ->has('programmer.contests')
+            ->has('programmer.tracker_performance');
+    });
+});
+
+it('returns 404 for non-existent programmer', function () {
+    $response = $this->get('/programmers/nonexistent');
+
+    $response->assertNotFound();
+});

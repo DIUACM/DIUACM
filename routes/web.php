@@ -30,3 +30,4 @@ Route::get('/trackers', [TrackerController::class, 'index'])->name('trackers.ind
 Route::get('/trackers/{tracker:slug}', [TrackerController::class, 'show'])->name('trackers.show');
 
 Route::get('/programmers', [ProgrammerController::class, 'index'])->name('programmers.index');
+Route::get('/programmers/{programmer:username}', [ProgrammerController::class, 'show'])->name('programmers.show');
