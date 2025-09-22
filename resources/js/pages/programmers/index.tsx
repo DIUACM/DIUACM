@@ -1,6 +1,6 @@
+import { CustomPagination } from '@/components/events/custom-pagination';
 import { ProgrammerCard, ProgrammerListItem } from '@/components/programmers/programmer-card';
 import { ProgrammersFilters } from '@/components/programmers/programmers-filters';
-import { CustomPagination } from '@/components/events/custom-pagination';
 import MainLayout from '@/layouts/main-layout';
 import { Head } from '@inertiajs/react';
 
@@ -62,7 +62,7 @@ export default function ProgrammersPage({ programmers, filters }: ProgrammersPag
                     )}
 
                     {/* 3 programmers per row grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
                         {programmers.data.map((programmer) => (
                             <ProgrammerCard key={programmer.id} programmer={programmer} />
                         ))}

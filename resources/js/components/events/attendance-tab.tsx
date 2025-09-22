@@ -1,12 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Users } from 'lucide-react';
 
 type Attendee = {
@@ -45,8 +38,8 @@ export function AttendanceTab({ attendees }: AttendanceTabProps) {
 
     if (attendees.length === 0) {
         return (
-            <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                <Users className="h-12 w-12 mx-auto mb-3 text-slate-400 dark:text-slate-500" />
+            <div className="py-8 text-center text-slate-500 dark:text-slate-400">
+                <Users className="mx-auto mb-3 h-12 w-12 text-slate-400 dark:text-slate-500" />
                 <p>No attendees yet.</p>
             </div>
         );
@@ -58,18 +51,10 @@ export function AttendanceTab({ attendees }: AttendanceTabProps) {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-slate-50 dark:bg-slate-900/50">
-                            <TableHead className="text-slate-700 dark:text-slate-300 font-medium">
-                                Name
-                            </TableHead>
-                            <TableHead className="text-slate-700 dark:text-slate-300 font-medium">
-                                Student ID
-                            </TableHead>
-                            <TableHead className="text-slate-700 dark:text-slate-300 font-medium">
-                                Department
-                            </TableHead>
-                            <TableHead className="text-right text-slate-700 dark:text-slate-300 font-medium">
-                                Timestamp
-                            </TableHead>
+                            <TableHead className="font-medium text-slate-700 dark:text-slate-300">Name</TableHead>
+                            <TableHead className="font-medium text-slate-700 dark:text-slate-300">Student ID</TableHead>
+                            <TableHead className="font-medium text-slate-700 dark:text-slate-300">Department</TableHead>
+                            <TableHead className="text-right font-medium text-slate-700 dark:text-slate-300">Timestamp</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -84,21 +69,13 @@ export function AttendanceTab({ attendees }: AttendanceTabProps) {
                                             </AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <div className="font-medium text-slate-900 dark:text-white">
-                                                {attendee.name}
-                                            </div>
-                                            <div className="text-sm text-slate-500 dark:text-slate-400">
-                                                @{attendee.username}
-                                            </div>
+                                            <div className="font-medium text-slate-900 dark:text-white">{attendee.name}</div>
+                                            <div className="text-sm text-slate-500 dark:text-slate-400">@{attendee.username}</div>
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-slate-700 dark:text-slate-300">
-                                    {attendee.student_id || "—"}
-                                </TableCell>
-                                <TableCell className="text-slate-700 dark:text-slate-300">
-                                    {attendee.department || "—"}
-                                </TableCell>
+                                <TableCell className="text-slate-700 dark:text-slate-300">{attendee.student_id || '—'}</TableCell>
+                                <TableCell className="text-slate-700 dark:text-slate-300">{attendee.department || '—'}</TableCell>
                                 <TableCell className="text-right text-slate-500 dark:text-slate-400">
                                     {formatTimestamp(attendee.attended_at)}
                                 </TableCell>

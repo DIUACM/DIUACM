@@ -1,6 +1,6 @@
-import { Copy, Check } from 'lucide-react';
-import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { Check, Copy } from 'lucide-react';
+import { useState } from 'react';
 
 type CopyButtonProps = {
     text: string;
@@ -14,7 +14,7 @@ export function CopyButton({ text, platform, className }: CopyButtonProps) {
     const handleCopy = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        
+
         try {
             await navigator.clipboard.writeText(text);
             setCopied(true);
@@ -27,17 +27,10 @@ export function CopyButton({ text, platform, className }: CopyButtonProps) {
     return (
         <button
             onClick={handleCopy}
-            className={cn(
-                "p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded transition-colors",
-                className
-            )}
+            className={cn('rounded p-1 transition-colors hover:bg-black/5 dark:hover:bg-white/5', className)}
             title={`Copy ${platform} handle`}
         >
-            {copied ? (
-                <Check className="w-3 h-3" />
-            ) : (
-                <Copy className="w-3 h-3" />
-            )}
+            {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
         </button>
     );
 }

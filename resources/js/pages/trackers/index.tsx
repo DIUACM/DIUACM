@@ -1,6 +1,6 @@
+import { CustomPagination } from '@/components/events/custom-pagination';
 import { TrackerCard, TrackerListItem } from '@/components/trackers/tracker-card';
 import { TrackersFilters } from '@/components/trackers/trackers-filters';
-import { CustomPagination } from '@/components/events/custom-pagination';
 import MainLayout from '@/layouts/main-layout';
 import { Head } from '@inertiajs/react';
 
@@ -39,9 +39,7 @@ export default function TrackersPage({ trackers, filters }: TrackersPageProps) {
             <section className="container mx-auto px-4 py-16">
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold tracking-tight">Trackers</h1>
-                    <p className="mt-1 text-slate-600 dark:text-slate-300">
-                        Track performance and rankings across contests and events.
-                    </p>
+                    <p className="mt-1 text-slate-600 dark:text-slate-300">Track performance and rankings across contests and events.</p>
                 </div>
 
                 <div className="mb-6">

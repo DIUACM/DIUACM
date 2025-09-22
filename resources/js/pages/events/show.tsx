@@ -1,5 +1,5 @@
-import { AttendanceTab } from '@/components/events/attendance-tab';
 import { AttendanceButton } from '@/components/events/attendance-button';
+import { AttendanceTab } from '@/components/events/attendance-tab';
 import { PerformanceTab } from '@/components/events/performance-tab';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MainLayout from '@/layouts/main-layout';
 import { Head, Link } from '@inertiajs/react';
 import { isAfter, isWithinInterval } from 'date-fns';
-import { ArrowLeft, CalendarDays, Clock, MapPin, Users, TrendingUp } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Clock, MapPin, TrendingUp, Users } from 'lucide-react';
 
 type User = {
     id: number;
@@ -180,19 +180,19 @@ export default function EventDetailsPage({
                 <div className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
                     <div className="mb-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                         <div className="min-w-0 flex-1">
-                            <h1 className="mb-3 text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">
-                                {event.title}
-                            </h1>
+                            <h1 className="mb-3 text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">{event.title}</h1>
 
                             <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
                                 <div className="flex items-center gap-2">
                                     <CalendarDays className="h-4 w-4 text-blue-500" />
-                                    <span>{new Intl.DateTimeFormat('en-US', { 
-                                        weekday: 'long',
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                    }).format(start)}</span>
+                                    <span>
+                                        {new Intl.DateTimeFormat('en-US', {
+                                            weekday: 'long',
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric',
+                                        }).format(start)}
+                                    </span>
                                 </div>
 
                                 <div className="flex items-center gap-2">
@@ -210,11 +210,7 @@ export default function EventDetailsPage({
                                 </div>
                             </div>
 
-                            {event.description && (
-                                <p className="mb-4 text-slate-600 dark:text-slate-300">
-                                    {event.description}
-                                </p>
-                            )}
+                            {event.description && <p className="mb-4 text-slate-600 dark:text-slate-300">{event.description}</p>}
                         </div>
 
                         <div className="sm:self-start">
@@ -223,7 +219,7 @@ export default function EventDetailsPage({
                     </div>
 
                     {/* Event Information - Badges */}
-                    <div className="flex flex-wrap gap-3 mb-4">
+                    <div className="mb-4 flex flex-wrap gap-3">
                         <Badge variant="default" className={`${getEventTypeBadgeStyle()} capitalize`}>
                             {event.type === 'class' && '📚 '}
                             {event.type === 'contest' && '🏆 '}
@@ -247,7 +243,10 @@ export default function EventDetailsPage({
                     <div className="flex flex-wrap gap-3">
                         {event.event_link && (
                             <a href={event.event_link} target="_blank" rel="noopener noreferrer">
-                                <Button variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-800/30 dark:bg-blue-900/20 dark:text-blue-400 px-4 py-2">
+                                <Button
+                                    variant="outline"
+                                    className="border-blue-200 bg-blue-50 px-4 py-2 text-blue-700 hover:bg-blue-100 dark:border-blue-800/30 dark:bg-blue-900/20 dark:text-blue-400"
+                                >
                                     <MapPin className="mr-2 h-4 w-4" />
                                     Event Link
                                 </Button>
@@ -290,10 +289,10 @@ export default function EventDetailsPage({
 
                 {/* Content - Enhanced with gradient styling */}
                 {shouldShowTabs ? (
-                    <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 transition-all overflow-hidden group hover:shadow-lg">
-                        <div className="p-6 relative z-10">
+                    <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md transition-all hover:shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                        <div className="relative z-10 p-6">
                             <Tabs defaultValue={defaultTab} className="w-full">
-                                <TabsList className="mb-6 p-1 bg-slate-100 dark:bg-slate-800 w-full sm:w-fit">
+                                <TabsList className="mb-6 w-full bg-slate-100 p-1 sm:w-fit dark:bg-slate-800">
                                     {showAttendance && (
                                         <TabsTrigger value="attendance" className="flex items-center gap-2 rounded-lg">
                                             <Users className="h-4 w-4" />
@@ -309,13 +308,13 @@ export default function EventDetailsPage({
                                 </TabsList>
 
                                 {showAttendance && (
-                                    <TabsContent value="attendance" className="p-0 mt-4">
+                                    <TabsContent value="attendance" className="mt-4 p-0">
                                         <AttendanceTab attendees={attendees} />
                                     </TabsContent>
                                 )}
 
                                 {showPerformance && (
-                                    <TabsContent value="performance" className="p-0 mt-4">
+                                    <TabsContent value="performance" className="mt-4 p-0">
                                         <PerformanceTab performanceData={performance_data} />
                                     </TabsContent>
                                 )}
@@ -323,9 +322,9 @@ export default function EventDetailsPage({
                         </div>
                     </div>
                 ) : showAttendance ? (
-                    <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 transition-all overflow-hidden group hover:shadow-lg">
-                        <div className="p-6 relative z-10">
-                            <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                    <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md transition-all hover:shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                        <div className="relative z-10 p-6">
+                            <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900 dark:text-white">
                                 <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                                 Attendees ({attendees_count})
                             </h2>
@@ -333,9 +332,9 @@ export default function EventDetailsPage({
                         </div>
                     </div>
                 ) : showPerformance ? (
-                    <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-md border border-slate-200 dark:border-slate-700 transition-all overflow-hidden group hover:shadow-lg">
-                        <div className="p-6 relative z-10">
-                            <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                    <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md transition-all hover:shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                        <div className="relative z-10 p-6">
+                            <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900 dark:text-white">
                                 <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                                 Performance ({performance_count})
                             </h2>
@@ -345,18 +344,14 @@ export default function EventDetailsPage({
                 ) : (
                     <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
                         <div className="mb-4 text-6xl">📊</div>
-                        <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
-                            No additional data available
-                        </h3>
+                        <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">No additional data available</h3>
                         <p className="text-slate-600 dark:text-slate-400">
-                            {!event.open_for_attendance && event.type !== 'contest' && 
+                            {!event.open_for_attendance &&
+                                event.type !== 'contest' &&
                                 "This event doesn't have attendance tracking or performance data."}
-                            {!event.open_for_attendance && event.type === 'contest' && 
-                                "Attendance tracking is not enabled for this contest."}
-                            {event.open_for_attendance && event.type !== 'contest' && attendees_count === 0 &&
-                                "No one has attended this event yet."}
-                            {event.type === 'contest' && performance_count === 0 &&
-                                "No performance data is available for this contest yet."}
+                            {!event.open_for_attendance && event.type === 'contest' && 'Attendance tracking is not enabled for this contest.'}
+                            {event.open_for_attendance && event.type !== 'contest' && attendees_count === 0 && 'No one has attended this event yet.'}
+                            {event.type === 'contest' && performance_count === 0 && 'No performance data is available for this contest yet.'}
                         </p>
                     </div>
                 )}

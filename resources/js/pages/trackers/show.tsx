@@ -274,22 +274,19 @@ export default function TrackersShow() {
 
                                                         {/* User */}
                                                         <td className="sticky left-16 z-10 bg-white px-4 py-3 hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700/50">
-                                                            <Link 
-                                                                href={`/programmers/${user.username}`}
-                                                                className="flex items-center gap-3 group"
-                                                            >
+                                                            <Link href={`/programmers/${user.username}`} className="group flex items-center gap-3">
                                                                 <Avatar className="h-8 w-8">
                                                                     <AvatarImage src={user.profile_picture || ''} alt={user.name} />
                                                                     <AvatarFallback className="bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300">
                                                                         {user.name.charAt(0).toUpperCase()}
                                                                     </AvatarFallback>
                                                                 </Avatar>
-                                                                <span className="truncate text-sm font-medium text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                                                <span className="truncate text-sm font-medium text-slate-900 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
                                                                     {user.name.length > 20 ? `${user.name.substring(0, 20)}...` : user.name}
                                                                 </span>
                                                             </Link>
                                                         </td>
-                                                        
+
                                                         {/* Score */}
                                                         <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">
                                                             {typeof user.score === 'number' ? user.score.toFixed(1) : user.score}

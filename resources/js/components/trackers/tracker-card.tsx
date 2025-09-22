@@ -1,6 +1,6 @@
+import { Card, CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from '@inertiajs/react';
 import { ArrowUpRight, BarChart3 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardAction } from '@/components/ui/card';
 
 export type TrackerListItem = {
     id: number;
@@ -16,7 +16,7 @@ type Props = {
 export function TrackerCard({ tracker }: Props) {
     return (
         <Link href={`/trackers/${tracker.slug}`} className="block">
-            <Card className="group relative overflow-hidden transition-all hover:shadow-lg bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+            <Card className="group relative overflow-hidden border-slate-200 bg-white transition-all hover:shadow-lg dark:border-slate-700 dark:bg-slate-900">
                 <div className="absolute -inset-1 -z-10 rounded-xl bg-gradient-to-r from-blue-500/10 via-cyan-500/10 to-purple-500/10 opacity-0 transition-opacity duration-300 group-hover:opacity-70"></div>
                 <div className="absolute inset-0 -z-10 bg-gradient-to-br from-blue-50 to-slate-50 opacity-50 dark:from-slate-800 dark:to-slate-900"></div>
                 <div className="absolute -right-10 -bottom-10 -z-10 h-24 w-24 rounded-full bg-blue-100/40 dark:bg-blue-900/20"></div>
@@ -34,11 +34,7 @@ export function TrackerCard({ tracker }: Props) {
                                 {tracker.title}
                             </CardTitle>
 
-                            {tracker.description && (
-                                <CardDescription className="line-clamp-3">
-                                    {tracker.description}
-                                </CardDescription>
-                            )}
+                            {tracker.description && <CardDescription className="line-clamp-3">{tracker.description}</CardDescription>}
                         </div>
                     </div>
 
