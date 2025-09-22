@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgrammerController;
 use App\Http\Controllers\TrackerController;
 use Illuminate\Support\Facades\Route;
@@ -38,3 +39,11 @@ Route::get('/trackers/{tracker:slug}', [TrackerController::class, 'show'])->name
 
 Route::get('/programmers', [ProgrammerController::class, 'index'])->name('programmers.index');
 Route::get('/programmers/{programmer:username}', [ProgrammerController::class, 'show'])->name('programmers.show');
+
+// Profile routes (requires authentication)
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/profile/change-password', [ProfileController::class, 'editPassword'])->name('profile.edit-password');
+    Route::post('/profile/change-password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
+});

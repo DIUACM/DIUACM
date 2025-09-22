@@ -16,7 +16,7 @@ it('displays tracker index page with published trackers', function () {
         'title' => 'Published Tracker',
         'order' => 1,
     ]);
-    
+
     $draftTracker = Tracker::factory()->create([
         'status' => VisibilityStatus::DRAFT,
         'title' => 'Draft Tracker',
@@ -38,7 +38,7 @@ it('allows searching trackers by title', function () {
         'title' => 'Programming Contest Tracker',
         'status' => VisibilityStatus::PUBLISHED,
     ]);
-    
+
     Tracker::factory()->create([
         'title' => 'Mathematics Competition',
         'status' => VisibilityStatus::PUBLISHED,
@@ -60,7 +60,7 @@ it('allows searching trackers by description', function () {
         'description' => 'Track programming contest performance',
         'status' => VisibilityStatus::PUBLISHED,
     ]);
-    
+
     Tracker::factory()->create([
         'title' => 'Math Tracker',
         'description' => 'Track mathematics competition results',

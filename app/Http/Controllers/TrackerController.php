@@ -24,8 +24,6 @@ class TrackerController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        
-
         return Inertia::render('trackers/index', [
             'trackers' => $trackers,
             'filters' => [

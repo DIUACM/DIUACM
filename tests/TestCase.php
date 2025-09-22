@@ -10,7 +10,7 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Clear all Laravel caches before each test
         Artisan::call('optimize:clear');
     }
