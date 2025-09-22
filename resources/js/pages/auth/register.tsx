@@ -20,7 +20,7 @@ export default function Register() {
                         <div className="mb-6">
                             <a
                                 href="/auth/google"
-                                className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-6 py-4 text-gray-700 shadow-sm transition-all hover:shadow-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+                                className="flex w-full items-center justify-center gap-3 rounded-lg border border-gray-300 bg-white px-6 py-4 text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
                             >
                                 <svg className="h-5 w-5" viewBox="0 0 24 24">
                                     <path
@@ -65,9 +65,7 @@ export default function Register() {
                                 <div className="ml-3">
                                     <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">DIU Email Required</h3>
                                     <div className="mt-2 text-sm text-blue-700 dark:text-blue-300">
-                                        <p>
-                                            Only students and faculty with DIU email addresses (@diu.edu.bd, @s.diu.edu.bd) can create an account.
-                                        </p>
+                                        <p>Only students and faculty with DIU email addresses (@diu.edu.bd, @s.diu.edu.bd) can create an account.</p>
                                     </div>
                                 </div>
                             </div>
