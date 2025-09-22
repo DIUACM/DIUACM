@@ -80,9 +80,16 @@ class AuthController extends Controller
                 'name' => $googleUser->getName(),
                 'email' => $googleUser->getEmail(),
                 'username' => $username,
-                'email_verified_at' => now(),
                 'password' => bcrypt(Str::random(24)), // Random password for OAuth users
             ]);
+
+            // Mark email as verified since it's coming from Google OAuth
+            $user->markEmailAsVerified();
+        } else {
+            // For existing users, mark email as verified if not already verified
+            if (! $user->hasVerifiedEmail()) {
+                $user->markEmailAsVerified();
+            }
         }
 
         Auth::login($user);
