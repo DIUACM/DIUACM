@@ -45,6 +45,10 @@ Route::get('/programmers/{programmer:username}', [ProgrammerController::class, '
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'create'])->name('login');
     Route::post('/login', [AuthController::class, 'store'])->name('login.store');
+
+    // Google OAuth routes
+    Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
+    Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 });
 
 Route::middleware('auth')->group(function () {
