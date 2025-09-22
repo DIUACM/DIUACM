@@ -1,0 +1,5 @@
+RewriteEngine on
+RewriteCond %{HTTP_HOST} ^diuacm.com$ [NC,OR]
+RewriteCond %{HTTP_HOST} ^www.diuacm.com$
+RewriteCond %{REQUEST_URI} !public/
+RewriteRule (.*) /public/$1 [L]
