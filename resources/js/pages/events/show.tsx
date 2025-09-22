@@ -5,10 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MainLayout from '@/layouts/main-layout';
+import events from '@/routes/events';
 import { Head, Link } from '@inertiajs/react';
 import { isAfter, isWithinInterval } from 'date-fns';
 import { ArrowLeft, CalendarDays, Clock, MapPin, TrendingUp, Users } from 'lucide-react';
-import events from '@/routes/events';
 
 type User = {
     id: number;

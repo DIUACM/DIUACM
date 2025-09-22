@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import MainLayout from '@/layouts/main-layout';
-import { Calendar, Database, Eye, Lock, Mail, Shield } from 'lucide-react';
 import { contact } from '@/routes';
+import { Calendar, Database, Eye, Lock, Mail, Shield } from 'lucide-react';
 
 export default function PrivacyPolicyPage() {
     return (

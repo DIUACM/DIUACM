@@ -3,9 +3,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import MainLayout from '@/layouts/main-layout';
+import trackers from '@/routes/trackers';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, BarChart3, Info, Shield, TrendingUp, Users } from 'lucide-react';
-import trackers from '@/routes/trackers';
 
 type EventStat = {
     solve_count: number;
@@ -107,7 +107,10 @@ export default function TrackersShow() {
                     <div className="text-center">
                         <h1 className="mb-4 text-4xl font-bold text-slate-900 dark:text-white">{tracker.title}</h1>
                         <p className="text-slate-600 dark:text-slate-300">No rank list available</p>
-                        <Link href={trackers.index.url()} className="mt-4 inline-flex items-center gap-2 text-blue-600 hover:underline dark:text-blue-400">
+                        <Link
+                            href={trackers.index.url()}
+                            className="mt-4 inline-flex items-center gap-2 text-blue-600 hover:underline dark:text-blue-400"
+                        >
                             <ArrowLeft className="h-4 w-4" />
                             Back to Trackers
                         </Link>

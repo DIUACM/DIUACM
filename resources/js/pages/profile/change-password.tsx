@@ -3,10 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import MainLayout from '@/layouts/main-layout';
+import profile from '@/routes/profile';
 import { Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, KeyIcon, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import profile from '@/routes/profile';
 
 export default function ChangePassword() {
     const { data, setData, post, processing, errors, reset } = useForm({

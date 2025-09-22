@@ -2,11 +2,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import MainLayout from '@/layouts/main-layout';
+import { login, privacyPolicy, register, termsAndConditions } from '@/routes';
+import auth from '@/routes/auth';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
-import { login, register, privacyPolicy, termsAndConditions } from '@/routes';
-import auth from '@/routes/auth';
 
 export default function Login() {
     const [showPassword, setShowPassword] = useState(false);

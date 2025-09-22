@@ -1,7 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import MainLayout from '@/layouts/main-layout';
-import { AlertTriangle, FileText, Gavel, Mail, Shield, Users } from 'lucide-react';
 import { contact } from '@/routes';
+import { AlertTriangle, FileText, Gavel, Mail, Shield, Users } from 'lucide-react';
 
 export default function TermsAndConditionsPage() {
     return (

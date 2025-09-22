@@ -6,12 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import MainLayout from '@/layouts/main-layout';
+import profile from '@/routes/profile';
+import programmers from '@/routes/programmers';
 import { Link, useForm } from '@inertiajs/react';
 import { Camera, Loader2, UserIcon } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import profile from '@/routes/profile';
-import programmers from '@/routes/programmers';
 
 interface User {
     id: number;

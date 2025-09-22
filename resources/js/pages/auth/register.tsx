@@ -1,7 +1,7 @@
 import MainLayout from '@/layouts/main-layout';
-import { Head, Link } from '@inertiajs/react';
 import { login, privacyPolicy, termsAndConditions } from '@/routes';
 import auth from '@/routes/auth';
+import { Head, Link } from '@inertiajs/react';
 
 export default function Register() {
     return (

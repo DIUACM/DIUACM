@@ -1,8 +1,8 @@
 import { Button } from '@/components/ui/button';
+import { about, contact, home, privacyPolicy, termsAndConditions } from '@/routes';
+import * as programmers from '@/routes/programmers';
 import { Link } from '@inertiajs/react';
 import { Heart, Mail } from 'lucide-react';
-import { home, about, privacyPolicy, termsAndConditions, contact } from '@/routes';
-import * as programmers from '@/routes/programmers';
 
 export default function Footer() {
     return (
@@ -28,7 +28,10 @@ export default function Footer() {
                         <h3 className="mb-4 text-sm font-semibold tracking-wider text-slate-900 uppercase dark:text-white">Quick Links</h3>
                         <ul className="space-y-2">
                             <li>
-                                <Link href={home.url()} className="text-slate-600 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400">
+                                <Link
+                                    href={home.url()}
+                                    className="text-slate-600 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"
+                                >
                                     Home
                                 </Link>
                             </li>

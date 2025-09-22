@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import MainLayout from '@/layouts/main-layout';
+import { about, contact } from '@/routes';
 import { Link } from '@inertiajs/react';
 import {
     ArrowRight,
@@ -18,7 +19,6 @@ import {
     Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { about, contact } from '@/routes';
 
 // Simple local time badge component
 function LocalTime() {

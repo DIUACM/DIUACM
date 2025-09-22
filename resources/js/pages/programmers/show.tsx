@@ -3,9 +3,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import MainLayout from '@/layouts/main-layout';
+import programmers from '@/routes/programmers';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Calendar, GraduationCap, MapPin, Target, Trophy, Users } from 'lucide-react';
-import programmers from '@/routes/programmers';
 
 type ContestMember = {
     name: string;
