@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\VJudgeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EventController;
@@ -8,7 +9,6 @@ use App\Http\Controllers\ProgrammerController;
 use App\Http\Controllers\TrackerController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use App\Http\Controllers\Api\VJudgeController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -73,5 +73,5 @@ Route::post('/api/events/{eventId}/vjudge-update', [VJudgeController::class, 'pr
     ->where('eventId', '[0-9]+');
 
 Route::get('/sanctum/csrf-cookie', function () {
-    return response()->json(['hi' ]);
+    return response()->json(['hi']);
 })->name('sanctum.csrf-cookie');

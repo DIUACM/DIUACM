@@ -47,7 +47,7 @@ class BlogPost extends Model implements HasMedia, HasRichContent
             ->fileAttachmentsDisk('media')
             ->fileAttachmentProvider(
                 SpatieMediaLibraryFileAttachmentProvider::make()
-                    
+
                     ->collection('content-file-attachments'),
             );
     }
