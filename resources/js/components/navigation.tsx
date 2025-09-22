@@ -166,21 +166,12 @@ export default function Navigation() {
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 ) : (
-                                    <div className="flex items-center space-x-1">
-                                        <Button variant="ghost" size="sm" asChild className="hidden h-8 px-3 sm:inline-flex">
-                                            <Link href={login.url()}>
-                                                <LogIn className="mr-1.5 h-3.5 w-3.5" />
-                                                Sign In
-                                            </Link>
-                                        </Button>
-                                        <Button
-                                            size="sm"
-                                            asChild
-                                            className="h-8 bg-gradient-to-r from-blue-600 to-cyan-500 px-3 hover:from-blue-700 hover:to-cyan-600"
-                                        >
-                                            <Link href={register.url()}>Sign Up</Link>
-                                        </Button>
-                                    </div>
+                                    <Button variant="ghost" size="sm" asChild className="h-8 px-3">
+                                        <Link href={login.url()}>
+                                            <LogIn className="mr-1.5 h-3.5 w-3.5" />
+                                            Sign In
+                                        </Link>
+                                    </Button>
                                 )}
 
                                 {/* Mobile Menu Button */}
@@ -297,11 +288,6 @@ export default function Navigation() {
                                             <Link href={login.url()} onClick={() => setIsMobileMenuOpen(false)}>
                                                 <LogIn className="mr-2 h-4 w-4" />
                                                 Sign In
-                                            </Link>
-                                        </Button>
-                                        <Button className="w-full" asChild>
-                                            <Link href={register.url()} onClick={() => setIsMobileMenuOpen(false)}>
-                                                Sign Up
                                             </Link>
                                         </Button>
                                     </div>
