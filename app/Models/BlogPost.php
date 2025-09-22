@@ -44,10 +44,10 @@ class BlogPost extends Model implements HasMedia, HasRichContent
     {
         $this->registerRichContent('content')
             ->fileAttachmentsVisibility('public')
-
+            ->fileAttachmentsDisk('media')
             ->fileAttachmentProvider(
                 SpatieMediaLibraryFileAttachmentProvider::make()
-
+                    
                     ->collection('content-file-attachments'),
             );
     }
