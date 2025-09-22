@@ -13,7 +13,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
@@ -65,8 +65,9 @@ class EventUserStatsRelationManager extends RelationManager
         return $table
             ->recordTitle(fn ($record): string => "{$record->user->name} - Stats")
             ->columns([
-                ImageColumn::make('user.image')
-                    ->disk('public')
+                SpatieMediaLibraryImageColumn::make('user.image')
+                    ->collection('profile_picture')
+                    ->visibility('public')
                     ->label('Avatar')
                     ->circular()
                     ->imageSize(36),

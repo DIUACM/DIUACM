@@ -9,6 +9,7 @@ use Filament\Actions\DetachBulkAction;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\ImageColumn;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -30,8 +31,9 @@ class AttendeesRelationManager extends RelationManager
             ->recordTitle(fn (\App\Models\User $record): string => "{$record->name} ({$record->username})")
             ->inverseRelationship('attendedEvents')
             ->columns([
-                ImageColumn::make('image')
-                    ->disk('public')
+                SpatieMediaLibraryImageColumn::make('image')
+                    ->collection('profile_picture')
+                    ->visibility('public')
                     ->label('Avatar')
                     ->circular()
                     ->imageSize(36),
