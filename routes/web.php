@@ -8,6 +8,7 @@ use App\Http\Controllers\ProgrammerController;
 use App\Http\Controllers\TrackerController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\Api\VJudgeController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -64,3 +65,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/change-password', [ProfileController::class, 'editPassword'])->name('profile.edit-password');
     Route::post('/profile/change-password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
 });
+
+Route::get('/api/events/vjudge', [VJudgeController::class, 'getActiveContests'])
+    ->middleware('auth');
+Route::post('/api/events/{eventId}/vjudge-update', [VJudgeController::class, 'processContestData'])
+    ->middleware('auth')
+    ->where('eventId', '[0-9]+');
