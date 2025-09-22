@@ -3,6 +3,7 @@
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -159,6 +160,8 @@ it('can upload profile picture', function () {
 });
 
 it('can upload profile picture via separate endpoint', function () {
+    Storage::fake('media');
+
     $user = User::factory()->create();
     $file = \Illuminate\Http\UploadedFile::fake()->image('profile.jpg', 400, 400);
 
