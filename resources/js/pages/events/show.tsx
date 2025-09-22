@@ -59,7 +59,7 @@ type EventDetailsPageProps = {
     performance_count?: number;
     attendance_info?: AttendanceInfo;
     auth?: {
-        user: any;
+        user: User;
     };
 };
 

@@ -14,8 +14,6 @@ import { useForm, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { 
   CheckCircle, 
-  Clock, 
-  Lock, 
   Users, 
   AlertTriangle, 
   Calendar,
@@ -33,8 +31,6 @@ interface AttendanceButtonProps {
   attendanceWindowEnabled: boolean;
   attendanceWindowStart: string | null;
   attendanceWindowEnd: string | null;
-  startingAt: string;
-  endingAt: string;
   isAuthenticated: boolean;
   state?: 'before_window' | 'during_window' | 'after_window';
 }
@@ -47,8 +43,6 @@ export function AttendanceButton({
   attendanceWindowEnabled,
   attendanceWindowStart,
   attendanceWindowEnd,
-  startingAt,
-  endingAt,
   isAuthenticated,
   state,
 }: AttendanceButtonProps) {

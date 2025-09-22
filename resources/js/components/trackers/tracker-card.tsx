@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { ArrowUpRight, BarChart3 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardAction } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardAction } from '@/components/ui/card';
 
 export type TrackerListItem = {
     id: number;

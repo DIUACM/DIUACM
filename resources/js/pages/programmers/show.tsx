@@ -13,8 +13,6 @@ import {
     Target,
     Trophy,
     Users,
-    User as UserIcon,
-    Code,
 } from 'lucide-react';
 
 type ContestMember = {
