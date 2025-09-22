@@ -1,65 +1,51 @@
 import { Button } from '@/components/ui/button';
 import MainLayout from '@/layouts/main-layout';
 import { Link } from '@inertiajs/react';
-import { AlertTriangle, ArrowLeft, Home, RefreshCw, Shield, Wrench } from 'lucide-react';
+import { Home, RefreshCw } from 'lucide-react';
 
 interface ErrorPageProps {
     status: number;
 }
 
 export default function ErrorPage({ status }: ErrorPageProps) {
-    const title = {
-        503: '503: Service Unavailable',
-        500: '500: Server Error',
-        404: '404: Page Not Found',
-        403: '403: Forbidden',
-    }[status] || `${status}: Error`;
+    const title =
+        {
+            503: '503: Service Unavailable',
+            500: '500: Server Error',
+            404: '404: Page Not Found',
+            403: '403: Forbidden',
+        }[status] || `${status}: Error`;
 
-    const description = {
-        503: 'Sorry, we are doing some maintenance. Please check back soon.',
-        500: 'Whoops, something went wrong on our servers.',
-        404: 'Sorry, the page you are looking for could not be found.',
-        403: 'Sorry, you are forbidden from accessing this page.',
-    }[status] || 'An unexpected error occurred.';
+    const description =
+        {
+            503: 'Sorry, we are doing some maintenance. Please check back soon.',
+            500: 'Whoops, something went wrong on our servers.',
+            404: 'Sorry, the page you are looking for could not be found.',
+            403: 'Sorry, you are forbidden from accessing this page.',
+        }[status] || 'An unexpected error occurred.';
 
-    const icon = {
-        503: Wrench,
-        500: AlertTriangle,
-        404: Home,
-        403: Shield,
-    }[status] || AlertTriangle;
-
-    const Icon = icon;
-
-    const suggestion = {
-        503: 'Our team is working to restore the service. Please try again in a few minutes.',
-        500: 'We\'ve been notified about this issue and are working to fix it.',
-        404: 'Check the URL for typos, or use the navigation menu to find what you\'re looking for.',
-        403: 'If you believe you should have access to this page, please contact support.',
-    }[status] || 'Please try refreshing the page or contact support if the problem persists.';
+    const suggestion =
+        {
+            503: 'Our team is working to restore the service. Please try again in a few minutes.',
+            500: "We've been notified about this issue and are working to fix it.",
+            404: "Check the URL for typos, or use the navigation menu to find what you're looking for.",
+            403: 'If you believe you should have access to this page, please contact support.',
+        }[status] || 'Please try refreshing the page or contact support if the problem persists.';
 
     return (
         <MainLayout>
-            <div className="min-h-screen flex items-center justify-center px-4 py-12">
-                <div className="max-w-2xl w-full text-center">
+            <div className="flex min-h-screen items-center justify-center px-4 py-12">
+                <div className="w-full max-w-2xl text-center">
                     {/* Error Content */}
                     <div className="mb-8">
-                        <h1 className="mb-4 text-6xl font-bold text-slate-900 dark:text-white">
-                            {status}
-                        </h1>
-                        <h2 className="mb-4 text-2xl font-semibold text-slate-700 dark:text-slate-300">
-                            {title.split(': ')[1] || title}
-                        </h2>
-                        <p className="mb-6 text-lg text-slate-600 dark:text-slate-400 max-w-md mx-auto">
-                            {description}
-                        </p>
-                        <p className="text-sm text-slate-500 dark:text-slate-500 max-w-lg mx-auto">
-                            {suggestion}
-                        </p>
+                        <h1 className="mb-4 text-6xl font-bold text-slate-900 dark:text-white">{status}</h1>
+                        <h2 className="mb-4 text-2xl font-semibold text-slate-700 dark:text-slate-300">{title.split(': ')[1] || title}</h2>
+                        <p className="mx-auto mb-6 max-w-md text-lg text-slate-600 dark:text-slate-400">{description}</p>
+                        <p className="mx-auto max-w-lg text-sm text-slate-500 dark:text-slate-500">{suggestion}</p>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
                         <Button
                             asChild
                             size="lg"
@@ -84,18 +70,16 @@ export default function ErrorPage({ status }: ErrorPageProps) {
 
                     {/* Additional Help */}
                     {status === 500 && (
-                        <div className="mt-12 p-6 rounded-2xl border border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-900/20">
+                        <div className="mt-12 rounded-2xl border border-amber-200 bg-amber-50/50 p-6 dark:border-amber-800 dark:bg-amber-900/20">
                             <p className="text-sm text-amber-700 dark:text-amber-300">
                                 <strong>Error ID:</strong> {Date.now().toString(36).toUpperCase()}
                             </p>
-                            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                                Please include this ID when contacting support
-                            </p>
+                            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">Please include this ID when contacting support</p>
                         </div>
                     )}
 
                     {status === 503 && (
-                        <div className="mt-12 p-6 rounded-2xl border border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-900/20">
+                        <div className="mt-12 rounded-2xl border border-blue-200 bg-blue-50/50 p-6 dark:border-blue-800 dark:bg-blue-900/20">
                             <p className="text-sm text-blue-700 dark:text-blue-300">
                                 Follow us on social media for maintenance updates and announcements.
                             </p>

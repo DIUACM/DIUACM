@@ -74,7 +74,7 @@ export default function Footer() {
                                     Programmers
                                 </Link>
                             </li>
-                             <li>
+                            <li>
                                 <Link
                                     href="/test-404"
                                     className="text-slate-600 transition hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400"

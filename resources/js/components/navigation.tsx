@@ -9,7 +9,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
-import { about, contact, home, login, logout, register } from '@/routes';
+import { about, contact, home, login, logout } from '@/routes';
 import events from '@/routes/events';
 import profile from '@/routes/profile';
 import programmers from '@/routes/programmers';

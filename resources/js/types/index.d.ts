@@ -1,5 +1,5 @@
 export interface Auth {
-    user: User|null;
+    user: User | null;
 }
 
 export interface SharedData {
