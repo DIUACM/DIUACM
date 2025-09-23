@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\EventUserStat;
 use App\Models\User;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class UpdateCodeforcesEventStats extends Command
@@ -112,21 +113,29 @@ class UpdateCodeforcesEventStats extends Command
             // Fetch standings for valid handles
             $handles = $withHandles->pluck('codeforces_handle')->implode(';');
             $url = 'https://codeforces.com/api/contest.standings?contestId='.urlencode((string) $contestId).'&showUnofficial=true&handles='.urlencode($handles);
+            // $this->line($url);
+            
+            $cacheKey = "codeforces_standings_{$contestId}_".md5($handles);
+            
+            $payload = Cache::remember($cacheKey, now()->addHours(2), function () use ($url, $contestId) {
+                $response = Http::timeout(30)
+                    ->acceptJson()
+                    ->get($url);
 
-            $response = Http::timeout(30)
-                ->acceptJson()
-                ->get($url);
+                if (! $response->successful()) {
+                    throw new \Exception("Failed to fetch standings from Codeforces API for contest {$contestId} (HTTP {$response->status()})");
+                }
 
-            if (! $response->successful()) {
-                $this->error("  [skip] Failed to fetch standings from Codeforces API for contest {$contestId} (HTTP {$response->status()})");
+                $responseData = $response->json();
+                if (($responseData['status'] ?? null) !== 'OK') {
+                    throw new \Exception("Codeforces API returned error for contest {$contestId}: ".($responseData['comment'] ?? 'unknown error'));
+                }
+                
+                return $responseData;
+            });
 
-                continue;
-            }
-
-            $payload = $response->json();
-            if (($payload['status'] ?? null) !== 'OK') {
-                $this->error("  [skip] Codeforces API returned error for contest {$contestId}: ".($payload['comment'] ?? 'unknown error'));
-
+            if (is_string($payload)) {
+                $this->error("  [skip] {$payload}");
                 continue;
             }
 
