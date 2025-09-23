@@ -243,12 +243,13 @@ export default function TrackersShow() {
                                                             className="min-w-48 px-4 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase dark:text-slate-400"
                                                         >
                                                             <div className="space-y-1">
-                                                                <div
-                                                                    className="block truncate text-xs font-semibold text-blue-600 dark:text-blue-400"
+                                                                <Link
+                                                                    href={`/events/${event.id}`}
+                                                                    className="block truncate text-xs font-semibold text-blue-600 transition-colors hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
                                                                     title={event.title}
                                                                 >
                                                                     {event.title.length > 30 ? `${event.title.substring(0, 30)}...` : event.title}
-                                                                </div>
+                                                                </Link>
                                                                 <div className="flex flex-wrap items-center gap-2">
                                                                     <span className="text-xs text-slate-500 dark:text-slate-400">
                                                                         {new Date(event.starting_at).toLocaleDateString('en-US', {
