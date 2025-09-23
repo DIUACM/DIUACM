@@ -69,12 +69,19 @@ function StatCell({ stat }: { stat: EventStat }) {
         <div className="px-4 py-3">
             <div className="flex flex-wrap gap-2">
                 {!participation ? (
-                    <Badge
-                        variant="outline"
-                        className="border-red-200 bg-red-50 text-xs text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
-                    >
-                        Absent
-                    </Badge>
+                    <>
+                        <Badge
+                            variant="outline"
+                            className="border-red-200 bg-red-50 text-xs text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
+                        >
+                            Absent
+                        </Badge>
+                        {upsolve_count > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                                {upsolve_count} Upsolve{upsolve_count !== 1 ? 's' : ''}
+                            </Badge>
+                        )}
+                    </>
                 ) : (
                     <>
                         <Badge
