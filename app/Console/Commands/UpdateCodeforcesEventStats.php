@@ -114,9 +114,9 @@ class UpdateCodeforcesEventStats extends Command
             $handles = $withHandles->pluck('codeforces_handle')->implode(';');
             $url = 'https://codeforces.com/api/contest.standings?contestId='.urlencode((string) $contestId).'&showUnofficial=true&handles='.urlencode($handles);
             // $this->line($url);
-            
+
             $cacheKey = "codeforces_standings_{$contestId}_".md5($handles);
-            
+
             $payload = Cache::remember($cacheKey, now()->addHours(2), function () use ($url, $contestId) {
                 $response = Http::timeout(30)
                     ->acceptJson()
@@ -130,12 +130,13 @@ class UpdateCodeforcesEventStats extends Command
                 if (($responseData['status'] ?? null) !== 'OK') {
                     throw new \Exception("Codeforces API returned error for contest {$contestId}: ".($responseData['comment'] ?? 'unknown error'));
                 }
-                
+
                 return $responseData;
             });
 
             if (is_string($payload)) {
                 $this->error("  [skip] {$payload}");
+
                 continue;
             }
 

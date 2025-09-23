@@ -36,6 +36,7 @@ class ShowUsersWithoutCodeforcesHandle extends Command
 
         if ($users->isEmpty()) {
             $this->info('No users found matching the criteria.');
+
             return Command::SUCCESS;
         }
 
