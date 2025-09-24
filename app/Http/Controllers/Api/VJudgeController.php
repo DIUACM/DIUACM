@@ -44,13 +44,6 @@ class VJudgeController extends Controller
         // Get event
         $event = Event::findOrFail($eventId);
 
-        // Check if auto update score is enabled for this event
-        if (! $event->auto_update_score) {
-            return response()->json([
-                'message' => 'Auto update score is disabled for this event',
-            ], 400);
-        }
-
         // Extract VJudge usernames from payload
         $vjudgeUsernames = [];
         if (isset($payload['participants']) && is_array($payload['participants'])) {
@@ -89,7 +82,7 @@ class VJudgeController extends Controller
         }
 
         // Process the VJudge data
-        $processedData = $this->processVjudgeData($payload);
+        $processedData = $this->processVjudgeData($payload, $event->auto_update_score);
 
         // Delete existing solve stats for this event
         EventUserStat::where('event_id', $eventId)->delete();
@@ -125,7 +118,7 @@ class VJudgeController extends Controller
         ]);
     }
 
-    private function processVjudgeData(array $data): array
+    private function processVjudgeData(array $data, bool $autoUpdateScore = true): array
     {
         $timeLimit = $data['length'] / 1000;
         $processed = [];
@@ -147,6 +140,15 @@ class VJudgeController extends Controller
             foreach ($data['submissions'] as $submission) {
                 [$participantId, $problemIndex, $isAccepted, $timestamp] = $submission;
 
+                // Handle partial acceptance when auto_update_score is false
+                $actuallyAccepted = $isAccepted === 1;
+                if (! $autoUpdateScore && count($submission) >= 6) {
+                    $userScore = $submission[4] ?? 0;
+                    $maxScore = $submission[5] ?? 100;
+                    // Only consider as accepted if user got full points
+                    $actuallyAccepted = $isAccepted === 1 && $userScore >= $maxScore;
+                }
+
                 $participant = $data['participants'][$participantId] ?? null;
                 if (! $participant) {
                     continue;
@@ -163,7 +165,7 @@ class VJudgeController extends Controller
 
                 $processed[$username]['absent'] = false;
 
-                if ($isAccepted === 1 && ! $processed[$username]['solved'][$problemIndex]) {
+                if ($actuallyAccepted && ! $processed[$username]['solved'][$problemIndex]) {
                     $processed[$username]['solveCount']++;
                     $processed[$username]['solved'][$problemIndex] = 1;
                 }
@@ -172,6 +174,15 @@ class VJudgeController extends Controller
             // Second pass: Process upsolve submissions
             foreach ($data['submissions'] as $submission) {
                 [$participantId, $problemIndex, $isAccepted, $timestamp] = $submission;
+
+                // Handle partial acceptance when auto_update_score is false
+                $actuallyAccepted = $isAccepted === 1;
+                if (! $autoUpdateScore && count($submission) >= 6) {
+                    $userScore = $submission[4] ?? 0;
+                    $maxScore = $submission[5] ?? 100;
+                    // Only consider as accepted if user got full points
+                    $actuallyAccepted = $isAccepted === 1 && $userScore >= $maxScore;
+                }
 
                 $participant = $data['participants'][$participantId] ?? null;
                 if (! $participant) {
@@ -183,7 +194,7 @@ class VJudgeController extends Controller
                     continue;
                 }
 
-                if ($isAccepted === 1 && $timestamp > $timeLimit && ! $processed[$username]['solved'][$problemIndex]) {
+                if ($actuallyAccepted && $timestamp > $timeLimit && ! $processed[$username]['solved'][$problemIndex]) {
                     $processed[$username]['upSolveCount']++;
                     $processed[$username]['solved'][$problemIndex] = 1;
                 }
