@@ -2,10 +2,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import MainLayout from '@/layouts/main-layout';
 import trackers from '@/routes/trackers';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, BarChart3, Info, Shield, TrendingUp, Users } from 'lucide-react';
+import { ArrowLeft, BarChart3, Download, FileText, Info, Shield, TrendingUp, Users } from 'lucide-react';
 
 type EventStat = {
     solve_count: number;
@@ -199,6 +205,48 @@ export default function TrackersShow() {
                                             <span className="hidden sm:inline">Strict Attendance</span>
                                         </Badge>
                                     )}
+                                </div>
+
+                                {/* Export button */}
+                                <div className="flex items-center gap-3">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="outline" size="sm" className="gap-1.5">
+                                                <Download className="h-4 w-4" />
+                                                Export
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem asChild>
+                                                <a
+                                                    href={trackers.export.url(
+                                                        { tracker: tracker.slug },
+                                                        { query: { keyword: selectedRankList.keyword, format: 'json' } }
+                                                    )}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    <FileText className="h-4 w-4" />
+                                                    Download as JSON
+                                                </a>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem asChild>
+                                                <a
+                                                    href={trackers.export.url(
+                                                        { tracker: tracker.slug },
+                                                        { query: { keyword: selectedRankList.keyword, format: 'csv' } }
+                                                    )}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    <FileText className="h-4 w-4" />
+                                                    Download as CSV
+                                                </a>
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
                             </div>
                         </CardContent>

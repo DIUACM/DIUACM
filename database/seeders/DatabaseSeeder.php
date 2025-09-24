@@ -17,8 +17,8 @@ class DatabaseSeeder extends Seeder
         $this->command->info('📊 Seeding Users (1000 users)...');
         $this->call(UserSeeder::class);
 
-        $this->command->info('🖼️ Seeding Galleries (100 galleries)...');
-        $this->call(GallerySeeder::class);
+        // $this->command->info('🖼️ Seeding Galleries (100 galleries)...');
+        // $this->call(GallerySeeder::class);
 
         $this->command->info('🏆 Seeding Contests (100 contests)...');
         $this->call(ContestSeeder::class);

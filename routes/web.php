@@ -38,6 +38,7 @@ Route::post('/events/{event}/attendance', [EventController::class, 'storeAttenda
 
 Route::get('/trackers', [TrackerController::class, 'index'])->name('trackers.index');
 Route::get('/trackers/{tracker:slug}', [TrackerController::class, 'show'])->name('trackers.show');
+Route::get('/trackers/{tracker:slug}/export', [TrackerController::class, 'export'])->name('trackers.export');
 
 Route::get('/programmers', [ProgrammerController::class, 'index'])->name('programmers.index');
 Route::get('/programmers/{programmer:username}', [ProgrammerController::class, 'show'])->name('programmers.show');
