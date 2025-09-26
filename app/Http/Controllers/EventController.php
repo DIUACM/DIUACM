@@ -137,7 +137,7 @@ class EventController extends Controller
                 'users.student_id',
                 'users.department',
             ])
-            ->withPivot('created_at as attended_at')
+            ->withPivot('created_at')
             ->orderBy('event_attendance.created_at', 'desc')
             ->get();
 
@@ -149,7 +149,7 @@ class EventController extends Controller
                 'student_id' => $user->student_id,
                 'department' => $user->department,
                 'profile_picture' => $user->getFirstMediaUrl('profile_picture', 'thumb'),
-                'attended_at' => $user->pivot->attended_at,
+                'attended_at' => $user->pivot->created_at->toISOString(),
             ];
         });
 
