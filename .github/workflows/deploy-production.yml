@@ -50,7 +50,8 @@ jobs:
           private-key: ${{ secrets.DEPLOY_PRIVATE_KEY }}
           dep: deploy
         env:
-          DEPLOY_HOSTNAME: ${{ secrets.DEPLOY_HOSTNAME }}
-          DEPLOY_REMOTE_USER: ${{ secrets.DEPLOY_REMOTE_USER }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-          DEPLOY_HTTP_USER: ${{ secrets.DEPLOY_HTTP_USER }}
+          DEPLOY_HOSTNAME: ${{ vars.DEPLOY_HOSTNAME }}
+          DEPLOY_REMOTE_USER: ${{ vars.DEPLOY_REMOTE_USER }}
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          DEPLOY_HTTP_USER: ${{ vars.DEPLOY_HTTP_USER }}
+          DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
