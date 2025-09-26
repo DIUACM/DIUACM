@@ -30,7 +30,7 @@ class UserResource extends Resource
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['name', 'email', 'username', 'phone', 'student_id'];
+        return ['name', 'email', 'username', 'phone', 'student_id', 'codeforces_handle', 'atcoder_handle', 'vjudge_handle'];
     }
 
     public static function getGlobalSearchResultDetails(Model $record): array

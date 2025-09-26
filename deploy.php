@@ -1,4 +1,5 @@
 <?php
+
 namespace Deployer;
 
 require 'recipe/laravel.php';
@@ -40,7 +41,7 @@ task('upload:assets', function () {
     $user = get('remote_user');
     $hostname = currentHost()->getHostname();
     $releasePath = get('release_path');
-    
+
     runLocally("scp -r public/build {$user}@{$hostname}:{$releasePath}/public/");
 })->desc('Upload built assets to server');
 

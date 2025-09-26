@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Event;
-use App\Models\EventUserStat;
 use App\Models\RankList;
 use App\Models\Tracker;
 use App\Models\User;
@@ -39,7 +38,7 @@ it('can export ranklist as json', function () {
         return [$event->id => ['weight' => 1.0]];
     }));
 
-    $response = get(route('trackers.export', $tracker->slug) . '?keyword=test-ranklist&format=json');
+    $response = get(route('trackers.export', $tracker->slug).'?keyword=test-ranklist&format=json');
 
     $response->assertOk();
 
@@ -74,7 +73,7 @@ it('can export ranklist as csv', function () {
     // Attach user to ranklist with score
     $rankList->users()->attach($user->id, ['score' => 95.5]);
 
-    $response = get(route('trackers.export', $tracker->slug) . '?keyword=test-ranklist-csv&format=csv');
+    $response = get(route('trackers.export', $tracker->slug).'?keyword=test-ranklist-csv&format=csv');
 
     $response->assertOk();
     $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
@@ -92,7 +91,7 @@ it('returns 404 for unpublished tracker', function () {
         'slug' => 'draft-tracker',
     ]);
 
-    $response = get(route('trackers.export', $tracker->slug) . '?format=json');
+    $response = get(route('trackers.export', $tracker->slug).'?format=json');
 
     $response->assertNotFound();
 });
@@ -103,7 +102,7 @@ it('returns 400 for invalid format', function () {
         'slug' => 'valid-tracker',
     ]);
 
-    $response = get(route('trackers.export', $tracker->slug) . '?format=invalid');
+    $response = get(route('trackers.export', $tracker->slug).'?format=invalid');
 
     $response->assertStatus(400);
 });

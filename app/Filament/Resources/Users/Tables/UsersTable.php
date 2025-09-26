@@ -19,6 +19,16 @@ class UsersTable
     {
         return $table
             ->defaultSort('created_at', 'desc')
+            ->searchable([
+                'name',
+                'email',
+                'username',
+                'phone',
+                'student_id',
+                'codeforces_handle',
+                'atcoder_handle',
+                'vjudge_handle',
+            ])
             ->columns([
                 SpatieMediaLibraryImageColumn::make('Avatar')
                     ->collection('profile_picture')

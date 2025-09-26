@@ -2,12 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import MainLayout from '@/layouts/main-layout';
 import trackers from '@/routes/trackers';
 import { Head, Link, usePage } from '@inertiajs/react';
@@ -221,7 +216,7 @@ export default function TrackersShow() {
                                                 <a
                                                     href={trackers.export.url(
                                                         { tracker: tracker.slug },
-                                                        { query: { keyword: selectedRankList.keyword, format: 'json' } }
+                                                        { query: { keyword: selectedRankList.keyword, format: 'json' } },
                                                     )}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
@@ -235,7 +230,7 @@ export default function TrackersShow() {
                                                 <a
                                                     href={trackers.export.url(
                                                         { tracker: tracker.slug },
-                                                        { query: { keyword: selectedRankList.keyword, format: 'csv' } }
+                                                        { query: { keyword: selectedRankList.keyword, format: 'csv' } },
                                                     )}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
