@@ -6,7 +6,6 @@ use App\Models\Event;
 use App\Models\EventUserStat;
 use App\Models\User;
 use Illuminate\Console\Command;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
 class UpdateAtcoderEventStats extends Command
@@ -104,6 +103,8 @@ class UpdateAtcoderEventStats extends Command
         /** @var array<int, array{id:string,start_epoch_second:int,duration_second:int}> $contests */
         $contests = json_decode($contestsJson, true) ?? [];
 
+        // Prepare contest data for processing
+        $contestData = [];
         foreach ($events as $event) {
             $contestId = $this->extractContestId($event->event_link);
             if ($contestId === null) {
@@ -119,24 +120,41 @@ class UpdateAtcoderEventStats extends Command
                 continue;
             }
 
-            $this->line("Processing event #{$event->id} — {$event->title} ({$contestId})");
+            $contestData[$contestId] = [
+                'event' => $event,
+                'start_epoch' => (int) $contest['start_epoch_second'],
+                'duration' => (int) $contest['duration_second'],
+            ];
+        }
 
-            // All users associated with the event through any of its ranklists.
-            $users = User::query()
-                ->whereHas('rankLists', function ($q) use ($event): void {
-                    $q->whereHas('events', function ($qq) use ($event): void {
-                        $qq->where('events.id', $event->id);
-                    });
-                })
-                ->get(['id', 'name', 'atcoder_handle']);
+        if (empty($contestData)) {
+            $this->info('No valid AtCoder contests to process.');
 
-            if ($users->isEmpty()) {
-                $this->warn('  No users associated via ranklists.');
+            return self::SUCCESS;
+        }
 
-                continue;
-            }
+        // Get all unique users across all events
+        $eventIds = collect($contestData)->pluck('event.id');
+        $users = User::query()
+            ->whereHas('rankLists', function ($q) use ($eventIds): void {
+                $q->whereHas('events', function ($qq) use ($eventIds): void {
+                    $qq->whereIn('events.id', $eventIds);
+                });
+            })
+            ->get(['id', 'name', 'atcoder_handle'])
+            ->unique('id');
 
-            $this->processUsersForEvent($users, $event->id, $contestId, (int) $contest['start_epoch_second'], (int) $contest['duration_second']);
+        if ($users->isEmpty()) {
+            $this->warn('No users found across all events.');
+
+            return self::SUCCESS;
+        }
+
+        $this->line("Processing {$users->count()} users across ".count($contestData).' contests...');
+
+        // Process each user once and calculate stats for all their relevant events
+        foreach ($users as $user) {
+            $this->processUserForAllEvents($user, $contestData);
         }
 
         $this->info('Done.');
@@ -144,64 +162,88 @@ class UpdateAtcoderEventStats extends Command
         return self::SUCCESS;
     }
 
-    private function processUsersForEvent(Collection $users, int $eventId, string $contestId, int $startEpoch, int $duration): void
+    private function processUserForAllEvents(User $user, array $contestData): void
     {
-        $endEpoch = $startEpoch + $duration;
+        $handle = trim((string) $user->atcoder_handle);
 
-        // Partition users by presence of a non-empty handle
-        $withHandles = $users->filter(function ($u) {
-            $h = $u->atcoder_handle;
+        // If user has no handle, mark as absent for all relevant events
+        if ($handle === '') {
+            foreach ($contestData as $contestId => $data) {
+                $event = $data['event'];
 
-            return $h !== null && trim((string) $h) !== '';
-        })->values();
-        $withoutHandles = $users->reject(function ($u) {
-            $h = $u->atcoder_handle;
+                // Check if user is associated with this specific event
+                $isUserAssociated = User::query()
+                    ->where('id', $user->id)
+                    ->whereHas('rankLists', function ($q) use ($event): void {
+                        $q->whereHas('events', function ($qq) use ($event): void {
+                            $qq->where('events.id', $event->id);
+                        });
+                    })
+                    ->exists();
 
-            return $h !== null && trim((string) $h) !== '';
-        })->values();
+                if ($isUserAssociated) {
+                    EventUserStat::updateOrCreate([
+                        'event_id' => $event->id,
+                        'user_id' => $user->id,
+                    ], [
+                        'solve_count' => 0,
+                        'upsolve_count' => 0,
+                        'participation' => false,
+                    ]);
+                    $this->line("  · {$user->name} — no AtCoder handle, set absent for {$event->title}");
+                }
+            }
 
-        // Mark users without handles as absent with zeros
-        /** @var \App\Models\User $user */
-        foreach ($withoutHandles as $user) {
-            EventUserStat::updateOrCreate([
-                'event_id' => $eventId,
-                'user_id' => $user->id,
-            ], [
-                'solve_count' => 0,
-                'upsolve_count' => 0,
-                'participation' => false,
-            ]);
-            $this->line("  · {$user->name} — no AtCoder handle, set absent");
+            return;
         }
 
-        // Process users with handles
-        /** @var \App\Models\User $user */
-        foreach ($withHandles as $user) {
-            $handle = trim((string) $user->atcoder_handle);
+        // Fetch all submissions for this user
+        $allSubmissions = $this->fetchAllUserSubmissions($handle);
+        if ($allSubmissions === false) {
+            $this->error("  [skip] Failed to fetch submissions for user '{$handle}'");
 
-            // Fetch user submissions from the start time; API returns all later submissions.
-            $subsJson = $this->fetch(self::ATCODER_API_SUBMISSIONS.'?user='.rawurlencode($handle).'&from_second='.$startEpoch);
-            if ($subsJson === false) {
-                $this->error(sprintf("  [skip] Failed to fetch submissions from AtCoder API for user '%s'", $handle));
+            return;
+        }
 
+        // Group submissions by contest_id for efficient processing
+        $submissionsByContest = [];
+        foreach ($allSubmissions as $submission) {
+            $contestId = $submission['contest_id'] ?? '';
+            if ($contestId !== '') {
+                $submissionsByContest[$contestId][] = $submission;
+            }
+        }
+
+        // Process each contest this user participated in
+        foreach ($contestData as $contestId => $data) {
+            $event = $data['event'];
+            $startEpoch = $data['start_epoch'];
+            $endEpoch = $startEpoch + $data['duration'];
+
+            // Check if user is associated with this specific event
+            $isUserAssociated = User::query()
+                ->where('id', $user->id)
+                ->whereHas('rankLists', function ($q) use ($event): void {
+                    $q->whereHas('events', function ($qq) use ($event): void {
+                        $qq->where('events.id', $event->id);
+                    });
+                })
+                ->exists();
+
+            if (! $isUserAssociated) {
                 continue;
             }
 
-            /** @var array<int, array{contest_id:string,epoch_second:int,problem_id:string,result:string}> $subs */
-            $subs = json_decode($subsJson, true) ?? [];
+            $contestSubmissions = $submissionsByContest[$contestId] ?? [];
 
             $solved = [];
             $upsolved = [];
             $present = false;
 
-            foreach ($subs as $s) {
-                if (($s['contest_id'] ?? null) !== $contestId) {
-                    continue;
-                }
-
-                $t = (int) ($s['epoch_second'] ?? 0);
-                $pid = (string) ($s['problem_id'] ?? '');
-                $res = (string) ($s['result'] ?? '');
+            foreach ($contestSubmissions as $submission) {
+                $t = (int) ($submission['epoch_second'] ?? 0);
+                $pid = (string) ($submission['problem_id'] ?? '');
+                $res = (string) ($submission['result'] ?? '');
 
                 $inWindow = $t >= $startEpoch && $t <= $endEpoch;
 
@@ -219,7 +261,7 @@ class UpdateAtcoderEventStats extends Command
             }
 
             EventUserStat::updateOrCreate([
-                'event_id' => $eventId,
+                'event_id' => $event->id,
                 'user_id' => $user->id,
             ], [
                 'solve_count' => count($solved),
@@ -228,13 +270,65 @@ class UpdateAtcoderEventStats extends Command
             ]);
 
             $this->line(sprintf(
-                '  · %s — solved: %d, upsolved: %d, present: %s',
+                '  · %s [%s] — solved: %d, upsolved: %d, present: %s',
                 $user->name,
+                $event->title,
                 count($solved),
                 count($upsolved),
                 $present ? 'yes' : 'no'
             ));
         }
+    }
+
+    /**
+     * Fetch all submissions for a user with pagination support.
+     *
+     * @return array<int, array{contest_id:string,epoch_second:int,problem_id:string,result:string}>|false
+     */
+    private function fetchAllUserSubmissions(string $handle): array|false
+    {
+        $allSubmissions = [];
+        $fromSecond = 0;
+        $maxPages = 1000; // Safety limit to prevent infinite loops
+        $currentPage = 0;
+
+        do {
+            $url = self::ATCODER_API_SUBMISSIONS.'?user='.rawurlencode($handle).'&from_second='.$fromSecond;
+            $subsJson = $this->fetch($url);
+
+            if ($subsJson === false) {
+                return false;
+            }
+
+            /** @var array<int, array{contest_id:string,epoch_second:int,problem_id:string,result:string}> $submissions */
+            $submissions = json_decode($subsJson, true) ?? [];
+
+            if (empty($submissions)) {
+                break;
+            }
+
+            $allSubmissions = array_merge($allSubmissions, $submissions);
+
+            // If we got fewer than 500 submissions, we've reached the end
+            if (count($submissions) < 500) {
+                break;
+            }
+
+            // Set the next fromSecond to the last submission's epoch_second
+            $lastSubmission = end($submissions);
+            $fromSecond = (int) ($lastSubmission['epoch_second'] ?? 0);
+
+            $currentPage++;
+
+            // Safety check to prevent infinite loops
+            if ($currentPage >= $maxPages) {
+                $this->warn("  Reached maximum page limit ({$maxPages}) for user {$handle}");
+                break;
+            }
+
+        } while (true);
+
+        return $allSubmissions;
     }
 
     private function extractContestId(?string $eventLink): ?string
