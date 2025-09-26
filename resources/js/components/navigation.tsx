@@ -79,7 +79,7 @@ export default function Navigation() {
                         : 'border-gray-200/50 bg-white/80 dark:border-gray-800/50 dark:bg-gray-900/80',
                 )}
             >
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex h-14 items-center justify-between">
                         {/* Logo */}
                         <Link href={home.url()} className="flex items-center space-x-2">
