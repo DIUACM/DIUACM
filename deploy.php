@@ -14,17 +14,36 @@ add('shared_dirs', []);
 add('writable_dirs', []);
 
 // Load environment variables
-$hostname = getenv('DEPLOY_HOSTNAME') ?: 'deploy.diuacm.com';
-$remoteUser = getenv('DEPLOY_REMOTE_USER') ?: 'diuacmc1';
-$deployPath = getenv('DEPLOY_PATH') ?: '/home/diuacmc1/deploy.diuacm.com';
-$httpUser = getenv('DEPLOY_HTTP_USER') ?: 'diuacmc1';
+$hostname = getenv('DEPLOY_HOSTNAME');
+$remoteUser = getenv('DEPLOY_REMOTE_USER');
+$deployPath = getenv('DEPLOY_PATH');
+$httpUser = getenv('DEPLOY_HTTP_USER');
+$sshPort = getenv('DEPLOY_SSH_PORT');
+
+// Validate required environment variables
+if (!$hostname) {
+    throw new \RuntimeException('DEPLOY_HOSTNAME environment variable is required');
+}
+if (!$remoteUser) {
+    throw new \RuntimeException('DEPLOY_REMOTE_USER environment variable is required');
+}
+if (!$deployPath) {
+    throw new \RuntimeException('DEPLOY_PATH environment variable is required');
+}
+if (!$httpUser) {
+    throw new \RuntimeException('DEPLOY_HTTP_USER environment variable is required');
+}
+if (!$sshPort) {
+    throw new \RuntimeException('DEPLOY_SSH_PORT environment variable is required');
+}
 
 // Hosts
 
 host($hostname)
     ->set('remote_user', $remoteUser)
     ->set('deploy_path', $deployPath)
-    ->set('http_user', $httpUser);
+    ->set('http_user', $httpUser)
+    ->set('port', $sshPort);
 
 // Tasks
 
@@ -40,9 +59,10 @@ task('upload:assets', function () {
     writeln('Uploading built assets...');
     $user = get('remote_user');
     $hostname = currentHost()->getHostname();
+    $port = get('port');
     $releasePath = get('release_path');
 
-    runLocally("scp -r public/build {$user}@{$hostname}:{$releasePath}/public/");
+    runLocally("scp -r -P {$port} public/build {$user}@{$hostname}:{$releasePath}/public/");
 })->desc('Upload built assets to server');
 
 // Skip npm tasks on server by overriding them
