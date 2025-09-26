@@ -12,12 +12,18 @@ add('shared_files', []);
 add('shared_dirs', []);
 add('writable_dirs', []);
 
+// Load environment variables
+$hostname = getenv('DEPLOY_HOSTNAME') ?: 'deploy.diuacm.com';
+$remoteUser = getenv('DEPLOY_REMOTE_USER') ?: 'diuacmc1';
+$deployPath = getenv('DEPLOY_PATH') ?: '/home/diuacmc1/deploy.diuacm.com';
+$httpUser = getenv('DEPLOY_HTTP_USER') ?: 'diuacmc1';
+
 // Hosts
 
-host('deploy.diuacm.com')
-    ->set('remote_user', 'diuacmc1')
-    ->set('deploy_path', '/home/diuacmc1/deploy.diuacm.com')
-    ->set('http_user', 'diuacmc1');
+host($hostname)
+    ->set('remote_user', $remoteUser)
+    ->set('deploy_path', $deployPath)
+    ->set('http_user', $httpUser);
 
 // Tasks
 
