@@ -1,11 +1,13 @@
 import { ContactForm } from '@/components/contact-form';
 import { Card, CardContent } from '@/components/ui/card';
 import MainLayout from '@/layouts/main-layout';
+import { Head } from '@inertiajs/react';
 import { Clock, Mail, MessageCircle, MessageSquare } from 'lucide-react';
 
 export default function Contact() {
     return (
         <MainLayout>
+            <Head title="Contact Us" />
             <div className="container mx-auto px-4 py-8 md:py-16">
                 {/* Header section */}
                 <div className="mb-8 text-center md:mb-12">

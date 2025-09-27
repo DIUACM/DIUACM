@@ -1,10 +1,13 @@
 import { Card, CardContent } from '@/components/ui/card';
 import MainLayout from '@/layouts/main-layout';
+import { Head } from '@inertiajs/react';
 import { Book, Trophy, Users } from 'lucide-react';
 
 export default function About() {
     return (
         <MainLayout>
+            <Head title="About Us" />
+
             <div className="container mx-auto px-4 py-16">
                 {/* Header section */}
                 <div className="mb-12 text-center">
