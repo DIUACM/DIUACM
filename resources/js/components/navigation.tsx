@@ -8,7 +8,6 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cloudflareImage, responsiveImage } from '@/lib/image-utils';
 import { cn } from '@/lib/utils';
 import { about, contact, home, login, logout } from '@/routes';
 import events from '@/routes/events';
@@ -84,15 +83,7 @@ export default function Navigation() {
                     <div className="flex h-14 items-center justify-between">
                         {/* Logo */}
                         <Link href={home.url()} className="flex items-center space-x-2">
-                            <img
-                                src={cloudflareImage('/images/diuacm-logo-rounded.webp', { width: 32, height: 32 })}
-                                srcSet={`${responsiveImage('/images/diuacm-logo-rounded.webp', 32, { height: 32 })['1x']} 1x, ${responsiveImage('/images/diuacm-logo-rounded.webp', 32, { height: 32 })['2x']} 2x, ${responsiveImage('/images/diuacm-logo-rounded.webp', 32, { height: 32 })['3x']} 3x`}
-                                alt="DIU ACM"
-                                className="h-7 w-7 rounded-lg"
-                                width={28}
-                                height={28}
-                                loading="eager"
-                            />
+                            <img src="/images/diuacm-logo-rounded.webp" alt="DIU ACM" className="h-7 w-7 rounded-lg" />
                             <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-xl font-bold text-transparent dark:from-blue-400 dark:to-cyan-300">
                                 DIU ACM
                             </span>
@@ -209,15 +200,7 @@ export default function Navigation() {
                             {/* Header */}
                             <div className="flex items-center justify-between border-b p-4">
                                 <div className="flex items-center space-x-2">
-                                    <img
-                                        src={cloudflareImage('/images/diuacm-logo-rounded.webp', { width: 36, height: 36 })}
-                                        srcSet={`${responsiveImage('/images/diuacm-logo-rounded.webp', 36, { height: 36 })['1x']} 1x, ${responsiveImage('/images/diuacm-logo-rounded.webp', 36, { height: 36 })['2x']} 2x, ${responsiveImage('/images/diuacm-logo-rounded.webp', 36, { height: 36 })['3x']} 3x`}
-                                        alt="DIU ACM"
-                                        className="h-8 w-8 rounded-lg"
-                                        width={32}
-                                        height={32}
-                                        loading="lazy"
-                                    />
+                                    <img src="/images/diuacm-logo-rounded.webp" alt="DIU ACM" className="h-8 w-8 rounded-lg" />
                                     <span className="text-lg font-semibold">DIU ACM</span>
                                 </div>
                                 <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
