@@ -1,10 +1,9 @@
 <?php
 
-use App\Models\User;
 use App\Models\Contest;
-use App\Models\Team;
 use App\Models\Event;
-use App\Models\Tracker;
+use App\Models\Team;
+use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -23,9 +22,9 @@ it('can access dashboard when authenticated as valid filament user', function ()
     ]);
 
     $response = $this->actingAs($user)->get('/admin/dashboard');
-    
+
     $response->assertOk()
-            ->assertSee('DIUACM Dashboard');
+        ->assertSee('DIUACM Dashboard');
 });
 
 it('dashboard shows correct statistics', function () {
@@ -34,15 +33,15 @@ it('dashboard shows correct statistics', function () {
         'email' => 'sourov2305101004@diu.edu.bd',
         'email_verified_at' => now(),
     ]);
-    
+
     // Create some test data
     Contest::factory()->count(3)->create();
     Team::factory()->count(2)->create();
     Event::factory()->count(4)->create();
-    
+
     $response = $this->actingAs($user)->get('/admin/dashboard');
-    
+
     $response->assertOk()
-            ->assertSee('DIUACM Dashboard')
-            ->assertSee('Dashboard'); // Check for sidebar navigation
+        ->assertSee('DIUACM Dashboard')
+        ->assertSee('Dashboard'); // Check for sidebar navigation
 });
