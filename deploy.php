@@ -21,19 +21,19 @@ $httpUser = getenv('DEPLOY_HTTP_USER');
 $sshPort = getenv('DEPLOY_SSH_PORT');
 
 // Validate required environment variables
-if (!$hostname) {
+if (! $hostname) {
     throw new \RuntimeException('DEPLOY_HOSTNAME environment variable is required');
 }
-if (!$remoteUser) {
+if (! $remoteUser) {
     throw new \RuntimeException('DEPLOY_REMOTE_USER environment variable is required');
 }
-if (!$deployPath) {
+if (! $deployPath) {
     throw new \RuntimeException('DEPLOY_PATH environment variable is required');
 }
-if (!$httpUser) {
+if (! $httpUser) {
     throw new \RuntimeException('DEPLOY_HTTP_USER environment variable is required');
 }
-if (!$sshPort) {
+if (! $sshPort) {
     throw new \RuntimeException('DEPLOY_SSH_PORT environment variable is required');
 }
 
