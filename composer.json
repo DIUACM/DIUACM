@@ -14,7 +14,8 @@
         "laravel/socialite": "^5.23",
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.11",
-        "league/flysystem-aws-s3-v3": "^3.29"
+        "league/flysystem-aws-s3-v3": "^3.29",
+        "pxlrbt/filament-environment-indicator": "^3.2"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.16",

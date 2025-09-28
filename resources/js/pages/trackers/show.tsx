@@ -215,7 +215,7 @@ export default function TrackersShow() {
                                             <DropdownMenuItem asChild>
                                                 <a
                                                     href={trackers.export.url(
-                                                        { tracker: tracker.slug },
+                                                        tracker.slug,
                                                         { query: { keyword: selectedRankList.keyword, format: 'json' } },
                                                     )}
                                                     target="_blank"
@@ -229,7 +229,7 @@ export default function TrackersShow() {
                                             <DropdownMenuItem asChild>
                                                 <a
                                                     href={trackers.export.url(
-                                                        { tracker: tracker.slug },
+                                                        tracker.slug,
                                                         { query: { keyword: selectedRankList.keyword, format: 'csv' } },
                                                     )}
                                                     target="_blank"
