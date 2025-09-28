@@ -49,13 +49,13 @@ it('filters events by search term', function () {
 
     Event::factory()->create([
         'title' => 'Data Structure Class',
-        'description' => 'Learn Python programming',
+        'description' => 'Learn Python Programming Contest',
         'status' => 'published',
         'starting_at' => now()->addDays(1),
         'ending_at' => now()->addDays(1)->addHours(2),
     ]);
 
-    $response = get('/events?search=Programming');
+    $response = get('/events?search=Programming+Contest');
 
     $response->assertSuccessful();
     $response->assertInertia(fn ($page) => $page->has('events.data', 2) // Should find 2 events with "Programming"
