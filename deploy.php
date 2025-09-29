@@ -19,6 +19,7 @@ $remoteUser = getenv('DEPLOY_REMOTE_USER');
 $deployPath = getenv('DEPLOY_PATH');
 $httpUser = getenv('DEPLOY_HTTP_USER');
 $sshPort = getenv('DEPLOY_SSH_PORT');
+$branch = getenv('DEPLOY_BRANCH') ?: 'main';
 
 // Validate required environment variables
 if (! $hostname) {
@@ -43,7 +44,8 @@ host($hostname)
     ->set('remote_user', $remoteUser)
     ->set('deploy_path', $deployPath)
     ->set('http_user', $httpUser)
-    ->set('port', $sshPort);
+    ->set('port', $sshPort)
+    ->set('branch', $branch);
 
 // Tasks
 

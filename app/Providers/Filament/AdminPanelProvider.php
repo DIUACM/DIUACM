@@ -59,8 +59,7 @@ class AdminPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ])->plugins([
-                EnvironmentIndicatorPlugin::make()
-                ->showGitBranch(),
+                EnvironmentIndicatorPlugin::make(),
             ]);
     }
 }
