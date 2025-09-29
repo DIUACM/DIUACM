@@ -19,6 +19,7 @@ class RankListsTable
     {
         return $table
             ->defaultSort('order', 'asc')
+            ->reorderable('order')
             ->columns([
                 TextColumn::make('keyword')
                     ->label('Keyword')

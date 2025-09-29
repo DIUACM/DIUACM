@@ -19,6 +19,7 @@ class TrackersTable
     {
         return $table
             ->defaultSort('order', 'asc')
+            ->reorderable('order')
             ->columns([
                 TextColumn::make('title')
                     ->searchable()
