@@ -79,7 +79,7 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
             ->addMediaCollection('profile_picture')
             ->useFallbackUrl(url: asset('images/fallback-gallery-image.jpeg'))
             ->singleFile()
-            ->useDisk(diskName: 'media')
+            ->useDisk(diskName: 'local-media-public')
             ->registerMediaConversions(function (?Media $media = null) {
                 $this
                     ->addMediaConversion('thumb')
