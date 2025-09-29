@@ -55,3 +55,4 @@ jobs:
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
           DEPLOY_HTTP_USER: ${{ vars.DEPLOY_HTTP_USER }}
           DEPLOY_SSH_PORT: ${{ secrets.DEPLOY_SSH_PORT }}
+          DEPLOY_BRANCH: main
