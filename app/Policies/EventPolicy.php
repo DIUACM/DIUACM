@@ -66,4 +66,9 @@ class EventPolicy
     {
         return $authUser->can('Reorder:Event');
     }
+
+    public function manageAttendance(AuthUser $authUser, Event $event): bool
+    {
+        return $authUser->can('ManageAttendance:Event');
+    }
 }

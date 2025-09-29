@@ -11,6 +11,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 class AttendeesRelationManager extends RelationManager
 {
@@ -53,6 +54,7 @@ class AttendeesRelationManager extends RelationManager
             ])
             ->headerActions([
                 AttachAction::make()
+                    ->authorize(Auth::user()->can('manageAttendance', $this->getOwnerRecord()))
                     ->recordSelectSearchColumns(['email', 'name', 'student_id', 'username', 'phone', 'codeforces_handle', 'atcoder_handle', 'vjudge_handle'])
                     ->preloadRecordSelect()
                     ->label('Mark Attendance')
@@ -61,11 +63,15 @@ class AttendeesRelationManager extends RelationManager
             ])
             ->recordActions([
                 DetachAction::make()
+                    ->authorize(Auth::user()->can('manageAttendance', $this->getOwnerRecord()))
+
                     ->label('Remove Attendance'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DetachBulkAction::make()
+                        ->authorize(Auth::user()->can('manageAttendance', $this->getOwnerRecord()))
+
                         ->label('Remove Selected Attendances'),
                 ]),
             ]);

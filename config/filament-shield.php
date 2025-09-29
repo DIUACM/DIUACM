@@ -1,6 +1,7 @@
 <?php
 
 use App\Filament\Pages\CustomDashboard;
+use App\Filament\Resources\Events\EventResource;
 use App\Filament\Resources\Users\UserResource;
 
 return [
@@ -176,6 +177,9 @@ return [
 
             UserResource::class => [
                 'assignRoles',
+            ],
+            EventResource::class => [
+                'manageAttendance',
             ],
 
         ],
