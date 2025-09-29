@@ -63,4 +63,9 @@ class UserPolicy
     {
         return $authUser->can('Reorder:User');
     }
+
+    public function assignRoles(AuthUser $authUser): bool
+    {
+        return $authUser->can('AssignRoles:User');
+    }
 }

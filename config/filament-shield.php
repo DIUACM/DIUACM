@@ -1,6 +1,7 @@
 <?php
 
 use App\Filament\Pages\CustomDashboard;
+use App\Filament\Resources\Users\UserResource;
 
 return [
 
@@ -172,6 +173,11 @@ return [
                 'update',
                 'delete',
             ],
+
+            UserResource::class => [
+                'assignRoles',
+            ],
+
         ],
         'exclude' => [
             //

@@ -12,6 +12,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Auth;
 
 class UserForm
 {
@@ -100,6 +101,19 @@ class UserForm
                                     ->label('Student ID'),
                             ]),
                     ]),
+
+                Section::make('Role Management')
+                    ->columnSpanFull()
+                    ->schema([
+                        Select::make('roles')
+                            ->relationship('roles', 'name')
+                            ->multiple()
+                            ->preload()
+                            ->searchable()
+                            ->helperText('Select one or more roles for this user. Users with appropriate permissions can manage role assignments.')
+                            ->visible(fn (): bool => Auth::user()?->can('assignRoles', User::class) ?? false),
+                    ])
+                    ->visible(fn (): bool => Auth::user()?->can('assignRoles', User::class) ?? false),
 
                 Section::make('Account History')
                     ->columnSpanFull()

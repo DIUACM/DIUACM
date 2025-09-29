@@ -12,14 +12,23 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Permission\Traits\HasRoles;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 
-class User extends Authenticatable implements HasMedia, MustVerifyEmail
+
+class User extends Authenticatable implements HasMedia, MustVerifyEmail,FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory,Notifiable;
 
     use HasRoles;
     use InteractsWithMedia;
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return  $this->hasVerifiedEmail() && $this->roles()->count() > 0;
+    }
+
 
     /**
      * The attributes that are mass assignable.
