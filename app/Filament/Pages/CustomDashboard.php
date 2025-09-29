@@ -17,9 +17,9 @@ class CustomDashboard extends Dashboard
 
     protected static ?string $navigationLabel = 'Dashboard';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = -2;
 
-    protected static string $routePath = 'dashboard';
+    protected static string $routePath = '/';
 
     public function getWidgets(): array
     {

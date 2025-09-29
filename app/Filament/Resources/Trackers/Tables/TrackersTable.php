@@ -8,6 +8,7 @@ use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Support\Colors\Color;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -19,6 +20,7 @@ class TrackersTable
     {
         return $table
             ->defaultSort('order', 'asc')
+            ->reorderable('order')
             ->columns([
                 TextColumn::make('title')
                     ->searchable()
@@ -87,6 +89,8 @@ class TrackersTable
                     ->tooltip('Manage rank lists for this tracker'),
                 EditAction::make()
                     ->iconButton(),
+                ViewAction::make('view')
+                    ->tooltip('View tracker details'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

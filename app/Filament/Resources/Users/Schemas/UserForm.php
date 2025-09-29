@@ -12,6 +12,8 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Auth;
+use Spatie\Permission\Models\Role;
 
 class UserForm
 {
@@ -100,6 +102,35 @@ class UserForm
                                     ->label('Student ID'),
                             ]),
                     ]),
+
+                Section::make('Role Management')
+                    ->columnSpanFull()
+                    ->schema([
+                        Select::make('roles')
+                            ->relationship('roles', 'name')
+                            ->multiple()
+                            ->preload()
+                            ->searchable()
+                            ->helperText('Select one or more roles for this user. Users with appropriate permissions can manage role assignments.')
+                            ->visible(fn (): bool => Auth::user()?->can('assignRoles', User::class) ?? false)
+                            ->rules([
+                                function () {
+                                    return function (string $attribute, $value, \Closure $fail) {
+                                        $user = Auth::user();
+
+                                        // If user is not super_admin but tries to assign super_admin role
+                                        if (! $user?->hasRole('super_admin') && is_array($value)) {
+                                            $roleNames = Role::whereIn('id', $value)->pluck('name')->toArray();
+
+                                            if (in_array('super_admin', $roleNames)) {
+                                                $fail('Only super administrators can assign the super admin role.');
+                                            }
+                                        }
+                                    };
+                                },
+                            ]),
+                    ])
+                    ->visible(fn (): bool => Auth::user()?->can('assignRoles', User::class) ?? false),
 
                 Section::make('Account History')
                     ->columnSpanFull()

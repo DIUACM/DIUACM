@@ -13,17 +13,19 @@ use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser, HasMedia, MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory,Notifiable;
 
+    use HasRoles;
     use InteractsWithMedia;
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->email === 'sourov2305101004@diu.edu.bd' && $this->hasVerifiedEmail();
+        return $this->hasVerifiedEmail() && $this->roles()->count() > 0;
     }
 
     /**

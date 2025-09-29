@@ -6,6 +6,7 @@ use App\Enums\VisibilityStatus;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Support\Colors\Color;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -19,6 +20,7 @@ class RankListsTable
     {
         return $table
             ->defaultSort('order', 'asc')
+            ->reorderable('order')
             ->columns([
                 TextColumn::make('keyword')
                     ->label('Keyword')
@@ -97,6 +99,7 @@ class RankListsTable
             ])
             ->recordActions([
                 EditAction::make(),
+                ViewAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
