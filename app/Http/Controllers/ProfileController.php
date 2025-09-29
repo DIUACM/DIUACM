@@ -72,8 +72,15 @@ class ProfileController extends Controller
             // Clear existing profile picture
             $user->clearMediaCollection('profile_picture');
 
-            // Add new profile picture
+            // Get the file extension
+            $extension = $profilePicture->getClientOriginalExtension();
+            
+            // Create custom filename: username-profile.ext
+            $filename = $user->username . '-profile.' . $extension;
+
+            // Add new profile picture with custom filename
             $user->addMedia($profilePicture)
+                ->usingFileName($filename)
                 ->toMediaCollection('profile_picture');
 
             $profilePictureUrl = $user->getFirstMediaUrl('profile_picture');
