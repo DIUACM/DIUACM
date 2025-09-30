@@ -74,9 +74,9 @@ class ProfileController extends Controller
 
             // Get the file extension
             $extension = $profilePicture->getClientOriginalExtension();
-            
+
             // Create custom filename: username-profile.ext
-            $filename = $user->username . '-profile.' . $extension;
+            $filename = $user->username.'-profile.'.$extension;
 
             // Add new profile picture with custom filename
             $user->addMedia($profilePicture)
