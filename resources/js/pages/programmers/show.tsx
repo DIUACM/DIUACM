@@ -103,7 +103,7 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
         <MainLayout>
             <Head title={`${programmer.name} - Programmer Profile`} />
 
-            <div className="container mx-auto px-4 py-16 sm:px-6 lg:px-8">
+            <div className="container mx-auto px-4 py-8">
                 <div className="mb-8">
                     <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
                         {/* Profile Picture */}
