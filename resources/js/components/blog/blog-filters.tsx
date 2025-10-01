@@ -1,8 +1,10 @@
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { router } from '@inertiajs/react';
-import { Search as SearchIcon, X } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { Filter, Search as SearchIcon, X } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 
 type BlogFiltersProps = {
     filters: {
@@ -32,44 +34,77 @@ export function BlogFilters({ filters }: BlogFiltersProps) {
         router.visit(newUrl, { preserveState: true, preserveScroll: true });
     };
 
-    const handleClearFilters = () => {
-        setSearchQuery('');
+    useEffect(() => {
+        setSearchQuery(filters.search || '');
+    }, [filters.search]);
+
+    const clearAllFilters = () => {
         const url = new URL(window.location.href);
         url.searchParams.delete('search');
         url.searchParams.delete('page');
         router.visit(url.toString(), { preserveState: true, preserveScroll: true });
+        setSearchQuery('');
     };
 
     return (
-        <div className="space-y-4">
-            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                    <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <Input
-                        type="text"
-                        placeholder="Search blog posts..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
-                    />
-                </div>
-                <div className="flex gap-2">
-                    <Button type="submit" variant="default" size="default">
-                        Search
-                    </Button>
-                    {hasActiveFilters && (
+        <div>
+            <Card className="mb-4 border-slate-200 dark:border-slate-700">
+                <CardContent>
+                    <div className="flex flex-col gap-4">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-center">
+                            <div className="w-full md:flex-1">
+                                <form onSubmit={handleSearch} className="relative">
+                                    <Input
+                                        placeholder="Search blog posts..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full pr-10"
+                                    />
+                                    <button
+                                        type="submit"
+                                        className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                                    >
+                                        <SearchIcon className="h-4 w-4" />
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {hasActiveFilters && (
+                <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-4 py-2 dark:border-slate-700 dark:bg-slate-800/50">
+                    <div className="flex w-full items-center justify-between">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="mr-1 flex items-center text-xs text-slate-500 dark:text-slate-400">
+                                <Filter className="mr-1 h-3 w-3" />
+                                Filters:
+                            </span>
+
+                            {filters.search && (
+                                <Badge
+                                    variant="secondary"
+                                    className="flex items-center gap-1 bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                >
+                                    {`"${filters.search}"`}
+                                </Badge>
+                            )}
+                        </div>
+
                         <Button
-                            type="button"
-                            variant="outline"
-                            size="default"
-                            onClick={handleClearFilters}
+                            variant="ghost"
+                            size="sm"
+                            onClick={clearAllFilters}
+                            className="h-7 px-2 py-1 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                            title="Clear all filters"
                         >
-                            <X className="mr-2 h-4 w-4" />
-                            Clear
+                            <X className="mr-1 h-3 w-3" />
+                            Clear all
                         </Button>
-                    )}
+                    </div>
                 </div>
-            </form>
+            )}
         </div>
     );
 }

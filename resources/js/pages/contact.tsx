@@ -8,7 +8,7 @@ export default function Contact() {
     return (
         <MainLayout>
             <Head title="Contact Us" />
-            <div className="container mx-auto px-4 py-8 md:py-16">
+            <div className="container mx-auto px-4 py-16">
                 {/* Header section */}
                 <div className="mb-8 text-center md:mb-12">
                     <h1 className="mb-4 text-2xl font-bold text-slate-900 md:text-4xl dark:text-white">

@@ -111,7 +111,7 @@ export default function TrackersShow() {
         return (
             <MainLayout>
                 <Head title={tracker.title} />
-                <div className="container mx-auto px-4 py-16">
+                <div className="container mx-auto px-4 py-8">
                     <div className="text-center">
                         <h1 className="mb-4 text-4xl font-bold text-slate-900 dark:text-white">{tracker.title}</h1>
                         <p className="text-slate-600 dark:text-slate-300">No rank list available</p>
@@ -134,7 +134,7 @@ export default function TrackersShow() {
     return (
         <MainLayout>
             <Head title={`${tracker.title} - ${selectedRankList.keyword}`} />
-            <div className="container mx-auto px-4 py-8 lg:py-12">
+            <div className="container mx-auto px-4 py-8">
                 <div className="space-y-6">
                     {/* Header Section */}
                     <div className="text-center lg:text-left">
