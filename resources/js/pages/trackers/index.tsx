@@ -1,4 +1,4 @@
-import { CustomPagination } from '@/components/events/custom-pagination';
+import { CustomPagination } from '@/components/ui/custom-pagination';
 import { TrackerCard, TrackerListItem } from '@/components/trackers/tracker-card';
 import { TrackersFilters } from '@/components/trackers/trackers-filters';
 import MainLayout from '@/layouts/main-layout';

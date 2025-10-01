@@ -10,13 +10,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { about, contact, home, login, logout } from '@/routes';
+import blog from '@/routes/blog';
 import events from '@/routes/events';
 import profile from '@/routes/profile';
 import programmers from '@/routes/programmers';
 import trackers from '@/routes/trackers';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BarChart3, Calendar, Home, Info, KeyRound, LogIn, LogOut, Mail, Menu, User, Users, X } from 'lucide-react';
+import { BarChart3, Calendar, FileText, Home, Info, KeyRound, LogIn, LogOut, Mail, Menu, User, Users, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppearanceToggleDropdown from './appearance-dropdown';
 
@@ -24,6 +25,7 @@ import AppearanceToggleDropdown from './appearance-dropdown';
 const menuItems = [
     { name: 'Home', href: home.url(), icon: Home },
     { name: 'Events', href: events.index.url(), icon: Calendar },
+    { name: 'Blog', href: blog.index.url(), icon: FileText },
     { name: 'Trackers', href: trackers.index.url(), icon: BarChart3 },
     { name: 'Programmers', href: programmers.index.url(), icon: Users },
     { name: 'About', href: about.url(), icon: Info },

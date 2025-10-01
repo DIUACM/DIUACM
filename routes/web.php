@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\VJudgeController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ProfileController;
@@ -35,6 +36,9 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 Route::get('/events', [EventController::class, 'index'])->name('events.index');
 Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
 Route::post('/events/{event}/attendance', [EventController::class, 'storeAttendance'])->name('events.attendance.store');
+
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{blogPost}', [BlogController::class, 'show'])->name('blog.show');
 
 Route::get('/trackers', [TrackerController::class, 'index'])->name('trackers.index');
 Route::get('/trackers/{slug}', [TrackerController::class, 'show'])->name('trackers.show');

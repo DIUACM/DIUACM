@@ -1,4 +1,4 @@
-import { CustomPagination } from '@/components/events/custom-pagination';
+import { CustomPagination } from '@/components/ui/custom-pagination';
 import { ProgrammerCard, ProgrammerListItem } from '@/components/programmers/programmer-card';
 import { ProgrammersFilters } from '@/components/programmers/programmers-filters';
 import MainLayout from '@/layouts/main-layout';
