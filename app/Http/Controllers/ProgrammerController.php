@@ -20,7 +20,7 @@ class ProgrammerController extends Controller
             })
             ->orderByDesc('max_cf_rating')
             ->orderBy('name')
-            ->paginate(12) // 12 items per page (4 rows × 3 items)
+            ->paginate(15) // 15 items per page (5 rows × 3 items)
             ->through(function ($user) {
                 return [
                     'id' => $user->id,
