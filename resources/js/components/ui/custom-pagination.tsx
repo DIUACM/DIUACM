@@ -10,12 +10,12 @@ import {
 import { router } from '@inertiajs/react';
 import { useCallback } from 'react';
 
-type PaginationProps = {
+type CustomPaginationProps = {
     currentPage: number;
     totalPages: number;
 };
 
-export function CustomPagination({ currentPage, totalPages }: PaginationProps) {
+export function CustomPagination({ currentPage, totalPages }: CustomPaginationProps) {
     // Handle page navigation without full page reload
     const handlePageChange = useCallback((pageNumber: number) => {
         const url = new URL(window.location.href);

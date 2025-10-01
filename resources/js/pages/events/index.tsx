@@ -1,6 +1,6 @@
-import { CustomPagination } from '@/components/events/custom-pagination';
 import { EventCard, EventListItem } from '@/components/events/event-card';
 import { EventsFilters } from '@/components/events/events-filters';
+import { CustomPagination } from '@/components/ui/custom-pagination';
 import MainLayout from '@/layouts/main-layout';
 import { Head } from '@inertiajs/react';
 

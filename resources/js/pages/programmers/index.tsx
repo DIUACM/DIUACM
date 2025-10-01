@@ -1,6 +1,6 @@
-import { CustomPagination } from '@/components/events/custom-pagination';
 import { ProgrammerCard, ProgrammerListItem } from '@/components/programmers/programmer-card';
 import { ProgrammersFilters } from '@/components/programmers/programmers-filters';
+import { CustomPagination } from '@/components/ui/custom-pagination';
 import MainLayout from '@/layouts/main-layout';
 import { Head } from '@inertiajs/react';
 
