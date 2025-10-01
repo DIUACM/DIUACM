@@ -1,8 +1,7 @@
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import MainLayout from '@/layouts/main-layout';
-import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Calendar, User } from 'lucide-react';
+import { Head } from '@inertiajs/react';
+import { Calendar, User } from 'lucide-react';
 
 type BlogPost = {
     id: number;
@@ -59,15 +58,7 @@ export default function BlogShowPage({ blogPost }: BlogShowPageProps) {
                         </div>
                     </div>
 
-                    {/* Navigation back to blog */}
-                    <div className="flex justify-center">
-                        <Link href="/blog">
-                            <Button variant="outline">
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                Back to Blog
-                            </Button>
-                        </Link>
-                    </div>
+                   
                 </div>
             </div>
         </MainLayout>
