@@ -39,9 +39,7 @@ export default function BlogPage({ blogPosts, filters }: BlogPageProps) {
             <section className="container mx-auto px-4 py-16">
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold tracking-tight">Blog</h1>
-                    <p className="mt-1 text-slate-600 dark:text-slate-300">
-                        Latest insights, tutorials, and updates from our team.
-                    </p>
+                    <p className="mt-1 text-slate-600 dark:text-slate-300">Latest insights, tutorials, and updates from our team.</p>
                 </div>
 
                 <div className="mb-6">
@@ -53,13 +51,11 @@ export default function BlogPage({ blogPosts, filters }: BlogPageProps) {
                         <div className="mb-4 text-6xl">📝</div>
                         <p className="mb-2 text-lg text-slate-500">No blog posts found</p>
                         <p className="text-sm text-slate-400">
-                            {filters.search
-                                ? 'Try adjusting your search to see more posts.'
-                                : 'There are no blog posts available at the moment.'}
+                            {filters.search ? 'Try adjusting your search to see more posts.' : 'There are no blog posts available at the moment.'}
                         </p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {blogPosts.data.map((blog) => (
                             <BlogCard key={blog.id} blog={blog} />
                         ))}
@@ -68,10 +64,7 @@ export default function BlogPage({ blogPosts, filters }: BlogPageProps) {
 
                 {blogPosts.data.length > 0 && blogPosts.last_page > 1 && (
                     <div className="mt-8 flex justify-center">
-                        <CustomPagination 
-                            currentPage={blogPosts.current_page} 
-                            totalPages={blogPosts.last_page} 
-                        />
+                        <CustomPagination currentPage={blogPosts.current_page} totalPages={blogPosts.last_page} />
                     </div>
                 )}
             </section>

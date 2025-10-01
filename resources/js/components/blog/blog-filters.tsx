@@ -15,7 +15,7 @@ type BlogFiltersProps = {
 export function BlogFilters({ filters }: BlogFiltersProps) {
     const [searchQuery, setSearchQuery] = useState(filters.search || '');
 
-    const hasActiveFilters = !!(filters.search);
+    const hasActiveFilters = !!filters.search;
 
     const createQueryString = useCallback((name: string, value: string | null) => {
         const url = new URL(window.location.href);

@@ -28,54 +28,48 @@ export function BlogCard({ blog }: BlogCardProps) {
     const [isLoading, setIsLoading] = useState(true);
 
     return (
-        <Link href={`/blog/${blog.slug}`} className="block group">
-            <Card className="overflow-hidden py-0 gap-0 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-600 transition-all duration-300 shadow-sm hover:shadow-lg hover:-translate-y-1">
+        <Link href={`/blog/${blog.slug}`} className="group block">
+            <Card className="gap-0 overflow-hidden border border-slate-200 py-0 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-300 hover:shadow-lg dark:border-slate-700 dark:hover:border-blue-600">
                 <div className="relative overflow-hidden bg-slate-100 dark:bg-slate-800">
-                    <div className="aspect-[16/9] bg-slate-200 dark:bg-slate-700 relative">
+                    <div className="relative aspect-[16/9] bg-slate-200 dark:bg-slate-700">
                         {/* Skeleton placeholder */}
                         <div
                             className={cn(
-                                "absolute inset-0 bg-slate-200 dark:bg-slate-700 transition-opacity duration-300",
-                                isLoading ? "opacity-100" : "opacity-0"
+                                'absolute inset-0 bg-slate-200 transition-opacity duration-300 dark:bg-slate-700',
+                                isLoading ? 'opacity-100' : 'opacity-0',
                             )}
                         />
                         <img
                             src={blog.featured_image_url || '/images/fallback-gallery-image.jpeg'}
                             alt={blog.title}
                             className={cn(
-                                "absolute inset-0 w-full h-full object-cover transition-all duration-500 group-hover:scale-105",
-                                isLoading ? "opacity-0 scale-110" : "opacity-100 scale-100"
+                                'absolute inset-0 h-full w-full object-cover transition-all duration-500 group-hover:scale-105',
+                                isLoading ? 'scale-110 opacity-0' : 'scale-100 opacity-100',
                             )}
                             onLoad={() => setIsLoading(false)}
                             onError={() => setIsLoading(false)}
                         />
                         {blog.is_featured && (
-                            <Badge className="absolute top-3 left-3 bg-yellow-500 text-yellow-900 hover:bg-yellow-500">
-                                Featured
-                            </Badge>
+                            <Badge className="absolute top-3 left-3 bg-yellow-500 text-yellow-900 hover:bg-yellow-500">Featured</Badge>
                         )}
                     </div>
                 </div>
 
                 <CardContent className="p-4">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    <h3 className="line-clamp-1 text-lg font-semibold text-slate-900 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
                         {blog.title}
                     </h3>
-                    {blog.excerpt && (
-                        <p className="text-sm text-slate-600 dark:text-slate-300 mt-1.5 line-clamp-2">
-                            {blog.excerpt}
-                        </p>
-                    )}
+                    {blog.excerpt && <p className="mt-1.5 line-clamp-2 text-sm text-slate-600 dark:text-slate-300">{blog.excerpt}</p>}
                 </CardContent>
 
-                <CardFooter className="px-4 py-0 pb-4 pt-0 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                <CardFooter className="flex items-center justify-between px-4 py-0 pt-0 pb-4 text-xs text-slate-500 dark:text-slate-400">
                     <div className="flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5" />
                         <span>{blog.published_at}</span>
                     </div>
 
                     <Badge variant="outline" className="font-normal">
-                        <User className="h-3 w-3 mr-1" />
+                        <User className="mr-1 h-3 w-3" />
                         {blog.author.name}
                     </Badge>
                 </CardFooter>

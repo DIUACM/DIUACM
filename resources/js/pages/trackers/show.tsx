@@ -214,10 +214,9 @@ export default function TrackersShow() {
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem asChild>
                                                 <a
-                                                    href={trackers.export.url(
-                                                        tracker.slug,
-                                                        { query: { keyword: selectedRankList.keyword, format: 'json' } },
-                                                    )}
+                                                    href={trackers.export.url(tracker.slug, {
+                                                        query: { keyword: selectedRankList.keyword, format: 'json' },
+                                                    })}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="flex items-center gap-2"
@@ -228,10 +227,9 @@ export default function TrackersShow() {
                                             </DropdownMenuItem>
                                             <DropdownMenuItem asChild>
                                                 <a
-                                                    href={trackers.export.url(
-                                                        tracker.slug,
-                                                        { query: { keyword: selectedRankList.keyword, format: 'csv' } },
-                                                    )}
+                                                    href={trackers.export.url(tracker.slug, {
+                                                        query: { keyword: selectedRankList.keyword, format: 'csv' },
+                                                    })}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="flex items-center gap-2"

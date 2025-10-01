@@ -27,18 +27,16 @@ export default function BlogShowPage({ blogPost }: BlogShowPageProps) {
         <MainLayout>
             <Head title={blogPost.title} />
 
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
                 <div>
                     {/* Blog post header */}
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-md overflow-hidden mb-8">
+                    <div className="mb-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">
                         <div className="p-6 md:p-8">
                             {/* Blog title */}
-                            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-6">
-                                {blogPost.title}
-                            </h1>
+                            <h1 className="mb-6 text-3xl font-bold text-slate-900 md:text-4xl dark:text-white">{blogPost.title}</h1>
 
                             {/* Blog meta info */}
-                            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mb-6">
+                            <div className="mb-6 flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
                                 <div className="flex items-center">
                                     <Calendar className="mr-2 h-4 w-4" />
                                     {blogPost.published_at}
@@ -52,13 +50,11 @@ export default function BlogShowPage({ blogPost }: BlogShowPageProps) {
                             <Separator className="my-6" />
 
                             {/* Blog content */}
-                            <div className="prose prose-slate dark:prose-invert max-w-none">
+                            <div className="prose max-w-none prose-slate dark:prose-invert">
                                 <div dangerouslySetInnerHTML={{ __html: blogPost.content }} />
                             </div>
                         </div>
                     </div>
-
-                   
                 </div>
             </div>
         </MainLayout>
