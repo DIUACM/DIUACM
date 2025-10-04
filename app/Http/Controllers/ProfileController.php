@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
+use RalphJSmit\Laravel\SEO\Support\SEOData;
 
 class ProfileController extends Controller
 {
@@ -27,6 +28,11 @@ class ProfileController extends Controller
             'user' => array_merge($user->toArray(), [
                 'profile_picture_url' => $profilePictureUrl ?: null,
             ]),
+        ])->withViewData([
+            'SEOData' => new SEOData(
+                title: 'Edit Profile',
+                description: 'Update your DIU ACM profile information, including personal details and competitive programming handles.',
+            ),
         ]);
     }
 
@@ -103,7 +109,12 @@ class ProfileController extends Controller
      */
     public function editPassword(): Response
     {
-        return Inertia::render('profile/change-password');
+        return Inertia::render('profile/change-password')->withViewData([
+            'SEOData' => new SEOData(
+                title: 'Change Password',
+                description: 'Update your DIU ACM account password to keep your account secure.',
+            ),
+        ]);
     }
 
     /**

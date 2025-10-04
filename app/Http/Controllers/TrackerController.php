@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use RalphJSmit\Laravel\SEO\Support\SEOData;
 
 class TrackerController extends Controller
 {
@@ -27,11 +28,21 @@ class TrackerController extends Controller
             ->paginate(10)
             ->withQueryString();
 
+        $search = $request->get('search');
+        $seoDescription = $search
+            ? "Search results for '{$search}' in trackers. Track competitive programming performance across various contests and events."
+            : 'View performance trackers and leaderboards for competitive programming contests and events at DIU ACM.';
+
         return Inertia::render('trackers/index', [
             'trackers' => $trackers,
             'filters' => [
-                'search' => $request->get('search'),
+                'search' => $search,
             ],
+        ])->withViewData([
+            'SEOData' => new SEOData(
+                title: $search ? "Search: {$search}" : 'Trackers',
+                description: $seoDescription,
+            ),
         ]);
     }
 
@@ -132,7 +143,12 @@ class TrackerController extends Controller
             ];
         });
 
-        return Inertia::render('trackers/show', $cachedData);
+        return Inertia::render('trackers/show', $cachedData)->withViewData([
+            'SEOData' => new SEOData(
+                title: $cachedData['tracker']['title'],
+                description: "View the {$cachedData['tracker']['title']} leaderboard and track competitive programming performance across various contests and events.",
+            ),
+        ]);
     }
 
     private function processEventStats(RankList $selectedRankList, $userIds, $eventIds): void

@@ -5,31 +5,21 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\PageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgrammerController;
 use App\Http\Controllers\TrackerController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('welcome');
-})->name('home');
+Route::get('/', [PageController::class, 'home'])->name('home');
 
-Route::get('/about', function () {
-    return Inertia::render('about');
-})->name('about');
+Route::get('/about', [PageController::class, 'about'])->name('about');
 
-Route::get('/privacy-policy', function () {
-    return Inertia::render('privacy-policy');
-})->name('privacy-policy');
+Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])->name('privacy-policy');
 
-Route::get('/terms-and-conditions', function () {
-    return Inertia::render('terms-and-conditions');
-})->name('terms-and-conditions');
+Route::get('/terms-and-conditions', [PageController::class, 'termsAndConditions'])->name('terms-and-conditions');
 
-Route::get('/contact', function () {
-    return Inertia::render('contact');
-})->name('contact');
+Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 

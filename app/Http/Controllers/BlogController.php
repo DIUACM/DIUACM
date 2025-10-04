@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BlogPost;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use RalphJSmit\Laravel\SEO\Support\SEOData;
 
 class BlogController extends Controller
 {
@@ -44,11 +45,20 @@ class BlogController extends Controller
             ];
         });
 
+        $seoDescription = $search
+            ? "Search results for '{$search}' in our blog. Discover articles, tutorials, and insights from the DIU ACM community."
+            : 'Explore our blog for competitive programming tips, tutorials, contest insights, and community stories from DIU ACM.';
+
         return Inertia::render('blog/index', [
             'blogPosts' => $blogPosts,
             'filters' => [
                 'search' => $search,
             ],
+        ])->withViewData([
+            'SEOData' => new SEOData(
+                title: $search ? "Search: {$search}" : 'Blog',
+                description: $seoDescription,
+            ),
         ]);
     }
 
@@ -76,6 +86,12 @@ class BlogController extends Controller
                 'featured_image_url' => $blogPost->getFirstMediaUrl('featured_image') ?: null,
                 'reading_time' => $this->estimateReadingTime($blogPost->content),
             ],
+        ])->withViewData([
+            'SEOData' => new SEOData(
+                title: $blogPost->title,
+                description: $this->generateExcerpt($blogPost->content, 160),
+                image: $blogPost->getFirstMediaUrl('featured_image') ?: null,
+            ),
         ]);
     }
 

@@ -17,6 +17,7 @@
         "laravel/wayfinder": "^0.1.11",
         "league/flysystem-aws-s3-v3": "^3.29",
         "pxlrbt/filament-environment-indicator": "^3.2",
+        "ralphjsmit/laravel-seo": "^1.7",
         "sentry/sentry-laravel": "^4.16"
     },
     "require-dev": {
