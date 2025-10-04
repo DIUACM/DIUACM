@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 use Laravel\Socialite\Facades\Socialite;
+use RalphJSmit\Laravel\SEO\Support\SEOData;
 
 class AuthController extends Controller
 {
@@ -19,7 +20,12 @@ class AuthController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('auth/login');
+        return Inertia::render('auth/login')->withViewData([
+            'SEOData' => new SEOData(
+                title: 'Login',
+                description: 'Sign in to your DIU ACM account to participate in contests, track your progress, and connect with the community.',
+            ),
+        ]);
     }
 
     /**
@@ -27,7 +33,12 @@ class AuthController extends Controller
      */
     public function register(): Response
     {
-        return Inertia::render('auth/register');
+        return Inertia::render('auth/register')->withViewData([
+            'SEOData' => new SEOData(
+                title: 'Register',
+                description: 'Create a DIU ACM account to join the competitive programming community, participate in contests, and enhance your skills.',
+            ),
+        ]);
     }
 
     /**

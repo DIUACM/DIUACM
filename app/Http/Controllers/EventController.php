@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use RalphJSmit\Laravel\SEO\Support\SEOData;
 
 class EventController extends Controller
 {
@@ -36,6 +37,11 @@ class EventController extends Controller
         // Hide fields that were only needed for query scopes
         $events->getCollection()->makeHidden(['status', 'description', 'event_link']);
 
+        $search = $request->get('search');
+        $seoDescription = $search
+            ? "Search results for '{$search}' in DIU ACM events. Find contests, workshops, training sessions, and more."
+            : 'Discover upcoming and past competitive programming contests, workshops, and training sessions organized by DIU ACM.';
+
         return Inertia::render('events/index', [
             'events' => $events,
             'filters' => [
@@ -43,6 +49,11 @@ class EventController extends Controller
                 'type' => $request->get('type'),
                 'participation_scope' => $request->get('participation_scope'),
             ],
+        ])->withViewData([
+            'SEOData' => new SEOData(
+                title: $search ? "Search: {$search}" : 'Events',
+                description: $seoDescription,
+            ),
         ]);
     }
 
@@ -121,7 +132,12 @@ class EventController extends Controller
             $data = array_merge($data, $this->getPerformanceData($event));
         }
 
-        return Inertia::render('events/show', $data);
+        return Inertia::render('events/show', $data)->withViewData([
+            'SEOData' => new SEOData(
+                title: $event->title,
+                description: $event->description,
+            ),
+        ]);
     }
 
     /**

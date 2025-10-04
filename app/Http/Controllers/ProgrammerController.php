@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use RalphJSmit\Laravel\SEO\Support\SEOData;
 
 class ProgrammerController extends Controller
 {
@@ -33,11 +34,20 @@ class ProgrammerController extends Controller
                 ];
             });
 
+        $seoDescription = $search
+            ? "Search results for '{$search}' in programmers. Find competitive programmers from DIU ACM."
+            : 'Browse profiles of competitive programmers at DIU ACM. View ratings, contest participations, and performance statistics.';
+
         return Inertia::render('programmers/index', [
             'programmers' => $programmers,
             'filters' => [
                 'search' => $search,
             ],
+        ])->withViewData([
+            'SEOData' => new SEOData(
+                title: $search ? "Search: {$search}" : 'Programmers',
+                description: $seoDescription,
+            ),
         ]);
     }
 
@@ -115,6 +125,8 @@ class ProgrammerController extends Controller
             })
             ->values();
 
+        $description = "{$programmer->name}'s competitive programming profile at DIU ACM. View contest participations, performance statistics, and rankings.";
+
         return Inertia::render('programmers/show', [
             'programmer' => [
                 'id' => $programmer->id,
@@ -130,6 +142,12 @@ class ProgrammerController extends Controller
                 'contests' => $contests,
                 'tracker_performance' => $trackerPerformance,
             ],
+        ])->withViewData([
+            'SEOData' => new SEOData(
+                title: $programmer->name,
+                description: $description,
+                image: $programmer->getFirstMediaUrl('profile_picture') ?: null,
+            ),
         ]);
     }
 }
