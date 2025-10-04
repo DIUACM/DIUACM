@@ -23,7 +23,7 @@
        
 
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        {!! ($SEOData??false)? seo($SEOData):seo() !!}
 
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">

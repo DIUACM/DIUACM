@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
+use RalphJSmit\Laravel\SEO\Support\SEOData;
+
 
 class EventController extends Controller
 {
@@ -120,8 +122,13 @@ class EventController extends Controller
         if ($event->type === \App\Enums\EventType::CONTEST) {
             $data = array_merge($data, $this->getPerformanceData($event));
         }
-
-        return Inertia::render('events/show', $data);
+        
+        return Inertia::render('events/show', $data)->withViewData([
+            'SEOData' => new SEOData(
+                title: $event->title,
+                description: $event->description,
+            ),
+        ]);
     }
 
     /**
