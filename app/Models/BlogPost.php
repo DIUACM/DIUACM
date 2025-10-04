@@ -87,7 +87,7 @@ class BlogPost extends Model implements HasMedia, HasRichContent
     {
         $this
             ->addMediaCollection('featured_image')
-            ->useFallbackUrl(url: asset('images/fallback-gallery-image.jpeg'))
+            ->useFallbackUrl(url: asset('images/diuacm.jpeg'))
             ->singleFile()
             ->useDisk(diskName: 'media')
             ->registerMediaConversions(function (?Media $media = null) {
