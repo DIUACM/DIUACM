@@ -12,7 +12,7 @@ return [
     /**
      * Use this setting to specify the site name that will be used in OpenGraph tags.
      */
-    'site_name' => "DIU ACM",
+    'site_name' => 'DIU ACM',
 
     /**
      * Use this setting to specify the path to the sitemap of your website. This exact path will outputted, so
@@ -82,7 +82,7 @@ return [
          * so you'll need to add the suffix manually if you want that. If set to null, we'll determine the title
          * just like the other pages.
          */
-        'homepage_title' => "DIU ACM | The Competitive Programming Community of DIU",
+        'homepage_title' => 'DIU ACM | The Competitive Programming Community of DIU',
     ],
 
     'description' => [
@@ -101,7 +101,7 @@ return [
          * This should be a path to an image. The url to the path is generated using the `secure_url()` function
          * (`secure_url($yourProvidedPath)`), so make sure the image is accessible from the public folder.
          */
-        'fallback' => asset('images/diuacm.jpeg'),
+        'fallback' => '/images/diuacm.jpeg',
     ],
 
     'author' => [
