@@ -8,7 +8,7 @@ require 'recipe/laravel.php';
 
 set('repository', 'https://github.com/DIUACM/DIUACM.git');
 set('writable_mode', 'chmod');
-set('keep_releases', 5);
+set('keep_releases', 2);
 
 add('shared_files', []);
 add('shared_dirs', []);
