@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\Gender;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Role;
 
 class UserSeeder extends Seeder
 {
@@ -16,7 +17,7 @@ class UserSeeder extends Seeder
         $this->command->info('Creating 1000 users...');
 
         // Create the admin user first
-        User::factory()->create([
+        $admin = User::factory()->create([
             'name' => 'Admin User',
             'email' => 'sourov2305101004@diu.edu.bd',
             'username' => 'admin_user',
@@ -25,6 +26,15 @@ class UserSeeder extends Seeder
             'student_id' => 'DIU-23051010',
             'max_cf_rating' => 2400,
         ]);
+
+        // Assign super_admin role to the admin user
+        $superAdminRole = Role::firstOrCreate(
+            ['name' => 'super_admin'],
+            ['guard_name' => 'web']
+        );
+        $admin->assignRole($superAdminRole);
+
+        $this->command->info('✅ Admin user created with super_admin role');
 
         // Create users with competitive programming handles (400 users)
         User::factory()
