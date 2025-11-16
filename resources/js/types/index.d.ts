@@ -1,9 +1,10 @@
 export interface Auth {
-    user: User | null;
+    user: User;
 }
 
 export interface SharedData {
     name: string;
+    quote: { message: string; author: string };
     auth: Auth;
     [key: string]: unknown;
 }

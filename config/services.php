@@ -15,11 +15,11 @@ return [
     */
 
     'postmark' => [
-        'token' => env('POSTMARK_TOKEN'),
+        'key' => env('POSTMARK_API_KEY'),
     ],
 
     'resend' => [
-        'key' => env('RESEND_KEY'),
+        'key' => env('RESEND_API_KEY'),
     ],
 
     'ses' => [
@@ -35,9 +35,4 @@ return [
         ],
     ],
 
-    'google' => [
-        'client_id' => env('AUTH_GOOGLE_ID'),
-        'client_secret' => env('AUTH_GOOGLE_SECRET'),
-        'redirect' => config('app.url').'/auth/google/callback',
-    ],
 ];
