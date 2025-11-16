@@ -2,12 +2,14 @@
 
 namespace App\Http\Middleware;
 
-use Illuminate\Foundation\Inspiring;
+use App\Services\OnlineUsersService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
+    public function __construct(protected OnlineUsersService $onlineUsersService) {}
+
     /**
      * The root template that's loaded on the first page visit.
      *
@@ -36,15 +38,23 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
 
         return [
             ...parent::share($request),
             'name' => config('app.name'),
-            'quote' => ['message' => trim($message), 'author' => trim($author)],
             'auth' => [
-                'user' => $request->user(),
+                'user' => $request->user() ? [
+                    ...$request->user()->toArray(),
+                    'avatar' => $request->user()->avatar_url,
+                ] : null,
             ],
+            'flash' => [
+                'success' => $request->session()->get('success'),
+                'error' => $request->session()->get('error'),
+                'info' => $request->session()->get('info'),
+                'warning' => $request->session()->get('warning'),
+            ],
+            'onlineUsersCount' => $this->onlineUsersService->getOnlineCount(),
         ];
     }
 }
