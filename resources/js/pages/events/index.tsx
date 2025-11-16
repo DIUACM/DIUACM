@@ -1,31 +1,12 @@
-import { EventCard, EventListItem } from '@/components/events/event-card';
+import { EventCard } from '@/components/events/event-card';
 import { EventsFilters } from '@/components/events/events-filters';
 import { CustomPagination } from '@/components/ui/custom-pagination';
 import MainLayout from '@/layouts/main-layout';
+import type { Event, PaginatedData } from '@/types';
 import { Head } from '@inertiajs/react';
 
-type PaginatedEvents = {
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    from: number;
-    to: number;
-    data: EventListItem[];
-    first_page_url: string;
-    last_page_url: string;
-    next_page_url: string | null;
-    prev_page_url: string | null;
-    path: string;
-    links: Array<{
-        url: string | null;
-        label: string;
-        active: boolean;
-    }>;
-};
-
 type EventsPageProps = {
-    events: PaginatedEvents;
+    events: PaginatedData<Event>;
     filters: {
         search?: string;
         type?: string;

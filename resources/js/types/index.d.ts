@@ -47,3 +47,13 @@ export interface PaginatedData<T> {
     to: number;
     total: number;
 }
+
+export interface Event {
+    id: number;
+    title: string;
+    starting_at: string;
+    ending_at: string;
+    participation_scope: string;
+    type: string;
+    attendees_count: number;
+}
