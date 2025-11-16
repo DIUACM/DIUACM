@@ -40,8 +40,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
             {children}
 
-    
-
             {/* <Footer /> */}
 
             <Toaster position="top-right" expand={true} richColors closeButton />
