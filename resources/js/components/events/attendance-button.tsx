@@ -4,14 +4,13 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { router, useForm } from '@inertiajs/react';
 import { formatDistanceToNow } from 'date-fns';
-import { AlertTriangle, Calendar, CheckCircle, Shield, Timer, Users } from 'lucide-react';
+import { AlertTriangle, Calendar, CheckCircle, Timer, Users } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
 interface AttendanceButtonProps {
     eventId: number;
     openForAttendance: boolean;
-    hasPassword?: boolean;
     userAlreadyAttended: boolean;
     attendanceWindowEnabled: boolean;
     attendanceWindowStart: string | null;
@@ -23,7 +22,6 @@ interface AttendanceButtonProps {
 export function AttendanceButton({
     eventId,
     openForAttendance,
-    hasPassword = false,
     userAlreadyAttended,
     attendanceWindowEnabled,
     attendanceWindowStart,
@@ -128,25 +126,6 @@ export function AttendanceButton({
 
     // RULE 5: During attendance window - check password and authentication
     if (state === 'during_window' || attendanceWindowEnabled) {
-        // RULE 5a: No password set - show error message
-        if (!hasPassword) {
-            return (
-                <div className="flex flex-col gap-2">
-                    <Button
-                        disabled
-                        variant="outline"
-                        className="border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-800/30 dark:bg-orange-900/20 dark:text-orange-400"
-                    >
-                        <Shield className="mr-2 h-4 w-4" />
-                        Password Not Set
-                    </Button>
-                    <p className="max-w-sm text-xs text-orange-600 dark:text-orange-400">
-                        The event organizer hasn't set the attendance password yet. Please check back later or contact the event manager.
-                    </p>
-                </div>
-            );
-        }
-
         // RULE 5b: Password set but user not logged in - show login prompt
         if (!isAuthenticated) {
             return (

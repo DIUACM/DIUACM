@@ -318,7 +318,6 @@ export default function EventDetailsPage({ event, auth }: Props) {
                             <AttendanceButton
                                 eventId={event.id}
                                 openForAttendance={event.open_for_attendance}
-                                hasPassword={event.has_attendance_password}
                                 userAlreadyAttended={userAlreadyAttended}
                                 attendanceWindowEnabled={attendanceWindowEnabled}
                                 attendanceWindowStart={attendanceWindowStartIso}
