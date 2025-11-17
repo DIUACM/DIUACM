@@ -23,12 +23,14 @@ class Gallery extends Model implements HasMedia
         'slug',
         'description',
         'status',
+        'show_in_homepage',
     ];
 
     protected function casts(): array
     {
         return [
             'status' => VisibilityStatus::class,
+            'show_in_homepage' => 'boolean',
         ];
     }
 

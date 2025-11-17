@@ -4,6 +4,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import MainLayout from '@/layouts/main-layout';
 import { about, contact } from '@/routes';
 import { Link } from '@inertiajs/react';
+import Autoplay from 'embla-carousel-autoplay';
 import {
     ArrowRight,
     Award,
@@ -21,6 +22,14 @@ import {
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+type PageProps = {
+    carouselSlides: Array<{
+        image: string;
+        caption: string;
+        alt: string;
+    }>;
+};
+
 // Simple local time badge component
 function LocalTime() {
     const [now, setNow] = useState<string>(new Date().toLocaleTimeString());
@@ -32,7 +41,13 @@ function LocalTime() {
 }
 
 // Image Carousel Component
-function ImageCarousel() {
+function ImageCarousel({ carouselSlides }: { carouselSlides: PageProps['carouselSlides'] }) {
+    const plugin = useRef(Autoplay({ delay: 4000, stopOnInteraction: true }));
+
+    if (!carouselSlides || carouselSlides.length === 0) {
+        return null;
+    }
+
     return (
         <section className="py-12 md:py-20">
             <div className="container mx-auto px-4">
@@ -46,6 +61,9 @@ function ImageCarousel() {
                 </div>
 
                 <Carousel
+                    plugins={[plugin.current]}
+                    onMouseEnter={plugin.current.stop}
+                    onMouseLeave={plugin.current.reset}
                     opts={{
                         align: 'start',
                         loop: true,
@@ -216,29 +234,6 @@ const stats = [
     },
 ] as const;
 
-const carouselSlides = [
-    {
-        image: '/images/homepage-images/20251111_094508-min.jpg',
-        caption: 'DIU ACM Community - Building Future Problem Solvers',
-        alt: 'DIU ACM team members participating in programming activities',
-    },
-    {
-        image: '/images/homepage-images/20251111_094545-min.jpg',
-        caption: 'Regular Contest Sessions - Sharpening Skills Together',
-        alt: 'Students engaged in competitive programming contest',
-    },
-    {
-        image: '/images/homepage-images/20251111_174737-min.jpg',
-        caption: 'Collaborative Learning - Mentorship and Growth',
-        alt: 'ACM members collaborating and learning together',
-    },
-    {
-        image: '/images/homepage-images/20251111_175701-min.jpg',
-        caption: 'ICPC Journey - Training Champions',
-        alt: 'DIU ACM preparing for ICPC competitions',
-    },
-] as const;
-
 function HeroSection() {
     const currentUser = 'diuacm';
     return (
@@ -398,14 +393,14 @@ function HeroSection() {
     );
 }
 
-export default function Welcome() {
+export default function Welcome({ carouselSlides }: PageProps) {
     return (
         <MainLayout>
             {/* Hero */}
             <HeroSection />
 
             {/* Image Carousel */}
-            <ImageCarousel />
+            <ImageCarousel carouselSlides={carouselSlides} />
 
             {/* How It Works */}
             <section className="bg-gradient-to-b from-white to-slate-50 py-16 dark:from-slate-900 dark:to-slate-950">

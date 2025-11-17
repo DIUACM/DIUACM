@@ -6,6 +6,7 @@ use App\Enums\VisibilityStatus;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
@@ -50,6 +51,10 @@ class GalleryForm
                                     ->inline()
                                     ->required()
                                     ->helperText('Set to Draft while preparing; Published makes it visible.'),
+                                Toggle::make('show_in_homepage')
+                                    ->label('Show in Homepage')
+                                    ->default(false)
+                                    ->helperText('Display this gallery in the homepage carousel when published.'),
                             ]),
                         Grid::make()
                             ->schema([
