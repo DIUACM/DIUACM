@@ -198,7 +198,6 @@ export interface Gallery {
     title: string;
     slug: string;
     description: string | null;
-    created_at: string;
     thumbnail: string | null;
     images_count: number;
 }
@@ -207,6 +206,5 @@ export interface GalleryDetails {
     title: string;
     slug: string;
     description: string | null;
-    created_at: string;
     images: GalleryImage[];
 }

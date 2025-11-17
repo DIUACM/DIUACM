@@ -1,8 +1,7 @@
-import { Separator } from '@/components/ui/separator';
 import MainLayout from '@/layouts/main-layout';
 import type { GalleryDetails } from '@/types';
 import { Head } from '@inertiajs/react';
-import { Calendar, Images } from 'lucide-react';
+import { Images } from 'lucide-react';
 import { useState } from 'react';
 import Lightbox from 'yet-another-react-lightbox';
 import 'yet-another-react-lightbox/styles.css';
@@ -27,30 +26,17 @@ export default function GalleryShowPage({ gallery }: GalleryShowPageProps) {
             <div className="container mx-auto px-4 py-8">
                 <div>
                     {/* Gallery header */}
-                    <div className="mb-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">
-                        <div className="p-6 md:p-8">
-                            {/* Gallery title */}
-                            <h1 className="mb-6 text-3xl font-bold text-slate-900 md:text-4xl dark:text-white">{gallery.title}</h1>
+                    <div className="mb-8">
+                        <h1 className="mb-4 text-4xl font-bold tracking-tight text-slate-900 md:text-5xl dark:text-white">{gallery.title}</h1>
 
-                            {/* Gallery meta info */}
-                            <div className="mb-6 flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
-                                <div className="flex items-center">
-                                    <Calendar className="mr-2 h-4 w-4" />
-                                    {gallery.created_at}
-                                </div>
-                                <div className="flex items-center">
-                                    <Images className="mr-2 h-4 w-4" />
-                                    {gallery.images.length} {gallery.images.length === 1 ? 'image' : 'images'}
-                                </div>
-                            </div>
-
-                            {gallery.description && (
-                                <>
-                                    <Separator className="my-6" />
-                                    <p className="text-slate-600 dark:text-slate-300">{gallery.description}</p>
-                                </>
-                            )}
+                        <div className="mb-6 flex items-center text-sm text-slate-500 dark:text-slate-400">
+                            <Images className="mr-2 h-4 w-4" />
+                            {gallery.images.length} {gallery.images.length === 1 ? 'image' : 'images'}
                         </div>
+
+                        {gallery.description && (
+                            <p className="text-lg text-slate-600 dark:text-slate-300">{gallery.description}</p>
+                        )}
                     </div>
 
                     {/* Gallery images grid */}

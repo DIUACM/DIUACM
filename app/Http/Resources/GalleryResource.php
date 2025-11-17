@@ -18,7 +18,6 @@ class GalleryResource extends JsonResource
             'title' => $this->title,
             'slug' => $this->slug,
             'description' => $this->description,
-            'created_at' => $this->created_at?->format('M d, Y'),
             'thumbnail' => $this->getFirstMediaUrl('gallery_images', 'thumb'),
             'images_count' => $this->getMedia('gallery_images')->count(),
         ];

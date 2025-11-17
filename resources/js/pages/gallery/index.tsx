@@ -69,11 +69,10 @@ export default function GalleryPage({ galleries, filters }: GalleryPageProps) {
                                         {gallery.title}
                                     </h3>
                                     {gallery.description && (
-                                        <p className="mb-3 line-clamp-2 text-sm text-slate-600 dark:text-slate-300">
+                                        <p className="line-clamp-2 text-sm text-slate-600 dark:text-slate-300">
                                             {gallery.description}
                                         </p>
                                     )}
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">{gallery.created_at}</p>
                                 </div>
                             </Link>
                         ))}
