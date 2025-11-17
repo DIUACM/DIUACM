@@ -12,11 +12,7 @@ export default function TermsAndConditionsPage() {
 
             <div className="container mx-auto px-4 py-16">
                 {/* Header section */}
-                <PageHeader
-                    title="Terms"
-                    gradientText="& Conditions"
-                    description="Terms and conditions for using DIU ACM website and services"
-                />
+                <PageHeader title="Terms" gradientText="& Conditions" description="Terms and conditions for using DIU ACM website and services" />
                 <p className="mb-12 text-center text-sm text-slate-500 dark:text-slate-400">
                     Last updated:{' '}
                     {new Date().toLocaleDateString('en-US', {

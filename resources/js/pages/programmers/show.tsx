@@ -29,11 +29,7 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                         {/* Profile Picture */}
                         <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full bg-slate-100 ring-2 ring-slate-200 sm:h-32 sm:w-32 dark:bg-slate-800 dark:ring-slate-700">
                             {programmer.avatar ? (
-                                <img
-                                    src={programmer.avatar}
-                                    alt={`${programmer.name}'s profile`}
-                                    className="h-full w-full object-cover"
-                                />
+                                <img src={programmer.avatar} alt={`${programmer.name}'s profile`} className="h-full w-full object-cover" />
                             ) : (
                                 <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-cyan-500 text-xl font-semibold text-white sm:text-2xl">
                                     {initials}
@@ -42,9 +38,7 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                         </div>
 
                         <div className="flex-1 text-center sm:text-left">
-                            <h1 className="mb-1 text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">
-                                {programmer.name}
-                            </h1>
+                            <h1 className="mb-1 text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">{programmer.name}</h1>
                             <p className="mb-3 text-lg text-slate-600 dark:text-slate-300">@{programmer.username}</p>
 
                             {typeof programmer.max_cf_rating === 'number' && programmer.max_cf_rating > 0 && (
@@ -222,17 +216,12 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                             <div>
                                                 <h3 className="text-lg font-medium">{contest.name}</h3>
                                                 {contest.date && (
-                                                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                                                        {formatContestDate(contest.date)}
-                                                    </p>
+                                                    <p className="text-sm text-slate-600 dark:text-slate-400">{formatContestDate(contest.date)}</p>
                                                 )}
                                             </div>
 
                                             <div className="flex items-center gap-2">
-                                                <Badge
-                                                    variant="outline"
-                                                    className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300"
-                                                >
+                                                <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
                                                     {contest.team_name}
                                                 </Badge>
                                                 {contest.rank && (
@@ -259,11 +248,7 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                                     >
                                                         <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
                                                             {member.avatar ? (
-                                                                <img
-                                                                    src={member.avatar}
-                                                                    alt={member.name}
-                                                                    className="h-full w-full object-cover"
-                                                                />
+                                                                <img src={member.avatar} alt={member.name} className="h-full w-full object-cover" />
                                                             ) : (
                                                                 <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-cyan-500 text-xs text-white">
                                                                     {member.name?.charAt(0) || '?'}
@@ -275,9 +260,7 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                                                 {member.name}
                                                             </p>
                                                             {member.student_id && (
-                                                                <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                                    {member.student_id}
-                                                                </p>
+                                                                <p className="text-xs text-slate-500 dark:text-slate-400">{member.student_id}</p>
                                                             )}
                                                         </div>
                                                     </Link>

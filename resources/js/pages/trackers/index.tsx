@@ -25,9 +25,7 @@ export default function TrackersPage({ trackers }: TrackersPageProps) {
                     <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-50 py-16 dark:border-slate-700 dark:bg-slate-800/50">
                         <div className="mb-4 text-6xl">📊</div>
                         <p className="mb-2 text-lg text-slate-500 dark:text-slate-400">No trackers available</p>
-                        <p className="text-sm text-slate-400 dark:text-slate-500">
-                            There are no performance trackers available at the moment.
-                        </p>
+                        <p className="text-sm text-slate-400 dark:text-slate-500">There are no performance trackers available at the moment.</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -40,14 +38,8 @@ export default function TrackersPage({ trackers }: TrackersPageProps) {
                                                 <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                                             </div>
                                         </div>
-                                        <CardTitle className="line-clamp-2 text-xl">
-                                            {tracker.title}
-                                        </CardTitle>
-                                        {tracker.description && (
-                                            <CardDescription className="line-clamp-3">
-                                                {tracker.description}
-                                            </CardDescription>
-                                        )}
+                                        <CardTitle className="line-clamp-2 text-xl">{tracker.title}</CardTitle>
+                                        {tracker.description && <CardDescription className="line-clamp-3">{tracker.description}</CardDescription>}
                                     </CardHeader>
                                 </Card>
                             </Link>

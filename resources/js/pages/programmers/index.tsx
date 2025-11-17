@@ -88,11 +88,7 @@ function ProgrammerCard({ programmer }: ProgrammerCardProps) {
                         <div className="relative flex-shrink-0">
                             <div className="h-12 w-12 overflow-hidden rounded-full bg-slate-100 ring-2 ring-slate-200 transition-all group-hover:ring-blue-300 dark:bg-slate-800 dark:ring-slate-700 dark:group-hover:ring-blue-600">
                                 {programmer.avatar ? (
-                                    <img
-                                        src={programmer.avatar}
-                                        alt={`${programmer.name}'s profile`}
-                                        className="h-full w-full object-cover"
-                                    />
+                                    <img src={programmer.avatar} alt={`${programmer.name}'s profile`} className="h-full w-full object-cover" />
                                 ) : (
                                     <div className="flex h-full w-full items-center justify-center text-slate-400 dark:text-slate-500">
                                         <UserIcon className="h-6 w-6" />
@@ -205,7 +201,7 @@ function ProgrammersFilters({ filters }: ProgrammersFiltersProps) {
                                     />
                                     <button
                                         type="submit"
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                                        className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                                     >
                                         <SearchIcon className="h-4 w-4" />
                                     </button>

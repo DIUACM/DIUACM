@@ -12,11 +12,7 @@ export default function PrivacyPolicyPage() {
 
             <div className="container mx-auto px-4 py-16">
                 {/* Header section */}
-                <PageHeader
-                    title="Privacy"
-                    gradientText="Policy"
-                    description="How we collect, use, and protect your personal information"
-                />
+                <PageHeader title="Privacy" gradientText="Policy" description="How we collect, use, and protect your personal information" />
                 <p className="mb-12 text-center text-sm text-slate-500 dark:text-slate-400">
                     Last updated:{' '}
                     {new Date().toLocaleDateString('en-US', {

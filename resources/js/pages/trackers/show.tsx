@@ -73,10 +73,7 @@ export default function TrackersShowPage({ tracker, selectedRankList, availableR
                     <div className="text-center">
                         <h1 className="mb-4 text-4xl font-bold text-slate-900 dark:text-white">{tracker.title}</h1>
                         <p className="text-slate-600 dark:text-slate-300">No rank list available</p>
-                        <Link
-                            href="/trackers"
-                            className="mt-4 inline-flex items-center gap-2 text-blue-600 hover:underline dark:text-blue-400"
-                        >
+                        <Link href="/trackers" className="mt-4 inline-flex items-center gap-2 text-blue-600 hover:underline dark:text-blue-400">
                             <ArrowLeft className="h-4 w-4" />
                             Back to Trackers
                         </Link>
@@ -224,19 +221,19 @@ export default function TrackersShowPage({ tracker, selectedRankList, availableR
                                                 {/* Table Header */}
                                                 <thead className="bg-slate-50 dark:bg-slate-800">
                                                     <tr>
-                                                        <th className="sticky left-0 z-10 bg-slate-50 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                                        <th className="sticky left-0 z-10 bg-slate-50 px-4 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase dark:bg-slate-800 dark:text-slate-400">
                                                             Rank
                                                         </th>
-                                                        <th className="sticky left-16 z-10 bg-slate-50 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                                        <th className="sticky left-16 z-10 bg-slate-50 px-4 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase dark:bg-slate-800 dark:text-slate-400">
                                                             User
                                                         </th>
-                                                        <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                                        <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase dark:text-slate-400">
                                                             Score
                                                         </th>
                                                         {events.map((event) => (
                                                             <th
                                                                 key={event.id}
-                                                                className="min-w-48 px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                                                                className="min-w-48 px-4 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase dark:text-slate-400"
                                                             >
                                                                 <div className="space-y-1">
                                                                     <Link
@@ -282,7 +279,10 @@ export default function TrackersShowPage({ tracker, selectedRankList, availableR
 
                                                             {/* User */}
                                                             <td className="sticky left-16 z-10 bg-white px-4 py-3 hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700/50">
-                                                                <Link href={`/programmers/${user.username}`} className="group flex items-center gap-3">
+                                                                <Link
+                                                                    href={`/programmers/${user.username}`}
+                                                                    className="group flex items-center gap-3"
+                                                                >
                                                                     <Avatar className="h-8 w-8">
                                                                         <AvatarImage src={user.avatar || ''} alt={user.name} />
                                                                         <AvatarFallback className="bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300">

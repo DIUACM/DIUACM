@@ -186,4 +186,3 @@ export interface TrackerRankListDetails {
 export interface TrackerAvailableRankList {
     keyword: string;
 }
-
