@@ -25,7 +25,6 @@ import { useEffect, useRef, useState } from 'react';
 type PageProps = {
     carouselSlides: Array<{
         image: string;
-        caption: string;
         alt: string;
     }>;
 };
@@ -81,12 +80,6 @@ function ImageCarousel({ carouselSlides }: { carouselSlides: PageProps['carousel
                                             className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
                                             loading="lazy"
                                         />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                                        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
-                                            <p className="text-xl font-semibold text-white drop-shadow-lg md:text-2xl">
-                                                {slide.caption}
-                                            </p>
-                                        </div>
                                     </div>
                                 </div>
                             </CarouselItem>

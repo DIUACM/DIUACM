@@ -25,7 +25,6 @@ class PagesController extends Controller
             foreach ($images as $image) {
                 $carouselSlides[] = [
                     'image' => $image->getUrl(),
-                    'caption' => $gallery->title,
                     'alt' => $gallery->description ?? $gallery->title,
                 ];
             }
