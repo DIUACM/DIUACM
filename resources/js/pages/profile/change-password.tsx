@@ -1,3 +1,4 @@
+import PageHeader from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -55,13 +56,7 @@ export default function ChangePassword() {
             <Head title="Change Password" />
 
             <div className="container mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-                {/* Page Header */}
-                <div className="mb-8 text-center">
-                    <h1 className="mb-2 text-4xl font-bold text-slate-900 dark:text-white">
-                        Change <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Password</span>
-                    </h1>
-                    <p className="text-slate-600 dark:text-slate-400">Update your password to keep your account secure</p>
-                </div>
+                <PageHeader title="Change" gradientText="Password" description="Update your password to keep your account secure" />
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
                     {/* Navigation Sidebar */}

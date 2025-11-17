@@ -1,4 +1,5 @@
 import { ImageCropper } from '@/components/image-cropper';
+import PageHeader from '@/components/page-header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -120,13 +121,7 @@ export default function EditProfile({ user }: Props) {
             <Head title="Edit Profile" />
 
             <div className="container mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-                {/* Page Header */}
-                <div className="mb-8 text-center">
-                    <h1 className="mb-2 text-4xl font-bold text-slate-900 dark:text-white">
-                        Edit <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Profile</span>
-                    </h1>
-                    <p className="text-slate-600 dark:text-slate-400">Update your personal information and profile picture</p>
-                </div>
+                <PageHeader title="Edit" gradientText="Profile" description="Update your personal information and profile picture" />
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
                     {/* Navigation Sidebar */}
