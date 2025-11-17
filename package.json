@@ -83,6 +83,7 @@
         "typescript": "^5.7.2",
         "vaul": "^1.1.2",
         "vite": "^7.0.4",
+        "yet-another-react-lightbox": "^3.25.0",
         "zod": "^4.1.12"
     },
     "optionalDependencies": {

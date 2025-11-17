@@ -46,7 +46,7 @@ class Gallery extends Model implements HasMedia
             ->registerMediaConversions(function (?Media $media = null) {
                 $this
                     ->addMediaConversion('thumb')
-                    ->fit(Fit::Contain, 500, 300)
+                    ->fit(Fit::Contain, 1000, 600)
                     ->queued();
             });
     }

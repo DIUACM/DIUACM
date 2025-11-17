@@ -186,3 +186,27 @@ export interface TrackerRankListDetails {
 export interface TrackerAvailableRankList {
     keyword: string;
 }
+
+export interface GalleryImage {
+    url: string;
+    thumbnail: string;
+    name: string;
+    mime_type: string;
+}
+
+export interface Gallery {
+    title: string;
+    slug: string;
+    description: string | null;
+    created_at: string;
+    thumbnail: string | null;
+    images_count: number;
+}
+
+export interface GalleryDetails {
+    title: string;
+    slug: string;
+    description: string | null;
+    created_at: string;
+    images: GalleryImage[];
+}

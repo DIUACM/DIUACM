@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgrammerController;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,9 @@ Route::get('/programmers/{user:username}', [ProgrammerController::class, 'show']
 
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{blogPost:slug}', [BlogController::class, 'show'])->name('blog.show');
+
+Route::get('/galleries', [GalleryController::class, 'index'])->name('galleries.index');
+Route::get('/galleries/{gallery:slug}', [GalleryController::class, 'show'])->name('galleries.show');
 
 Route::get('/trackers', [\App\Http\Controllers\TrackerController::class, 'index'])->name('trackers.index');
 Route::get('/trackers/{slug}', [\App\Http\Controllers\TrackerController::class, 'show'])->name('trackers.show');

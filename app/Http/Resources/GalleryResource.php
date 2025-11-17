@@ -1,0 +1,26 @@
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class GalleryResource extends JsonResource
+{
+    /**
+     * Transform the resource into an array.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'title' => $this->title,
+            'slug' => $this->slug,
+            'description' => $this->description,
+            'created_at' => $this->created_at?->format('M d, Y'),
+            'thumbnail' => $this->getFirstMediaUrl('gallery_images', 'thumb'),
+            'images_count' => $this->getMedia('gallery_images')->count(),
+        ];
+    }
+}
