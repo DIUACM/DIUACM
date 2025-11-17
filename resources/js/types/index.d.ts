@@ -75,6 +75,7 @@ export interface EventImage {
 export interface EventDetails extends Event {
     description: string;
     event_link: string;
+    open_for_attendance: boolean;
     images: EventImage[];
     attendance?: Array<PublicUser & { attended_at: string }>;
     performance?: Array<PublicUser & { solve_count: number; upsolve_count: number }>;
