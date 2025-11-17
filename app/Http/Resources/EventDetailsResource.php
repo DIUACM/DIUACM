@@ -17,6 +17,15 @@ class EventDetailsResource extends EventResource
         return array_merge(parent::toArray($request), [
             'description' => $this->description,
             'event_link' => $this->event_link,
+            'images' => $this->when($this->relationLoaded('media'), function () {
+                return $this->getMedia('event_images')->map(function ($media) {
+                    return [
+                        'url' => $media->getUrl(),
+                        'preview_url' => $media->hasGeneratedConversion('medium') ? $media->getUrl('medium') : $media->getUrl(),
+                        'mime_type' => $media->mime_type,
+                    ];
+                });
+            }),
             'attendance' => $this->when($this->open_for_attendance && $this->relationLoaded('attendees'), function () {
                 return $this->attendees->map(function ($user) {
                     return array_merge(
