@@ -143,3 +143,47 @@ export interface BlogPostDetails extends BlogPost {
     content: string;
     featured_image_full: string | null;
 }
+
+export interface Tracker {
+    title: string;
+    slug: string;
+    description?: string;
+}
+
+export interface TrackerEvent {
+    id: number;
+    title: string;
+    starting_at: string;
+    strict_attendance?: boolean;
+}
+
+export interface EventStat {
+    event_id: number;
+    solve_count: number;
+    upsolve_count: number;
+    participation: boolean;
+}
+
+export interface TrackerUser {
+    id: number;
+    name: string;
+    username: string;
+    department: string | null;
+    student_id: string | null;
+    avatar: string | null;
+    score: number;
+    event_stats: Record<number, EventStat | null>;
+}
+
+export interface TrackerRankListDetails {
+    id: number;
+    keyword: string;
+    consider_strict_attendance: boolean;
+    events: TrackerEvent[];
+    users: TrackerUser[];
+}
+
+export interface TrackerAvailableRankList {
+    keyword: string;
+}
+

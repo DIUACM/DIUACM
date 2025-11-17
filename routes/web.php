@@ -35,3 +35,7 @@ Route::get('/programmers/{user:username}', [ProgrammerController::class, 'show']
 
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{blogPost:slug}', [BlogController::class, 'show'])->name('blog.show');
+
+Route::get('/trackers', [\App\Http\Controllers\TrackerController::class, 'index'])->name('trackers.index');
+Route::get('/trackers/{slug}', [\App\Http\Controllers\TrackerController::class, 'show'])->name('trackers.show');
+Route::get('/trackers/{slug}/export', [\App\Http\Controllers\TrackerController::class, 'export'])->name('trackers.export');
