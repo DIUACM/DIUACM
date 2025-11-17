@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MainLayout from '@/layouts/main-layout';
 import events from '@/routes/events';
-import type { AttendanceInfo, Auth, EventDetails } from '@/types';
+import type { Auth, EventDetails } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { isAfter, isWithinInterval } from 'date-fns';
 import {
@@ -21,16 +21,49 @@ import {
 
 type Props = {
     event: EventDetails;
-    attendance_info?: AttendanceInfo;
     auth?: Auth;
 };
 
-export default function EventDetailsPage({ event, attendance_info, auth }: Props) {
+export default function EventDetailsPage({ event, auth }: Props) {
     const now = new Date();
     const start = new Date(event.starting_at);
     const end = new Date(event.ending_at);
     const isUpcoming = isAfter(start, now);
     const isRunning = isWithinInterval(now, { start, end });
+
+    const attendanceWindowStart = Number.isNaN(start.getTime())
+        ? null
+        : new Date(start.getTime() - 15 * 60 * 1000);
+    const attendanceWindowEnd = Number.isNaN(end.getTime())
+        ? null
+        : new Date(end.getTime() + 20 * 60 * 1000);
+    const attendanceWindowEnabled = Boolean(
+        event.open_for_attendance &&
+            attendanceWindowStart &&
+            attendanceWindowEnd &&
+            isWithinInterval(now, {
+                start: attendanceWindowStart,
+                end: attendanceWindowEnd,
+            })
+    );
+    let attendanceState: 'before_window' | 'during_window' | 'after_window' | undefined;
+    if (attendanceWindowStart && attendanceWindowEnd) {
+        if (now < attendanceWindowStart) {
+            attendanceState = 'before_window';
+        } else if (now > attendanceWindowEnd) {
+            attendanceState = 'after_window';
+        } else {
+            attendanceState = 'during_window';
+        }
+    }
+    const userAlreadyAttended = Boolean(
+        auth?.user &&
+            event.attendance?.some(
+                (attendee) => attendee.username === auth.user.username
+            )
+    );
+    const attendanceWindowStartIso = attendanceWindowStart?.toISOString() ?? null;
+    const attendanceWindowEndIso = attendanceWindowEnd?.toISOString() ?? null;
 
     const durationInMinutes = Math.max(
         0,
@@ -281,17 +314,17 @@ export default function EventDetailsPage({ event, attendance_info, auth }: Props
                         )}
 
                         {/* Attendance Button */}
-                        {attendance_info && (
+                        {event.open_for_attendance && (
                             <AttendanceButton
                                 eventId={event.id}
                                 openForAttendance={event.open_for_attendance}
-                                hasPassword={attendance_info.has_password}
-                                userAlreadyAttended={attendance_info.user_already_attended}
-                                attendanceWindowEnabled={attendance_info.attendance_window_enabled}
-                                attendanceWindowStart={attendance_info.attendance_window_start}
-                                attendanceWindowEnd={attendance_info.attendance_window_end}
+                                hasPassword={event.has_attendance_password}
+                                userAlreadyAttended={userAlreadyAttended}
+                                attendanceWindowEnabled={attendanceWindowEnabled}
+                                attendanceWindowStart={attendanceWindowStartIso}
+                                attendanceWindowEnd={attendanceWindowEndIso}
                                 isAuthenticated={!!auth?.user}
-                                state={attendance_info.state}
+                                state={attendanceState}
                             />
                         )}
                     </div>

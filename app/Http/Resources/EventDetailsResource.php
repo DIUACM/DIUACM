@@ -18,6 +18,7 @@ class EventDetailsResource extends EventResource
             'description' => $this->description,
             'event_link' => $this->event_link,
             'open_for_attendance' => $this->open_for_attendance,
+            'has_attendance_password' => filled($this->event_password),
             'images' => $this->when($this->relationLoaded('media'), function () {
                 return $this->getMedia('event_images')->map(function ($media) {
                     return [

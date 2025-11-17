@@ -89,37 +89,8 @@ class EventController extends Controller
             ]);
         }
 
-        // Prepare attendance info for the button
-        $attendanceInfo = null;
-        if ($event->open_for_attendance) {
-            $windowStart = $event->starting_at?->copy()->subMinutes(15);
-            $windowEnd = $event->ending_at?->copy()->addMinutes(20);
-            $now = now();
-
-            $state = null;
-            if ($windowStart && $windowEnd) {
-                if ($now->lt($windowStart)) {
-                    $state = 'before_window';
-                } elseif ($now->between($windowStart, $windowEnd, true)) {
-                    $state = 'during_window';
-                } else {
-                    $state = 'after_window';
-                }
-            }
-
-            $attendanceInfo = [
-                'user_already_attended' => $request->user() ? $event->attendees()->where('users.id', $request->user()->id)->exists() : false,
-                'has_password' => ! empty($event->event_password),
-                'attendance_window_enabled' => $event->isAttendanceWindowEnabled(),
-                'attendance_window_start' => $windowStart?->toIso8601String(),
-                'attendance_window_end' => $windowEnd?->toIso8601String(),
-                'state' => $state,
-            ];
-        }
-
         return Inertia::render('events/show', [
             'event' => EventDetailsResource::make($event)->resolve(),
-            'attendance_info' => $attendanceInfo,
         ]);
     }
 
