@@ -24,3 +24,5 @@ Route::middleware('guest')->group(function () {
 
 Route::get('/events', [EventController::class, 'index'])->name('events.index');
 Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
+Route::post('/events/{event}/attendance', [EventController::class, 'storeAttendance'])->name('events.attendance.store');
+
