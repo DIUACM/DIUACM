@@ -12,6 +12,11 @@ class PagesController extends Controller
         return Inertia::render('home');
     }
 
+    public function about(): Response
+    {
+        return Inertia::render('about');
+    }
+
     public function privacy(): Response
     {
         return Inertia::render('privacy-policy');
