@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Enums\EventType;
 use App\Enums\VisibilityStatus;
+use App\Http\Requests\StoreEventAttendanceRequest;
 use App\Http\Resources\EventDetailsResource;
 use App\Http\Resources\EventResource;
 use App\Models\Event;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -89,54 +89,16 @@ class EventController extends Controller
         return new EventDetailsResource($event);
     }
 
-     /**
+    /**
      * Submit attendance for an event.
      */
-    public function storeAttendance(Request $request, Event $event)
+    public function storeAttendance(StoreEventAttendanceRequest $request, Event $event): \Illuminate\Http\RedirectResponse
     {
-        // Ensure user is authenticated
-        if (! Auth::check()) {
-            abort(401, 'You must be logged in to give attendance.');
-        }
-
-        // Validate that the event is published
-        if ($event->status !== VisibilityStatus::PUBLISHED) {
-            abort(404, 'Event not found.');
-        }
-
-        // Check if attendance is enabled for this event
-        if (! $event->open_for_attendance) {
-            return back()->withErrors(['attendance' => 'Attendance is not enabled for this event.']);
-        }
-
-        // Check if attendance window is enabled
-        if (! $event->isAttendanceWindowEnabled()) {
-            return back()->withErrors(['attendance' => 'Attendance window is not currently open.']);
-        }
-
-        // Check if user already gave attendance
-        $userId = Auth::id();
-        if ($event->attendees()->where('user_id', $userId)->exists()) {
-            return back()->withErrors(['attendance' => 'You have already given attendance for this event.']);
-        }
-
-        // Only check password during attendance window - validate password exists and matches
-        if (empty($event->event_password)) {
-            return back()->withErrors(['attendance' => 'Event password is not set. Please contact the event organizer.']);
-        }
-
-        // Validate the password input
-        $request->validate([
-            'password' => 'required|string',
-        ]);
-
-        if ($request->password !== $event->event_password) {
-            return back()->withErrors(['password' => 'Invalid event password.']);
-        }
-
         // Add the user to the attendance list
-        $event->attendees()->attach($userId);
+        $event->attendees()->attach($request->user()->id);
 
-        return back()->with('success', 'Attendance confirmed successfully!');
+        return redirect()
+            ->route('events.show', $event)
+            ->with('success', 'Attendance confirmed successfully!');
     }
 }
