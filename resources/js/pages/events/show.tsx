@@ -1,19 +1,20 @@
-
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MainLayout from '@/layouts/main-layout';
 import events from '@/routes/events';
 import type { EventDetails } from '@/types';
-import { Link } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { isAfter, isWithinInterval } from 'date-fns';
 import {
     ArrowLeft,
-    Calendar,
+    CalendarDays,
     Clock,
-    ExternalLink,
-    Trophy,
+    MapPin,
+    Medal,
+    TrendingUp,
     Users,
 } from 'lucide-react';
 
@@ -27,7 +28,6 @@ export default function EventDetailsPage({ event }: Props) {
     const end = new Date(event.ending_at);
     const isUpcoming = isAfter(start, now);
     const isRunning = isWithinInterval(now, { start, end });
-    const isEnded = isAfter(now, end);
 
     const durationInMinutes = Math.max(
         0,
@@ -37,6 +37,21 @@ export default function EventDetailsPage({ event }: Props) {
     const minutes = durationInMinutes % 60;
     const formatDuration = () =>
         `${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`;
+
+    const formatEventStatus = (futureDate: Date, reference: Date): string => {
+        const diffInMinutes = Math.floor(
+            (futureDate.getTime() - reference.getTime()) / (1000 * 60)
+        );
+        const diffInHours = Math.floor(diffInMinutes / 60);
+        const diffInDays = Math.floor(diffInHours / 24);
+        if (diffInDays > 0)
+            return `in ${diffInDays} day${diffInDays > 1 ? 's' : ''}`;
+        if (diffInHours > 0)
+            return `in ${diffInHours} hour${diffInHours > 1 ? 's' : ''}`;
+        if (diffInMinutes > 0)
+            return `in ${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''}`;
+        return 'Starting soon';
+    };
 
     const getEventTypeBadgeStyle = () => {
         switch (event.type) {
@@ -49,35 +64,32 @@ export default function EventDetailsPage({ event }: Props) {
         }
     };
 
-    const getScopeLabel = () => {
+    const scopeConfig = (() => {
         switch (event.participation_scope) {
             case 'open_for_all':
-                return 'Open for All';
+                return { icon: '👥', label: 'Open for All' } as const;
             case 'only_girls':
-                return 'Girls Only';
+                return { icon: '👩', label: 'Girls Only' } as const;
             case 'junior_programmers':
-                return 'Junior Programmers';
+                return { icon: '🌱', label: 'Junior Programmers' } as const;
             case 'selected_persons':
-                return 'Selected Persons';
+                return { icon: '✨', label: 'Selected Persons' } as const;
             default:
-                return event.participation_scope;
+                return {
+                    icon: '👥',
+                    label: event.participation_scope,
+                } as const;
         }
-    };
+    })();
 
-    const getScopeIcon = () => {
-        switch (event.participation_scope) {
-            case 'open_for_all':
-                return '👥';
-            case 'only_girls':
-                return '👩';
-            case 'junior_programmers':
-                return '🌱';
-            case 'selected_persons':
-                return '✨';
-            default:
-                return '👥';
-        }
-    };
+    const progress = isRunning
+        ? Math.min(
+              100,
+              ((now.getTime() - start.getTime()) /
+                  (end.getTime() - start.getTime())) *
+                  100
+          )
+        : 0;
 
     const StatusBadge = () => {
         if (isRunning)
@@ -98,7 +110,7 @@ export default function EventDetailsPage({ event }: Props) {
                     variant="outline"
                     className="border-green-200 bg-green-50 text-green-700 dark:border-green-800/30 dark:bg-green-900/20 dark:text-green-400"
                 >
-                    Upcoming
+                    {formatEventStatus(start, now)}
                 </Badge>
             );
         return (
@@ -111,8 +123,42 @@ export default function EventDetailsPage({ event }: Props) {
         );
     };
 
+    const getInitials = (name: string) => {
+        return name
+            .split(' ')
+            .map((n) => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+    };
+
+    const formatTimestamp = (timestamp: string) => {
+        return new Date(timestamp).toLocaleString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+        });
+    };
+
+    // Determine which tabs to show
+    const showAttendance =
+        event.open_for_attendance &&
+        event.attendance &&
+        event.attendance.length > 0;
+    const showPerformance =
+        event.type === 'contest' &&
+        event.performance &&
+        event.performance.length > 0;
+    const shouldShowTabs = showAttendance && showPerformance;
+
+    const defaultTab = showAttendance ? 'attendance' : 'performance';
+
     return (
         <MainLayout>
+            <Head title={event.title} />
+
             <section className="container mx-auto px-4 py-8">
                 {/* Back button */}
                 <div className="mb-6">
@@ -125,305 +171,633 @@ export default function EventDetailsPage({ event }: Props) {
                 </div>
 
                 {/* Event Header */}
-                <div className="mb-8">
-                    <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-                        <div className="flex-1">
-                            <h1 className="mb-3 text-3xl font-bold text-slate-900 md:text-4xl dark:text-white">
+                <div className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                    <div className="mb-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                        <div className="min-w-0 flex-1">
+                            <h1 className="mb-3 text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">
                                 {event.title}
                             </h1>
-                            <div className="flex flex-wrap gap-2">
-                                <StatusBadge />
-                                <Badge
-                                    variant="default"
-                                    className={`${getEventTypeBadgeStyle()} capitalize`}
-                                >
-                                    {event.type === 'class' && '📚 '}
-                                    {event.type === 'contest' && '🏆 '}
-                                    {event.type === 'other' && '📋 '}
-                                    {event.type}
-                                </Badge>
-                                <Badge
-                                    variant="outline"
-                                    className="border-slate-200 bg-white/30 dark:border-slate-700 dark:bg-slate-800/30"
-                                >
-                                    {getScopeIcon()} {getScopeLabel()}
-                                </Badge>
-                            </div>
-                        </div>
 
-                        {event.event_link && (
-                            <Link href={event.event_link} target="_blank">
-                                <Button className="gap-2">
-                                    <ExternalLink className="h-4 w-4" />
-                                    Join Event
-                                </Button>
-                            </Link>
-                        )}
-                    </div>
-
-                    {/* Event Info Cards */}
-                    <div className="grid gap-4 md:grid-cols-3">
-                        <Card>
-                            <CardContent className="flex items-center gap-3 p-4">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
-                                    <Calendar className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                                        Start Date
-                                    </p>
-                                    <p className="font-semibold text-slate-900 dark:text-white">
+                            <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
+                                <div className="flex items-center gap-2">
+                                    <CalendarDays className="h-4 w-4 text-blue-500" />
+                                    <span>
                                         {new Intl.DateTimeFormat('en-US', {
-                                            month: 'short',
-                                            day: 'numeric',
+                                            weekday: 'long',
                                             year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric',
                                         }).format(start)}
-                                    </p>
+                                    </span>
                                 </div>
-                            </CardContent>
-                        </Card>
 
-                        <Card>
-                            <CardContent className="flex items-center gap-3 p-4">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900/30">
-                                    <Clock className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                                        Time
-                                    </p>
-                                    <p className="font-semibold text-slate-900 dark:text-white">
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-blue-500" />
+                                    <span>
                                         {new Intl.DateTimeFormat('en-US', {
                                             hour: 'numeric',
                                             minute: '2-digit',
                                             hour12: true,
                                         }).format(start)}
-                                    </p>
+                                        {' - '}
+                                        {new Intl.DateTimeFormat('en-US', {
+                                            hour: 'numeric',
+                                            minute: '2-digit',
+                                            hour12: true,
+                                        }).format(end)}
+                                    </span>
                                 </div>
-                            </CardContent>
-                        </Card>
 
-                        <Card>
-                            <CardContent className="flex items-center gap-3 p-4">
-                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-                                    <Clock className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-blue-500" />
+                                    <span>{formatDuration()}</span>
                                 </div>
-                                <div>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                                        Duration
-                                    </p>
-                                    <p className="font-semibold text-slate-900 dark:text-white">
-                                        {formatDuration()}
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+
+                            {event.description && (
+                                <p className="mb-4 whitespace-pre-wrap text-slate-600 dark:text-slate-300">
+                                    {event.description}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="sm:self-start">
+                            <StatusBadge />
+                        </div>
                     </div>
+
+                    {/* Event Information - Badges */}
+                    <div className="mb-4 flex flex-wrap gap-3">
+                        <Badge
+                            variant="default"
+                            className={`${getEventTypeBadgeStyle()} capitalize`}
+                        >
+                            {event.type === 'class' && '📚 '}
+                            {event.type === 'contest' && '🏆 '}
+                            {event.type === 'other' && '📋 '}
+                            {event.type}
+                        </Badge>
+
+                        <Badge
+                            variant="outline"
+                            className="border-slate-200 bg-white/30 dark:border-slate-700 dark:bg-slate-800/30"
+                        >
+                            {scopeConfig.icon} {scopeConfig.label}
+                        </Badge>
+
+                        {showAttendance && event.attendance && (
+                            <Badge
+                                variant="outline"
+                                className="border-slate-200 bg-white/30 dark:border-slate-700 dark:bg-slate-800/30"
+                            >
+                                <Users className="mr-1 h-3 w-3" />
+                                {event.attendance.length}{' '}
+                                {event.attendance.length === 1
+                                    ? 'attendee'
+                                    : 'attendees'}
+                            </Badge>
+                        )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    {event.event_link && (
+                        <div className="flex flex-wrap gap-3">
+                            <a
+                                href={event.event_link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <Button
+                                    variant="outline"
+                                    className="border-blue-200 bg-blue-50 px-4 py-2 text-blue-700 hover:bg-blue-100 dark:border-blue-800/30 dark:bg-blue-900/20 dark:text-blue-400"
+                                >
+                                    <MapPin className="mr-2 h-4 w-4" />
+                                    Event Link
+                                </Button>
+                            </a>
+                        </div>
+                    )}
+
+                    {isRunning && (
+                        <div className="mt-6">
+                            <div className="mb-2 flex items-center justify-between text-sm text-slate-500">
+                                <span>{Math.round(progress)}% complete</span>
+                                <span>
+                                    Time remaining: {formatEventStatus(end, now)}
+                                </span>
+                            </div>
+                            <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                <div
+                                    className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 dark:from-blue-400 dark:to-cyan-400"
+                                    style={{ width: `${progress}%` }}
+                                ></div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                <div className="grid gap-8 lg:grid-cols-3">
-                    <div className="lg:col-span-2">
-                        {/* Description */}
-                        <Card className="mb-8">
-                            <CardHeader>
-                                <CardTitle>About This Event</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="prose prose-slate max-w-none dark:prose-invert">
-                                    <p className="whitespace-pre-wrap text-slate-700 dark:text-slate-300">
-                                        {event.description}
-                                    </p>
+                {/* Event Gallery */}
+                {event.images && event.images.length > 0 && (
+                    <div className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                        <h2 className="mb-4 text-xl font-semibold text-slate-900 dark:text-white">
+                            Event Gallery
+                        </h2>
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {event.images.map((image, index) => (
+                                <div
+                                    key={index}
+                                    className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700"
+                                >
+                                    <img
+                                        src={image.preview_url}
+                                        alt={`Event image ${index + 1}`}
+                                        className="h-64 w-full object-cover"
+                                    />
                                 </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Event Images */}
-                        {event.images && event.images.length > 0 && (
-                            <Card className="mb-8">
-                                <CardHeader>
-                                    <CardTitle>Event Gallery</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid gap-4 sm:grid-cols-2">
-                                        {event.images.map((image, index) => (
-                                            <div
-                                                key={index}
-                                                className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700"
-                                            >
-                                                <img
-                                                    src={image.preview_url}
-                                                    alt={`Event image ${index + 1}`}
-                                                    className="h-64 w-full object-cover"
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        )}
-
-                        {/* Performance Data for Contests */}
-                        {event.type === 'contest' &&
-                            event.performance &&
-                            event.performance.length > 0 && (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="flex items-center gap-2">
-                                            <Trophy className="h-5 w-5 text-yellow-500" />
-                                            Performance Leaderboard
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="overflow-x-auto">
-                                            <table className="w-full">
-                                                <thead>
-                                                    <tr className="border-b border-slate-200 dark:border-slate-700">
-                                                        <th className="pb-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                                            Rank
-                                                        </th>
-                                                        <th className="pb-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                                            Name
-                                                        </th>
-                                                        <th className="pb-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                                            Student ID
-                                                        </th>
-                                                        <th className="pb-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                                            Solves
-                                                        </th>
-                                                        <th className="pb-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-300">
-                                                            Upsolves
-                                                        </th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {event.performance.map(
-                                                        (user, index) => (
-                                                            <tr
-                                                                key={index}
-                                                                className="border-b border-slate-100 last:border-0 dark:border-slate-800"
-                                                            >
-                                                                <td className="py-3 text-slate-700 dark:text-slate-300">
-                                                                    <span
-                                                                        className={`font-semibold ${
-                                                                            index ===
-                                                                            0
-                                                                                ? 'text-yellow-600 dark:text-yellow-400'
-                                                                                : index ===
-                                                                                    1
-                                                                                  ? 'text-slate-400 dark:text-slate-500'
-                                                                                  : index ===
-                                                                                      2
-                                                                                    ? 'text-orange-600 dark:text-orange-400'
-                                                                                    : ''
-                                                                        }`}
-                                                                    >
-                                                                        #{index + 1}
-                                                                    </span>
-                                                                </td>
-                                                                <td className="py-3 text-slate-900 dark:text-white">
-                                                                    {
-                                                                        user.name
-                                                                    }
-                                                                </td>
-                                                                <td className="py-3 text-sm text-slate-600 dark:text-slate-400">
-                                                                    {
-                                                                        user.student_id
-                                                                    }
-                                                                </td>
-                                                                <td className="py-3 text-center">
-                                                                    <Badge
-                                                                        variant="outline"
-                                                                        className="bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400"
-                                                                    >
-                                                                        {
-                                                                            user.solve_count
-                                                                        }
-                                                                    </Badge>
-                                                                </td>
-                                                                <td className="py-3 text-center">
-                                                                    <Badge
-                                                                        variant="outline"
-                                                                        className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400"
-                                                                    >
-                                                                        {
-                                                                            user.upsolve_count
-                                                                        }
-                                                                    </Badge>
-                                                                </td>
-                                                            </tr>
-                                                        )
-                                                    )}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            )}
+                            ))}
+                        </div>
                     </div>
+                )}
 
-                    {/* Sidebar */}
-                    <div className="lg:col-span-1">
-                        {/* Attendance List */}
-                        {event.open_for_attendance &&
-                            event.attendance &&
-                            event.attendance.length > 0 && (
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="flex items-center gap-2">
-                                            <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                                            Attendees ({event.attendance.length}
-                                            )
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="space-y-3">
+                {/* Content - Tabs or individual sections */}
+                {shouldShowTabs ? (
+                    <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md transition-all hover:shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                        <div className="relative z-10 p-6">
+                            <Tabs defaultValue={defaultTab} className="w-full">
+                                <TabsList className="mb-6 w-full bg-slate-100 p-1 sm:w-fit dark:bg-slate-800">
+                                    {showAttendance && event.attendance && (
+                                        <TabsTrigger
+                                            value="attendance"
+                                            className="flex items-center gap-2 rounded-lg"
+                                        >
+                                            <Users className="h-4 w-4" />
+                                            <span>
+                                                Attendees (
+                                                {event.attendance.length})
+                                            </span>
+                                        </TabsTrigger>
+                                    )}
+                                    {showPerformance && event.performance && (
+                                        <TabsTrigger
+                                            value="performance"
+                                            className="flex items-center gap-2 rounded-lg"
+                                        >
+                                            <TrendingUp className="h-4 w-4" />
+                                            <span>
+                                                Performance (
+                                                {event.performance.length})
+                                            </span>
+                                        </TabsTrigger>
+                                    )}
+                                </TabsList>
+
+                                {showAttendance && event.attendance && (
+                                    <TabsContent
+                                        value="attendance"
+                                        className="mt-4 p-0"
+                                    >
+                                        <div className="space-y-4">
+                                            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow className="bg-slate-50 dark:bg-slate-900/50">
+                                                            <TableHead className="font-medium text-slate-700 dark:text-slate-300">
+                                                                Name
+                                                            </TableHead>
+                                                            <TableHead className="font-medium text-slate-700 dark:text-slate-300">
+                                                                Student ID
+                                                            </TableHead>
+                                                            <TableHead className="font-medium text-slate-700 dark:text-slate-300">
+                                                                Department
+                                                            </TableHead>
+                                                            <TableHead className="text-right font-medium text-slate-700 dark:text-slate-300">
+                                                                Timestamp
+                                                            </TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {event.attendance.map(
+                                                            (
+                                                                attendee,
+                                                                index
+                                                            ) => (
+                                                                <TableRow
+                                                                    key={index}
+                                                                >
+                                                                    <TableCell>
+                                                                        <div className="flex items-center gap-3">
+                                                                            <Avatar className="h-8 w-8 border border-slate-200 dark:border-slate-700">
+                                                                                <AvatarImage
+                                                                                    src={
+                                                                                        attendee.avatar
+                                                                                    }
+                                                                                    alt={
+                                                                                        attendee.name
+                                                                                    }
+                                                                                />
+                                                                                <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                                                                                    {getInitials(
+                                                                                        attendee.name
+                                                                                    )}
+                                                                                </AvatarFallback>
+                                                                            </Avatar>
+                                                                            <div>
+                                                                                <div className="font-medium text-slate-900 dark:text-white">
+                                                                                    {
+                                                                                        attendee.name
+                                                                                    }
+                                                                                </div>
+                                                                                <div className="text-sm text-slate-500 dark:text-slate-400">
+                                                                                    @
+                                                                                    {
+                                                                                        attendee.username
+                                                                                    }
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </TableCell>
+                                                                    <TableCell className="text-slate-700 dark:text-slate-300">
+                                                                        {attendee.student_id ||
+                                                                            '—'}
+                                                                    </TableCell>
+                                                                    <TableCell className="text-slate-700 dark:text-slate-300">
+                                                                        {attendee.department ||
+                                                                            '—'}
+                                                                    </TableCell>
+                                                                    <TableCell className="text-right text-slate-500 dark:text-slate-400">
+                                                                        {formatTimestamp(
+                                                                            attendee.attended_at
+                                                                        )}
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            )
+                                                        )}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        </div>
+                                    </TabsContent>
+                                )}
+
+                                {showPerformance && event.performance && (
+                                    <TabsContent
+                                        value="performance"
+                                        className="mt-4 p-0"
+                                    >
+                                        <div className="space-y-4">
+                                            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                                                <Table>
+                                                    <TableHeader>
+                                                        <TableRow className="bg-slate-50 dark:bg-slate-900/50">
+                                                            <TableHead className="font-medium text-slate-700 dark:text-slate-300">
+                                                                Rank
+                                                            </TableHead>
+                                                            <TableHead className="font-medium text-slate-700 dark:text-slate-300">
+                                                                Participant
+                                                            </TableHead>
+                                                            <TableHead className="text-center font-medium text-slate-700 dark:text-slate-300">
+                                                                Solves
+                                                            </TableHead>
+                                                            <TableHead className="text-center font-medium text-slate-700 dark:text-slate-300">
+                                                                Upsolves
+                                                            </TableHead>
+                                                            <TableHead className="text-center font-medium text-slate-700 dark:text-slate-300">
+                                                                Total
+                                                            </TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {event.performance.map(
+                                                            (user, index) => (
+                                                                <TableRow
+                                                                    key={index}
+                                                                    className={
+                                                                        index <
+                                                                        3
+                                                                            ? 'bg-slate-50/50 dark:bg-slate-900/20'
+                                                                            : ''
+                                                                    }
+                                                                >
+                                                                    <TableCell className="font-medium">
+                                                                        <div className="flex items-center gap-2">
+                                                                            {index ===
+                                                                                0 && (
+                                                                                <Medal className="h-5 w-5 text-yellow-500" />
+                                                                            )}
+                                                                            {index ===
+                                                                                1 && (
+                                                                                <Medal className="h-5 w-5 text-slate-400" />
+                                                                            )}
+                                                                            {index ===
+                                                                                2 && (
+                                                                                <Medal className="h-5 w-5 text-amber-600" />
+                                                                            )}
+                                                                            {index >
+                                                                                2 && (
+                                                                                <span className="pl-1">
+                                                                                    #
+                                                                                    {index +
+                                                                                        1}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </TableCell>
+                                                                    <TableCell>
+                                                                        <div className="flex items-center gap-3">
+                                                                            <Avatar className="h-8 w-8 border border-slate-200 dark:border-slate-700">
+                                                                                <AvatarImage
+                                                                                    src={
+                                                                                        user.avatar
+                                                                                    }
+                                                                                    alt={
+                                                                                        user.name
+                                                                                    }
+                                                                                />
+                                                                                <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                                                                                    {getInitials(
+                                                                                        user.name
+                                                                                    )}
+                                                                                </AvatarFallback>
+                                                                            </Avatar>
+                                                                            <div>
+                                                                                <div className="font-medium text-slate-900 dark:text-white">
+                                                                                    {
+                                                                                        user.name
+                                                                                    }
+                                                                                </div>
+                                                                                <div className="text-sm text-slate-500 dark:text-slate-400">
+                                                                                    @
+                                                                                    {
+                                                                                        user.username
+                                                                                    }
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </TableCell>
+                                                                    <TableCell className="text-center">
+                                                                        <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/30">
+                                                                            {
+                                                                                user.solve_count
+                                                                            }
+                                                                        </Badge>
+                                                                    </TableCell>
+                                                                    <TableCell className="text-center">
+                                                                        <Badge
+                                                                            variant="outline"
+                                                                            className="border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-400"
+                                                                        >
+                                                                            {
+                                                                                user.upsolve_count
+                                                                            }
+                                                                        </Badge>
+                                                                    </TableCell>
+                                                                    <TableCell className="text-center font-medium text-slate-900 dark:text-white">
+                                                                        {user.solve_count +
+                                                                            user.upsolve_count}
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            )
+                                                        )}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        </div>
+                                    </TabsContent>
+                                )}
+                            </Tabs>
+                        </div>
+                    </div>
+                ) : showAttendance && event.attendance ? (
+                    <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md transition-all hover:shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                        <div className="relative z-10 p-6">
+                            <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900 dark:text-white">
+                                <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                Attendees ({event.attendance.length})
+                            </h2>
+                            <div className="space-y-4">
+                                <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="bg-slate-50 dark:bg-slate-900/50">
+                                                <TableHead className="font-medium text-slate-700 dark:text-slate-300">
+                                                    Name
+                                                </TableHead>
+                                                <TableHead className="font-medium text-slate-700 dark:text-slate-300">
+                                                    Student ID
+                                                </TableHead>
+                                                <TableHead className="font-medium text-slate-700 dark:text-slate-300">
+                                                    Department
+                                                </TableHead>
+                                                <TableHead className="text-right font-medium text-slate-700 dark:text-slate-300">
+                                                    Timestamp
+                                                </TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
                                             {event.attendance.map(
                                                 (attendee, index) => (
-                                                    <div key={index}>
-                                                        <div className="flex items-start justify-between">
-                                                            <div className="min-w-0 flex-1">
-                                                                <p className="truncate font-medium text-slate-900 dark:text-white">
-                                                                    {
-                                                                        attendee.name
-                                                                    }
-                                                                </p>
-                                                                <p className="text-sm text-slate-500 dark:text-slate-400">
-                                                                    {
-                                                                        attendee.student_id
-                                                                    }
-                                                                </p>
+                                                    <TableRow key={index}>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-3">
+                                                                <Avatar className="h-8 w-8 border border-slate-200 dark:border-slate-700">
+                                                                    <AvatarImage
+                                                                        src={
+                                                                            attendee.avatar
+                                                                        }
+                                                                        alt={
+                                                                            attendee.name
+                                                                        }
+                                                                    />
+                                                                    <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                                                                        {getInitials(
+                                                                            attendee.name
+                                                                        )}
+                                                                    </AvatarFallback>
+                                                                </Avatar>
+                                                                <div>
+                                                                    <div className="font-medium text-slate-900 dark:text-white">
+                                                                        {
+                                                                            attendee.name
+                                                                        }
+                                                                    </div>
+                                                                    <div className="text-sm text-slate-500 dark:text-slate-400">
+                                                                        @
+                                                                        {
+                                                                            attendee.username
+                                                                        }
+                                                                    </div>
+                                                                </div>
                                                             </div>
-                                                            <p className="text-xs text-slate-400 dark:text-slate-500">
-                                                                {new Intl.DateTimeFormat(
-                                                                    'en-US',
-                                                                    {
-                                                                        month: 'short',
-                                                                        day: 'numeric',
-                                                                        hour: 'numeric',
-                                                                        minute: '2-digit',
-                                                                    }
-                                                                ).format(
-                                                                    new Date(
-                                                                        attendee.attended_at
-                                                                    )
-                                                                )}
-                                                            </p>
-                                                        </div>
-                                                        {index <
-                                                            (event.attendance
-                                                                ?.length ?? 0) -
-                                                                1 && (
-                                                            <Separator className="mt-3" />
-                                                        )}
-                                                    </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-slate-700 dark:text-slate-300">
+                                                            {attendee.student_id ||
+                                                                '—'}
+                                                        </TableCell>
+                                                        <TableCell className="text-slate-700 dark:text-slate-300">
+                                                            {attendee.department ||
+                                                                '—'}
+                                                        </TableCell>
+                                                        <TableCell className="text-right text-slate-500 dark:text-slate-400">
+                                                            {formatTimestamp(
+                                                                attendee.attended_at
+                                                            )}
+                                                        </TableCell>
+                                                    </TableRow>
                                                 )
                                             )}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                ) : showPerformance && event.performance ? (
+                    <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-md transition-all hover:shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                        <div className="relative z-10 p-6">
+                            <h2 className="mb-6 flex items-center gap-2 text-xl font-semibold text-slate-900 dark:text-white">
+                                <TrendingUp className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                Performance ({event.performance.length})
+                            </h2>
+                            <div className="space-y-4">
+                                <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="bg-slate-50 dark:bg-slate-900/50">
+                                                <TableHead className="font-medium text-slate-700 dark:text-slate-300">
+                                                    Rank
+                                                </TableHead>
+                                                <TableHead className="font-medium text-slate-700 dark:text-slate-300">
+                                                    Participant
+                                                </TableHead>
+                                                <TableHead className="text-center font-medium text-slate-700 dark:text-slate-300">
+                                                    Solves
+                                                </TableHead>
+                                                <TableHead className="text-center font-medium text-slate-700 dark:text-slate-300">
+                                                    Upsolves
+                                                </TableHead>
+                                                <TableHead className="text-center font-medium text-slate-700 dark:text-slate-300">
+                                                    Total
+                                                </TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {event.performance.map(
+                                                (user, index) => (
+                                                    <TableRow
+                                                        key={index}
+                                                        className={
+                                                            index < 3
+                                                                ? 'bg-slate-50/50 dark:bg-slate-900/20'
+                                                                : ''
+                                                        }
+                                                    >
+                                                        <TableCell className="font-medium">
+                                                            <div className="flex items-center gap-2">
+                                                                {index === 0 && (
+                                                                    <Medal className="h-5 w-5 text-yellow-500" />
+                                                                )}
+                                                                {index === 1 && (
+                                                                    <Medal className="h-5 w-5 text-slate-400" />
+                                                                )}
+                                                                {index === 2 && (
+                                                                    <Medal className="h-5 w-5 text-amber-600" />
+                                                                )}
+                                                                {index > 2 && (
+                                                                    <span className="pl-1">
+                                                                        #
+                                                                        {index +
+                                                                            1}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-3">
+                                                                <Avatar className="h-8 w-8 border border-slate-200 dark:border-slate-700">
+                                                                    <AvatarImage
+                                                                        src={
+                                                                            user.avatar
+                                                                        }
+                                                                        alt={
+                                                                            user.name
+                                                                        }
+                                                                    />
+                                                                    <AvatarFallback className="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                                                                        {getInitials(
+                                                                            user.name
+                                                                        )}
+                                                                    </AvatarFallback>
+                                                                </Avatar>
+                                                                <div>
+                                                                    <div className="font-medium text-slate-900 dark:text-white">
+                                                                        {
+                                                                            user.name
+                                                                        }
+                                                                    </div>
+                                                                    <div className="text-sm text-slate-500 dark:text-slate-400">
+                                                                        @
+                                                                        {
+                                                                            user.username
+                                                                        }
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/30">
+                                                                {
+                                                                    user.solve_count
+                                                                }
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            <Badge
+                                                                variant="outline"
+                                                                className="border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-400"
+                                                            >
+                                                                {
+                                                                    user.upsolve_count
+                                                                }
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-center font-medium text-slate-900 dark:text-white">
+                                                            {user.solve_count +
+                                                                user.upsolve_count}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="rounded-xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                        <div className="mb-4 text-6xl">📊</div>
+                        <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
+                            No additional data available
+                        </h3>
+                        <p className="text-slate-600 dark:text-slate-400">
+                            {!event.open_for_attendance &&
+                                event.type !== 'contest' &&
+                                "This event doesn't have attendance tracking or performance data."}
+                            {!event.open_for_attendance &&
+                                event.type === 'contest' &&
+                                'Attendance tracking is not enabled for this contest.'}
+                            {event.open_for_attendance &&
+                                event.type !== 'contest' &&
+                                (!event.attendance ||
+                                    event.attendance.length === 0) &&
+                                'No one has attended this event yet.'}
+                            {event.type === 'contest' &&
+                                (!event.performance ||
+                                    event.performance.length === 0) &&
+                                'No performance data is available for this contest yet.'}
+                        </p>
+                    </div>
+                )}
             </section>
         </MainLayout>
     );
