@@ -1,3 +1,4 @@
+import { AttendanceButton } from '@/components/events/attendance-button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MainLayout from '@/layouts/main-layout';
 import events from '@/routes/events';
-import type { EventDetails } from '@/types';
+import type { AttendanceInfo, Auth, EventDetails } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { isAfter, isWithinInterval } from 'date-fns';
 import {
@@ -20,9 +21,11 @@ import {
 
 type Props = {
     event: EventDetails;
+    attendance_info?: AttendanceInfo;
+    auth?: Auth;
 };
 
-export default function EventDetailsPage({ event }: Props) {
+export default function EventDetailsPage({ event, attendance_info, auth }: Props) {
     const now = new Date();
     const start = new Date(event.starting_at);
     const end = new Date(event.ending_at);
@@ -260,8 +263,8 @@ export default function EventDetailsPage({ event }: Props) {
                     </div>
 
                     {/* Action Buttons */}
-                    {event.event_link && (
-                        <div className="flex flex-wrap gap-3">
+                    <div className="flex flex-wrap gap-3">
+                        {event.event_link && (
                             <a
                                 href={event.event_link}
                                 target="_blank"
@@ -275,8 +278,23 @@ export default function EventDetailsPage({ event }: Props) {
                                     Event Link
                                 </Button>
                             </a>
-                        </div>
-                    )}
+                        )}
+
+                        {/* Attendance Button */}
+                        {attendance_info && (
+                            <AttendanceButton
+                                eventId={event.id}
+                                openForAttendance={event.open_for_attendance}
+                                hasPassword={attendance_info.has_password}
+                                userAlreadyAttended={attendance_info.user_already_attended}
+                                attendanceWindowEnabled={attendance_info.attendance_window_enabled}
+                                attendanceWindowStart={attendance_info.attendance_window_start}
+                                attendanceWindowEnd={attendance_info.attendance_window_end}
+                                isAuthenticated={!!auth?.user}
+                                state={attendance_info.state}
+                            />
+                        )}
+                    </div>
 
                     {isRunning && (
                         <div className="mt-6">

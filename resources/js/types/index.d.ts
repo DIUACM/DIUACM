@@ -80,3 +80,13 @@ export interface EventDetails extends Event {
     attendance?: Array<PublicUser & { attended_at: string }>;
     performance?: Array<PublicUser & { solve_count: number; upsolve_count: number }>;
 }
+
+export interface AttendanceInfo {
+    user_already_attended: boolean;
+    has_password: boolean;
+    attendance_window_enabled: boolean;
+    attendance_window_start: string | null;
+    attendance_window_end: string | null;
+    state?: 'before_window' | 'during_window' | 'after_window';
+}
+
