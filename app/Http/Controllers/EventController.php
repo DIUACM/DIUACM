@@ -60,7 +60,7 @@ class EventController extends Controller
      * - Attendees and count if attendance is open
      * - Performance statistics for contest events
      */
-    public function show(Event $event): EventDetailsResource
+    public function show(Event $event): Response
     {
         abort_if($event->status !== VisibilityStatus::PUBLISHED, 404, 'Event not found.');
 
@@ -88,8 +88,10 @@ class EventController extends Controller
                     ->orderByDesc('event_user_stats.upsolve_count'),
             ]);
         }
-
-        return new EventDetailsResource($event);
+        
+        return Inertia::render('events/show', [
+            'event' => EventDetailsResource::make($event)->resolve(),
+        ]);
     }
 
     /**
