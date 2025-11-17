@@ -66,9 +66,16 @@ export interface Event {
     attendees_count?: number;
 }
 
+export interface EventImage {
+    url: string;
+    preview_url: string;
+    mime_type: string;
+}
+
 export interface EventDetails extends Event {
     description: string;
     event_link: string;
+    images: EventImage[];
     attendance?: Array<PublicUser & { attended_at: string }>;
     performance?: Array<PublicUser & { solve_count: number; upsolve_count: number }>;
 }
