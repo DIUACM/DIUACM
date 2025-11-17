@@ -119,7 +119,7 @@ export default function EditProfile({ user }: Props) {
         <MainLayout>
             <Head title="Edit Profile" />
 
-            <div className="container mx-auto px-4 py-16 sm:px-6 lg:px-8">
+            <div className="container mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
                 {/* Page Header */}
                 <div className="mb-8 text-center">
                     <h1 className="mb-2 text-4xl font-bold text-slate-900 dark:text-white">
@@ -128,9 +128,9 @@ export default function EditProfile({ user }: Props) {
                     <p className="text-slate-600 dark:text-slate-400">Update your personal information and profile picture</p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
                     {/* Navigation Sidebar */}
-                    <div className="space-y-6">
+                    <div className="space-y-6 lg:col-span-1">
                         <Card className="overflow-hidden border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">
                             <CardContent className="p-6">
                                 <div className="mb-4 flex items-center">
@@ -177,194 +177,241 @@ export default function EditProfile({ user }: Props) {
                         </Card>
                     </div>
 
-                    <Card className="overflow-hidden border border-slate-200 bg-white shadow-md lg:col-span-2 dark:border-slate-700 dark:bg-slate-800">
-                        <CardContent className="p-6 md:p-8">
-                            <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="space-y-6 lg:col-span-3">
+                        <Card className="overflow-hidden border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">
+                            <CardContent className="p-6 md:p-8">
+                                <form onSubmit={handleSubmit} className="space-y-8">
                                 {/* Profile Picture Section */}
-                                <div className="flex flex-col items-center space-y-4">
-                                    <div className="relative">
-                                        <Avatar className="h-24 w-24 border-4 border-slate-200 dark:border-slate-700">
-                                            <AvatarImage src={previewAvatar} alt={data.name} />
-                                            <AvatarFallback className="bg-gradient-to-r from-blue-600 to-cyan-500 text-2xl text-white">
-                                                {getInitials(data.name)}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="secondary"
-                                            className="absolute right-0 bottom-0 h-8 w-8 rounded-full p-0 shadow-lg"
-                                            onClick={() => setShowImageCropper(true)}
-                                            disabled={isUploadingImage}
-                                        >
-                                            {isUploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-                                        </Button>
+                                <div className="border-b border-slate-200 pb-8 dark:border-slate-700">
+                                    <h3 className="mb-6 text-lg font-semibold text-slate-900 dark:text-white">Profile Picture</h3>
+                                    <div className="flex flex-col items-center space-y-4 sm:flex-row sm:items-start sm:space-x-6 sm:space-y-0">
+                                        <div className="relative">
+                                            <Avatar className="h-32 w-32 border-4 border-slate-200 dark:border-slate-700">
+                                                <AvatarImage src={previewAvatar} alt={data.name} />
+                                                <AvatarFallback className="bg-gradient-to-r from-blue-600 to-cyan-500 text-3xl text-white">
+                                                    {getInitials(data.name)}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="secondary"
+                                                className="absolute right-0 bottom-0 h-10 w-10 rounded-full p-0 shadow-lg"
+                                                onClick={() => setShowImageCropper(true)}
+                                                disabled={isUploadingImage}
+                                            >
+                                                {isUploadingImage ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
+                                            </Button>
+                                        </div>
+                                        <div className="flex-1 text-center sm:text-left">
+                                            <p className="mb-2 font-medium text-slate-900 dark:text-white">Profile Photo</p>
+                                            <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
+                                                Click the camera icon to update your profile picture. Recommended size: 400x400px
+                                            </p>
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => setShowImageCropper(true)}
+                                                disabled={isUploadingImage}
+                                                className="w-full sm:w-auto"
+                                            >
+                                                {isUploadingImage ? (
+                                                    <>
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                        Uploading...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Camera className="mr-2 h-4 w-4" />
+                                                        Change Photo
+                                                    </>
+                                                )}
+                                            </Button>
+                                        </div>
                                     </div>
-                                    <p className="text-sm text-slate-600 dark:text-slate-400">Click the camera icon to update your profile picture</p>
                                 </div>
 
-                                {/* Name Field */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="name" className="text-sm font-medium">
-                                        Name <span className="text-red-500">*</span>
-                                    </Label>
-                                    <Input
-                                        id="name"
-                                        type="text"
-                                        value={data.name}
-                                        onChange={(e) => setData('name', e.target.value)}
-                                        placeholder="Enter your full name"
-                                        className={errors.name ? 'border-red-500' : ''}
-                                        required
-                                    />
-                                    {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+                                {/* Basic Information Section */}
+                                <div className="space-y-6">
+                                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Basic Information</h3>
+                                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                        {/* Name Field */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="name" className="text-sm font-medium">
+                                                Name <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Input
+                                                id="name"
+                                                type="text"
+                                                value={data.name}
+                                                onChange={(e) => setData('name', e.target.value)}
+                                                placeholder="Enter your full name"
+                                                className={errors.name ? 'border-red-500' : ''}
+                                                required
+                                            />
+                                            {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+                                        </div>
+
+                                        {/* Username Field */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="username" className="text-sm font-medium">
+                                                Username <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Input
+                                                id="username"
+                                                type="text"
+                                                value={data.username}
+                                                onChange={(e) => setData('username', e.target.value)}
+                                                placeholder="Enter your username"
+                                                className={errors.username ? 'border-red-500' : ''}
+                                                required
+                                            />
+                                            {errors.username && <p className="text-sm text-red-500">{errors.username}</p>}
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">Only letters, numbers, dashes, and underscores</p>
+                                        </div>
+
+                                        {/* Email Field - Read Only */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="email" className="text-sm font-medium">
+                                                Email
+                                            </Label>
+                                            <Input
+                                                id="email"
+                                                type="email"
+                                                value={user.email}
+                                                readOnly
+                                                className="cursor-not-allowed bg-slate-50 dark:bg-slate-900/50"
+                                            />
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">Email cannot be changed</p>
+                                        </div>
+
+                                        {/* Gender Field */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="gender" className="text-sm font-medium">
+                                                Gender
+                                            </Label>
+                                            <Select value={data.gender} onValueChange={(value) => setData('gender', value)} disabled={processing}>
+                                                <SelectTrigger className={errors.gender ? 'border-red-500' : ''}>
+                                                    <SelectValue placeholder="Select gender" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="male">Male</SelectItem>
+                                                    <SelectItem value="female">Female</SelectItem>
+                                                    <SelectItem value="other">Other</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            {errors.gender && <p className="text-sm text-red-500">{errors.gender}</p>}
+                                        </div>
+
+                                        {/* Phone Field */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="phone" className="text-sm font-medium">
+                                                Phone Number
+                                            </Label>
+                                            <Input
+                                                id="phone"
+                                                type="text"
+                                                value={data.phone}
+                                                onChange={(e) => setData('phone', e.target.value)}
+                                                placeholder="Enter your phone number"
+                                                className={errors.phone ? 'border-red-500' : ''}
+                                            />
+                                            {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
+                                        </div>
+                                    </div>
                                 </div>
 
-                                {/* Email Field - Read Only */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="email" className="text-sm font-medium">
-                                        Email
-                                    </Label>
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        value={user.email}
-                                        readOnly
-                                        className="cursor-not-allowed bg-slate-50 dark:bg-slate-900/50"
-                                    />
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">Email cannot be changed</p>
+                                {/* Academic Information Section */}
+                                <div className="space-y-6">
+                                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Academic Information</h3>
+                                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                        {/* Student ID Field */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="student_id" className="text-sm font-medium">
+                                                Student ID
+                                            </Label>
+                                            <Input
+                                                id="student_id"
+                                                type="text"
+                                                value={data.student_id}
+                                                onChange={(e) => setData('student_id', e.target.value)}
+                                                placeholder="e.g., DIU-12345678"
+                                                className={errors.student_id ? 'border-red-500' : ''}
+                                            />
+                                            {errors.student_id && <p className="text-sm text-red-500">{errors.student_id}</p>}
+                                        </div>
+
+                                        {/* Department Field */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="department" className="text-sm font-medium">
+                                                Department
+                                            </Label>
+                                            <Input
+                                                id="department"
+                                                type="text"
+                                                value={data.department}
+                                                onChange={(e) => setData('department', e.target.value)}
+                                                placeholder="e.g., CSE, SWE, EEE"
+                                                className={errors.department ? 'border-red-500' : ''}
+                                            />
+                                            {errors.department && <p className="text-sm text-red-500">{errors.department}</p>}
+                                        </div>
+                                    </div>
                                 </div>
 
-                                {/* Username Field */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="username" className="text-sm font-medium">
-                                        Username <span className="text-red-500">*</span>
-                                    </Label>
-                                    <Input
-                                        id="username"
-                                        type="text"
-                                        value={data.username}
-                                        onChange={(e) => setData('username', e.target.value)}
-                                        placeholder="Enter your username"
-                                        className={errors.username ? 'border-red-500' : ''}
-                                        required
-                                    />
-                                    {errors.username && <p className="text-sm text-red-500">{errors.username}</p>}
-                                    <p className="text-xs text-slate-500 dark:text-slate-400">Only letters, numbers, dashes, and underscores allowed</p>
-                                </div>
+                                {/* Competitive Programming Handles Section */}
+                                <div className="space-y-6">
+                                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Competitive Programming Handles</h3>
+                                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                        {/* Codeforces Handle */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="codeforces_handle" className="text-sm font-medium">
+                                                Codeforces Handle
+                                            </Label>
+                                            <Input
+                                                id="codeforces_handle"
+                                                type="text"
+                                                value={data.codeforces_handle}
+                                                onChange={(e) => setData('codeforces_handle', e.target.value)}
+                                                placeholder="Your Codeforces username"
+                                                className={errors.codeforces_handle ? 'border-red-500' : ''}
+                                            />
+                                            {errors.codeforces_handle && <p className="text-sm text-red-500">{errors.codeforces_handle}</p>}
+                                        </div>
 
-                                {/* Gender Field */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="gender" className="text-sm font-medium">
-                                        Gender
-                                    </Label>
-                                    <Select value={data.gender} onValueChange={(value) => setData('gender', value)} disabled={processing}>
-                                        <SelectTrigger className={errors.gender ? 'border-red-500' : ''}>
-                                            <SelectValue placeholder="Select gender" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="male">Male</SelectItem>
-                                            <SelectItem value="female">Female</SelectItem>
-                                            <SelectItem value="other">Other</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    {errors.gender && <p className="text-sm text-red-500">{errors.gender}</p>}
-                                </div>
+                                        {/* AtCoder Handle */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="atcoder_handle" className="text-sm font-medium">
+                                                AtCoder Handle
+                                            </Label>
+                                            <Input
+                                                id="atcoder_handle"
+                                                type="text"
+                                                value={data.atcoder_handle}
+                                                onChange={(e) => setData('atcoder_handle', e.target.value)}
+                                                placeholder="Your AtCoder username"
+                                                className={errors.atcoder_handle ? 'border-red-500' : ''}
+                                            />
+                                            {errors.atcoder_handle && <p className="text-sm text-red-500">{errors.atcoder_handle}</p>}
+                                        </div>
 
-                                {/* Phone Field */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="phone" className="text-sm font-medium">
-                                        Phone Number
-                                    </Label>
-                                    <Input
-                                        id="phone"
-                                        type="text"
-                                        value={data.phone}
-                                        onChange={(e) => setData('phone', e.target.value)}
-                                        placeholder="Enter your phone number"
-                                        className={errors.phone ? 'border-red-500' : ''}
-                                    />
-                                    {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
-                                </div>
-
-                                {/* Student ID Field */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="student_id" className="text-sm font-medium">
-                                        Student ID
-                                    </Label>
-                                    <Input
-                                        id="student_id"
-                                        type="text"
-                                        value={data.student_id}
-                                        onChange={(e) => setData('student_id', e.target.value)}
-                                        placeholder="Enter your student ID (optional)"
-                                        className={errors.student_id ? 'border-red-500' : ''}
-                                    />
-                                    {errors.student_id && <p className="text-sm text-red-500">{errors.student_id}</p>}
-                                </div>
-
-                                {/* Department Field */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="department" className="text-sm font-medium">
-                                        Department
-                                    </Label>
-                                    <Input
-                                        id="department"
-                                        type="text"
-                                        value={data.department}
-                                        onChange={(e) => setData('department', e.target.value)}
-                                        placeholder="Enter your department (optional)"
-                                        className={errors.department ? 'border-red-500' : ''}
-                                    />
-                                    {errors.department && <p className="text-sm text-red-500">{errors.department}</p>}
-                                </div>
-
-                                {/* Codeforces Handle */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="codeforces_handle" className="text-sm font-medium">
-                                        Codeforces Handle
-                                    </Label>
-                                    <Input
-                                        id="codeforces_handle"
-                                        type="text"
-                                        value={data.codeforces_handle}
-                                        onChange={(e) => setData('codeforces_handle', e.target.value)}
-                                        placeholder="Enter your Codeforces handle (optional)"
-                                        className={errors.codeforces_handle ? 'border-red-500' : ''}
-                                    />
-                                    {errors.codeforces_handle && <p className="text-sm text-red-500">{errors.codeforces_handle}</p>}
-                                </div>
-
-                                {/* AtCoder Handle */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="atcoder_handle" className="text-sm font-medium">
-                                        AtCoder Handle
-                                    </Label>
-                                    <Input
-                                        id="atcoder_handle"
-                                        type="text"
-                                        value={data.atcoder_handle}
-                                        onChange={(e) => setData('atcoder_handle', e.target.value)}
-                                        placeholder="Enter your AtCoder handle (optional)"
-                                        className={errors.atcoder_handle ? 'border-red-500' : ''}
-                                    />
-                                    {errors.atcoder_handle && <p className="text-sm text-red-500">{errors.atcoder_handle}</p>}
-                                </div>
-
-                                {/* VJudge Handle */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="vjudge_handle" className="text-sm font-medium">
-                                        VJudge Handle
-                                    </Label>
-                                    <Input
-                                        id="vjudge_handle"
-                                        type="text"
-                                        value={data.vjudge_handle}
-                                        onChange={(e) => setData('vjudge_handle', e.target.value)}
-                                        placeholder="Enter your VJudge handle (optional)"
-                                        className={errors.vjudge_handle ? 'border-red-500' : ''}
-                                    />
-                                    {errors.vjudge_handle && <p className="text-sm text-red-500">{errors.vjudge_handle}</p>}
+                                        {/* VJudge Handle */}
+                                        <div className="space-y-2">
+                                            <Label htmlFor="vjudge_handle" className="text-sm font-medium">
+                                                VJudge Handle
+                                            </Label>
+                                            <Input
+                                                id="vjudge_handle"
+                                                type="text"
+                                                value={data.vjudge_handle}
+                                                onChange={(e) => setData('vjudge_handle', e.target.value)}
+                                                placeholder="Your VJudge username"
+                                                className={errors.vjudge_handle ? 'border-red-500' : ''}
+                                            />
+                                            {errors.vjudge_handle && <p className="text-sm text-red-500">{errors.vjudge_handle}</p>}
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Action Buttons */}
@@ -372,7 +419,8 @@ export default function EditProfile({ user }: Props) {
                                     <Button
                                         type="submit"
                                         disabled={processing}
-                                        className="min-w-[140px] rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-6 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
+                                        size="lg"
+                                        className="rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-8 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
                                     >
                                         {processing ? (
                                             <>
@@ -390,6 +438,7 @@ export default function EditProfile({ user }: Props) {
                             </form>
                         </CardContent>
                     </Card>
+                    </div>
                 </div>
             </div>
 
