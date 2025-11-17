@@ -39,7 +39,6 @@ export default function ChangePassword() {
         post('/profile/change-password', {
             preserveScroll: true,
             onSuccess: () => {
-                toast.success('Password changed successfully!');
                 reset();
             },
             onError: (errors) => {

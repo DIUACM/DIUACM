@@ -69,7 +69,6 @@ export default function EditProfile({ user }: Props) {
                     setPreviewAvatar(newAvatar);
                 }
                 setIsUploadingImage(false);
-                toast.success('Profile picture updated successfully!');
             },
             onError: (errors) => {
                 setIsUploadingImage(false);
@@ -93,9 +92,6 @@ export default function EditProfile({ user }: Props) {
 
         put('/profile', {
             preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Profile updated successfully!');
-            },
             onError: (errors) => {
                 const errorMessages = Object.values(errors).flat();
                 errorMessages.forEach((error) => {

@@ -84,6 +84,7 @@ class ProfileController extends Controller
             $avatarUrl = $user->avatar_url;
 
             return back()->with([
+                'success' => 'Profile picture updated successfully.',
                 'user' => array_merge($user->fresh()->toArray(), [
                     'avatar' => $avatarUrl,
                 ]),
