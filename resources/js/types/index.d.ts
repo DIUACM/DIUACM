@@ -26,6 +26,14 @@ export interface User {
     [key: string]: unknown; // This allows for additional properties...
 }
 
+export interface PublicUser {
+    name: string;
+    username: string;
+    avatar: string;
+    student_id: string;
+    department: string;
+}
+
 export interface PaginationLink {
     url: string | null;
     label: string;
@@ -55,5 +63,12 @@ export interface Event {
     ending_at: string;
     participation_scope: string;
     type: string;
-    attendees_count: number;
+    attendees_count?: number;
+}
+
+export interface EventDetails extends Event {
+    description: string;
+    event_link: string;
+    attendance?: Array<PublicUser & { attended_at: string }>;
+    performance?: Array<PublicUser & { solve_count: number; upsolve_count: number }>;
 }

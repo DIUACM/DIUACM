@@ -143,4 +143,16 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
     {
         return 'username';
     }
+
+    /**
+     * Get the cached avatar URL for the user.
+     */
+    public function getAvatarUrlAttribute(): string
+    {
+        return cache()->remember(
+            key: "user.{$this->id}.avatar",
+            ttl: now()->addDay(),
+            callback: fn () => $this->getFirstMediaUrl('profile_picture')
+        );
+    }
 }
