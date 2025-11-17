@@ -17,7 +17,7 @@ class GalleryDetailsResource extends GalleryResource
             'images' => $this->getMedia('gallery_images')->map(function ($media) {
                 return [
                     'url' => $media->getUrl(),
-                    'thumbnail' => $media->getUrl('thumb'),
+                    'thumbnail' => $media->hasGeneratedConversion('thumb') ? $media->getUrl('thumb') : $media->getUrl(),
                     'name' => $media->name,
                     'mime_type' => $media->mime_type,
                 ];
