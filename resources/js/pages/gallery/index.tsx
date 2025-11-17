@@ -2,7 +2,7 @@ import { GalleryFilters } from '@/components/gallery/gallery-filters';
 import { CustomPagination } from '@/components/ui/custom-pagination';
 import MainLayout from '@/layouts/main-layout';
 import type { Gallery, PaginatedData } from '@/types';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { show } from '@/routes/galleries';
 import { Images } from 'lucide-react';
 
@@ -43,7 +43,7 @@ export default function GalleryPage({ galleries, filters }: GalleryPageProps) {
                 ) : (
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {galleries.data.map((gallery) => (
-                            <a
+                            <Link
                                 key={gallery.slug}
                                 href={show.url(gallery.slug)}
                                 className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
@@ -75,7 +75,7 @@ export default function GalleryPage({ galleries, filters }: GalleryPageProps) {
                                     )}
                                     <p className="text-xs text-slate-500 dark:text-slate-400">{gallery.created_at}</p>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 )}
