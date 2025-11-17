@@ -11,7 +11,7 @@ Route::get('/contact', [\App\Http\Controllers\PagesController::class, 'contact']
 Route::get('/about', [\App\Http\Controllers\PagesController::class, 'about'])->name('about');
 
 Route::get('/privacy-policy', [\App\Http\Controllers\PagesController::class, 'privacy'])->name('privacy-policy');
-Route::get('/terms-of-service', [\App\Http\Controllers\PagesController::class, 'terms'])->name('terms-and-conditions');
+Route::get('/terms-and-conditions', [\App\Http\Controllers\PagesController::class, 'terms'])->name('terms-and-conditions');
 
 // Auth routes
 Route::middleware('guest')->group(function () {
