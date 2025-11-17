@@ -78,6 +78,9 @@ class ProfileController extends Controller
                 ->usingFileName($filename)
                 ->toMediaCollection('profile_picture');
 
+            // Clear avatar cache
+            cache()->forget("user.{$user->id}.avatar");
+
             $avatarUrl = $user->avatar_url;
 
             return back()->with([
