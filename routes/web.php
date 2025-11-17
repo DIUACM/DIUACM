@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgrammerController;
@@ -51,3 +52,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/change-password', [ProfileController::class, 'editPassword'])->name('profile.editPassword');
     Route::post('/profile/change-password', [ProfileController::class, 'updatePassword'])->name('profile.updatePassword');
 });
+
+Route::get('/contact', [ContactController::class, 'contact'])->name('contact');
+Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
