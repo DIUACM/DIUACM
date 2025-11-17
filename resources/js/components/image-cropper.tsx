@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Cropper from 'react-easy-crop';
 
 interface ImageCropperProps {
@@ -34,6 +34,15 @@ export function ImageCropper({ onComplete, onCancel }: ImageCropperProps) {
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<CropArea | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Auto-trigger file picker when modal opens
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fileInputRef.current?.click();
+        }, 100);
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -131,6 +140,7 @@ export function ImageCropper({ onComplete, onCancel }: ImageCropperProps) {
                 <div className="space-y-6">
                     {!image ? (
                         <div
+                            onClick={() => fileInputRef.current?.click()}
                             onDrop={handleDrop}
                             onDragOver={(e) => {
                                 e.preventDefault();
@@ -148,13 +158,30 @@ export function ImageCropper({ onComplete, onCancel }: ImageCropperProps) {
                                 'cursor-pointer',
                             )}
                         >
-                            <p className="text-center text-sm text-muted-foreground">Drag and drop your image here, or click to select</p>
-                            <Button asChild variant="secondary">
-                                <label>
-                                    Choose Image
-                                    <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-                                </label>
-                            </Button>
+                            <svg
+                                className="h-12 w-12 text-muted-foreground"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                            </svg>
+                            <div className="text-center">
+                                <p className="mb-1 text-sm font-medium text-slate-900 dark:text-white">Click to upload or drag and drop</p>
+                                <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 2MB</p>
+                            </div>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={handleFileChange}
+                            />
                         </div>
                     ) : (
                         <div className="space-y-6">
@@ -183,6 +210,8 @@ export function ImageCropper({ onComplete, onCancel }: ImageCropperProps) {
                                     onClick={() => {
                                         setImage(null);
                                         setZoom(1);
+                                        // Trigger file picker again after clearing
+                                        setTimeout(() => fileInputRef.current?.click(), 100);
                                     }}
                                     disabled={isProcessing}
                                 >
