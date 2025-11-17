@@ -116,7 +116,7 @@ export default function EditProfile({ user }: Props) {
         <MainLayout>
             <Head title="Edit Profile" />
 
-            <div className="container mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+            <div className="container mx-auto max-w-7xl px-4 py-16">
                 <PageHeader title="Edit" gradientText="Profile" description="Update your personal information and profile picture" />
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">

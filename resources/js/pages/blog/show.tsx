@@ -13,7 +13,7 @@ export default function BlogShowPage({ blogPost }: BlogShowPageProps) {
         <MainLayout>
             <Head title={blogPost.title} />
 
-            <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+            <div className="container mx-auto px-4 py-8">
                 <div>
                     {/* Blog post header */}
                     <div className="mb-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">

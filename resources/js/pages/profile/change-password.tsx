@@ -54,7 +54,7 @@ export default function ChangePassword() {
         <MainLayout>
             <Head title="Change Password" />
 
-            <div className="container mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+            <div className="container mx-auto max-w-7xl px-4 py-16">
                 <PageHeader title="Change" gradientText="Password" description="Update your password to keep your account secure" />
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">

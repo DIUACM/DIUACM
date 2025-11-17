@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import MainLayout from '@/layouts/main-layout';
 import { about, contact } from '@/routes';
 import { Link } from '@inertiajs/react';
@@ -18,7 +19,7 @@ import {
     Trophy,
     Users,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // Simple local time badge component
 function LocalTime() {
@@ -28,6 +29,57 @@ function LocalTime() {
         return () => clearInterval(id);
     }, []);
     return <span>{now}</span>;
+}
+
+// Image Carousel Component
+function ImageCarousel() {
+    return (
+        <section className="py-12 md:py-20">
+            <div className="container mx-auto px-4">
+                <div className="mb-8 text-center">
+                    <h2 className="mb-3 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl dark:text-white">
+                        Our <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent dark:from-blue-400 dark:to-cyan-300">Community</span> in Action
+                    </h2>
+                    <p className="text-lg text-slate-600 dark:text-slate-400">
+                        Witness the spirit of competitive programming at DIU ACM
+                    </p>
+                </div>
+
+                <Carousel
+                    opts={{
+                        align: 'start',
+                        loop: true,
+                    }}
+                    className="w-full"
+                >
+                    <CarouselContent>
+                        {carouselSlides.map((slide, index) => (
+                            <CarouselItem key={index}>
+                                <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl transition-all hover:shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+                                    <div className="relative aspect-video w-full overflow-hidden">
+                                        <img
+                                            src={slide.image}
+                                            alt={slide.alt}
+                                            className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                                            loading="lazy"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                                        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+                                            <p className="text-xl font-semibold text-white drop-shadow-lg md:text-2xl">
+                                                {slide.caption}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="left-2 md:-left-12" />
+                    <CarouselNext className="right-2 md:-right-12" />
+                </Carousel>
+            </div>
+        </section>
+    );
 }
 
 // Data (inspired by the provided Next.js project)
@@ -164,11 +216,35 @@ const stats = [
     },
 ] as const;
 
+const carouselSlides = [
+    {
+        image: '/images/homepage-images/20251111_094508-min.jpg',
+        caption: 'DIU ACM Community - Building Future Problem Solvers',
+        alt: 'DIU ACM team members participating in programming activities',
+    },
+    {
+        image: '/images/homepage-images/20251111_094545-min.jpg',
+        caption: 'Regular Contest Sessions - Sharpening Skills Together',
+        alt: 'Students engaged in competitive programming contest',
+    },
+    {
+        image: '/images/homepage-images/20251111_174737-min.jpg',
+        caption: 'Collaborative Learning - Mentorship and Growth',
+        alt: 'ACM members collaborating and learning together',
+    },
+    {
+        image: '/images/homepage-images/20251111_175701-min.jpg',
+        caption: 'ICPC Journey - Training Champions',
+        alt: 'DIU ACM preparing for ICPC competitions',
+    },
+] as const;
+
 function HeroSection() {
     const currentUser = 'diuacm';
     return (
         <section className="relative overflow-hidden py-16 md:py-28">
-            <div className="relative z-10 container mx-auto px-4">
+            <div className="container mx-auto px-4">
+                <div className="relative z-10">
                 <div className="grid grid-cols-1 items-center justify-between gap-10 md:grid-cols-2">
                     <div>
                         <div className="mb-6 inline-flex items-center">
@@ -316,6 +392,7 @@ function HeroSection() {
                         </div>
                     </div>
                 </div>
+                </div>
             </div>
         </section>
     );
@@ -326,6 +403,9 @@ export default function Welcome() {
         <MainLayout>
             {/* Hero */}
             <HeroSection />
+
+            {/* Image Carousel */}
+            <ImageCarousel />
 
             {/* How It Works */}
             <section className="bg-gradient-to-b from-white to-slate-50 py-16 dark:from-slate-900 dark:to-slate-950">
@@ -561,8 +641,8 @@ export default function Welcome() {
             <section className="relative overflow-hidden py-20">
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 dark:from-blue-500/10 dark:to-cyan-500/10" />
 
-                <div className="relative container mx-auto px-4">
-                    <div className="mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white p-8 shadow-xl md:p-10 dark:border-slate-700 dark:bg-slate-800">
+                <div className="container mx-auto px-4">
+                    <div className="relative mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white p-8 shadow-xl md:p-10 dark:border-slate-700 dark:bg-slate-800">
                         <div className="mb-8 text-center">
                             <h2 className="mb-4 text-3xl font-bold text-slate-900 dark:text-white">Join DIU ACM Community</h2>
                             <p className="text-lg text-slate-600 dark:text-slate-300">
