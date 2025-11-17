@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgrammerController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +25,8 @@ Route::middleware('guest')->group(function () {
     Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 });
 
+Route::post('/logout', [AuthController::class, 'destroy'])->middleware('auth')->name('logout');
+
 Route::get('/events', [EventController::class, 'index'])->name('events.index');
 Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
 Route::post('/events/{event}/attendance', [EventController::class, 'storeAttendance'])
@@ -39,3 +42,12 @@ Route::get('/blog/{blogPost:slug}', [BlogController::class, 'show'])->name('blog
 Route::get('/trackers', [\App\Http\Controllers\TrackerController::class, 'index'])->name('trackers.index');
 Route::get('/trackers/{slug}', [\App\Http\Controllers\TrackerController::class, 'show'])->name('trackers.show');
 Route::get('/trackers/{slug}/export', [\App\Http\Controllers\TrackerController::class, 'export'])->name('trackers.export');
+
+// Profile routes
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar.update');
+    Route::get('/profile/change-password', [ProfileController::class, 'editPassword'])->name('profile.editPassword');
+    Route::post('/profile/change-password', [ProfileController::class, 'updatePassword'])->name('profile.updatePassword');
+});
