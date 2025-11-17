@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\ProgrammerController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [\App\Http\Controllers\PagesController::class, 'home'])->name('home');
@@ -27,3 +28,6 @@ Route::get('/events/{event}', [EventController::class, 'show'])->name('events.sh
 Route::post('/events/{event}/attendance', [EventController::class, 'storeAttendance'])
     ->middleware('auth')
     ->name('events.attendance.store');
+
+Route::get('/programmers', [ProgrammerController::class, 'index'])->name('programmers.index');
+Route::get('/programmers/{user:username}', [ProgrammerController::class, 'show'])->name('programmers.show');

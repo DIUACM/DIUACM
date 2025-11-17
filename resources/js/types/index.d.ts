@@ -82,3 +82,50 @@ export interface EventDetails extends Event {
     performance?: Array<PublicUser & { solve_count: number; upsolve_count: number }>;
 }
 
+export interface Programmer {
+    name: string;
+    username: string;
+    student_id: string | null;
+    department: string | null;
+    max_cf_rating: number | null;
+    codeforces_handle: string | null;
+    avatar: string | null;
+}
+
+export interface TrackerRankList {
+    keyword: string;
+    user_position: number | null;
+    user_score: number;
+    total_users: number;
+    events_count: number;
+}
+
+export interface TrackerPerformance {
+    slug: string;
+    title: string;
+    ranklists: TrackerRankList[];
+}
+
+export interface ContestMember {
+    name: string;
+    username: string;
+    student_id: string | null;
+    avatar: string | null;
+}
+
+export interface Contest {
+    id: number;
+    name: string;
+    date: string | null;
+    team_name: string;
+    rank: number | null;
+    solve_count: number | null;
+    members: ContestMember[];
+}
+
+export interface ProgrammerDetails extends Programmer {
+    atcoder_handle: string | null;
+    vjudge_handle: string | null;
+    tracker_performance: TrackerPerformance[];
+    contests: Contest[];
+}
