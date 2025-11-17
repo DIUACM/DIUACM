@@ -88,7 +88,7 @@ class EventController extends Controller
                     ->orderByDesc('event_user_stats.upsolve_count'),
             ]);
         }
-        
+
         return Inertia::render('events/show', [
             'event' => EventDetailsResource::make($event)->resolve(),
         ]);
