@@ -21,7 +21,7 @@ class EventResource extends JsonResource
             'ending_at' => $this->ending_at,
             'participation_scope' => $this->participation_scope,
             'type' => $this->type,
-            'attendees_count' => $this->whenCounted('attendees'),
+            'attendees_count' => $this->when($this->open_for_attendance, fn () => $this->whenCounted('attendees')),
         ];
     }
 }

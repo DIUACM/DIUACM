@@ -2,16 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\EventType;
 use App\Enums\VisibilityStatus;
 use App\Http\Resources\EventDetailsResource;
 use App\Http\Resources\EventResource;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class EventController extends Controller
 {
-    public function index(Request $request)
+    /**
+     * Public user columns to select for attendees and performance data.
+     */
+    private const USER_PUBLIC_COLUMNS = ['id', 'name', 'username', 'student_id', 'department'];
+
+    /**
+     * Display a paginated list of published events.
+     */
+    public function index(Request $request): Response
     {
         $events = Event::query()
             ->select([
@@ -27,11 +37,7 @@ class EventController extends Controller
             ->search($request->get('search'))
             ->ofType($request->get('type'))
             ->forParticipationScope($request->get('participation_scope'))
-            ->withCount([
-                'attendees' => function ($query) {
-                    $query->whereColumn('events.open_for_attendance', true);
-                },
-            ])
+            ->withCount('attendees')
             ->orderBy('starting_at', 'desc')
             ->paginate(10)
             ->withQueryString();
@@ -46,38 +52,38 @@ class EventController extends Controller
         ]);
     }
 
-    public function show(Event $event)
+    /**
+     * Display the specified event with conditional eager loading.
+     *
+     * Conditionally loads:
+     * - Attendees and count if attendance is open
+     * - Performance statistics for contest events
+     */
+    public function show(Event $event): EventDetailsResource
     {
-        if ($event->status !== VisibilityStatus::PUBLISHED) {
-            abort(403, 'This event is not published yet.');
-        }
+        abort_if($event->status !== VisibilityStatus::PUBLISHED, 404, 'Event not found.');
 
-        // Build query with conditional eager loading
-        $query = Event::where('id', $event->id);
+        $userColumns = array_map(fn ($col) => "users.{$col}", self::USER_PUBLIC_COLUMNS);
 
         // Only load attendees count and attendees if attendance is open
         if ($event->open_for_attendance) {
-            $query->withCount('attendees')
-                ->with([
-                    'attendees' => function ($query) {
-                        $query->select('users.id', 'users.name', 'users.username', 'users.student_id', 'users.department')
-                            ->orderBy('event_attendance.created_at', 'desc');
-                    },
+            $event->loadCount('attendees')
+                ->load([
+                    'attendees' => fn ($attendeesQuery) => $attendeesQuery
+                        ->select($userColumns)
+                        ->orderBy('event_attendance.created_at', 'desc'),
                 ]);
         }
 
         // Load performance data for contest events
-        if ($event->type->value === 'contest') {
-            $query->with([
-                'usersWithStats' => function ($query) {
-                    $query->select('users.id', 'users.name', 'users.username', 'users.student_id', 'users.department')
-                        ->orderByDesc('event_user_stats.solve_count')
-                        ->orderByDesc('event_user_stats.upsolve_count');
-                },
+        if ($event->type === EventType::CONTEST) {
+            $event->load([
+                'usersWithStats' => fn ($statsQuery) => $statsQuery
+                    ->select($userColumns)
+                    ->orderByDesc('event_user_stats.solve_count')
+                    ->orderByDesc('event_user_stats.upsolve_count'),
             ]);
         }
-
-        $event = $query->firstOrFail();
 
         return new EventDetailsResource($event);
     }

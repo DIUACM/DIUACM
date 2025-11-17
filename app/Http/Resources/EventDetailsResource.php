@@ -2,10 +2,10 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\EventType;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
 
-class EventDetailsResource extends JsonResource
+class EventDetailsResource extends EventResource
 {
     /**
      * Transform the resource into an array.
@@ -14,15 +14,8 @@ class EventDetailsResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return [
-            'id' => $this->id,
-            'title' => $this->title,
+        return array_merge(parent::toArray($request), [
             'description' => $this->description,
-            'starting_at' => $this->starting_at,
-            'ending_at' => $this->ending_at,
-            'participation_scope' => $this->participation_scope,
-            'type' => $this->type,
-            'attendees_count' => $this->whenCounted('attendees'),
             'event_link' => $this->event_link,
             'attendance' => $this->when($this->open_for_attendance && $this->relationLoaded('attendees'), function () {
                 return $this->attendees->map(function ($user) {
@@ -32,7 +25,7 @@ class EventDetailsResource extends JsonResource
                     );
                 });
             }),
-            'performance' => $this->when($this->type->value === 'contest' && $this->relationLoaded('usersWithStats'), function () {
+            'performance' => $this->when($this->type === EventType::CONTEST && $this->relationLoaded('usersWithStats'), function () {
                 return $this->usersWithStats->map(function ($user) {
                     return array_merge(
                         (new PublicUserResource($user))->toArray(request()),
@@ -43,6 +36,6 @@ class EventDetailsResource extends JsonResource
                     );
                 });
             }),
-        ];
+        ]);
     }
 }

@@ -155,4 +155,18 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
             callback: fn () => $this->getFirstMediaUrl('profile_picture')
         );
     }
+
+    /**
+     * Clear avatar cache when user is updated.
+     */
+    protected static function booted(): void
+    {
+        static::updated(function (User $user) {
+            cache()->forget("user.{$user->id}.avatar");
+        });
+
+        static::deleted(function (User $user) {
+            cache()->forget("user.{$user->id}.avatar");
+        });
+    }
 }
