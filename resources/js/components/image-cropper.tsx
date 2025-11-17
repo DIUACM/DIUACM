@@ -158,12 +158,7 @@ export function ImageCropper({ onComplete, onCancel }: ImageCropperProps) {
                                 'cursor-pointer',
                             )}
                         >
-                            <svg
-                                className="h-12 w-12 text-muted-foreground"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
+                            <svg className="h-12 w-12 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
@@ -175,13 +170,7 @@ export function ImageCropper({ onComplete, onCancel }: ImageCropperProps) {
                                 <p className="mb-1 text-sm font-medium text-slate-900 dark:text-white">Click to upload or drag and drop</p>
                                 <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 2MB</p>
                             </div>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={handleFileChange}
-                            />
+                            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                         </div>
                     ) : (
                         <div className="space-y-6">

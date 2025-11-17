@@ -7,7 +7,7 @@ import MainLayout from '@/layouts/main-layout';
 import profile from '@/routes/profile';
 import programmers from '@/routes/programmers';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { KeyIcon, Loader2, Save, UserIcon } from 'lucide-react';
+import { Loader2, Save, UserIcon } from 'lucide-react';
 import { FormEventHandler } from 'react';
 import { toast } from 'sonner';
 
@@ -110,96 +110,100 @@ export default function ChangePassword() {
                         <Card className="overflow-hidden border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">
                             <CardContent className="p-6 md:p-8">
                                 <form onSubmit={handleSubmit} className="space-y-8">
-                                {/* Password Change Section */}
-                                <div className="space-y-6">
-                                    <div>
-                                        <h3 className="mb-1 text-lg font-semibold text-slate-900 dark:text-white">Change Password</h3>
-                                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                                            Enter your current password and choose a new secure password
-                                        </p>
-                                    </div>
-
+                                    {/* Password Change Section */}
                                     <div className="space-y-6">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="current_password" className="text-sm font-medium">
-                                                Current Password <span className="text-red-500">*</span>
-                                            </Label>
-                                            <Input
-                                                id="current_password"
-                                                type="password"
-                                                value={data.current_password}
-                                                onChange={(e) => setData('current_password', e.target.value)}
-                                                placeholder="Enter your current password"
-                                                disabled={processing}
-                                                className={errors.current_password ? 'border-red-500' : ''}
-                                                autoComplete="current-password"
-                                                required
-                                            />
-                                            {errors.current_password && <p className="text-sm text-red-500">{errors.current_password}</p>}
+                                        <div>
+                                            <h3 className="mb-1 text-lg font-semibold text-slate-900 dark:text-white">Change Password</h3>
+                                            <p className="text-sm text-slate-600 dark:text-slate-400">
+                                                Enter your current password and choose a new secure password
+                                            </p>
                                         </div>
 
-                                        <div className="space-y-2">
-                                            <Label htmlFor="password" className="text-sm font-medium">
-                                                New Password <span className="text-red-500">*</span>
-                                            </Label>
-                                            <Input
-                                                id="password"
-                                                type="password"
-                                                value={data.password}
-                                                onChange={(e) => setData('password', e.target.value)}
-                                                placeholder="Enter your new password"
-                                                disabled={processing}
-                                                className={errors.password ? 'border-red-500' : ''}
-                                                autoComplete="new-password"
-                                                required
-                                            />
-                                            {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
-                                            <p className="text-xs text-slate-500 dark:text-slate-400">Password must be at least 8 characters long</p>
-                                        </div>
+                                        <div className="space-y-6">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="current_password" className="text-sm font-medium">
+                                                    Current Password <span className="text-red-500">*</span>
+                                                </Label>
+                                                <Input
+                                                    id="current_password"
+                                                    type="password"
+                                                    value={data.current_password}
+                                                    onChange={(e) => setData('current_password', e.target.value)}
+                                                    placeholder="Enter your current password"
+                                                    disabled={processing}
+                                                    className={errors.current_password ? 'border-red-500' : ''}
+                                                    autoComplete="current-password"
+                                                    required
+                                                />
+                                                {errors.current_password && <p className="text-sm text-red-500">{errors.current_password}</p>}
+                                            </div>
 
-                                        <div className="space-y-2">
-                                            <Label htmlFor="password_confirmation" className="text-sm font-medium">
-                                                Confirm New Password <span className="text-red-500">*</span>
-                                            </Label>
-                                            <Input
-                                                id="password_confirmation"
-                                                type="password"
-                                                value={data.password_confirmation}
-                                                onChange={(e) => setData('password_confirmation', e.target.value)}
-                                                placeholder="Confirm your new password"
-                                                disabled={processing}
-                                                className={errors.password_confirmation ? 'border-red-500' : ''}
-                                                autoComplete="new-password"
-                                                required
-                                            />
-                                            {errors.password_confirmation && <p className="text-sm text-red-500">{errors.password_confirmation}</p>}
+                                            <div className="space-y-2">
+                                                <Label htmlFor="password" className="text-sm font-medium">
+                                                    New Password <span className="text-red-500">*</span>
+                                                </Label>
+                                                <Input
+                                                    id="password"
+                                                    type="password"
+                                                    value={data.password}
+                                                    onChange={(e) => setData('password', e.target.value)}
+                                                    placeholder="Enter your new password"
+                                                    disabled={processing}
+                                                    className={errors.password ? 'border-red-500' : ''}
+                                                    autoComplete="new-password"
+                                                    required
+                                                />
+                                                {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
+                                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                                    Password must be at least 8 characters long
+                                                </p>
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <Label htmlFor="password_confirmation" className="text-sm font-medium">
+                                                    Confirm New Password <span className="text-red-500">*</span>
+                                                </Label>
+                                                <Input
+                                                    id="password_confirmation"
+                                                    type="password"
+                                                    value={data.password_confirmation}
+                                                    onChange={(e) => setData('password_confirmation', e.target.value)}
+                                                    placeholder="Confirm your new password"
+                                                    disabled={processing}
+                                                    className={errors.password_confirmation ? 'border-red-500' : ''}
+                                                    autoComplete="new-password"
+                                                    required
+                                                />
+                                                {errors.password_confirmation && (
+                                                    <p className="text-sm text-red-500">{errors.password_confirmation}</p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:justify-end dark:border-slate-700">
-                                    <Button
-                                        type="submit"
-                                        disabled={processing}
-                                        size="lg"
-                                        className="rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-8 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
-                                    >
-                                        {processing ? (
-                                            <>
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                Changing...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Save className="mr-2 h-4 w-4" />
-                                                Change Password
-                                            </>
-                                        )}
-                                    </Button>
-                                </div>
-                            </form>
-                        </CardContent>
-                    </Card>
+                                    <div className="flex flex-col gap-3 border-t border-slate-200 pt-6 sm:flex-row sm:justify-end dark:border-slate-700">
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                            size="lg"
+                                            className="rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-8 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
+                                        >
+                                            {processing ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Changing...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Save className="mr-2 h-4 w-4" />
+                                                    Change Password
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
+                                </form>
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
             </div>

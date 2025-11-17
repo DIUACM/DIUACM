@@ -1,5 +1,7 @@
 // import Footer from '@/components/footer';
 // import Navigation from '@/components/navigation';
+import Footer from '@/components/footer';
+import Navigation from '@/components/navigation';
 import type { SharedData } from '@/types';
 import { usePage } from '@inertiajs/react';
 import { useEffect, type ReactNode } from 'react';
@@ -36,11 +38,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 <div className="absolute top-10 right-20 h-32 w-32 rounded-full bg-cyan-200/50 dark:bg-cyan-800/20" />
                 <div className="absolute right-0 bottom-0 h-40 w-52 rounded-full bg-violet-200/40 dark:bg-violet-900/20" />
             </div>
-            {/* <Navigation /> */}
+            <Navigation />
 
             {children}
 
-            {/* <Footer /> */}
+            <Footer />
 
             <Toaster position="top-right" expand={true} richColors closeButton />
         </>
