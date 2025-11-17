@@ -114,7 +114,6 @@ export interface ContestMember {
 }
 
 export interface Contest {
-    id: number;
     name: string;
     date: string | null;
     team_name: string;

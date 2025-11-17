@@ -50,7 +50,6 @@ class ProgrammerDetailsResource extends ProgrammerResource
         // Format contests with team members
         $contests = $this->teams->map(function ($team) {
             return [
-                'id' => $team->contest->id,
                 'name' => $team->contest->name,
                 'date' => $team->contest->date?->format('Y-m-d H:i:s'),
                 'team_name' => $team->name,
