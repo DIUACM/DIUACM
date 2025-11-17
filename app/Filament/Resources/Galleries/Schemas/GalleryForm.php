@@ -67,7 +67,7 @@ class GalleryForm
                         SpatieMediaLibraryFileUpload::make('gallery_images')
 
                             ->collection('gallery_images')
-                            ->helperText('Upload up to 12 images (JPEG, PNG, WebP, max 2MB each). Drag to reorder.')
+                            ->helperText('Upload up to 50 images (JPEG, PNG, WebP, max 10MB each). Drag to reorder.')
                             ->visibility('public')
                             ->image()
                             ->imageEditor()
@@ -77,9 +77,8 @@ class GalleryForm
                             ->appendFiles()
                             ->openable()
                             ->downloadable()
-                            ->maxFiles(12)
-                            ->maxSize(2048)
-                            ->acceptedFileTypes(types: ['image/jpeg', 'image/png', 'image/webp'])
+                            ->maxFiles(50)
+                            ->maxSize(10240)
                             ->columnSpanFull(),
                     ]),
                 Section::make('Gallery History')
