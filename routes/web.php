@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ProgrammerController;
 use Illuminate\Support\Facades\Route;
@@ -31,3 +32,6 @@ Route::post('/events/{event}/attendance', [EventController::class, 'storeAttenda
 
 Route::get('/programmers', [ProgrammerController::class, 'index'])->name('programmers.index');
 Route::get('/programmers/{user:username}', [ProgrammerController::class, 'show'])->name('programmers.show');
+
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{blogPost:slug}', [BlogController::class, 'show'])->name('blog.show');

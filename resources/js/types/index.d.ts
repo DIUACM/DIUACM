@@ -128,3 +128,18 @@ export interface ProgrammerDetails extends Programmer {
     tracker_performance: TrackerPerformance[];
     contests: Contest[];
 }
+
+export interface BlogPost {
+    title: string;
+    slug: string;
+    excerpt: string;
+    published_at: string | null;
+    is_featured: boolean;
+    featured_image: string | null;
+    author: PublicUser;
+}
+
+export interface BlogPostDetails extends BlogPost {
+    content: string;
+    featured_image_full: string | null;
+}
