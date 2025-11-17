@@ -26,7 +26,7 @@ class TrackerController extends Controller
             ->get();
 
         return Inertia::render('trackers/index', [
-            'trackers' => TrackerResource::collection($trackers),
+            'trackers' => TrackerResource::collection($trackers)->resolve(),
         ]);
     }
 

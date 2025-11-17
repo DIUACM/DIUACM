@@ -1,9 +1,8 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import MainLayout from '@/layouts/main-layout';
 import type { Tracker } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { BarChart3, TrendingUp } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 
 type TrackersPageProps = {
     trackers: Tracker[];
@@ -33,33 +32,25 @@ export default function TrackersPage({ trackers }: TrackersPageProps) {
                 ) : (
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {trackers.map((tracker) => (
-                            <Card
-                                key={tracker.slug}
-                                className="group transition-all hover:shadow-lg dark:hover:shadow-slate-900/50"
-                            >
-                                <CardHeader>
-                                    <div className="mb-2 flex items-start justify-between">
-                                        <div className="rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 p-3 dark:from-blue-900/20 dark:to-indigo-900/20">
-                                            <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                            <Link key={tracker.slug} href={`/trackers/${tracker.slug}`}>
+                                <Card className="group cursor-pointer transition-all hover:shadow-lg dark:hover:shadow-slate-900/50">
+                                    <CardHeader>
+                                        <div className="mb-2 flex items-start justify-between">
+                                            <div className="rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 p-3 dark:from-blue-900/20 dark:to-indigo-900/20">
+                                                <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                                            </div>
                                         </div>
-                                    </div>
-                                    <CardTitle className="line-clamp-2 text-xl">
-                                        {tracker.title}
-                                    </CardTitle>
-                                    {tracker.description && (
-                                        <CardDescription className="line-clamp-3">
-                                            {tracker.description}
-                                        </CardDescription>
-                                    )}
-                                </CardHeader>
-                                <CardContent>
-                                    <Link href={`/trackers/${tracker.slug}`}>
-                                        <Button className="w-full group-hover:bg-blue-600 group-hover:text-white">
-                                            View Leaderboard
-                                        </Button>
-                                    </Link>
-                                </CardContent>
-                            </Card>
+                                        <CardTitle className="line-clamp-2 text-xl">
+                                            {tracker.title}
+                                        </CardTitle>
+                                        {tracker.description && (
+                                            <CardDescription className="line-clamp-3">
+                                                {tracker.description}
+                                            </CardDescription>
+                                        )}
+                                    </CardHeader>
+                                </Card>
+                            </Link>
                         ))}
                     </div>
                 )}
