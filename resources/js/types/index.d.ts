@@ -57,155 +57,13 @@ export interface PaginatedData<T> {
     total: number;
 }
 
-export interface Event {
-    id: number;
+// ********* Gallery Interface Added *********
+export interface Gallery {
     title: string;
-    starting_at: string;
-    ending_at: string;
-    participation_scope: string;
-    type: string;
-    attendees_count?: number;
-}
-
-export interface EventImage {
-    url: string;
-    preview_url: string;
-    mime_type: string;
-}
-
-export interface EventDetails extends Event {
-    description: string;
-    event_link: string;
-    open_for_attendance: boolean;
-    images: EventImage[];
-    attendance?: Array<PublicUser & { attended_at: string }>;
-    performance?: Array<PublicUser & { solve_count: number; upsolve_count: number }>;
-}
-
-export interface Programmer {
-    name: string;
-    username: string;
-    student_id: string | null;
-    department: string | null;
-    max_cf_rating: number | null;
-    codeforces_handle: string | null;
-    avatar: string | null;
-}
-
-export interface TrackerRankList {
-    keyword: string;
-    user_position: number | null;
-    user_score: number;
-    total_users: number;
-    events_count: number;
-}
-
-export interface TrackerPerformance {
     slug: string;
-    title: string;
-    ranklists: TrackerRankList[];
-}
-
-export interface Contest {
-    id: number;
-    name: string;
-    contest_type: string;
-    location: string | null;
-    date: string | null;
     description: string | null;
-    standings_url: string | null;
-    teams_count?: number;
-}
-
-export interface ContestTeamMember extends PublicUser {
-    id: number;
-}
-
-export interface ContestTeam {
-    id: number;
-    name: string;
-    rank: number | null;
-    solve_count: number | null;
-    members: ContestTeamMember[];
-}
-
-export interface ContestDetails extends Contest {
-    gallery?: GalleryDetails;
-    teams?: ContestTeam[];
-}
-
-export interface ProgrammerContest {
-    name: string;
-    date: string | null;
-    team_name: string;
-    rank: number | null;
-    solve_count: number | null;
-    members: PublicUser[];
-}
-
-export interface ProgrammerDetails extends Programmer {
-    atcoder_handle: string | null;
-    vjudge_handle: string | null;
-    tracker_performance: TrackerPerformance[];
-    contests: ProgrammerContest[];
-}
-
-export interface BlogPost {
-    title: string;
-    slug: string;
-    excerpt: string;
-    published_at: string | null;
-    is_featured: boolean;
-    featured_image: string | null;
-    author: PublicUser;
-}
-
-export interface BlogPostDetails extends BlogPost {
-    content: string;
-    featured_image_full: string | null;
-}
-
-export interface Tracker {
-    title: string;
-    slug: string;
-    description?: string;
-}
-
-export interface TrackerEvent {
-    id: number;
-    title: string;
-    starting_at: string;
-    strict_attendance?: boolean;
-}
-
-export interface EventStat {
-    event_id: number;
-    solve_count: number;
-    upsolve_count: number;
-    participation: boolean;
-}
-
-export interface TrackerUser {
-    id: number;
-    name: string;
-    username: string;
-    department: string | null;
-    student_id: string | null;
-    avatar: string | null;
-    score: number;
-    event_stats: Record<number, EventStat | null>;
-}
-
-export interface TrackerRankListDetails {
-    id: number;
-    keyword: string;
-    consider_strict_attendance: boolean;
-    events: TrackerEvent[];
-    users: TrackerUser[];
-}
-
-export interface TrackerAvailableRankList {
-    keyword: string;
+    thumbnail: string | null;
+    images_count: number;
 }
 
 export interface GalleryImage {
@@ -215,14 +73,27 @@ export interface GalleryImage {
     mime_type: string;
 }
 
-export interface Gallery {
-    title: string;
-    slug: string;
-    description: string | null;
-    thumbnail: string | null;
-    images_count: number;
-}
-
 export interface GalleryDetails extends Gallery {
     images: GalleryImage[];
+}
+
+
+// ********* Event Interface Added *********
+
+export interface Event {
+    id: number;
+    title: string;
+    starting_at: string;
+    ending_at: string;
+    participation_scope: string;
+    type: string;
+    attendees_count?: number;
+}
+export interface EventDetails extends Event {
+    description: string;
+    event_link: string;
+    open_for_attendance: boolean;
+    images: GalleryImage[];
+    attendance?: Array<PublicUser & { attended_at: string }>;
+    performance?: Array<PublicUser & { solve_count: number; upsolve_count: number }>;
 }

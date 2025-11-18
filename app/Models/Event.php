@@ -155,8 +155,8 @@ class Event extends Model implements HasMedia
             ->useDisk(diskName: 'media')
             ->registerMediaConversions(function (?Media $media = null) {
                 $this
-                    ->addMediaConversion('medium')
-                    ->width(1200)
+                    ->addMediaConversion('thumb')
+                    ->width(1000)
                     ->queued();
             });
     }
