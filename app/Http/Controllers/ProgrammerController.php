@@ -56,9 +56,17 @@ class ProgrammerController extends Controller
      */
     public function show(User $user)
     {
-       
-       return ProgrammerDetailsResource::make($user)->resolve();
+        $user->load([
+            'rankLists' => function ($query) {
+                $query->withPivot('score', 'position')
+                    ->withCount([
+                        'events as event_count',
+                        'users as total_user_count',
+                    ])
+                    ->with('tracker:id,title,slug');
+            },
+        ]);
 
-    
+        return ProgrammerDetailsResource::make($user)->resolve();
     }
 }

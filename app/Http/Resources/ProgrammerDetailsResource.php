@@ -13,12 +13,31 @@ class ProgrammerDetailsResource extends ProgrammerResource
      */
     public function toArray(Request $request): array
     {
-       
-
         return array_merge(parent::toArray($request), [
             'atcoder_handle' => $this->atcoder_handle,
             'vjudge_handle' => $this->vjudge_handle,
-        
+            'trackers' => $this->whenLoaded('rankLists', function () {
+                return $this->rankLists
+                    ->groupBy('tracker_id')
+                    ->map(function ($rankLists, $trackerId) {
+                        $tracker = $rankLists->first()->tracker;
+
+                        return [
+                            'title' => $tracker?->title,
+                            'slug' => $tracker?->slug,
+                            'rank_lists' => $rankLists->map(function ($rankList) {
+                                return [
+                                    'keyword' => $rankList->keyword,
+                                    'position' => $rankList->pivot?->position,
+                                    'score' => $rankList->pivot?->score,
+                                    'event_count' => $rankList->event_count ?? 0,
+                                    'total_user_count' => $rankList->total_user_count ?? 0,
+                                ];
+                            })->values(),
+                        ];
+                    })
+                    ->values();
+            }),
         ]);
     }
 }

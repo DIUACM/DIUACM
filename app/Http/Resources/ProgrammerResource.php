@@ -3,7 +3,6 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProgrammerResource extends PublicUserResource
 {
@@ -14,7 +13,7 @@ class ProgrammerResource extends PublicUserResource
      */
     public function toArray(Request $request): array
     {
-          return array_merge(parent::toArray($request), [
+        return array_merge(parent::toArray($request), [
             'max_cf_rating' => $this->max_cf_rating,
         ]);
     }
