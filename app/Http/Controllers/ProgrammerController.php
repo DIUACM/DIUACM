@@ -74,6 +74,8 @@ class ProgrammerController extends Controller
             },
         ]);
 
-        return ProgrammerDetailsResource::make($user)->resolve();
+        return Inertia::render('programmers/show', [
+            'programmer' => ProgrammerDetailsResource::make($user)->resolve(),
+        ]);
     }
 }
