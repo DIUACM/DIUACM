@@ -47,11 +47,12 @@ class ProgrammerDetailsResource extends ProgrammerResource
                         $team = $teams->first();
 
                         return [
-                            'name' => $contest?->name,
-                            'contest_type' => $contest?->contest_type?->value,
-                            'location' => $contest?->location,
-                            'date' => $contest?->date?->toIso8601String(),
-                            'standings_url' => $contest?->standings_url,
+                            'id' => $contest->id,
+                            'name' => $contest->name,
+                            'contest_type' => $contest->contest_type->value,
+                            'location' => $contest->location,
+                            'date' => $contest->date?->toIso8601String(),
+                            'standings_url' => $contest->standings_url,
                             'team' => new ContestTeamResource($team),
                         ];
                     })

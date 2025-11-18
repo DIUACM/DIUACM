@@ -116,6 +116,7 @@ export interface BlogPostDetails extends BlogPost {
 // ********* Contest Interface Added *********
 
 export interface Contest {
+    id: number;
     name: string;
     contest_type: string;
     location: string | null;
@@ -151,6 +152,7 @@ export interface TrackerRankList {
 }
 
 export interface ProgrammerContest {
+    id: number;
     name: string;
     contest_type: string;
     location: string | null;
