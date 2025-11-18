@@ -97,3 +97,49 @@ export interface EventDetails extends Event {
     attendance?: Array<PublicUser & { attended_at: string }>;
     performance?: Array<PublicUser & { solve_count: number; upsolve_count: number }>;
 }
+
+// ********* Blogpost Interface Added *********
+
+export interface BlogPost {
+    title: string;
+    slug: string;
+    excerpt: string;
+    published_at: string | null;
+    is_featured: boolean;
+    featured_image: string | null;
+    author: PublicUser;
+}
+
+export interface BlogPostDetails extends BlogPost {
+    content: string;
+}
+
+// ********* Contest Interface Added *********
+
+export interface Contest {
+    name: string;
+    contest_type: string;
+    location: string | null;
+    date: string | null;
+    description: string | null;
+    standings_url: string | null;
+    teams_count?: number;
+}
+
+export interface ContestTeam {
+    name: string;
+    rank: number | null;
+    solve_count: number | null;
+    members: PublicUser[];
+}
+export interface ContestDetails extends Contest {
+    gallery?: GalleryDetails;
+    teams?: ContestTeam[];
+}
+
+// ********* Trackers Interface Added *********
+export interface Tracker {
+    title: string;
+    slug: string;
+    description: string | null;
+}

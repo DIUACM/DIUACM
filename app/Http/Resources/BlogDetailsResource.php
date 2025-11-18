@@ -15,7 +15,6 @@ class BlogDetailsResource extends BlogResource
     {
         return array_merge(parent::toArray($request), [
             'content' => $this->content,
-            'featured_image_full' => $this->getFirstMediaUrl('featured_image'),
         ]);
     }
 }

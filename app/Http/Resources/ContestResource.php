@@ -15,7 +15,6 @@ class ContestResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
             'name' => $this->name,
             'contest_type' => $this->contest_type,
             'location' => $this->location,
