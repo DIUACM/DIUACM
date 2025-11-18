@@ -2,7 +2,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import MainLayout from '@/layouts/main-layout';
 import type { ContestDetails } from '@/types';
 import { Head, Link } from '@inertiajs/react';
@@ -125,7 +124,7 @@ export default function ContestDetailsPage({ contest }: Props) {
                     {contest.description && (
                         <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-700">
                             <div
-                                className="prose prose-slate max-w-none dark:prose-invert"
+                                className="prose max-w-none prose-slate dark:prose-invert"
                                 dangerouslySetInnerHTML={{ __html: contest.description }}
                             />
                         </div>
@@ -179,9 +178,7 @@ export default function ContestDetailsPage({ contest }: Props) {
                                         {/* Team Header */}
                                         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
                                             <div>
-                                                <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">
-                                                    {team.name}
-                                                </h3>
+                                                <h3 className="mb-2 text-lg font-semibold text-slate-900 dark:text-white">{team.name}</h3>
                                                 <div className="flex flex-wrap gap-2">
                                                     {team.rank !== null && (
                                                         <Badge className={getRankBadgeColor(team.rank)}>
@@ -190,7 +187,10 @@ export default function ContestDetailsPage({ contest }: Props) {
                                                         </Badge>
                                                     )}
                                                     {team.solve_count !== null && team.solve_count > 0 && (
-                                                        <Badge variant="outline" className="border-green-200 bg-green-50 text-green-700 dark:border-green-800/30 dark:bg-green-900/20 dark:text-green-400">
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="border-green-200 bg-green-50 text-green-700 dark:border-green-800/30 dark:bg-green-900/20 dark:text-green-400"
+                                                        >
                                                             {team.solve_count} {team.solve_count === 1 ? 'Problem' : 'Problems'} Solved
                                                         </Badge>
                                                     )}
@@ -241,9 +241,7 @@ export default function ContestDetailsPage({ contest }: Props) {
                         <CardContent className="py-12">
                             <div className="flex flex-col items-center justify-center">
                                 <Users className="mb-4 h-12 w-12 text-slate-300 dark:text-slate-600" />
-                                <p className="text-center text-slate-500 dark:text-slate-400">
-                                    No teams have been registered for this contest yet.
-                                </p>
+                                <p className="text-center text-slate-500 dark:text-slate-400">No teams have been registered for this contest yet.</p>
                             </div>
                         </CardContent>
                     </Card>

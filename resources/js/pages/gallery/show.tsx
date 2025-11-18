@@ -34,9 +34,7 @@ export default function GalleryShowPage({ gallery }: GalleryShowPageProps) {
                             {gallery.images.length} {gallery.images.length === 1 ? 'image' : 'images'}
                         </div>
 
-                        {gallery.description && (
-                            <p className="text-lg text-slate-600 dark:text-slate-300">{gallery.description}</p>
-                        )}
+                        {gallery.description && <p className="text-lg text-slate-600 dark:text-slate-300">{gallery.description}</p>}
                     </div>
 
                     {/* Gallery images grid */}

@@ -77,7 +77,6 @@ export interface GalleryDetails extends Gallery {
     images: GalleryImage[];
 }
 
-
 // ********* Event Interface Added *********
 
 export interface Event {
@@ -142,4 +141,35 @@ export interface Tracker {
     title: string;
     slug: string;
     description: string | null;
+}
+export interface TrackerEvent {
+    id: number;
+    title: string;
+    starting_at: string;
+    strict_attendance?: boolean;
+}
+export interface EventStat {
+    event_id: number;
+    solve_count: number;
+    upsolve_count: number;
+    participation: boolean;
+}
+
+export interface TrackerUser extends PublicUser {
+    score: number;
+    event_stats: Record<number, EventStat | null>;
+}
+
+export interface TrackerAvailableRankList {
+    keyword: string;
+}
+
+export interface TrackerDetails extends Tracker {
+    available_rank_lists: TrackerAvailableRankList[];
+    selected_rank_list: {
+        keyword: string;
+        consider_strict_attendance: boolean;
+        events: TrackerEvent[];
+        users: TrackerUser[];
+    };
 }

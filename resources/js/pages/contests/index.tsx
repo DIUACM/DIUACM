@@ -21,9 +21,7 @@ export default function ContestsPage({ contests, filters }: ContestsPageProps) {
             <section className="container mx-auto px-4 py-16">
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold tracking-tight">Contests</h1>
-                    <p className="mt-1 text-slate-600 dark:text-slate-300">
-                        Explore our participation in competitive programming contests
-                    </p>
+                    <p className="mt-1 text-slate-600 dark:text-slate-300">Explore our participation in competitive programming contests</p>
                 </div>
 
                 <div className="mb-6">

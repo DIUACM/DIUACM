@@ -67,9 +67,7 @@ export function ContestCard({ contest }: Props) {
                     </div>
 
                     {/* Description */}
-                    {contest.description && (
-                        <p className="mb-4 line-clamp-2 text-sm text-slate-600 dark:text-slate-400">{contest.description}</p>
-                    )}
+                    {contest.description && <p className="mb-4 line-clamp-2 text-sm text-slate-600 dark:text-slate-400">{contest.description}</p>}
 
                     {/* Metadata */}
                     <div className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
@@ -94,8 +92,6 @@ export function ContestCard({ contest }: Props) {
                             </div>
                         )}
                     </div>
-
-                   
                 </div>
             </div>
         </Link>

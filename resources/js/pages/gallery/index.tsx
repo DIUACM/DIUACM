@@ -1,9 +1,9 @@
 import { GalleryFilters } from '@/components/gallery/gallery-filters';
 import { CustomPagination } from '@/components/ui/custom-pagination';
 import MainLayout from '@/layouts/main-layout';
+import { show } from '@/routes/galleries';
 import type { Gallery, PaginatedData } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { show } from '@/routes/galleries';
 import { Images } from 'lucide-react';
 
 type GalleryPageProps = {
@@ -35,9 +35,7 @@ export default function GalleryPage({ galleries, filters }: GalleryPageProps) {
                         <div className="mb-4 text-6xl">📸</div>
                         <p className="mb-2 text-lg text-slate-500">No galleries found</p>
                         <p className="text-sm text-slate-400">
-                            {filters.search
-                                ? 'Try adjusting your search to see more galleries.'
-                                : 'There are no galleries available at the moment.'}
+                            {filters.search ? 'Try adjusting your search to see more galleries.' : 'There are no galleries available at the moment.'}
                         </p>
                     </div>
                 ) : (
@@ -60,7 +58,7 @@ export default function GalleryPage({ galleries, filters }: GalleryPageProps) {
                                             <Images className="h-12 w-12 text-slate-300 dark:text-slate-600" />
                                         </div>
                                     )}
-                                    <div className="absolute bottom-2 right-2 rounded-full bg-black/70 px-3 py-1 text-xs text-white">
+                                    <div className="absolute right-2 bottom-2 rounded-full bg-black/70 px-3 py-1 text-xs text-white">
                                         {gallery.images_count} {gallery.images_count === 1 ? 'image' : 'images'}
                                     </div>
                                 </div>
@@ -69,9 +67,7 @@ export default function GalleryPage({ galleries, filters }: GalleryPageProps) {
                                         {gallery.title}
                                     </h3>
                                     {gallery.description && (
-                                        <p className="line-clamp-2 text-sm text-slate-600 dark:text-slate-300">
-                                            {gallery.description}
-                                        </p>
+                                        <p className="line-clamp-2 text-sm text-slate-600 dark:text-slate-300">{gallery.description}</p>
                                     )}
                                 </div>
                             </Link>

@@ -13,44 +13,33 @@ class TrackerDetailsResource extends TrackerResource
      */
     public function toArray(Request $request): array
     {
-        return [
-            'tracker' => [
-                'title' => $this->title,
-                'slug' => $this->slug,
+        return array_merge(parent::toArray($request), [
+            'selected_rank_list' => [
+                'keyword' => $this->selectedRankList->keyword,
+                'consider_strict_attendance' => $this->selectedRankList->consider_strict_attendance,
+                'events' => $this->selectedRankList->events->map(function ($event) {
+                    return [
+                        'id' => $event->id,
+                        'title' => $event->title,
+                        'starting_at' => $event->starting_at,
+                        'strict_attendance' => $event->strict_attendance ?? null,
+                    ];
+                }),
+                'users' => $this->selectedRankList->users->map(function ($user) {
+                    return array_merge(
+                        (new PublicUserResource($user))->toArray(request()),
+                        [
+                            'score' => $user->pivot->score ?? 0,
+                            'event_stats' => $user->getAttribute('event_stats'),
+                        ]
+                    );
+                }),
             ],
-            'selectedRankList' => $this->when(isset($this->selectedRankList), function () {
-                $rankList = $this->selectedRankList;
-
+            'available_rank_lists' => $this->availableRankLists->map(function ($rankList) {
                 return [
-                    'id' => $rankList->id,
                     'keyword' => $rankList->keyword,
-                    'consider_strict_attendance' => $rankList->consider_strict_attendance,
-                    'events' => $rankList->events->map(function ($event) {
-                        return [
-                            'id' => $event->id,
-                            'title' => $event->title,
-                            'starting_at' => $event->starting_at,
-                            'strict_attendance' => $event->strict_attendance ?? null,
-                        ];
-                    }),
-                    'users' => $rankList->users->map(function ($user) {
-                        return array_merge(
-                            (new PublicUserResource($user))->toArray(request()),
-                            [
-                                'score' => $user->pivot->score ?? 0,
-                                'event_stats' => $user->getAttribute('event_stats'),
-                            ]
-                        );
-                    }),
                 ];
             }),
-            'availableRankLists' => $this->when(isset($this->availableRankLists), function () {
-                return $this->availableRankLists->map(function ($rankList) {
-                    return [
-                        'keyword' => $rankList->keyword,
-                    ];
-                });
-            }),
-        ];
+        ]);
     }
 }
