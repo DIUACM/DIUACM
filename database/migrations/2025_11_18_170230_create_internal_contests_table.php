@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\VisibilityStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -28,7 +29,7 @@ return new class extends Migration
             $table->json('sections')->nullable();
             $table->json('lab_teacher_names')->nullable();
             $table->json('tshirt_sizes')->nullable();
-            $table->string('status')->default('draft');
+            $table->string('status')->default(VisibilityStatus::DRAFT);
             $table->timestamps();
         });
     }

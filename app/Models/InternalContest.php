@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\VisibilityStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Image\Enums\Fit;
@@ -13,6 +14,7 @@ class InternalContest extends Model implements HasMedia
 {
     /** @use HasFactory<\Database\Factories\InternalContestFactory> */
     use HasFactory;
+
     use InteractsWithMedia;
 
     protected $fillable = [
@@ -37,6 +39,7 @@ class InternalContest extends Model implements HasMedia
     protected function casts(): array
     {
         return [
+            'status' => VisibilityStatus::class,
             'registration_deadline' => 'datetime',
             'registration_start_time' => 'datetime',
             'registration_limit' => 'integer',

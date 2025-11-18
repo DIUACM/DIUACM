@@ -17,7 +17,7 @@ class InternalContestFactory extends Factory
     public function definition(): array
     {
         $title = fake()->sentence(3);
-        
+
         return [
             'title' => $title,
             'slug' => str($title)->slug(),
