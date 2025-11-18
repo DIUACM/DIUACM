@@ -54,40 +54,11 @@ class ProgrammerController extends Controller
     /**
      * Display the specified programmer's profile.
      */
-    public function show(User $user): Response
+    public function show(User $user)
     {
-        // Load tracker performance with all necessary data
-        $user->load([
-            'rankLists' => function ($query) {
-                $query->with([
-                    'tracker:id,title,slug',
-                    'users' => function ($usersQuery) {
-                        $usersQuery->select(['users.id'])
-                            ->orderByPivot('score', 'desc');
-                    },
-                    'events:id',
-                ])
-                    ->select(['rank_lists.id', 'rank_lists.tracker_id', 'rank_lists.keyword'])
-                    ->orderBy('rank_lists.order');
-            },
-        ]);
+       
+       return ProgrammerDetailsResource::make($user)->resolve();
 
-        // Load contest participations with team and members
-        $user->load([
-            'teams' => function ($query) {
-                $query->with([
-                    'contest:id,name,date',
-                    'members' => function ($membersQuery) {
-                        $membersQuery->select(['users.id', 'users.name', 'users.username', 'users.student_id', 'users.department']);
-                    },
-                ])
-                    ->select(['teams.id', 'teams.name', 'teams.contest_id', 'teams.rank', 'teams.solve_count'])
-                    ->orderBy('teams.created_at', 'desc');
-            },
-        ]);
-
-        return Inertia::render('programmers/show', [
-            'programmer' => ProgrammerDetailsResource::make($user)->resolve(),
-        ]);
+    
     }
 }

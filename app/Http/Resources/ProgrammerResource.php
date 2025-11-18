@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ProgrammerResource extends JsonResource
+class ProgrammerResource extends PublicUserResource
 {
     /**
      * Transform the resource into an array.
@@ -14,14 +14,8 @@ class ProgrammerResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return [
-            'name' => $this->name,
-            'username' => $this->username,
-            'student_id' => $this->student_id,
-            'department' => $this->department,
+          return array_merge(parent::toArray($request), [
             'max_cf_rating' => $this->max_cf_rating,
-            'codeforces_handle' => $this->codeforces_handle,
-            'avatar' => $this->avatar_url,
-        ];
+        ]);
     }
 }

@@ -136,6 +136,33 @@ export interface ContestDetails extends Contest {
     teams?: ContestTeam[];
 }
 
+// ********* Programmers Interface Added *********
+
+export interface Programmer extends PublicUser {
+    max_cf_rating: number | null;
+}
+
+
+export interface ProgrammerContest {
+    name: string;
+    date: string | null;
+    team_name: string;
+    rank: number | null;
+    solve_count: number | null;
+    members: PublicUser[];
+}
+
+export interface TrackerPerformance {
+    slug: string;
+    title: string;
+    ranklists: TrackerRankList[];
+}
+export interface ProgrammerDetails extends Programmer {
+    atcoder_handle: string | null;
+    vjudge_handle: string | null;
+    tracker_performance: TrackerPerformance[];
+    contests: ProgrammerContest[];
+}
 // ********* Trackers Interface Added *********
 export interface Tracker {
     title: string;
@@ -173,3 +200,5 @@ export interface TrackerDetails extends Tracker {
         users: TrackerUser[];
     };
 }
+
+
