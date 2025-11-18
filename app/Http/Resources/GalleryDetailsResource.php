@@ -14,7 +14,7 @@ class GalleryDetailsResource extends GalleryResource
     public function toArray(Request $request): array
     {
         return array_merge(parent::toArray($request), [
-            'images' => GalleryMediaResource::collection($this->getMedia('gallery_images')),
+            'images' => GalleryMediaResource::collection($this->getMedia('gallery_images'))->resolve(),
         ]);
     }
 }

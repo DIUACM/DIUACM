@@ -18,7 +18,7 @@ class ContestTeamResource extends JsonResource
             'name' => $this->name,
             'rank' => $this->rank,
             'solve_count' => $this->solve_count,
-            'members' => PublicUserResource::collection($this->members),
+            'members' => PublicUserResource::collection($this->members)->resolve(),
         ];
     }
 }

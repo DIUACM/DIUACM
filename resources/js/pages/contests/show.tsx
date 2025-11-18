@@ -170,9 +170,9 @@ export default function ContestDetailsPage({ contest }: Props) {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-6">
-                                {contest.teams!.map((team) => (
+                                {contest.teams!.map((team, teamIndex: number) => (
                                     <div
-                                        key={team.id}
+                                        key={teamIndex}
                                         className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-700 dark:bg-slate-800/30"
                                     >
                                         {/* Team Header */}
@@ -206,7 +206,7 @@ export default function ContestDetailsPage({ contest }: Props) {
                                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
                                                 {team.members.map((member) => (
                                                     <Link
-                                                        key={member.id}
+                                                        key={member.username}
                                                         href={`/programmers/${member.username}`}
                                                         className="flex items-center gap-3 rounded-lg bg-white p-3 transition-shadow hover:shadow-md dark:bg-slate-800"
                                                     >

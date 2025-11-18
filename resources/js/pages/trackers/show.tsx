@@ -4,14 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import MainLayout from '@/layouts/main-layout';
-import type { EventStat, Tracker, TrackerAvailableRankList, TrackerRankListDetails } from '@/types';
+import type { EventStat, TrackerAvailableRankList, TrackerRankListDetails } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, BarChart3, Download, FileText, Info, Shield, TrendingUp, Users } from 'lucide-react';
 
 type TrackersShowPageProps = {
-    tracker: Tracker;
-    selectedRankList: TrackerRankListDetails | null;
-    availableRankLists: TrackerAvailableRankList[];
+    title: string;
+    slug: string;
+    description: string | null;
+    selected_rank_list: TrackerRankListDetails | null;
+    available_rank_lists: TrackerAvailableRankList[];
 };
 
 function StatCell({ stat }: { stat: EventStat | null }) {
@@ -64,14 +66,17 @@ function StatCell({ stat }: { stat: EventStat | null }) {
     );
 }
 
-export default function TrackersShowPage({ tracker, selectedRankList, availableRankLists }: TrackersShowPageProps) {
+export default function TrackersShowPage({ title, slug, description, selected_rank_list, available_rank_lists }: TrackersShowPageProps) {
+    const selectedRankList = selected_rank_list;
+    const availableRankLists = available_rank_lists;
+
     if (!selectedRankList) {
         return (
             <MainLayout>
-                <Head title={tracker.title} />
+                <Head title={title} />
                 <div className="container mx-auto px-4 py-8">
                     <div className="text-center">
-                        <h1 className="mb-4 text-4xl font-bold text-slate-900 dark:text-white">{tracker.title}</h1>
+                        <h1 className="mb-4 text-4xl font-bold text-slate-900 dark:text-white">{title}</h1>
                         <p className="text-slate-600 dark:text-slate-300">No rank list available</p>
                         <Link href="/trackers" className="mt-4 inline-flex items-center gap-2 text-blue-600 hover:underline dark:text-blue-400">
                             <ArrowLeft className="h-4 w-4" />
@@ -88,7 +93,7 @@ export default function TrackersShowPage({ tracker, selectedRankList, availableR
 
     return (
         <MainLayout>
-            <Head title={`${tracker.title} - ${selectedRankList.keyword}`} />
+            <Head title={`${title} - ${selectedRankList.keyword}`} />
             <div className="container mx-auto px-4 py-8">
                 <div className="space-y-6">
                     {/* Header Section */}
@@ -100,7 +105,7 @@ export default function TrackersShowPage({ tracker, selectedRankList, availableR
                             <ArrowLeft className="h-4 w-4" />
                             Back to Trackers
                         </Link>
-                        <h1 className="mb-4 text-2xl font-bold text-slate-900 dark:text-white">{tracker.title}</h1>
+                        <h1 className="mb-4 text-2xl font-bold text-slate-900 dark:text-white">{title}</h1>
                     </div>
 
                     {/* Ranklist Navigation and Stats */}
@@ -114,7 +119,7 @@ export default function TrackersShowPage({ tracker, selectedRankList, availableR
                                         <div className="flex flex-wrap gap-2">
                                             {availableRankLists.map((rankList) => {
                                                 const isActive = rankList.keyword === selectedRankList.keyword;
-                                                const href = `/trackers/${tracker.slug}?keyword=${rankList.keyword}`;
+                                                const href = `/trackers/${slug}?keyword=${rankList.keyword}`;
 
                                                 return (
                                                     <Link key={rankList.keyword} href={href}>
@@ -169,7 +174,7 @@ export default function TrackersShowPage({ tracker, selectedRankList, availableR
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem asChild>
                                                 <a
-                                                    href={`/trackers/${tracker.slug}/export?keyword=${selectedRankList.keyword}&format=json`}
+                                                    href={`/trackers/${slug}/export?keyword=${selectedRankList.keyword}&format=json`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="flex items-center gap-2"
@@ -180,7 +185,7 @@ export default function TrackersShowPage({ tracker, selectedRankList, availableR
                                             </DropdownMenuItem>
                                             <DropdownMenuItem asChild>
                                                 <a
-                                                    href={`/trackers/${tracker.slug}/export?keyword=${selectedRankList.keyword}&format=csv`}
+                                                    href={`/trackers/${slug}/export?keyword=${selectedRankList.keyword}&format=csv`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="flex items-center gap-2"
@@ -271,7 +276,7 @@ export default function TrackersShowPage({ tracker, selectedRankList, availableR
                                                 {/* Table Body */}
                                                 <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-800">
                                                     {users.map((user, index) => (
-                                                        <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                                        <tr key={user.username} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                                             {/* Rank */}
                                                             <td className="sticky left-0 z-10 bg-white px-4 py-3 text-sm font-medium text-slate-900 hover:bg-slate-50 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700/50">
                                                                 {index + 1}

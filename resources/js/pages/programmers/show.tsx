@@ -125,15 +125,15 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                 </div>
 
                 {/* Tracker Performance */}
-                {Array.isArray(programmer.tracker_performance) && programmer.tracker_performance.length > 0 && (
+                {Array.isArray(programmer.trackers) && programmer.trackers.length > 0 && (
                     <div className="mb-8">
                         <h2 className="mb-6 flex items-center text-xl font-semibold text-slate-900 dark:text-white">
                             <Target className="mr-2 h-5 w-5 text-purple-600 dark:text-purple-400" />
-                            Tracker Performance ({programmer.tracker_performance.length})
+                            Tracker Performance ({programmer.trackers.length})
                         </h2>
 
                         <div className="space-y-6">
-                            {programmer.tracker_performance.map((tracker) => (
+                            {programmer.trackers.map((tracker) => (
                                 <Card key={tracker.slug} className="transition-shadow hover:shadow-md">
                                     <CardContent>
                                         <div className="mb-4">
@@ -141,7 +141,7 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                         </div>
 
                                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                            {tracker.ranklists.map((rankList) => (
+                                            {tracker.rank_lists.map((rankList) => (
                                                 <Link
                                                     key={rankList.keyword}
                                                     href={`/trackers/${tracker.slug}?keyword=${encodeURIComponent(rankList.keyword)}`}
@@ -149,12 +149,12 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                                 >
                                                     <div className="mb-3 flex items-center justify-between">
                                                         <h4 className="font-medium">{rankList.keyword}</h4>
-                                                        {rankList.user_position && (
+                                                        {rankList.position && (
                                                             <Badge
                                                                 variant="outline"
                                                                 className="bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
                                                             >
-                                                                #{rankList.user_position}
+                                                                #{rankList.position}
                                                             </Badge>
                                                         )}
                                                     </div>
@@ -166,7 +166,7 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                                                 <span>Total Users</span>
                                                             </div>
                                                             <span className="font-medium text-slate-900 dark:text-slate-100">
-                                                                {rankList.total_users}
+                                                                {rankList.total_user_count}
                                                             </span>
                                                         </div>
 
@@ -176,7 +176,7 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                                                 <span>Events</span>
                                                             </div>
                                                             <span className="font-medium text-slate-900 dark:text-slate-100">
-                                                                {rankList.events_count}
+                                                                {rankList.event_count}
                                                             </span>
                                                         </div>
 
@@ -186,7 +186,7 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                                                 <span>Score</span>
                                                             </div>
                                                             <span className="font-medium text-amber-600 dark:text-amber-400">
-                                                                {rankList.user_score}
+                                                                {rankList.score}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -222,14 +222,14 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
 
                                             <div className="flex items-center gap-2">
                                                 <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-                                                    {contest.team_name}
+                                                    {contest.team.name}
                                                 </Badge>
-                                                {contest.rank && (
+                                                {contest.team.rank && (
                                                     <Badge
                                                         variant="outline"
                                                         className="bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
                                                     >
-                                                        Rank #{contest.rank}
+                                                        Rank #{contest.team.rank}
                                                     </Badge>
                                                 )}
                                             </div>
@@ -237,10 +237,10 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
 
                                         <div>
                                             <h4 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">
-                                                Team Members ({contest.members.length})
+                                                Team Members ({contest.team.members.length})
                                             </h4>
                                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-                                                {contest.members.map((member) => (
+                                                {contest.team.members.map((member) => (
                                                     <Link
                                                         key={member.username}
                                                         href={`/programmers/${member.username}`}
@@ -267,11 +267,11 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                                 ))}
                                             </div>
 
-                                            {contest.solve_count !== null && (
+                                            {contest.team.solve_count !== null && (
                                                 <div className="mt-3 flex items-center gap-2 border-t border-slate-200 pt-3 dark:border-slate-700">
                                                     <Trophy className="h-4 w-4 text-blue-500" />
                                                     <span className="text-sm text-slate-600 dark:text-slate-400">
-                                                        {contest.solve_count} problems solved
+                                                        {contest.team.solve_count} problems solved
                                                     </span>
                                                 </div>
                                             )}

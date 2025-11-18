@@ -202,12 +202,14 @@ export interface TrackerAvailableRankList {
     keyword: string;
 }
 
+export interface TrackerRankListDetails {
+    keyword: string;
+    consider_strict_attendance: boolean;
+    events: TrackerEvent[];
+    users: TrackerUser[];
+}
+
 export interface TrackerDetails extends Tracker {
     available_rank_lists: TrackerAvailableRankList[];
-    selected_rank_list: {
-        keyword: string;
-        consider_strict_attendance: boolean;
-        events: TrackerEvent[];
-        users: TrackerUser[];
-    };
+    selected_rank_list: TrackerRankListDetails;
 }

@@ -53,7 +53,7 @@ class ProgrammerDetailsResource extends ProgrammerResource
                             'location' => $contest->location,
                             'date' => $contest->date?->toIso8601String(),
                             'standings_url' => $contest->standings_url,
-                            'team' => new ContestTeamResource($team),
+                            'team' => (new ContestTeamResource($team))->resolve(),
                         ];
                     })
                     ->values();

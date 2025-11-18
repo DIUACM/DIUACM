@@ -19,7 +19,7 @@ class EventDetailsResource extends EventResource
             'event_link' => $this->event_link,
             'open_for_attendance' => $this->open_for_attendance,
             'images' => $this->when($this->relationLoaded('media'), function () {
-                return GalleryMediaResource::collection($this->getMedia('event_images'));
+                return GalleryMediaResource::collection($this->getMedia('event_images'))->resolve();
             }),
             'attendance' => $this->when($this->open_for_attendance && $this->relationLoaded('attendees'), function () {
                 return $this->attendees->map(function ($user) {

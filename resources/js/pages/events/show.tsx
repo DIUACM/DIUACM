@@ -290,7 +290,7 @@ export default function EventDetailsPage({ event, auth }: Props) {
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {event.images.map((image, index) => (
                                 <div key={index} className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
-                                    <img src={image.preview_url} alt={`Event image ${index + 1}`} className="h-64 w-full object-cover" />
+                                    <img src={image.thumbnail} alt={`Event image ${index + 1}`} className="h-64 w-full object-cover" />
                                 </div>
                             ))}
                         </div>
