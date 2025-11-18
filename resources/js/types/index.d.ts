@@ -106,27 +106,48 @@ export interface TrackerPerformance {
     ranklists: TrackerRankList[];
 }
 
-export interface ContestMember {
+export interface Contest {
+    id: number;
     name: string;
-    username: string;
-    student_id: string | null;
-    avatar: string | null;
+    contest_type: string;
+    location: string | null;
+    date: string | null;
+    description: string | null;
+    standings_url: string | null;
+    teams_count?: number;
 }
 
-export interface Contest {
+export interface ContestTeamMember extends PublicUser {
+    id: number;
+}
+
+export interface ContestTeam {
+    id: number;
+    name: string;
+    rank: number | null;
+    solve_count: number | null;
+    members: ContestTeamMember[];
+}
+
+export interface ContestDetails extends Contest {
+    gallery?: GalleryDetails;
+    teams?: ContestTeam[];
+}
+
+export interface ProgrammerContest {
     name: string;
     date: string | null;
     team_name: string;
     rank: number | null;
     solve_count: number | null;
-    members: ContestMember[];
+    members: PublicUser[];
 }
 
 export interface ProgrammerDetails extends Programmer {
     atcoder_handle: string | null;
     vjudge_handle: string | null;
     tracker_performance: TrackerPerformance[];
-    contests: Contest[];
+    contests: ProgrammerContest[];
 }
 
 export interface BlogPost {
@@ -202,9 +223,6 @@ export interface Gallery {
     images_count: number;
 }
 
-export interface GalleryDetails {
-    title: string;
-    slug: string;
-    description: string | null;
+export interface GalleryDetails extends Gallery {
     images: GalleryImage[];
 }

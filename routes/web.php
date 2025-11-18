@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ContestController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\ProfileController;
@@ -34,6 +35,9 @@ Route::get('/events/{event}', [EventController::class, 'show'])->name('events.sh
 Route::post('/events/{event}/attendance', [EventController::class, 'storeAttendance'])
     ->middleware('auth')
     ->name('events.attendance.store');
+
+Route::get('/contests', [ContestController::class, 'index'])->name('contests.index');
+Route::get('/contests/{contest}', [ContestController::class, 'show'])->name('contests.show');
 
 Route::get('/programmers', [ProgrammerController::class, 'index'])->name('programmers.index');
 Route::get('/programmers/{user:username}', [ProgrammerController::class, 'show'])->name('programmers.show');
