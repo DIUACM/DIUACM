@@ -15,12 +15,7 @@ class ContestDetailsResource extends ContestResource
     {
         return array_merge(parent::toArray($request), [
             'gallery' => $this->whenLoaded('gallery', fn () => (new GalleryDetailsResource($this->gallery))->toArray($request)),
-            'teams' => $this->whenLoaded('teams', fn () => $this->teams->map(fn ($team) => [
-                'name' => $team->name,
-                'rank' => $team->rank,
-                'solve_count' => $team->solve_count,
-                'members' => $team->members->map(fn ($member) => (new PublicUserResource($member))->toArray($request)),
-            ])),
+            'teams' => $this->whenLoaded('teams', fn () => ContestTeamResource::collection($this->teams)),
         ]);
     }
 }

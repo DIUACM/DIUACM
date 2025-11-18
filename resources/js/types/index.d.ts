@@ -143,25 +143,35 @@ export interface Programmer extends PublicUser {
 }
 
 
+export interface TrackerRankList {
+    keyword: string;
+    position: number ;
+    score: number;
+    total_user_count: number;
+    event_count: number;
+}
+
 export interface ProgrammerContest {
     name: string;
+    contest_type: string;
+    location: string | null;
     date: string | null;
-    team_name: string;
-    rank: number | null;
-    solve_count: number | null;
-    members: PublicUser[];
+   standings_url: string | null;
+   team:ContestTeam ;
 }
 
 export interface TrackerPerformance {
     slug: string;
     title: string;
-    ranklists: TrackerRankList[];
+    rank_lists: TrackerRankList[];
 }
+
 export interface ProgrammerDetails extends Programmer {
     atcoder_handle: string | null;
     vjudge_handle: string | null;
-    tracker_performance: TrackerPerformance[];
-    contests: ProgrammerContest[];
+    codeforces_handle: string | null;
+    trackers: TrackerPerformance[];
+
 }
 // ********* Trackers Interface Added *********
 export interface Tracker {

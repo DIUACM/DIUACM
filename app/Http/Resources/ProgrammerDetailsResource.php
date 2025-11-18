@@ -16,6 +16,7 @@ class ProgrammerDetailsResource extends ProgrammerResource
         return array_merge(parent::toArray($request), [
             'atcoder_handle' => $this->atcoder_handle,
             'vjudge_handle' => $this->vjudge_handle,
+            'codeforces_handle' => $this->codeforces_handle,
             'trackers' => $this->whenLoaded('rankLists', function () {
                 return $this->rankLists
                     ->groupBy('tracker_id')
@@ -43,6 +44,7 @@ class ProgrammerDetailsResource extends ProgrammerResource
                     ->groupBy('contest_id')
                     ->map(function ($teams, $contestId) {
                         $contest = $teams->first()->contest;
+                        $team = $teams->first();
 
                         return [
                             'name' => $contest?->name,
@@ -50,14 +52,7 @@ class ProgrammerDetailsResource extends ProgrammerResource
                             'location' => $contest?->location,
                             'date' => $contest?->date?->toIso8601String(),
                             'standings_url' => $contest?->standings_url,
-                            'teams' => $teams->map(function ($team) {
-                                return [
-                                    'name' => $team->name,
-                                    'rank' => $team->rank,
-                                    'solve_count' => $team->solve_count,
-                                    'members' => PublicUserResource::collection($team->members),
-                                ];
-                            })->values(),
+                            'team' => new ContestTeamResource($team),
                         ];
                     })
                     ->values();
