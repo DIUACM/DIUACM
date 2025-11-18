@@ -142,10 +142,9 @@ export interface Programmer extends PublicUser {
     max_cf_rating: number | null;
 }
 
-
 export interface TrackerRankList {
     keyword: string;
-    position: number ;
+    position: number;
     score: number;
     total_user_count: number;
     event_count: number;
@@ -156,8 +155,8 @@ export interface ProgrammerContest {
     contest_type: string;
     location: string | null;
     date: string | null;
-   standings_url: string | null;
-   team:ContestTeam ;
+    standings_url: string | null;
+    team: ContestTeam;
 }
 
 export interface TrackerPerformance {
@@ -171,7 +170,7 @@ export interface ProgrammerDetails extends Programmer {
     vjudge_handle: string | null;
     codeforces_handle: string | null;
     trackers: TrackerPerformance[];
-
+    contests: ProgrammerContest[];
 }
 // ********* Trackers Interface Added *********
 export interface Tracker {
@@ -210,5 +209,3 @@ export interface TrackerDetails extends Tracker {
         users: TrackerUser[];
     };
 }
-
-
