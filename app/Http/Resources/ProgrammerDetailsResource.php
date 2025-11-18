@@ -38,6 +38,30 @@ class ProgrammerDetailsResource extends ProgrammerResource
                     })
                     ->values();
             }),
+            'contests' => $this->whenLoaded('teams', function () {
+                return $this->teams
+                    ->groupBy('contest_id')
+                    ->map(function ($teams, $contestId) {
+                        $contest = $teams->first()->contest;
+
+                        return [
+                            'name' => $contest?->name,
+                            'contest_type' => $contest?->contest_type?->value,
+                            'location' => $contest?->location,
+                            'date' => $contest?->date?->toIso8601String(),
+                            'standings_url' => $contest?->standings_url,
+                            'teams' => $teams->map(function ($team) {
+                                return [
+                                    'name' => $team->name,
+                                    'rank' => $team->rank,
+                                    'solve_count' => $team->solve_count,
+                                    'members' => PublicUserResource::collection($team->members),
+                                ];
+                            })->values(),
+                        ];
+                    })
+                    ->values();
+            }),
         ]);
     }
 }

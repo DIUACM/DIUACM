@@ -65,6 +65,13 @@ class ProgrammerController extends Controller
                     ])
                     ->with('tracker:id,title,slug');
             },
+            'teams' => function ($query) {
+                $query->with([
+                    'contest:id,name,contest_type,location,date,standings_url',
+                    'members:id,name,username,student_id,department',
+                ])
+                    ->orderBy('created_at', 'desc');
+            },
         ]);
 
         return ProgrammerDetailsResource::make($user)->resolve();
