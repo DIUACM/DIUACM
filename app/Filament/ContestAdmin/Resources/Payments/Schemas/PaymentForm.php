@@ -20,6 +20,7 @@ class PaymentForm
         return $schema
             ->components([
                 Section::make('Payment Information')
+                 ->columnSpanFull()
                     ->schema([
                         MorphToSelect::make('payable')
                             ->label('Related To')
@@ -36,6 +37,7 @@ class PaymentForm
                     ]),
 
                 Section::make('Transaction Details')
+                 ->columnSpanFull()
                     ->schema([
                         Grid::make(2)
                             ->schema([
@@ -89,6 +91,7 @@ class PaymentForm
                     ]),
 
                 Section::make('Gateway Response')
+                 ->columnSpanFull()
                     ->description('Response data from the payment gateway')
                     ->schema([
                         Textarea::make('gateway_response')
