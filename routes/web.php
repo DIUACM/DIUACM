@@ -6,6 +6,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContestController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GalleryController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgrammerController;
 use Illuminate\Support\Facades\Route;
@@ -63,3 +64,11 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/contact', [ContactController::class, 'contact'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+
+
+
+// Payment routes
+Route::middleware('auth')->prefix('payments')->name('payment.')->group(function () {
+    Route::get('/registrations/{registration}', [PaymentController::class, 'initiateRegistrationPayment'])
+        ->name('registration.initiate');
+});

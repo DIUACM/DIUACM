@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\Gender;
 use App\Enums\PaymentStatus;
+use App\Traits\HasPayments;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -12,6 +13,7 @@ class InternalContestRegistration extends Model
 {
     /** @use HasFactory<\Database\Factories\InternalContestRegistrationFactory> */
     use HasFactory;
+    use HasPayments;
 
     protected $fillable = [
         'internal_contest_id',
@@ -49,8 +51,4 @@ class InternalContestRegistration extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function payments(): MorphMany
-    {
-        return $this->morphMany(Payment::class, 'payable');
-    }
 }
