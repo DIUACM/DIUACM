@@ -72,3 +72,11 @@ Route::middleware('auth')->prefix('payments')->name('payment.')->group(function 
     Route::get('/registrations/{registration}', [PaymentController::class, 'initiateRegistrationPayment'])
         ->name('registration.initiate');
 });
+
+// Public payment callback routes (no auth required)
+Route::get('/payments/callback/{gateway}', [PaymentController::class, 'handleCallback'])
+    ->name('payment.callback');
+
+Route::post('/success',function(){
+    return request()->all();
+});
