@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -30,6 +31,7 @@ class Payment extends Model
             'amount' => 'decimal:2',
             'gateway_response' => 'array',
             'paid_at' => 'datetime',
+            'status' => PaymentStatus::class,
         ];
     }
 
