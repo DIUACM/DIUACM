@@ -5,6 +5,7 @@ namespace App\Filament\ContestAdmin\Resources\InternalContests\Resources\Interna
 use App\Filament\ContestAdmin\Resources\InternalContests\InternalContestResource;
 use App\Filament\ContestAdmin\Resources\InternalContests\Resources\InternalContestRegistrations\Pages\CreateInternalContestRegistration;
 use App\Filament\ContestAdmin\Resources\InternalContests\Resources\InternalContestRegistrations\Pages\EditInternalContestRegistration;
+use App\Filament\ContestAdmin\Resources\InternalContests\Resources\InternalContestRegistrations\RelationManagers\PaymentsRelationManager;
 use App\Filament\ContestAdmin\Resources\InternalContests\Resources\InternalContestRegistrations\Schemas\InternalContestRegistrationForm;
 use App\Filament\ContestAdmin\Resources\InternalContests\Resources\InternalContestRegistrations\Tables\InternalContestRegistrationsTable;
 use App\Models\InternalContestRegistration;
@@ -51,7 +52,7 @@ class InternalContestRegistrationResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            PaymentsRelationManager::class,
         ];
     }
 
