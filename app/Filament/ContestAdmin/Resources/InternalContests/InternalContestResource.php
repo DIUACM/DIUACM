@@ -5,6 +5,7 @@ namespace App\Filament\ContestAdmin\Resources\InternalContests;
 use App\Filament\ContestAdmin\Resources\InternalContests\Pages\CreateInternalContest;
 use App\Filament\ContestAdmin\Resources\InternalContests\Pages\EditInternalContest;
 use App\Filament\ContestAdmin\Resources\InternalContests\Pages\ListInternalContests;
+use App\Filament\ContestAdmin\Resources\InternalContests\Pages\ManageInternalContestRegistration;
 use App\Filament\ContestAdmin\Resources\InternalContests\Schemas\InternalContestForm;
 use App\Filament\ContestAdmin\Resources\InternalContests\Tables\InternalContestsTable;
 use App\Models\InternalContest;
@@ -19,6 +20,8 @@ use Illuminate\Database\Eloquent\Model;
 class InternalContestResource extends Resource
 {
     protected static ?string $model = InternalContest::class;
+
+    protected static ?string $slug = 'contests';
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTicket;
 
@@ -73,6 +76,8 @@ class InternalContestResource extends Resource
             'index' => ListInternalContests::route('/'),
             'create' => CreateInternalContest::route('/create'),
             'edit' => EditInternalContest::route('/{record}/edit'),
+            'registrations' => ManageInternalContestRegistration::route('/{record}/registrations'),
+
         ];
     }
 }
