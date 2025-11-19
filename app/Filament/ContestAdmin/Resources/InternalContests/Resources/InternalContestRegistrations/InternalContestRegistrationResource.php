@@ -9,6 +9,7 @@ use App\Filament\ContestAdmin\Resources\InternalContests\Resources\InternalConte
 use App\Filament\ContestAdmin\Resources\InternalContests\Resources\InternalContestRegistrations\Tables\InternalContestRegistrationsTable;
 use App\Models\InternalContestRegistration;
 use BackedEnum;
+use Filament\Resources\ParentResourceRegistration;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -22,8 +23,6 @@ class InternalContestRegistrationResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
 
-    protected static ?string $parentResource = InternalContestResource::class;
-
     protected static ?string $recordTitleAttribute = 'name';
 
     protected static ?string $navigationLabel = 'Registrations';
@@ -31,6 +30,13 @@ class InternalContestRegistrationResource extends Resource
     protected static ?string $modelLabel = 'Registration';
 
     protected static ?string $pluralModelLabel = 'Registrations';
+
+    public static function getParentResourceRegistration(): ?ParentResourceRegistration
+    {
+        return InternalContestResource::asParent()
+            ->relationship('registrations')
+            ->inverseRelationship('internalContest');
+    }
 
     public static function form(Schema $schema): Schema
     {
