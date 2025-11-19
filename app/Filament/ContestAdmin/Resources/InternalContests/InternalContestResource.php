@@ -29,6 +29,12 @@ class InternalContestResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'title';
 
+    protected static ?string $navigationLabel = 'Contests';
+
+    protected static ?string $modelLabel = 'Contest';
+
+    protected static ?string $pluralModelLabel = 'Contests';
+
     public static function getNavigationBadge(): ?string
     {
         return static::getModel()::count();
