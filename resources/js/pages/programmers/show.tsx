@@ -185,9 +185,7 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                                                 <Trophy className="h-4 w-4 text-amber-500" />
                                                                 <span>Score</span>
                                                             </div>
-                                                            <span className="font-medium text-amber-600 dark:text-amber-400">
-                                                                {rankList.score}
-                                                            </span>
+                                                            <span className="font-medium text-amber-600 dark:text-amber-400">{rankList.score}</span>
                                                         </div>
                                                     </div>
                                                 </Link>
