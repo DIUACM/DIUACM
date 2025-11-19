@@ -57,6 +57,11 @@ class InternalContest extends Model implements HasMedia
         return 'slug';
     }
 
+    public function registrations()
+    {
+        return $this->hasMany(InternalContestRegistration::class);
+    }
+
     public function registerMediaCollections(): void
     {
         $this
