@@ -2,11 +2,16 @@
 
 namespace App\Filament\ContestAdmin\Resources\InternalContests\Resources\InternalContestRegistrations\Tables;
 
+use App\Enums\Gender;
+use App\Enums\PaymentStatus;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Support\Colors\Color;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class InternalContestRegistrationsTable
@@ -14,54 +19,125 @@ class InternalContestRegistrationsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->defaultSort('created_at', 'desc')
             ->columns([
-                TextColumn::make('internal_contest_id')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('user_id')
-                    ->numeric()
-                    ->sortable(),
                 TextColumn::make('name')
-                    ->searchable(),
-                TextColumn::make('email')
-                    ->label('Email address')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable()
+                    ->weight('medium')
+                    ->limit(30),
+
                 TextColumn::make('student_id')
-                    ->searchable(),
+                    ->label('Student ID')
+                    ->searchable()
+                    ->sortable()
+                    ->copyable()
+                    ->copyMessage('Student ID copied')
+                    ->limit(20),
+
+                TextColumn::make('email')
+                    ->label('Email')
+                    ->searchable()
+                    ->limit(30)
+                    ->toggleable(),
+
                 TextColumn::make('phone')
-                    ->searchable(),
-                TextColumn::make('section')
-                    ->searchable(),
+                    ->label('Phone')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('department')
-                    ->searchable(),
-                TextColumn::make('lab_teacher_name')
-                    ->searchable(),
-                TextColumn::make('tshirt_size')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable()
+                    ->limit(20),
+
+                TextColumn::make('section')
+                    ->searchable()
+                    ->sortable(),
+
                 TextColumn::make('gender')
                     ->badge()
-                    ->searchable(),
-                IconColumn::make('transport_service_required')
-                    ->boolean(),
-                TextColumn::make('pickup_point')
-                    ->searchable(),
-                TextColumn::make('payment_status')
+                    ->sortable(),
+
+                TextColumn::make('tshirt_size')
+                    ->label('T-Shirt')
                     ->badge()
-                    ->searchable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
+                    ->color(Color::Gray)
+                    ->toggleable(),
+
+                IconColumn::make('transport_service_required')
+                    ->label('Transport')
+                    ->boolean()
+                    ->alignCenter()
+                    ->toggleable(),
+
+                TextColumn::make('pickup_point')
+                    ->label('Pickup Point')
+                    ->searchable()
+                    ->limit(20)
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('payment_status')
+                    ->label('Payment')
+                    ->badge()
+                    ->sortable(),
+
+                TextColumn::make('user.name')
+                    ->label('User Account')
+                    ->searchable()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('created_at')
+                    ->label('Registered At')
+                    ->dateTime('M j, Y g:i A')
+                    ->sortable()
+                    ->toggleable(),
+
                 TextColumn::make('updated_at')
-                    ->dateTime()
+                    ->label('Updated At')
+                    ->dateTime('M j, Y g:i A')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('payment_status')
+                    ->label('Payment Status')
+                    ->options(PaymentStatus::class)
+                    ->multiple()
+                    ->preload(),
+
+                SelectFilter::make('gender')
+                    ->options(Gender::class)
+                    ->multiple()
+                    ->preload(),
+
+                SelectFilter::make('transport_service_required')
+                    ->label('Transport Service')
+                    ->options([
+                        1 => 'Required',
+                        0 => 'Not Required',
+                    ]),
+
+                SelectFilter::make('department')
+                    ->options(fn () => \App\Models\InternalContestRegistration::query()
+                        ->distinct()
+                        ->pluck('department', 'department')
+                        ->toArray())
+                    ->searchable()
+                    ->multiple()
+                    ->preload(),
             ])
             ->recordActions([
                 EditAction::make(),
+                Action::make('markPaid')
+                    ->label('Mark Paid')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->visible(fn ($record) => $record->payment_status !== PaymentStatus::PAID)
+                    ->requiresConfirmation()
+                    ->action(fn ($record) => $record->update(['payment_status' => PaymentStatus::PAID]))
+                    ->successNotificationTitle('Payment status updated to Paid'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

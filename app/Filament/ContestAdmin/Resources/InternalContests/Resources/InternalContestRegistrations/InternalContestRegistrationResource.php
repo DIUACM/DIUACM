@@ -20,11 +20,17 @@ class InternalContestRegistrationResource extends Resource
 
     protected static ?string $slug = 'registrations';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClipboardDocumentList;
 
     protected static ?string $parentResource = InternalContestResource::class;
 
     protected static ?string $recordTitleAttribute = 'name';
+
+    protected static ?string $navigationLabel = 'Registrations';
+
+    protected static ?string $modelLabel = 'Registration';
+
+    protected static ?string $pluralModelLabel = 'Registrations';
 
     public static function form(Schema $schema): Schema
     {
