@@ -32,48 +32,74 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'destroy'])->middleware('auth')->name('logout');
 
-Route::get('/events', [EventController::class, 'index'])->name('events.index');
-Route::get('/events/{event}', [EventController::class, 'show'])->name('events.show');
-Route::post('/events/{event}/attendance', [EventController::class, 'storeAttendance'])
-    ->middleware('auth')
-    ->name('events.attendance.store');
-
-Route::get('/contests', [ContestController::class, 'index'])->name('contests.index');
-Route::get('/contests/{contest}', [ContestController::class, 'show'])->name('contests.show');
-
-Route::get('/internal-contests', [InternalContestController::class, 'index'])->name('internal-contests.index');
-Route::get('/internal-contests/{internalContest:slug}', [InternalContestController::class, 'show'])->name('internal-contests.show');
-Route::get('/internal-contests/{internalContest:slug}/register', [InternalContestController::class, 'registration'])->name('internal-contests.registration');
-Route::post('/internal-contests/{internalContest:slug}/register', [InternalContestController::class, 'storeRegistration'])->name('internal-contests.store-registration');
-Route::post('/internal-contests/{internalContest:slug}/validate-student-id', [InternalContestController::class, 'validateStudentId'])->name('internal-contests.validate-student-id');
-Route::get('/internal-contests/{internalContest:slug}/my-registration', [InternalContestController::class, 'myRegistration'])
-    ->middleware('auth')
-    ->name('internal-contests.my-registration');
-
-Route::get('/programmers', [ProgrammerController::class, 'index'])->name('programmers.index');
-Route::get('/programmers/{user:username}', [ProgrammerController::class, 'show'])->name('programmers.show');
-
-Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
-Route::get('/blog/{blogPost:slug}', [BlogController::class, 'show'])->name('blog.show');
-
-Route::get('/galleries', [GalleryController::class, 'index'])->name('galleries.index');
-Route::get('/galleries/{gallery:slug}', [GalleryController::class, 'show'])->name('galleries.show');
-
-Route::get('/trackers', [\App\Http\Controllers\TrackerController::class, 'index'])->name('trackers.index');
-Route::get('/trackers/{slug}', [\App\Http\Controllers\TrackerController::class, 'show'])->name('trackers.show');
-Route::get('/trackers/{slug}/export', [\App\Http\Controllers\TrackerController::class, 'export'])->name('trackers.export');
-
-// Profile routes
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar.update');
-    Route::get('/profile/change-password', [ProfileController::class, 'editPassword'])->name('profile.editPassword');
-    Route::post('/profile/change-password', [ProfileController::class, 'updatePassword'])->name('profile.updatePassword');
+// Event routes
+Route::prefix('events')->name('events.')->group(function () {
+    Route::get('/', [EventController::class, 'index'])->name('index');
+    Route::get('/{event}', [EventController::class, 'show'])->name('show');
+    
+    Route::middleware('auth')->group(function () {
+        Route::post('/{event}/attendance', [EventController::class, 'storeAttendance'])->name('attendance.store');
+    });
 });
 
-Route::get('/contact', [ContactController::class, 'contact'])->name('contact');
-Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+// Contest routes
+Route::prefix('contests')->name('contests.')->group(function () {
+    Route::get('/', [ContestController::class, 'index'])->name('index');
+    Route::get('/{contest}', [ContestController::class, 'show'])->name('show');
+});
+
+// Internal contest routes
+Route::prefix('internal-contests')->name('internal-contests.')->group(function () {
+    Route::get('/', [InternalContestController::class, 'index'])->name('index');
+    Route::get('/{internalContest:slug}', [InternalContestController::class, 'show'])->name('show');
+    
+    Route::middleware(['auth', 'verified'])->group(function () {
+        Route::get('/{internalContest:slug}/register', [InternalContestController::class, 'registration'])->name('registration');
+        Route::post('/{internalContest:slug}/register', [InternalContestController::class, 'storeRegistration'])->name('store-registration');
+        Route::post('/{internalContest:slug}/validate-student-id', [InternalContestController::class, 'validateStudentId'])->name('validate-student-id');
+        Route::get('/{internalContest:slug}/my-registration', [InternalContestController::class, 'myRegistration'])->name('my-registration');
+    });
+});
+
+// Programmer routes
+Route::prefix('programmers')->name('programmers.')->group(function () {
+    Route::get('/', [ProgrammerController::class, 'index'])->name('index');
+    Route::get('/{user:username}', [ProgrammerController::class, 'show'])->name('show');
+});
+
+// Blog routes
+Route::prefix('blog')->name('blog.')->group(function () {
+    Route::get('/', [BlogController::class, 'index'])->name('index');
+    Route::get('/{blogPost:slug}', [BlogController::class, 'show'])->name('show');
+});
+
+// Gallery routes
+Route::prefix('galleries')->name('galleries.')->group(function () {
+    Route::get('/', [GalleryController::class, 'index'])->name('index');
+    Route::get('/{gallery:slug}', [GalleryController::class, 'show'])->name('show');
+});
+
+// Tracker routes
+Route::prefix('trackers')->name('trackers.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\TrackerController::class, 'index'])->name('index');
+    Route::get('/{slug}', [\App\Http\Controllers\TrackerController::class, 'show'])->name('show');
+    Route::get('/{slug}/export', [\App\Http\Controllers\TrackerController::class, 'export'])->name('export');
+});
+
+// Profile routes
+Route::middleware('auth')->prefix('profile')->name('profile.')->group(function () {
+    Route::get('/', [ProfileController::class, 'edit'])->name('edit');
+    Route::put('/', [ProfileController::class, 'update'])->name('update');
+    Route::post('/avatar', [ProfileController::class, 'updateAvatar'])->name('avatar.update');
+    Route::get('/change-password', [ProfileController::class, 'editPassword'])->name('editPassword');
+    Route::post('/change-password', [ProfileController::class, 'updatePassword'])->name('updatePassword');
+});
+
+// Contact routes
+Route::prefix('contact')->name('contact')->group(function () {
+    Route::get('/', [ContactController::class, 'contact']);
+    Route::post('/', [ContactController::class, 'store'])->name('.store');
+});
 
 // Payment routes
 Route::middleware('auth')->prefix('payments')->name('payment.')->group(function () {
