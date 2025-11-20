@@ -98,4 +98,18 @@ class InternalContestRegistration extends Model implements Payable
         // - Sending cancellation notification
         // - Allowing user to retry payment
     }
+
+    /**
+     * Generate a unique and readable transaction ID for internal contest registration
+     * Format: ICTR-{CONTEST_ID}-{DATE}-{UNIQUE}
+     * Example: ICTR-5-20251120-A1B2C3
+     */
+    protected function generateTransactionId(): string
+    {
+        $contestId = $this->internal_contest_id ?? 'NEW';
+        $date = now()->format('Ymd');
+        $unique = strtoupper(substr(uniqid(), -6));
+
+        return "ICTR-{$contestId}-{$date}-{$unique}";
+    }
 }
