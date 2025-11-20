@@ -3,7 +3,7 @@
 namespace App\Filament\ContestAdmin\Resources\InternalContests\Resources\InternalContestRegistrations\Schemas;
 
 use App\Enums\Gender;
-use App\Enums\PaymentStatus;
+use App\Enums\RegistrationStatus;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -113,13 +113,13 @@ class InternalContestRegistrationForm
                     ])
                     ->columns(2),
 
-                Section::make('Payment Information')
+                Section::make('Registration Status')
                     ->columnSpanFull()
                     ->schema([
-                        ToggleButtons::make('payment_status')
-                            ->label('Payment Status')
-                            ->options(PaymentStatus::class)
-                            ->default(PaymentStatus::PENDING)
+                        ToggleButtons::make('status')
+                            ->label('Status')
+                            ->options(RegistrationStatus::class)
+                            ->default(RegistrationStatus::PENDING)
                             ->required()
                             ->inline()
                             ->grouped()
