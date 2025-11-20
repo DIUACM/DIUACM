@@ -32,7 +32,7 @@ class SslCommerzGateway implements PaymentGatewayInterface
             $paymentData = [
                 'total_amount' => $data['amount'],
                 'currency' => $data['currency'] ?? 'BDT',
-                'tran_id' => $data['invoice_number'],
+                'tran_id' => $data['transaction_id'],
                 'product_category' => $data['product_category'] ?? 'general',
                 'product_name' => $data['product_name'] ?? 'Payment',
                 'product_profile' => $data['product_profile'] ?? 'general',
@@ -66,7 +66,7 @@ class SslCommerzGateway implements PaymentGatewayInterface
                 return [
                     'success' => true,
                     'payment_url' => $decodedResponse['data'],
-                    'payment_id' => $data['invoice_number'],
+                    'payment_id' => $data['transaction_id'],
                     'transaction_status' => 'Initiated',
                     'response' => $decodedResponse,
                 ];

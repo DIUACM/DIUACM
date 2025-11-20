@@ -54,14 +54,14 @@ class PaymentService
     ): array {
         // Create payment record
         $payment = $model->createPayment($gateway, $amount, $additionalData['currency'] ?? 'BDT', [
-            'transaction_id' => $additionalData['invoice_number'] ?? null,
+            'transaction_id' => $additionalData['transaction_id'] ?? null,
         ]);
 
         // Initiate payment with gateway
         $gatewayInstance = $this->gateway($gateway);
         $result = $gatewayInstance->initiatePayment(array_merge($additionalData, [
             'amount' => $amount,
-            'invoice_number' => $payment->transaction_id,
+            'transaction_id' => $payment->transaction_id,
         ]));
 
         // Update payment with gateway response
