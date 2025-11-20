@@ -16,7 +16,6 @@ class InternalContestDetailsResource extends InternalContestResource
     {
         return array_merge(parent::toArray($request), [
             'description' => $this->description,
-            'registration_limit' => $this->registration_limit,
         ]);
     }
 }

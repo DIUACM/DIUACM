@@ -21,6 +21,7 @@ class InternalContestResource extends JsonResource
             'registration_deadline' => $this->registration_deadline,
             'registration_start_time' => $this->registration_start_time,
             'registration_fee' => $this->registration_fee,
+            'registration_limit' => $this->registration_limit,
             'banner_image' => $this->getFirstMediaUrl('banner_image'),
             'is_registration_open' => $this->isRegistrationOpen(),
         ];

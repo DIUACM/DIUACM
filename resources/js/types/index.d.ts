@@ -222,11 +222,24 @@ export interface InternalContest {
     registration_deadline: string;
     registration_start_time: string;
     registration_fee: number;
+    registration_limit: number | null;
     banner_image: string | null;
     is_registration_open: boolean;
 }
 
 export interface InternalContestDetails extends InternalContest {
     description: string;
-    registration_limit: number | null;
+}
+
+export interface InternalContestRegistrationView extends InternalContest {
+    form_settings: {
+        student_id_rules?: string;
+        student_id_rules_guide?: string;
+        pickup_points?: any[];
+        departments?: any[];
+        sections?: any[];
+        lab_teacher_names?: any[];
+        tshirt_sizes?: string[];
+    };
+    tshirt_size_guideline_url?: string;
 }

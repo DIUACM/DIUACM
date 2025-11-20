@@ -43,6 +43,9 @@ Route::get('/contests/{contest}', [ContestController::class, 'show'])->name('con
 
 Route::get('/internal-contests', [InternalContestController::class, 'index'])->name('internal-contests.index');
 Route::get('/internal-contests/{internalContest:slug}', [InternalContestController::class, 'show'])->name('internal-contests.show');
+Route::get('/internal-contests/{internalContest:slug}/register', [InternalContestController::class, 'registration'])->name('internal-contests.registration');
+Route::post('/internal-contests/{internalContest:slug}/register', [InternalContestController::class, 'storeRegistration'])->name('internal-contests.store-registration');
+Route::post('/internal-contests/{internalContest:slug}/validate-student-id', [InternalContestController::class, 'validateStudentId'])->name('internal-contests.validate-student-id');
 
 Route::get('/programmers', [ProgrammerController::class, 'index'])->name('programmers.index');
 Route::get('/programmers/{user:username}', [ProgrammerController::class, 'show'])->name('programmers.show');
