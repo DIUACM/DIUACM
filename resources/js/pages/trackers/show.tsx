@@ -66,7 +66,7 @@ function StatCell({ stat }: { stat: EventStat | null }) {
     );
 }
 
-export default function TrackersShowPage({ title, slug, description, selected_rank_list, available_rank_lists }: TrackersShowPageProps) {
+export default function TrackersShowPage({ title, slug, selected_rank_list, available_rank_lists }: TrackersShowPageProps) {
     const selectedRankList = selected_rank_list;
     const availableRankLists = available_rank_lists;
 

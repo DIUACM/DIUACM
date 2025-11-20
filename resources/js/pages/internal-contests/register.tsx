@@ -100,18 +100,17 @@ export default function InternalContestRegisterPage({ contest }: Props) {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        // @ts-ignore
         post(storeRegistrationRoute.url(contest.slug));
     };
 
     // Helper to safely get name from repeater items
-    const getItemName = (item: any) => {
+    const getItemName = (item: string | { name?: string; full_name?: string }) => {
         if (typeof item === 'string') return item;
         return item.name || item.full_name || '';
     };
 
     // Helper to safely get value from repeater items
-    const getItemValue = (item: any) => {
+    const getItemValue = (item: string | { name?: string; full_name?: string }) => {
         if (typeof item === 'string') return item;
         return item.name || item.full_name || ''; // Use name/full_name as value if no specific code/id
     };
@@ -321,7 +320,7 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                                             <SelectValue placeholder="Select Department" />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            {contest.form_settings.departments.map((dept: any, index: number) => {
+                                                            {contest.form_settings.departments.map((dept, index: number) => {
                                                                 const value = getItemValue(dept);
                                                                 const label = getItemName(dept);
                                                                 return (
@@ -361,7 +360,7 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                                             <SelectValue placeholder="Select Section" />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            {contest.form_settings.sections.map((sec: any, index: number) => {
+                                                            {contest.form_settings.sections.map((sec, index: number) => {
                                                                 const value = getItemValue(sec);
                                                                 const label = getItemName(sec);
                                                                 return (
@@ -405,7 +404,7 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                                             <SelectValue placeholder="Select Lab Teacher" />
                                                         </SelectTrigger>
                                                         <SelectContent>
-                                                            {contest.form_settings.lab_teacher_names.map((teacher: any, index: number) => {
+                                                            {contest.form_settings.lab_teacher_names.map((teacher, index: number) => {
                                                                 const value = getItemValue(teacher);
                                                                 const label = getItemName(teacher);
                                                                 return (
@@ -521,7 +520,7 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                                                     <SelectValue placeholder="Select Pickup Point" />
                                                                 </SelectTrigger>
                                                                 <SelectContent>
-                                                                    {contest.form_settings.pickup_points.map((point: any, index: number) => {
+                                                                    {contest.form_settings.pickup_points.map((point, index: number) => {
                                                                         const value = getItemValue(point);
                                                                         const label = getItemName(point);
                                                                         return (

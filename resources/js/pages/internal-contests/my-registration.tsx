@@ -279,7 +279,7 @@ function InfoCard({ title, children }: { title: string; children: React.ReactNod
     );
 }
 
-function Field({ icon: Icon, label, value }: { icon?: any; label: string; value: React.ReactNode }) {
+function Field({ icon: Icon, label, value }: { icon?: React.ComponentType<{ className?: string }>; label: string; value: React.ReactNode }) {
     return (
         <div>
             <div className="mb-1 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
@@ -292,7 +292,7 @@ function Field({ icon: Icon, label, value }: { icon?: any; label: string; value:
 }
 
 function Badge({ status }: { status: string }) {
-    const styles: Record<string, { icon: any; className: string; label: string }> = {
+    const styles: Record<string, { icon: React.ComponentType<{ className?: string }>; className: string; label: string }> = {
         paid: {
             icon: CheckCircle2,
             className: 'bg-green-500/10 text-green-700 border-green-500/20 dark:text-green-300',

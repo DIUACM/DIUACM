@@ -235,10 +235,10 @@ export interface InternalContestRegistrationView extends InternalContest {
     form_settings: {
         student_id_rules?: string;
         student_id_rules_guide?: string;
-        pickup_points?: any[];
-        departments?: any[];
-        sections?: any[];
-        lab_teacher_names?: any[];
+        pickup_points?: Array<string | { name?: string; full_name?: string }>;
+        departments?: Array<string | { name?: string; full_name?: string }>;
+        sections?: Array<string | { name?: string; full_name?: string }>;
+        lab_teacher_names?: Array<string | { name?: string; full_name?: string }>;
         tshirt_sizes?: string[];
     };
     tshirt_size_guideline_url?: string;

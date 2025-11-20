@@ -6,12 +6,9 @@ import { Head } from '@inertiajs/react';
 
 type Props = {
     contests: PaginatedData<InternalContest>;
-    filters: {
-        search?: string;
-    };
 };
 
-export default function InternalContestsPage({ contests, filters }: Props) {
+export default function InternalContestsPage({ contests }: Props) {
     return (
         <MainLayout>
             <Head title="Internal Contests" />
