@@ -180,7 +180,7 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                                 }
                                                 required
                                             />
-                                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                            <div className="absolute top-1/2 right-3 -translate-y-1/2">
                                                 {isValidatingId && <Loader2 className="h-4 w-4 animate-spin text-slate-500" />}
                                                 {!isValidatingId && idValidationResult?.valid === true && (
                                                     <CheckCircle2 className="h-4 w-4 text-green-500" />

@@ -1,9 +1,9 @@
 import { Button } from '@/components/ui/button';
 import MainLayout from '@/layouts/main-layout';
+import { registration } from '@/routes/internal-contests';
 import type { InternalContestDetails } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, CalendarDays, Clock, Users } from 'lucide-react';
-import { registration } from '@/routes/internal-contests';
 
 type Props = {
     contest: InternalContestDetails;
@@ -77,7 +77,10 @@ export default function InternalContestDetailsPage({ contest }: Props) {
                             {/* Description */}
                             {contest.description && (
                                 <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-700">
-                                    <div className="prose max-w-none prose-slate dark:prose-invert" dangerouslySetInnerHTML={{ __html: contest.description }} />
+                                    <div
+                                        className="prose max-w-none prose-slate dark:prose-invert"
+                                        dangerouslySetInnerHTML={{ __html: contest.description }}
+                                    />
                                 </div>
                             )}
                         </div>
@@ -146,7 +149,7 @@ export default function InternalContestDetailsPage({ contest }: Props) {
                 </div>
 
                 {/* Mobile Fixed Bottom Button */}
-                <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white p-4 shadow-lg lg:hidden dark:border-slate-700 dark:bg-slate-900">
+                <div className="fixed right-0 bottom-0 left-0 z-50 border-t border-slate-200 bg-white p-4 shadow-lg lg:hidden dark:border-slate-700 dark:bg-slate-900">
                     <div className="container mx-auto">
                         {contest.is_registration_open ? (
                             <Button
