@@ -182,7 +182,12 @@ class InternalContestController extends Controller
     {
         $registration = $internalContest->registrations()
             ->where('user_id', $request->user()->id)
-            ->with(['payments' => fn ($query) => $query->latest()])
+            ->with([
+                'internalContest' => function ($query) {
+                    $query->select('id', 'title', 'slug', 'description', 'registration_fee', 'registration_deadline', 'registration_start_time', 'semester');
+                },
+                'payments' => fn ($query) => $query->latest()->limit(5),
+            ])
             ->firstOrFail();
 
         return Inertia::render('internal-contests/my-registration', [

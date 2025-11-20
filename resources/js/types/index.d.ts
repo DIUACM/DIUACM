@@ -247,9 +247,14 @@ export interface InternalContestRegistrationView extends InternalContest {
 export interface InternalContestMyRegistration {
     id: number;
     internal_contest: {
+        id: number;
         title: string;
         slug: string;
+        semester: string;
+        description: string;
         registration_fee: number;
+        registration_deadline: string;
+        registration_start_time: string;
     };
     student_id: string;
     name: string;
@@ -263,9 +268,28 @@ export interface InternalContestMyRegistration {
     transport_service_required: boolean;
     pickup_point: string | null;
     status: 'pending' | 'paid' | 'canceled' | 'under_review';
-    payment_status: 'pending' | 'paid' | 'failed' | 'canceled' | 'refunded' | 'under_manual_review' | null;
-    payment_amount: number | null;
-    payment_gateway: string | null;
-    payment_transaction_id: string | null;
-    created_at: string;
+    is_confirmed: boolean;
+    is_free: boolean;
+    payment: {
+        id: number;
+        status: 'pending' | 'paid' | 'failed' | 'canceled' | 'refunded' | 'under_manual_review';
+        amount: number;
+        currency: string;
+        gateway: string;
+        transaction_id: string;
+        gateway_transaction_id: string;
+        paid_at: string | null;
+        created_at: string;
+    } | null;
+    payment_history: Array<{
+        id: number;
+        status: 'pending' | 'paid' | 'failed' | 'canceled' | 'refunded' | 'under_manual_review';
+        amount: number;
+        gateway: string;
+        transaction_id: string;
+        paid_at: string | null;
+        created_at: string;
+    }>;
+    registered_at: string;
+    updated_at: string;
 }
