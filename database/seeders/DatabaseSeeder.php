@@ -23,6 +23,9 @@ class DatabaseSeeder extends Seeder
         $this->command->info('🏆 Seeding Internal Contests...');
         $this->call(InternalContestSeeder::class);
 
+        $this->command->info('🎫 Seeding Internal Contest Registrations...');
+        $this->call(InternalContestRegistrationSeeder::class);
+
         $this->command->info('🏆 Seeding Contests (100 contests)...');
         $this->call(ContestSeeder::class);
 
