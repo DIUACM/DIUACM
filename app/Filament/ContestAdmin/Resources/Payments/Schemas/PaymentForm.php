@@ -99,7 +99,9 @@ class PaymentForm
                             ->rows(6)
                             ->columnSpanFull()
                             ->helperText('JSON response from payment gateway (will be stored as JSON)')
-                            ->placeholder('Paste JSON response here...'),
+                            ->placeholder('Paste JSON response here...')
+                            ->formatStateUsing(fn ($state) => is_array($state) ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : $state)
+                            ->dehydrateStateUsing(fn ($state) => is_string($state) && !empty($state) ? json_decode($state, true) : $state),
                     ])
                     ->collapsible()
                     ->collapsed(),
