@@ -2,17 +2,18 @@
 
 namespace App\Models;
 
+use App\Contracts\Payable;
 use App\Enums\Gender;
 use App\Enums\PaymentStatus;
 use App\Traits\HasPayments;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-class InternalContestRegistration extends Model
+class InternalContestRegistration extends Model implements Payable
 {
     /** @use HasFactory<\Database\Factories\InternalContestRegistrationFactory> */
     use HasFactory;
+
     use HasPayments;
 
     protected $fillable = [
@@ -51,4 +52,50 @@ class InternalContestRegistration extends Model
         return $this->belongsTo(User::class);
     }
 
+    /**
+     * Handle successful payment for contest registration
+     */
+    public function onPaymentSuccessful(Payment $payment): void
+    {
+        // Update registration payment status to paid
+        $this->update([
+            'payment_status' => PaymentStatus::PAID,
+        ]);
+
+        // You can add additional logic here, such as:
+        // - Sending confirmation email
+        // - Creating user account if needed
+        // - Triggering notifications
+        // - Logging the event
+    }
+
+    /**
+     * Handle failed payment for contest registration
+     */
+    public function onPaymentFailed(Payment $payment): void
+    {
+        // Update registration payment status to failed
+        $this->update([
+            'payment_status' => PaymentStatus::FAILED,
+        ]);
+
+        // You can add additional logic here, such as:
+        // - Sending failure notification
+        // - Logging the failure
+    }
+
+    /**
+     * Handle cancelled payment for contest registration
+     */
+    public function onPaymentCancelled(Payment $payment): void
+    {
+        // Update registration payment status to pending
+        $this->update([
+            'payment_status' => PaymentStatus::PENDING,
+        ]);
+
+        // You can add additional logic here, such as:
+        // - Sending cancellation notification
+        // - Allowing user to retry payment
+    }
 }

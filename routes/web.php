@@ -79,7 +79,7 @@ Route::post('/contact', [ContactController::class, 'store'])->name('contact.stor
 
 // Payment routes
 Route::middleware('auth')->prefix('payments')->name('payment.')->group(function () {
-    Route::get('/registrations/{registration}', [PaymentController::class, 'initiateRegistrationPayment'])
+    Route::post('/registrations/{registration}', [PaymentController::class, 'initiateRegistrationPayment'])
         ->name('registration.initiate');
 });
 

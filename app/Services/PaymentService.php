@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
+use App\Contracts\Payable;
 use App\Contracts\PaymentGatewayInterface;
 use App\Enums\PaymentStatus;
 use App\Models\Payment;
 use App\Services\PaymentGateways\SslCommerzGateway;
-use Illuminate\Database\Eloquent\Model;
 
 class PaymentService
 {
@@ -41,13 +41,13 @@ class PaymentService
     /**
      * Initiate a payment for a model
      *
-     * @param  Model  $model  Model that uses HasPayments trait
-     * @param  string  $gateway  Gateway name (e.g., 'bkash')
+     * @param  Payable  $model  Model that implements Payable interface
+     * @param  string  $gateway  Gateway name (e.g., 'sslcommerz')
      * @param  float  $amount  Payment amount
      * @param  array  $additionalData  Additional payment data
      */
     public function initiatePayment(
-        Model $model,
+        Payable $model,
         string $gateway,
         float $amount,
         array $additionalData = []
