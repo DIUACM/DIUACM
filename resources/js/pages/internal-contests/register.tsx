@@ -226,9 +226,11 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="gender">Gender</Label>
-                                        <Select value={data.gender} onValueChange={(val) => setData('gender', val)}>
-                                            <SelectTrigger>
+                                        <Label htmlFor="gender">
+                                            Gender <span className="text-red-500">*</span>
+                                        </Label>
+                                        <Select value={data.gender} onValueChange={(val) => setData('gender', val)} required>
+                                            <SelectTrigger className={errors.gender ? 'border-red-500' : ''}>
                                                 <SelectValue placeholder="Select Gender" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -241,9 +243,11 @@ export default function InternalContestRegisterPage({ contest }: Props) {
 
                                     {contest.form_settings.departments && contest.form_settings.departments.length > 0 ? (
                                         <div className="space-y-2">
-                                            <Label htmlFor="department">Department</Label>
-                                            <Select value={data.department} onValueChange={(val) => setData('department', val)}>
-                                                <SelectTrigger>
+                                            <Label htmlFor="department">
+                                                Department <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Select value={data.department} onValueChange={(val) => setData('department', val)} required>
+                                                <SelectTrigger className={errors.department ? 'border-red-500' : ''}>
                                                     <SelectValue placeholder="Select Department" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -262,18 +266,15 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                         </div>
                                     ) : (
                                         <div className="space-y-2">
-                                            <Label htmlFor="department">Department</Label>
-                                            <Alert variant="destructive" className="mb-2">
-                                                <AlertCircle className="h-4 w-4" />
-                                                <AlertTitle>Warning</AlertTitle>
-                                                <AlertDescription>
-                                                    Department options are not configured for this contest. Please type your department manually.
-                                                </AlertDescription>
-                                            </Alert>
+                                            <Label htmlFor="department">
+                                                Department <span className="text-red-500">*</span>
+                                            </Label>
                                             <Input
                                                 id="department"
                                                 value={data.department}
                                                 onChange={(e) => setData('department', e.target.value)}
+                                                placeholder="Enter your department"
+                                                className={errors.department ? 'border-red-500' : ''}
                                                 required
                                             />
                                             {errors.department && <p className="text-sm text-red-500">{errors.department}</p>}
@@ -282,9 +283,11 @@ export default function InternalContestRegisterPage({ contest }: Props) {
 
                                     {contest.form_settings.sections && contest.form_settings.sections.length > 0 ? (
                                         <div className="space-y-2">
-                                            <Label htmlFor="section">Section</Label>
-                                            <Select value={data.section} onValueChange={(val) => setData('section', val)}>
-                                                <SelectTrigger>
+                                            <Label htmlFor="section">
+                                                Section <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Select value={data.section} onValueChange={(val) => setData('section', val)} required>
+                                                <SelectTrigger className={errors.section ? 'border-red-500' : ''}>
                                                     <SelectValue placeholder="Select Section" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -303,24 +306,28 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                         </div>
                                     ) : (
                                         <div className="space-y-2">
-                                            <Label htmlFor="section">Section</Label>
-                                            <Alert variant="destructive" className="mb-2">
-                                                <AlertCircle className="h-4 w-4" />
-                                                <AlertTitle>Warning</AlertTitle>
-                                                <AlertDescription>
-                                                    Section options are not configured for this contest. Please type your section manually.
-                                                </AlertDescription>
-                                            </Alert>
-                                            <Input id="section" value={data.section} onChange={(e) => setData('section', e.target.value)} required />
+                                            <Label htmlFor="section">
+                                                Section <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Input
+                                                id="section"
+                                                value={data.section}
+                                                onChange={(e) => setData('section', e.target.value)}
+                                                placeholder="Enter your section"
+                                                className={errors.section ? 'border-red-500' : ''}
+                                                required
+                                            />
                                             {errors.section && <p className="text-sm text-red-500">{errors.section}</p>}
                                         </div>
                                     )}
 
                                     {contest.form_settings.lab_teacher_names && contest.form_settings.lab_teacher_names.length > 0 ? (
                                         <div className="space-y-2">
-                                            <Label htmlFor="lab_teacher_name">Lab Teacher</Label>
-                                            <Select value={data.lab_teacher_name} onValueChange={(val) => setData('lab_teacher_name', val)}>
-                                                <SelectTrigger>
+                                            <Label htmlFor="lab_teacher_name">
+                                                Lab Teacher <span className="text-red-500">*</span>
+                                            </Label>
+                                            <Select value={data.lab_teacher_name} onValueChange={(val) => setData('lab_teacher_name', val)} required>
+                                                <SelectTrigger className={errors.lab_teacher_name ? 'border-red-500' : ''}>
                                                     <SelectValue placeholder="Select Lab Teacher" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -339,18 +346,16 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                         </div>
                                     ) : (
                                         <div className="space-y-2">
-                                            <Label htmlFor="lab_teacher_name">Lab Teacher</Label>
-                                            <Alert variant="destructive" className="mb-2">
-                                                <AlertCircle className="h-4 w-4" />
-                                                <AlertTitle>Warning</AlertTitle>
-                                                <AlertDescription>
-                                                    Lab Teacher options are not configured for this contest. Please type the name manually.
-                                                </AlertDescription>
-                                            </Alert>
+                                            <Label htmlFor="lab_teacher_name">
+                                                Lab Teacher <span className="text-red-500">*</span>
+                                            </Label>
                                             <Input
                                                 id="lab_teacher_name"
                                                 value={data.lab_teacher_name}
                                                 onChange={(e) => setData('lab_teacher_name', e.target.value)}
+                                                placeholder="Enter lab teacher name"
+                                                className={errors.lab_teacher_name ? 'border-red-500' : ''}
+                                                required
                                             />
                                             {errors.lab_teacher_name && <p className="text-sm text-red-500">{errors.lab_teacher_name}</p>}
                                         </div>
@@ -360,9 +365,11 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                         <div className="col-span-full space-y-4">
                                             <div className="grid gap-6 md:grid-cols-2">
                                                 <div className="space-y-2">
-                                                    <Label htmlFor="tshirt_size">T-Shirt Size</Label>
-                                                    <Select value={data.tshirt_size} onValueChange={(val) => setData('tshirt_size', val)}>
-                                                        <SelectTrigger>
+                                                    <Label htmlFor="tshirt_size">
+                                                        T-Shirt Size <span className="text-red-500">*</span>
+                                                    </Label>
+                                                    <Select value={data.tshirt_size} onValueChange={(val) => setData('tshirt_size', val)} required>
+                                                        <SelectTrigger className={errors.tshirt_size ? 'border-red-500' : ''}>
                                                             <SelectValue placeholder="Select Size" />
                                                         </SelectTrigger>
                                                         <SelectContent>
@@ -393,9 +400,9 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                         <div className="col-span-full space-y-4">
                                             <Alert variant="destructive">
                                                 <AlertCircle className="h-4 w-4" />
-                                                <AlertTitle>Warning</AlertTitle>
+                                                <AlertTitle>Error</AlertTitle>
                                                 <AlertDescription>
-                                                    T-Shirt size options are not configured for this contest. You cannot select a size.
+                                                    T-Shirt size options are not configured for this contest. Please contact the organizers.
                                                 </AlertDescription>
                                             </Alert>
                                         </div>

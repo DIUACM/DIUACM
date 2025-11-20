@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\VisibilityStatus;
+use App\Http\Requests\StoreInternalContestRegistrationRequest;
 use App\Http\Resources\InternalContestDetailsResource;
 use App\Http\Resources\InternalContestMyRegistrationResource;
 use App\Http\Resources\InternalContestRegistrationViewResource;
@@ -83,7 +84,7 @@ class InternalContestController extends Controller
     /**
      * Store a newly created registration in storage.
      */
-    public function storeRegistration(Request $request, InternalContest $internalContest)
+    public function storeRegistration(StoreInternalContestRegistrationRequest $request, InternalContest $internalContest)
     {
         if ($internalContest->status !== VisibilityStatus::PUBLISHED || ! $internalContest->isRegistrationOpen()) {
             abort(403, 'Registration is closed.');
@@ -97,19 +98,7 @@ class InternalContestController extends Controller
             return redirect()->back()->withErrors(['student_id' => 'This Student ID is already registered.']);
         }
 
-        $validated = $request->validate([
-            'student_id' => ['required', 'string', 'max:255'],
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
-            'phone' => ['required', 'string', 'max:255'],
-            'department' => ['required', 'string', 'max:255'],
-            'section' => ['required', 'string', 'max:255'],
-            'lab_teacher_name' => ['nullable', 'string', 'max:255'],
-            'tshirt_size' => ['nullable', 'string', 'max:255'],
-            'gender' => ['required', 'string', 'in:male,female'],
-            'transport_service_required' => ['boolean'],
-            'pickup_point' => ['nullable', 'string', 'max:255', 'required_if:transport_service_required,true'],
-        ]);
+        $validated = $request->validated();
 
         $registration = $internalContest->registrations()->create([
             'user_id' => $request->user()->id,
@@ -122,12 +111,12 @@ class InternalContestController extends Controller
             'lab_teacher_name' => $validated['lab_teacher_name'],
             'tshirt_size' => $validated['tshirt_size'],
             'gender' => $validated['gender'],
-            'transport_service_required' => $validated['transport_service_required'],
-            'pickup_point' => $validated['pickup_point'],
+            'transport_service_required' => $validated['transport_service_required'] ?? false,
+            'pickup_point' => $validated['pickup_point'] ?? null,
             'payment_status' => \App\Enums\PaymentStatus::PENDING,
         ]);
 
-        // If fee is 0, mark as paid? Or handle payment logic.
+        // If fee is 0, mark as paid
         if ($internalContest->registration_fee <= 0) {
             $registration->update(['payment_status' => \App\Enums\PaymentStatus::PAID]);
         }
