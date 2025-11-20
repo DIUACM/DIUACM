@@ -263,5 +263,9 @@ export interface InternalContestMyRegistration {
     transport_service_required: boolean;
     pickup_point: string | null;
     status: string;
+    payment_status: string | null;
+    payment_amount: number | null;
+    payment_gateway: string | null;
+    payment_transaction_id: string | null;
     created_at: string;
 }

@@ -14,6 +14,8 @@ class InternalContestMyRegistrationResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $latestPayment = $this->payments->first();
+
         return [
             'id' => $this->id,
             'internal_contest' => [
@@ -32,7 +34,11 @@ class InternalContestMyRegistrationResource extends JsonResource
             'gender' => $this->gender,
             'transport_service_required' => $this->transport_service_required,
             'pickup_point' => $this->pickup_point,
-            'status' => $this->status,
+            'status' => $this->getStatus(),
+            'payment_status' => $latestPayment?->status?->value,
+            'payment_amount' => $latestPayment ? (float) $latestPayment->amount : null,
+            'payment_gateway' => $latestPayment?->gateway,
+            'payment_transaction_id' => $latestPayment?->transaction_id,
             'created_at' => $this->created_at,
         ];
     }

@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Contracts\Payable;
 use App\Enums\Gender;
-use App\Enums\RegistrationStatus;
 use App\Traits\HasPayments;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -30,7 +29,6 @@ class InternalContestRegistration extends Model implements Payable
         'gender',
         'transport_service_required',
         'pickup_point',
-        'status',
     ];
 
     protected function casts(): array
@@ -38,7 +36,6 @@ class InternalContestRegistration extends Model implements Payable
         return [
             'transport_service_required' => 'boolean',
             'gender' => Gender::class,
-            'status' => RegistrationStatus::class,
         ];
     }
 
@@ -53,15 +50,62 @@ class InternalContestRegistration extends Model implements Payable
     }
 
     /**
+     * Check if the registration is free (no payment required)
+     */
+    public function isFree(): bool
+    {
+        return $this->internalContest->registration_fee == 0;
+    }
+
+    /**
+     * Check if the registration is confirmed
+     * A registration is confirmed if it's free OR has a successful payment
+     */
+    public function isConfirmed(): bool
+    {
+        return $this->isFree() || $this->hasSuccessfulPayment();
+    }
+
+    /**
+     * Check if the registration is pending confirmation
+     */
+    public function isPending(): bool
+    {
+        return ! $this->isConfirmed();
+    }
+
+    /**
+     * Check if the registration has been canceled
+     * A registration is canceled if it has a failed or canceled payment
+     */
+    public function isCanceled(): bool
+    {
+        $latestPayment = $this->latestPayment();
+
+        return $latestPayment && in_array($latestPayment->status->value, ['failed', 'canceled']);
+    }
+
+    /**
+     * Get the computed registration status based on payment state
+     */
+    public function getStatus(): string
+    {
+        if ($this->isConfirmed()) {
+            return 'paid';
+        }
+
+        if ($this->isCanceled()) {
+            return 'canceled';
+        }
+
+        return 'pending';
+    }
+
+    /**
      * Handle successful payment for contest registration
      */
     public function onPaymentSuccessful(Payment $payment): void
     {
-        // Update registration status to paid
-        $this->update([
-            'status' => RegistrationStatus::PAID,
-        ]);
-
         // You can add additional logic here, such as:
         // - Sending confirmation email
         // - Creating user account if needed
@@ -74,11 +118,6 @@ class InternalContestRegistration extends Model implements Payable
      */
     public function onPaymentFailed(Payment $payment): void
     {
-        // Update registration status to canceled
-        $this->update([
-            'status' => RegistrationStatus::CANCELED,
-        ]);
-
         // You can add additional logic here, such as:
         // - Sending failure notification
         // - Logging the failure
@@ -89,11 +128,6 @@ class InternalContestRegistration extends Model implements Payable
      */
     public function onPaymentCancelled(Payment $payment): void
     {
-        // Update registration status to pending
-        $this->update([
-            'status' => RegistrationStatus::PENDING,
-        ]);
-
         // You can add additional logic here, such as:
         // - Sending cancellation notification
         // - Allowing user to retry payment

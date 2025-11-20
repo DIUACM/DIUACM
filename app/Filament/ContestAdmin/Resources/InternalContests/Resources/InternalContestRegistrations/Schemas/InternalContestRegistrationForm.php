@@ -3,11 +3,9 @@
 namespace App\Filament\ContestAdmin\Resources\InternalContests\Resources\InternalContestRegistrations\Schemas;
 
 use App\Enums\Gender;
-use App\Enums\RegistrationStatus;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\ToggleButtons;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -112,19 +110,6 @@ class InternalContestRegistrationForm
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
-
-                Section::make('Registration Status')
-                    ->columnSpanFull()
-                    ->schema([
-                        ToggleButtons::make('status')
-                            ->label('Status')
-                            ->options(RegistrationStatus::class)
-                            ->default(RegistrationStatus::PENDING)
-                            ->required()
-                            ->inline()
-                            ->grouped()
-                            ->columnSpanFull(),
-                    ]),
 
                 Section::make('Metadata')
                     ->columnSpanFull()

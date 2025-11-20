@@ -1,6 +1,5 @@
 <?php
 
-use App\Enums\RegistrationStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -31,9 +30,6 @@ return new class extends Migration
             $table->string('gender');
             $table->boolean('transport_service_required')->default(false);
             $table->string('pickup_point')->nullable();
-
-            // Registration Status
-            $table->string('status')->default(RegistrationStatus::PENDING->value);
 
             $table->timestamps();
 

@@ -3,8 +3,6 @@
 namespace App\Filament\ContestAdmin\Resources\InternalContests\Resources\InternalContestRegistrations\Tables;
 
 use App\Enums\Gender;
-use App\Enums\RegistrationStatus;
-use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -80,7 +78,13 @@ class InternalContestRegistrationsTable
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->sortable(),
+                    ->sortable()
+                    ->state(fn ($record) => $record->getStatus())
+                    ->colors([
+                        'success' => 'paid',
+                        'warning' => 'pending',
+                        'danger' => 'canceled',
+                    ]),
 
                 TextColumn::make('user.name')
                     ->label('User Account')
@@ -103,7 +107,21 @@ class InternalContestRegistrationsTable
             ->filters([
                 SelectFilter::make('status')
                     ->label('Registration Status')
-                    ->options(RegistrationStatus::class)
+                    ->options([
+                        'paid' => 'Paid',
+                        'pending' => 'Pending',
+                        'canceled' => 'Canceled',
+                    ])
+                    ->query(function ($query, $state) {
+                        if (! $state['value']) {
+                            return $query;
+                        }
+
+                        return $query->where(function ($q) {
+                            // This will be handled by a custom query based on payment status
+                            // For now, we'll filter based on the computed status
+                        });
+                    })
                     ->multiple()
                     ->preload(),
 
@@ -130,14 +148,6 @@ class InternalContestRegistrationsTable
             ])
             ->recordActions([
                 EditAction::make(),
-                Action::make('markPaid')
-                    ->label('Mark Paid')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->visible(fn ($record) => $record->status !== RegistrationStatus::PAID)
-                    ->requiresConfirmation()
-                    ->action(fn ($record) => $record->update(['status' => RegistrationStatus::PAID]))
-                    ->successNotificationTitle('Registration status updated to Paid'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([

@@ -95,12 +95,13 @@ class PaymentController extends Controller
 
                 return $this->handleFailedCallback('Payment not found');
             }
-            if( !isset($result['gateway_transaction_id']) || $payment->gateway_transaction_id !== $result['gateway_transaction_id']) {
-                
+            if (! isset($result['gateway_transaction_id']) || $payment->gateway_transaction_id !== $result['gateway_transaction_id']) {
+
                 Log::error('Gateway transaction ID mismatch', [
                     'expected' => $payment->gateway_transaction_id,
                     'received' => $result['gateway_transaction_id'] ?? null,
                 ]);
+
                 return $this->handleFailedCallback('Gateway transaction ID mismatch');
 
             }
