@@ -81,4 +81,13 @@ class InternalContest extends Model implements HasMedia
             ->singleFile()
             ->useDisk(diskName: 'media');
     }
+
+    public function isRegistrationOpen(): bool
+    {
+        $now = now();
+
+        return $this->status === VisibilityStatus::PUBLISHED
+            && $this->registration_start_time <= $now
+            && $this->registration_deadline >= $now;
+    }
 }

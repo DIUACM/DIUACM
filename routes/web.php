@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContestController;
+use App\Http\Controllers\InternalContestController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\PaymentController;
@@ -39,6 +40,9 @@ Route::post('/events/{event}/attendance', [EventController::class, 'storeAttenda
 
 Route::get('/contests', [ContestController::class, 'index'])->name('contests.index');
 Route::get('/contests/{contest}', [ContestController::class, 'show'])->name('contests.show');
+
+Route::get('/internal-contests', [InternalContestController::class, 'index'])->name('internal-contests.index');
+Route::get('/internal-contests/{internalContest:slug}', [InternalContestController::class, 'show'])->name('internal-contests.show');
 
 Route::get('/programmers', [ProgrammerController::class, 'index'])->name('programmers.index');
 Route::get('/programmers/{user:username}', [ProgrammerController::class, 'show'])->name('programmers.show');

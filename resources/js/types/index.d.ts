@@ -213,3 +213,20 @@ export interface TrackerDetails extends Tracker {
     available_rank_lists: TrackerAvailableRankList[];
     selected_rank_list: TrackerRankListDetails;
 }
+
+// ********* Internal Contest Interface Added *********
+export interface InternalContest {
+    id: number;
+    title: string;
+    slug: string;
+    registration_deadline: string;
+    registration_start_time: string;
+    registration_fee: number;
+    banner_image: string | null;
+    is_registration_open: boolean;
+}
+
+export interface InternalContestDetails extends InternalContest {
+    description: string;
+    registration_limit: number | null;
+}
