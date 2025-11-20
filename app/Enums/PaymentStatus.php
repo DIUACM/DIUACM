@@ -13,6 +13,7 @@ enum PaymentStatus: string implements HasColor, HasIcon, HasLabel
     case FAILED = 'failed';
     case CANCELED = 'canceled';
     case REFUNDED = 'refunded';
+    case UNDER_MANUAL_REVIEW = 'under_manual_review';
 
     public function getLabel(): ?string
     {
@@ -22,6 +23,7 @@ enum PaymentStatus: string implements HasColor, HasIcon, HasLabel
             self::FAILED => 'Failed',
             self::CANCELED => 'Canceled',
             self::REFUNDED => 'Refunded',
+            self::UNDER_MANUAL_REVIEW => 'Under Manual Review',
         };
     }
 
@@ -33,6 +35,7 @@ enum PaymentStatus: string implements HasColor, HasIcon, HasLabel
             self::FAILED => 'danger',
             self::CANCELED => 'gray',
             self::REFUNDED => 'info',
+            self::UNDER_MANUAL_REVIEW => 'primary',
         };
     }
 
@@ -44,6 +47,7 @@ enum PaymentStatus: string implements HasColor, HasIcon, HasLabel
             self::FAILED => 'heroicon-m-x-circle',
             self::CANCELED => 'heroicon-m-no-symbol',
             self::REFUNDED => 'heroicon-m-arrow-uturn-left',
+            self::UNDER_MANUAL_REVIEW => 'heroicon-m-eye',
         };
     }
 }
