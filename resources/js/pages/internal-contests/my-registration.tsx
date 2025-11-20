@@ -14,8 +14,8 @@ type Props = {
 export default function MyRegistrationPage({ registration }: Props) {
     const { auth } = usePage<SharedData>().props;
 
-    const isPending = registration.payment_status === 'pending';
-    const isPaid = registration.payment_status === 'paid';
+    const isPending = registration.status === 'pending';
+    const isPaid = registration.status === 'paid';
 
     const form = useForm({
         gateway: 'sslcommerz',
@@ -47,7 +47,7 @@ export default function MyRegistrationPage({ registration }: Props) {
                                     variant={isPaid ? 'default' : isPending ? 'secondary' : 'destructive'}
                                     className="px-3 py-1 text-sm capitalize"
                                 >
-                                    {registration.payment_status}
+                                    {registration.status}
                                 </Badge>
                             </div>
                         </CardHeader>

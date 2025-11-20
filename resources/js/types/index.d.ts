@@ -262,6 +262,6 @@ export interface InternalContestMyRegistration {
     gender: string;
     transport_service_required: boolean;
     pickup_point: string | null;
-    payment_status: string;
+    status: string;
     created_at: string;
 }

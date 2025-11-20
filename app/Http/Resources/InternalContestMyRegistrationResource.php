@@ -32,7 +32,7 @@ class InternalContestMyRegistrationResource extends JsonResource
             'gender' => $this->gender,
             'transport_service_required' => $this->transport_service_required,
             'pickup_point' => $this->pickup_point,
-            'payment_status' => $this->payment_status,
+            'status' => $this->status,
             'created_at' => $this->created_at,
         ];
     }

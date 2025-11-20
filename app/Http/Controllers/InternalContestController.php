@@ -113,12 +113,12 @@ class InternalContestController extends Controller
             'gender' => $validated['gender'],
             'transport_service_required' => $validated['transport_service_required'] ?? false,
             'pickup_point' => $validated['pickup_point'] ?? null,
-            'payment_status' => \App\Enums\PaymentStatus::PENDING,
+            'status' => \App\Enums\PaymentStatus::PENDING,
         ]);
 
         // If fee is 0, mark as paid
         if ($internalContest->registration_fee <= 0) {
-            $registration->update(['payment_status' => \App\Enums\PaymentStatus::PAID]);
+            $registration->update(['status' => \App\Enums\PaymentStatus::PAID]);
         }
 
         return redirect()->route('internal-contests.my-registration', $internalContest)
