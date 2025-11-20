@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Enums\PaymentStatus;
+use App\Enums\RegistrationStatus;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -31,7 +31,7 @@ class InternalContestRegistrationFactory extends Factory
             'gender' => fake()->randomElement(['male', 'female']),
             'transport_service_required' => fake()->boolean(30),
             'pickup_point' => fake()->boolean(30) ? fake()->randomElement(['Main Campus', 'Dhanmondi', 'Uttara', 'Mirpur']) : null,
-            'payment_status' => fake()->randomElement(PaymentStatus::cases()),
+            'status' => fake()->randomElement(RegistrationStatus::cases()),
         ];
     }
 }

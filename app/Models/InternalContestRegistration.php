@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Contracts\Payable;
 use App\Enums\Gender;
-use App\Enums\PaymentStatus;
+use App\Enums\RegistrationStatus;
 use App\Traits\HasPayments;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -30,7 +30,7 @@ class InternalContestRegistration extends Model implements Payable
         'gender',
         'transport_service_required',
         'pickup_point',
-        'payment_status',
+        'status',
     ];
 
     protected function casts(): array
@@ -38,7 +38,7 @@ class InternalContestRegistration extends Model implements Payable
         return [
             'transport_service_required' => 'boolean',
             'gender' => Gender::class,
-            'payment_status' => PaymentStatus::class,
+            'status' => RegistrationStatus::class,
         ];
     }
 
@@ -57,9 +57,9 @@ class InternalContestRegistration extends Model implements Payable
      */
     public function onPaymentSuccessful(Payment $payment): void
     {
-        // Update registration payment status to paid
+        // Update registration status to paid
         $this->update([
-            'payment_status' => PaymentStatus::PAID,
+            'status' => RegistrationStatus::PAID,
         ]);
 
         // You can add additional logic here, such as:
@@ -74,9 +74,9 @@ class InternalContestRegistration extends Model implements Payable
      */
     public function onPaymentFailed(Payment $payment): void
     {
-        // Update registration payment status to failed
+        // Update registration status to canceled
         $this->update([
-            'payment_status' => PaymentStatus::FAILED,
+            'status' => RegistrationStatus::CANCELED,
         ]);
 
         // You can add additional logic here, such as:
@@ -89,9 +89,9 @@ class InternalContestRegistration extends Model implements Payable
      */
     public function onPaymentCancelled(Payment $payment): void
     {
-        // Update registration payment status to pending
+        // Update registration status to pending
         $this->update([
-            'payment_status' => PaymentStatus::PENDING,
+            'status' => RegistrationStatus::PENDING,
         ]);
 
         // You can add additional logic here, such as:

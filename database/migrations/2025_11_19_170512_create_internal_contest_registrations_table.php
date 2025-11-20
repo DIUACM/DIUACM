@@ -1,6 +1,6 @@
 <?php
 
-use App\Enums\PaymentStatus;
+use App\Enums\RegistrationStatus;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -32,8 +32,8 @@ return new class extends Migration
             $table->boolean('transport_service_required')->default(false);
             $table->string('pickup_point')->nullable();
 
-            // Payment
-            $table->string('payment_status')->default(PaymentStatus::PENDING->value);
+            // Registration Status
+            $table->string('status')->default(RegistrationStatus::PENDING->value);
 
             $table->timestamps();
 

@@ -3,7 +3,7 @@
 namespace App\Filament\ContestAdmin\Resources\InternalContests\Resources\InternalContestRegistrations\Tables;
 
 use App\Enums\Gender;
-use App\Enums\PaymentStatus;
+use App\Enums\RegistrationStatus;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -77,8 +77,8 @@ class InternalContestRegistrationsTable
                     ->limit(20)
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                TextColumn::make('payment_status')
-                    ->label('Payment')
+                TextColumn::make('status')
+                    ->label('Status')
                     ->badge()
                     ->sortable(),
 
@@ -101,9 +101,9 @@ class InternalContestRegistrationsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('payment_status')
-                    ->label('Payment Status')
-                    ->options(PaymentStatus::class)
+                SelectFilter::make('status')
+                    ->label('Registration Status')
+                    ->options(RegistrationStatus::class)
                     ->multiple()
                     ->preload(),
 
@@ -134,10 +134,10 @@ class InternalContestRegistrationsTable
                     ->label('Mark Paid')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
-                    ->visible(fn ($record) => $record->payment_status !== PaymentStatus::PAID)
+                    ->visible(fn ($record) => $record->status !== RegistrationStatus::PAID)
                     ->requiresConfirmation()
-                    ->action(fn ($record) => $record->update(['payment_status' => PaymentStatus::PAID]))
-                    ->successNotificationTitle('Payment status updated to Paid'),
+                    ->action(fn ($record) => $record->update(['status' => RegistrationStatus::PAID]))
+                    ->successNotificationTitle('Registration status updated to Paid'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
