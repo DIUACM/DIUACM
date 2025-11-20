@@ -87,6 +87,3 @@ Route::middleware('auth')->prefix('payments')->name('payment.')->group(function 
 Route::match(['get', 'post'], '/payments/callback/{gateway}', [PaymentController::class, 'handleCallback'])
     ->name('payment.callback');
 
-Route::post('/success',function(){
-    return request()->all();
-});
