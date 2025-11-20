@@ -139,7 +139,9 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                             >
                                 1
                             </div>
-                            <span className={`hidden text-sm font-medium sm:inline ${step >= 1 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}`}>
+                            <span
+                                className={`hidden text-sm font-medium sm:inline ${step >= 1 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}`}
+                            >
                                 Student ID
                             </span>
                         </div>
@@ -154,7 +156,9 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                             >
                                 2
                             </div>
-                            <span className={`hidden text-sm font-medium sm:inline ${step >= 2 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}`}>
+                            <span
+                                className={`hidden text-sm font-medium sm:inline ${step >= 2 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}`}
+                            >
                                 Complete Profile
                             </span>
                         </div>
@@ -203,7 +207,9 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                                 {!isValidatingId && idValidationResult?.valid === true && (
                                                     <CheckCircle2 className="h-5 w-5 text-green-500" />
                                                 )}
-                                                {!isValidatingId && idValidationResult?.valid === false && <XCircle className="h-5 w-5 text-red-500" />}
+                                                {!isValidatingId && idValidationResult?.valid === false && (
+                                                    <XCircle className="h-5 w-5 text-red-500" />
+                                                )}
                                             </div>
                                         </div>
                                         {errors.student_id && (
@@ -219,7 +225,9 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                             </p>
                                         )}
                                         {contest.form_settings.student_id_rules_guide && (
-                                            <p className="text-sm text-slate-500 dark:text-slate-400">{contest.form_settings.student_id_rules_guide}</p>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400">
+                                                {contest.form_settings.student_id_rules_guide}
+                                            </p>
                                         )}
                                     </div>
                                 </div>
@@ -229,7 +237,7 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                 <div className="space-y-6">
                                     {/* Personal Information Section */}
                                     <div>
-                                        <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300">
+                                        <h3 className="mb-4 text-sm font-semibold tracking-wide text-slate-700 uppercase dark:text-slate-300">
                                             Personal Information
                                         </h3>
                                         <div className="grid gap-6 md:grid-cols-2">
@@ -299,7 +307,7 @@ export default function InternalContestRegisterPage({ contest }: Props) {
 
                                     {/* Academic Information Section */}
                                     <div className="pt-2">
-                                        <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300">
+                                        <h3 className="mb-4 text-sm font-semibold tracking-wide text-slate-700 uppercase dark:text-slate-300">
                                             Academic Information
                                         </h3>
                                         <div className="grid gap-6 md:grid-cols-2">
@@ -388,7 +396,11 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                                     <Label htmlFor="lab_teacher_name">
                                                         Lab Teacher <span className="text-red-500">*</span>
                                                     </Label>
-                                                    <Select value={data.lab_teacher_name} onValueChange={(val) => setData('lab_teacher_name', val)} required>
+                                                    <Select
+                                                        value={data.lab_teacher_name}
+                                                        onValueChange={(val) => setData('lab_teacher_name', val)}
+                                                        required
+                                                    >
                                                         <SelectTrigger className={`h-11 ${errors.lab_teacher_name ? 'border-red-500' : ''}`}>
                                                             <SelectValue placeholder="Select Lab Teacher" />
                                                         </SelectTrigger>
@@ -427,7 +439,7 @@ export default function InternalContestRegisterPage({ contest }: Props) {
 
                                     {/* T-Shirt & Transport Section */}
                                     <div className="pt-2">
-                                        <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-700 dark:text-slate-300">
+                                        <h3 className="mb-4 text-sm font-semibold tracking-wide text-slate-700 uppercase dark:text-slate-300">
                                             Additional Details
                                         </h3>
                                         <div className="space-y-6">
@@ -438,7 +450,11 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                                             <Label htmlFor="tshirt_size">
                                                                 T-Shirt Size <span className="text-red-500">*</span>
                                                             </Label>
-                                                            <Select value={data.tshirt_size} onValueChange={(val) => setData('tshirt_size', val)} required>
+                                                            <Select
+                                                                value={data.tshirt_size}
+                                                                onValueChange={(val) => setData('tshirt_size', val)}
+                                                                required
+                                                            >
                                                                 <SelectTrigger className={`h-11 ${errors.tshirt_size ? 'border-red-500' : ''}`}>
                                                                     <SelectValue placeholder="Select Size" />
                                                                 </SelectTrigger>
