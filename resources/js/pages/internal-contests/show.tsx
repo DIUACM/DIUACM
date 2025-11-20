@@ -41,21 +41,51 @@ export default function InternalContestDetailsPage({ contest }: Props) {
                 <div className="grid gap-8 lg:grid-cols-3">
                     {/* Main Content */}
                     <div className="lg:col-span-2">
-                        {contest.banner_image && (
-                            <div className="mb-8 overflow-hidden rounded-xl border border-slate-200 shadow-sm dark:border-slate-700">
-                                <img src={contest.banner_image} alt={contest.title} className="h-full w-full object-cover" />
-                            </div>
-                        )}
+                        {/* Contest Header */}
+                        <div className="mb-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                            <h1 className="mb-4 text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">{contest.title}</h1>
 
-                        <div className="mb-8">
-                            <h1 className="mb-4 text-3xl font-bold text-slate-900 dark:text-white">{contest.title}</h1>
-                            <div className="prose max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: contest.description }} />
+                            {/* Metadata */}
+                            <div className="mb-4 flex flex-wrap items-center gap-4 text-sm text-slate-600 dark:text-slate-400">
+                                <div className="flex items-center gap-2">
+                                    <CalendarDays className="h-4 w-4 text-blue-500" />
+                                    <span>Deadline: {formatDate(contest.registration_deadline)}</span>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-blue-500" />
+                                    <span>Starts: {formatDate(contest.registration_start_time)}</span>
+                                </div>
+
+                                {contest.registration_limit && (
+                                    <div className="flex items-center gap-2">
+                                        <Users className="h-4 w-4 text-blue-500" />
+                                        <span>
+                                            {contest.registration_limit} {contest.registration_limit === 1 ? 'Participant' : 'Participants'}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Banner Image */}
+                            {contest.banner_image && (
+                                <div className="mb-4 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                                    <img src={contest.banner_image} alt={contest.title} className="h-full w-full object-cover" />
+                                </div>
+                            )}
+
+                            {/* Description */}
+                            {contest.description && (
+                                <div className="mt-4 border-t border-slate-200 pt-4 dark:border-slate-700">
+                                    <div className="prose max-w-none prose-slate dark:prose-invert" dangerouslySetInnerHTML={{ __html: contest.description }} />
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     {/* Sidebar */}
                     <div className="space-y-6">
-                        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                        <div className="sticky top-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
                             <h3 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Registration Details</h3>
 
                             <div className="space-y-4">
@@ -96,16 +126,14 @@ export default function InternalContestDetailsPage({ contest }: Props) {
                                 )}
                             </div>
 
-                            <div className="mt-6">
+                            <div className="mt-6 hidden lg:block">
                                 {contest.is_registration_open ? (
                                     <Button
-                                        className="w-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
+                                        className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 font-medium text-white transition-all hover:from-blue-700 hover:to-cyan-700 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
                                         size="lg"
                                         asChild
                                     >
-                                        <Link href={registration.url(contest.slug)}>
-                                            Register Now
-                                        </Link>
+                                        <Link href={registration.url(contest.slug)}>Register Now</Link>
                                     </Button>
                                 ) : (
                                     <Button className="w-full" size="lg" disabled>
@@ -114,6 +142,25 @@ export default function InternalContestDetailsPage({ contest }: Props) {
                                 )}
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                {/* Mobile Fixed Bottom Button */}
+                <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white p-4 shadow-lg lg:hidden dark:border-slate-700 dark:bg-slate-900">
+                    <div className="container mx-auto">
+                        {contest.is_registration_open ? (
+                            <Button
+                                className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 font-medium text-white transition-all hover:from-blue-700 hover:to-cyan-700 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
+                                size="lg"
+                                asChild
+                            >
+                                <Link href={registration.url(contest.slug)}>Register Now</Link>
+                            </Button>
+                        ) : (
+                            <Button className="w-full" size="lg" disabled>
+                                Registration Closed
+                            </Button>
+                        )}
                     </div>
                 </div>
             </section>
