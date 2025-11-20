@@ -53,25 +53,14 @@ class PaymentController extends Controller
             );
 
             if ($result['success']) {
-                return response()->json([
-                    'success' => true,
-                    'payment_url' => $result['payment_url'],
-                    'payment_id' => $result['payment_id'],
-                    'message' => 'Payment initiated successfully',
-                ]);
+                return Inertia::location($result['payment_url']);
             }
 
-            return response()->json([
-                'success' => false,
-                'message' => $result['message'] ?? 'Payment initiation failed',
-            ], 422);
+            return redirect()->back()->with('error', $result['message'] ?? 'Payment initiation failed');
         } catch (\Exception $e) {
             Log::error('Payment initiation error: '.$e->getMessage());
 
-            return response()->json([
-                'success' => false,
-                'message' => 'An error occurred while initiating payment',
-            ], 500);
+            return redirect()->back()->with('error', 'An error occurred while initiating payment');
         }
     }
 

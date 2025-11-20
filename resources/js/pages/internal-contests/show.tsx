@@ -3,6 +3,7 @@ import MainLayout from '@/layouts/main-layout';
 import type { InternalContestDetails } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, CalendarDays, Clock, Users } from 'lucide-react';
+import { registration } from '@/routes/internal-contests';
 
 type Props = {
     contest: InternalContestDetails;
@@ -100,8 +101,11 @@ export default function InternalContestDetailsPage({ contest }: Props) {
                                     <Button
                                         className="w-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
                                         size="lg"
+                                        asChild
                                     >
-                                        Register Now
+                                        <Link href={registration.url(contest.slug)}>
+                                            Register Now
+                                        </Link>
                                     </Button>
                                 ) : (
                                     <Button className="w-full" size="lg" disabled>

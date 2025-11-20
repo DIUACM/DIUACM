@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance']);
 
+        $middleware->validateCsrfTokens(except: [
+            'payments/callback/*',
+        ]);
+
         $middleware->web(append: [
             HandleAppearance::class,
 

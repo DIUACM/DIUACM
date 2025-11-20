@@ -84,7 +84,7 @@ Route::middleware('auth')->prefix('payments')->name('payment.')->group(function 
 });
 
 // Public payment callback routes (no auth required)
-Route::get('/payments/callback/{gateway}', [PaymentController::class, 'handleCallback'])
+Route::match(['get', 'post'], '/payments/callback/{gateway}', [PaymentController::class, 'handleCallback'])
     ->name('payment.callback');
 
 Route::post('/success',function(){

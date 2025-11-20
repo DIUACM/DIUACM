@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import MainLayout from '@/layouts/main-layout';
 import { InternalContestMyRegistration, SharedData } from '@/types';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { CheckCircle2, Clock, CreditCard, MapPin, Shirt, User } from 'lucide-react';
 
 type Props = {
@@ -16,6 +16,14 @@ export default function MyRegistrationPage({ registration }: Props) {
 
     const isPending = registration.payment_status === 'pending';
     const isPaid = registration.payment_status === 'paid';
+
+    const form = useForm({
+        gateway: 'sslcommerz',
+    });
+
+    const handlePayment = () => {
+        form.post(initiateRegistrationPayment.url({ registration: registration.id }));
+    };
 
     return (
         <MainLayout>
@@ -150,11 +158,9 @@ export default function MyRegistrationPage({ registration }: Props) {
                         </CardContent>
                         <CardFooter className="bg-gray-50 dark:bg-gray-900/50 border-t p-6 flex justify-end">
                             {isPending && registration.internal_contest.registration_fee > 0 && (
-                                <Button asChild size="lg" className="w-full sm:w-auto">
-                                    <a href={initiateRegistrationPayment.url({ registration: registration.id })}>
-                                        <CreditCard className="w-4 h-4 mr-2" />
-                                        Pay Now (৳{registration.internal_contest.registration_fee})
-                                    </a>
+                                <Button onClick={handlePayment} size="lg" className="w-full sm:w-auto" disabled={form.processing}>
+                                    <CreditCard className="w-4 h-4 mr-2" />
+                                    {form.processing ? 'Processing...' : `Pay Now (৳${registration.internal_contest.registration_fee})`}
                                 </Button>
                             )}
                         </CardFooter>
