@@ -96,7 +96,7 @@ class PaymentsRelationManager extends RelationManager
                             ->columnSpanFull()
                             ->helperText('Raw JSON response from payment gateway')
                             ->formatStateUsing(fn ($state) => is_array($state) ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : $state)
-                            ->dehydrateStateUsing(fn ($state) => is_string($state) && !empty($state) ? json_decode($state, true) : $state),
+                            ->dehydrateStateUsing(fn ($state) => is_string($state) && ! empty($state) ? json_decode($state, true) : $state),
                     ])
                     ->columns(2),
             ]);

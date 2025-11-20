@@ -4,9 +4,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContestController;
-use App\Http\Controllers\InternalContestController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GalleryController;
+use App\Http\Controllers\InternalContestController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgrammerController;
@@ -75,8 +75,6 @@ Route::middleware('auth')->group(function () {
 Route::get('/contact', [ContactController::class, 'contact'])->name('contact');
 Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
 
-
-
 // Payment routes
 Route::middleware('auth')->prefix('payments')->name('payment.')->group(function () {
     Route::post('/registrations/{registration}', [PaymentController::class, 'initiateRegistrationPayment'])
@@ -86,4 +84,3 @@ Route::middleware('auth')->prefix('payments')->name('payment.')->group(function 
 // Public payment callback routes (no auth required)
 Route::match(['get', 'post'], '/payments/callback/{gateway}', [PaymentController::class, 'handleCallback'])
     ->name('payment.callback');
-

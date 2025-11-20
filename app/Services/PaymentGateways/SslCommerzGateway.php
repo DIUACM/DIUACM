@@ -27,7 +27,7 @@ class SslCommerzGateway implements PaymentGatewayInterface
 
     public function initiatePayment(array $data): array
     {
-        
+
         try {
             $paymentData = [
                 'total_amount' => $data['amount'],
@@ -59,8 +59,6 @@ class SslCommerzGateway implements PaymentGatewayInterface
             $response = $this->sslCommerz->makePayment($paymentData, 'checkout', 'json');
 
             $decodedResponse = json_decode($response, true);
-
-            
 
             if (isset($decodedResponse['status']) && in_array(strtoupper($decodedResponse['status']), ['SUCCESS', 'SUCCESSFUL'])) {
                 return [

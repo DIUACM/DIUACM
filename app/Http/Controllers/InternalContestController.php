@@ -66,7 +66,7 @@ class InternalContestController extends Controller
             return redirect()->route('internal-contests.my-registration', $internalContest);
         }
 
-        if (!$internalContest->isRegistrationOpen()) {
+        if (! $internalContest->isRegistrationOpen()) {
             return Inertia::render('internal-contests/show', [
                 'contest' => InternalContestDetailsResource::make($internalContest)->resolve(),
                 'flash' => [
@@ -85,7 +85,7 @@ class InternalContestController extends Controller
      */
     public function storeRegistration(Request $request, InternalContest $internalContest)
     {
-        if ($internalContest->status !== VisibilityStatus::PUBLISHED || !$internalContest->isRegistrationOpen()) {
+        if ($internalContest->status !== VisibilityStatus::PUBLISHED || ! $internalContest->isRegistrationOpen()) {
             abort(403, 'Registration is closed.');
         }
 
@@ -94,7 +94,7 @@ class InternalContestController extends Controller
         }
 
         if ($internalContest->registrations()->where('student_id', $request->input('student_id'))->exists()) {
-             return redirect()->back()->withErrors(['student_id' => 'This Student ID is already registered.']);
+            return redirect()->back()->withErrors(['student_id' => 'This Student ID is already registered.']);
         }
 
         $validated = $request->validate([
@@ -166,16 +166,16 @@ class InternalContestController extends Controller
             if (str_starts_with($pattern, 'regex:')) {
                 $pattern = substr($pattern, 6);
             }
-            
+
             // Ensure pattern has delimiters
-            if (!str_starts_with($pattern, '/')) {
-                $pattern = '/' . $pattern . '/';
+            if (! str_starts_with($pattern, '/')) {
+                $pattern = '/'.$pattern.'/';
             }
 
-            if (!preg_match($pattern, $studentId)) {
-                 return response()->json([
+            if (! preg_match($pattern, $studentId)) {
+                return response()->json([
                     'valid' => false,
-                    'message' => 'Student ID format is invalid. ' . ($internalContest->student_id_rules_guide ?? ''),
+                    'message' => 'Student ID format is invalid. '.($internalContest->student_id_rules_guide ?? ''),
                 ]);
             }
         }

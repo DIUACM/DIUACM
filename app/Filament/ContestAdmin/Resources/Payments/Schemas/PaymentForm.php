@@ -20,7 +20,7 @@ class PaymentForm
         return $schema
             ->components([
                 Section::make('Payment Information')
-                 ->columnSpanFull()
+                    ->columnSpanFull()
                     ->schema([
                         MorphToSelect::make('payable')
                             ->label('Related To')
@@ -37,7 +37,7 @@ class PaymentForm
                     ]),
 
                 Section::make('Transaction Details')
-                 ->columnSpanFull()
+                    ->columnSpanFull()
                     ->schema([
                         Grid::make(2)
                             ->schema([
@@ -91,7 +91,7 @@ class PaymentForm
                     ]),
 
                 Section::make('Gateway Response')
-                 ->columnSpanFull()
+                    ->columnSpanFull()
                     ->description('Response data from the payment gateway')
                     ->schema([
                         Textarea::make('gateway_response')
@@ -101,7 +101,7 @@ class PaymentForm
                             ->helperText('JSON response from payment gateway (will be stored as JSON)')
                             ->placeholder('Paste JSON response here...')
                             ->formatStateUsing(fn ($state) => is_array($state) ? json_encode($state, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) : $state)
-                            ->dehydrateStateUsing(fn ($state) => is_string($state) && !empty($state) ? json_decode($state, true) : $state),
+                            ->dehydrateStateUsing(fn ($state) => is_string($state) && ! empty($state) ? json_decode($state, true) : $state),
                     ])
                     ->collapsible()
                     ->collapsed(),

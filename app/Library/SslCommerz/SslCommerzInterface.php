@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Library\SslCommerz;
 
 interface SslCommerzInterface

@@ -1,10 +1,13 @@
 <?php
+
 namespace App\Library\SslCommerz;
 
 abstract class AbstractSslCommerz implements SslCommerzInterface
 {
     protected $apiUrl;
+
     protected $storeId;
+
     protected $storePassword;
 
     protected function setStoreId($storeID)
@@ -38,16 +41,15 @@ abstract class AbstractSslCommerz implements SslCommerzInterface
     }
 
     /**
-     * @param $data
-     * @param array $header
-     * @param bool $setLocalhost
+     * @param  array  $header
+     * @param  bool  $setLocalhost
      * @return bool|string
      */
     public function callToApi($data, $header = [], $setLocalhost = false)
     {
         $curl = curl_init();
 
-        if (!$setLocalhost) {
+        if (! $setLocalhost) {
             curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
             curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2); // The default value for this option is 2. It means, it has to have the same name in the certificate as is in the URL you operate against.
         } else {
@@ -70,18 +72,17 @@ abstract class AbstractSslCommerz implements SslCommerzInterface
         $curlErrorNo = curl_errno($curl);
         curl_close($curl);
 
-        if ($code == 200 & !($curlErrorNo)) {
+        if ($code == 200 & ! ($curlErrorNo)) {
             return $response;
         } else {
-            return "FAILED TO CONNECT WITH SSLCOMMERZ API";
-            //return "cURL Error #:" . $err;
+            return 'FAILED TO CONNECT WITH SSLCOMMERZ API';
+            // return "cURL Error #:" . $err;
         }
     }
 
     /**
-     * @param $response
-     * @param string $type
-     * @param string $pattern
+     * @param  string  $type
+     * @param  string  $pattern
      * @return false|mixed|string
      */
     public function formatResponse($response, $type = 'checkout', $pattern = 'json')
@@ -91,18 +92,18 @@ abstract class AbstractSslCommerz implements SslCommerzInterface
         if ($type != 'checkout') {
             return $sslcz;
         } else {
-            if (!empty($sslcz['GatewayPageURL'])) {
+            if (! empty($sslcz['GatewayPageURL'])) {
                 // this is important to show the popup, return or echo to send json response back
-                if(!empty($this->getApiUrl()) && $this->getApiUrl() == 'https://securepay.sslcommerz.com') {
-                   $response = json_encode(['status' => 'SUCCESS', 'data' => $sslcz['GatewayPageURL'], 'logo' => $sslcz['storeLogo']]);
+                if (! empty($this->getApiUrl()) && $this->getApiUrl() == 'https://securepay.sslcommerz.com') {
+                    $response = json_encode(['status' => 'SUCCESS', 'data' => $sslcz['GatewayPageURL'], 'logo' => $sslcz['storeLogo']]);
                 } else {
                     $response = json_encode(['status' => 'success', 'data' => $sslcz['GatewayPageURL'], 'logo' => $sslcz['storeLogo']]);
                 }
             } else {
-                if (strpos($sslcz['failedreason'],'Store Credential') === false) {
+                if (strpos($sslcz['failedreason'], 'Store Credential') === false) {
                     $message = $sslcz['failedreason'];
                 } else {
-                    $message = "Check the SSLCZ_TESTMODE and SSLCZ_STORE_PASSWORD value in your .env; DO NOT USE MERCHANT PANEL PASSWORD HERE.";
+                    $message = 'Check the SSLCZ_TESTMODE and SSLCZ_STORE_PASSWORD value in your .env; DO NOT USE MERCHANT PANEL PASSWORD HERE.';
                 }
                 $response = json_encode(['status' => 'fail', 'data' => null, 'message' => $message]);
             }
@@ -116,12 +117,11 @@ abstract class AbstractSslCommerz implements SslCommerzInterface
     }
 
     /**
-     * @param $url
-     * @param bool $permanent
+     * @param  bool  $permanent
      */
     public function redirect($url, $permanent = false)
     {
-        header('Location: ' . $url, true, $permanent ? 301 : 302);
+        header('Location: '.$url, true, $permanent ? 301 : 302);
 
         exit();
     }
