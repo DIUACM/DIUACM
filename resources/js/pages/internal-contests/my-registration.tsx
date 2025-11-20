@@ -4,8 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import MainLayout from '@/layouts/main-layout';
 import { InternalContestMyRegistration } from '@/types';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { 
+    ArrowLeft,
     CheckCircle2, 
     Clock, 
     CreditCard, 
@@ -48,7 +49,7 @@ export default function MyRegistrationPage({ registration }: Props) {
     const isPaymentUnderManualReview = paymentStatus === 'under_manual_review';
 
     // User can pay if: has fee, not confirmed, and (no payment OR payment failed/canceled)
-    const canPayAgain = !isPaymentPaid && !isPaymentPending && !isPaymentUnderManualReview;
+    const canPayAgain = !isPaymentPaid && !isPaymentUnderManualReview;
     const showPaymentButton = hasFee && !isConfirmed && canPayAgain;
 
     const form = useForm({
@@ -67,39 +68,47 @@ export default function MyRegistrationPage({ registration }: Props) {
         <MainLayout>
             <Head title={`My Registration - ${registration.internal_contest.title}`} />
 
-            <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
-                <div className="mx-auto max-w-5xl space-y-6">
-                    {/* Header Section */}
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 sm:text-3xl">
-                                My Registration
-                            </h1>
-                            <p className="mt-1 text-base text-muted-foreground">
-                                {registration.internal_contest.title}
-                            </p>
-                        </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleRefresh}
-                        >
-                            <RefreshCw className="mr-2 h-4 w-4" />
-                            Refresh
+            <div className="container mx-auto px-4 py-8">
+                {/* Back button */}
+                <div className="mb-6">
+                    <Link href={`/internal-contests/${registration.internal_contest.slug}`}>
+                        <Button variant="ghost" className="gap-2 pl-0 hover:pl-2 transition-all">
+                            <ArrowLeft className="h-4 w-4" />
+                            Back to Contest
                         </Button>
-                    </div>
+                    </Link>
+                </div>
 
-                    {/* Status Banner */}
-                    <StatusBanner
-                        status={registrationStatus}
-                        isConfirmed={isConfirmed}
-                        payment={payment}
-                        hasFee={hasFee}
-                    />
+                <div className="grid gap-8 lg:grid-cols-3">
+                    {/* Main Content */}
+                    <div className="space-y-6 lg:col-span-2">
+                        {/* Header Section */}
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 sm:text-3xl">
+                                    My Registration
+                                </h1>
+                                <p className="mt-1 text-base text-muted-foreground">
+                                    {registration.internal_contest.title}
+                                </p>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleRefresh}
+                            >
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Refresh
+                            </Button>
+                        </div>
 
-                    <div className="grid gap-6 lg:grid-cols-3">
-                        {/* Main Content */}
-                        <div className="space-y-6 lg:col-span-2">
+                        {/* Status Banner */}
+                        <StatusBanner
+                            status={registrationStatus}
+                            isConfirmed={isConfirmed}
+                            payment={payment}
+                            hasFee={hasFee}
+                        />
                             {/* Registration Details Card */}
                             <Card>
                                 <CardHeader>
@@ -213,8 +222,9 @@ export default function MyRegistrationPage({ registration }: Props) {
 
                         {/* Sidebar */}
                         <div className="space-y-6">
-                            {/* Status Card */}
-                            <Card>
+                            <div className="sticky top-8 space-y-6">
+                                {/* Status Card */}
+                                <Card>
                                 <CardHeader>
                                     <CardTitle className="text-base">Status</CardTitle>
                                 </CardHeader>
@@ -306,10 +316,10 @@ export default function MyRegistrationPage({ registration }: Props) {
                                     </div>
                                 </CardContent>
                             </Card>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
         </MainLayout>
     );
 }
