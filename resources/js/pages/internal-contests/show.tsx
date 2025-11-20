@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import MainLayout from '@/layouts/main-layout';
 import type { InternalContestDetails } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, CalendarDays, Clock, DollarSign, Users } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Clock, Users } from 'lucide-react';
 
 type Props = {
     contest: InternalContestDetails;
@@ -48,9 +48,7 @@ export default function InternalContestDetailsPage({ contest }: Props) {
 
                         <div className="mb-8">
                             <h1 className="mb-4 text-3xl font-bold text-slate-900 dark:text-white">{contest.title}</h1>
-                            <div className="prose max-w-none dark:prose-invert">
-                                <p>{contest.description}</p>
-                            </div>
+                            <div className="prose max-w-none dark:prose-invert" dangerouslySetInnerHTML={{ __html: contest.description }} />
                         </div>
                     </div>
 
@@ -77,7 +75,7 @@ export default function InternalContestDetailsPage({ contest }: Props) {
                                 </div>
 
                                 <div className="flex items-start gap-3">
-                                    <DollarSign className="mt-0.5 h-5 w-5 text-blue-500" />
+                                    <span className="mt-0.5 flex h-5 w-5 items-center justify-center text-lg font-bold text-blue-500">৳</span>
                                     <div>
                                         <p className="text-sm font-medium text-slate-900 dark:text-white">Registration Fee</p>
                                         <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -99,7 +97,10 @@ export default function InternalContestDetailsPage({ contest }: Props) {
 
                             <div className="mt-6">
                                 {contest.is_registration_open ? (
-                                    <Button className="w-full" size="lg">
+                                    <Button
+                                        className="w-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
+                                        size="lg"
+                                    >
                                         Register Now
                                     </Button>
                                 ) : (
