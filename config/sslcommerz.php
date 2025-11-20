@@ -17,7 +17,7 @@ return [
 	],
 	'apiDomain' => $apiDomain,
 	'connect_from_localhost' => env("IS_LOCALHOST", false), // For Sandbox, use "true", For Live, use "false"
-	'success_url' => '/success',
+	'success_url' => route('payment.callback', ['gateway' => 'sslcommerz']),
 	'failed_url' => '/fail',
 	'cancel_url' => '/cancel',
 	'ipn_url' => '/ipn',
