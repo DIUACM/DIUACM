@@ -81,19 +81,28 @@ class PaymentController extends Controller
             // Handle the callback through payment service
             $result = $this->paymentService->handleCallback($gateway, $callbackData);
 
-            if (! isset($result['payment_id'])) {
-                Log::error('Payment callback missing payment_id', ['result' => $result]);
+            if (! isset($result['transaction_id'])) {
+                Log::error('Payment callback missing transaction_id', ['result' => $result]);
 
                 return $this->handleFailedCallback('Invalid callback response');
             }
 
             // Find the payment by transaction ID
-            $payment = Payment::where('transaction_id', $result['payment_id'])->first();
+            $payment = Payment::where('transaction_id', $result['transaction_id'])->first();
 
             if (! $payment) {
-                Log::error('Payment not found for callback', ['payment_id' => $result['payment_id']]);
+                Log::error('Payment not found for callback', ['transaction_id' => $result['transaction_id']]);
 
                 return $this->handleFailedCallback('Payment not found');
+            }
+            if( !isset($result['gateway_transaction_id']) || $payment->gateway_transaction_id !== $result['gateway_transaction_id']) {
+                
+                Log::error('Gateway transaction ID mismatch', [
+                    'expected' => $payment->gateway_transaction_id,
+                    'received' => $result['gateway_transaction_id'] ?? null,
+                ]);
+                return $this->handleFailedCallback('Gateway transaction ID mismatch');
+
             }
 
             // Process the payment result using database transaction
@@ -102,7 +111,6 @@ class PaymentController extends Controller
                 if ($result['success']) {
                     // Mark payment as successful and call model hook
                     $payment->payable->markPaymentAsSuccessful($payment, [
-                        'gateway_transaction_id' => $result['transaction_id'] ?? $result['payment_id'],
                         'callback_response' => $result['response'] ?? $callbackData,
                     ]);
 

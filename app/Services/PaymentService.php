@@ -68,7 +68,9 @@ class PaymentService
         if ($result['success']) {
             $payment->update([
                 'gateway_transaction_id' => $result['payment_id'] ?? null,
-                'gateway_response' => $result['response'] ?? null,
+                'gateway_response' => [
+                    'initiation_response' => $result['response'] ?? null,
+                ],
             ]);
 
             return [
