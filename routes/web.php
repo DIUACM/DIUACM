@@ -36,7 +36,7 @@ Route::post('/logout', [AuthController::class, 'destroy'])->middleware('auth')->
 Route::prefix('events')->name('events.')->group(function () {
     Route::get('/', [EventController::class, 'index'])->name('index');
     Route::get('/{event}', [EventController::class, 'show'])->name('show');
-    
+
     Route::middleware('auth')->group(function () {
         Route::post('/{event}/attendance', [EventController::class, 'storeAttendance'])->name('attendance.store');
     });
@@ -52,7 +52,7 @@ Route::prefix('contests')->name('contests.')->group(function () {
 Route::prefix('internal-contests')->name('internal-contests.')->group(function () {
     Route::get('/', [InternalContestController::class, 'index'])->name('index');
     Route::get('/{internalContest:slug}', [InternalContestController::class, 'show'])->name('show');
-    
+
     Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{internalContest:slug}/register', [InternalContestController::class, 'registration'])->name('registration');
         Route::post('/{internalContest:slug}/register', [InternalContestController::class, 'storeRegistration'])->name('store-registration');

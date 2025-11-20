@@ -21,11 +21,13 @@ export default function MyRegistrationPage({ registration }: Props) {
     const isRegistrationPending = registrationStatus === 'pending';
     const isRegistrationPaid = registrationStatus === 'paid';
     const isRegistrationCanceled = registrationStatus === 'canceled';
+    const isRegistrationUnderReview = registrationStatus === 'under_review';
 
     const isPaymentPending = paymentStatus === 'pending';
     const isPaymentPaid = paymentStatus === 'paid';
     const isPaymentFailed = paymentStatus === 'failed';
     const isPaymentCanceled = paymentStatus === 'canceled';
+    const isPaymentUnderManualReview = paymentStatus === 'under_manual_review';
 
     const form = useForm({
         gateway: 'sslcommerz',
@@ -38,6 +40,7 @@ export default function MyRegistrationPage({ registration }: Props) {
     const getRegistrationStatusColor = () => {
         if (isRegistrationPaid) return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-900';
         if (isRegistrationCanceled) return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900';
+        if (isRegistrationUnderReview) return 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-900';
         return 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-900';
     };
 
@@ -45,12 +48,14 @@ export default function MyRegistrationPage({ registration }: Props) {
         if (isPaymentPaid) return 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-900';
         if (isPaymentFailed || isPaymentCanceled) return 'bg-red-100 text-red-800 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-900';
         if (isPaymentPending) return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900';
+        if (isPaymentUnderManualReview) return 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-900';
         return 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-900';
     };
 
     const getRegistrationStatusIcon = () => {
         if (isRegistrationPaid) return <CheckCircle2 className="h-5 w-5" />;
         if (isRegistrationCanceled) return <XCircle className="h-5 w-5" />;
+        if (isRegistrationUnderReview) return <AlertCircle className="h-5 w-5" />;
         return <Clock className="h-5 w-5" />;
     };
 
@@ -58,6 +63,7 @@ export default function MyRegistrationPage({ registration }: Props) {
         if (isPaymentPaid) return <CheckCircle2 className="h-5 w-5" />;
         if (isPaymentFailed || isPaymentCanceled) return <XCircle className="h-5 w-5" />;
         if (isPaymentPending) return <Clock className="h-5 w-5" />;
+        if (isPaymentUnderManualReview) return <AlertCircle className="h-5 w-5" />;
         return <Info className="h-5 w-5" />;
     };
 
@@ -84,11 +90,12 @@ export default function MyRegistrationPage({ registration }: Props) {
                                 <div className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${getRegistrationStatusColor()}`}>
                                     {getRegistrationStatusIcon()}
                                     <div className="flex-1">
-                                        <p className="font-semibold capitalize">{registrationStatus}</p>
+                                        <p className="font-semibold capitalize">{registrationStatus === 'under_review' ? 'Under Review' : registrationStatus}</p>
                                         <p className="text-sm opacity-90">
                                             {isRegistrationPaid && 'Your registration is confirmed'}
                                             {isRegistrationPending && 'Awaiting payment confirmation'}
                                             {isRegistrationCanceled && 'Registration has been canceled'}
+                                            {isRegistrationUnderReview && 'Payment verification in progress'}
                                         </p>
                                     </div>
                                 </div>
@@ -105,12 +112,13 @@ export default function MyRegistrationPage({ registration }: Props) {
                                     <div className={`flex items-center gap-3 rounded-lg border px-4 py-3 ${getPaymentStatusColor()}`}>
                                         {getPaymentStatusIcon()}
                                         <div className="flex-1">
-                                            <p className="font-semibold capitalize">{paymentStatus || 'Not Initiated'}</p>
+                                            <p className="font-semibold capitalize">{paymentStatus === 'under_manual_review' ? 'Under Manual Review' : paymentStatus || 'Not Initiated'}</p>
                                             <p className="text-sm opacity-90">
                                                 {isPaymentPaid && `Paid ৳${registration.payment_amount}`}
                                                 {isPaymentPending && 'Payment is being processed'}
                                                 {isPaymentFailed && 'Payment failed, please retry'}
                                                 {isPaymentCanceled && 'Payment was canceled'}
+                                                {isPaymentUnderManualReview && 'Admin verification pending'}
                                                 {!paymentStatus && 'No payment initiated yet'}
                                             </p>
                                         </div>
@@ -259,11 +267,31 @@ export default function MyRegistrationPage({ registration }: Props) {
                                         </div>
                                     </div>
                                 )}
+
+                                {isPaymentUnderManualReview && (
+                                    <div className="flex items-start gap-3 rounded-lg border border-purple-200 bg-purple-50 p-4 dark:border-purple-900 dark:bg-purple-900/20">
+                                        <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-purple-600 dark:text-purple-400" />
+                                        <div>
+                                            <h4 className="font-semibold text-purple-900 dark:text-purple-100">
+                                                Payment Under Manual Review
+                                            </h4>
+                                            <p className="mt-1 text-sm text-purple-700 dark:text-purple-300">
+                                                Your payment is currently being verified by our team. This process may take up to 24-48 hours. 
+                                                You will be notified via email once the review is complete. Please do not attempt another payment.
+                                            </p>
+                                            {registration.payment_transaction_id && (
+                                                <p className="mt-2 text-xs font-mono text-purple-600 dark:text-purple-400">
+                                                    Reference: {registration.payment_transaction_id}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </CardContent>
 
                         {/* Action Footer */}
-                        {isRegistrationPending && hasFee && !isPaymentPaid && !isPaymentPending && (
+                        {isRegistrationPending && hasFee && !isPaymentPaid && !isPaymentPending && !isPaymentUnderManualReview && (
                             <CardFooter className="border-t bg-gray-50 p-6 dark:bg-gray-900/50">
                                 <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                     <div className="text-sm text-gray-600 dark:text-gray-400">

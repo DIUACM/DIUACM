@@ -41,6 +41,14 @@ trait HasPayments
     }
 
     /**
+     * Get payments under manual review
+     */
+    public function paymentsUnderManualReview(): MorphMany
+    {
+        return $this->payments()->where('status', PaymentStatus::UNDER_MANUAL_REVIEW);
+    }
+
+    /**
      * Check if has any successful payment
      */
     public function hasSuccessfulPayment(): bool
@@ -54,6 +62,23 @@ trait HasPayments
     public function hasPendingPayment(): bool
     {
         return $this->pendingPayments()->exists();
+    }
+
+    /**
+     * Check if has payment under manual review
+     */
+    public function hasPaymentUnderManualReview(): bool
+    {
+        return $this->paymentsUnderManualReview()->exists();
+    }
+
+    /**
+     * Check if can initiate new payment
+     * Returns false if there's already a successful payment, pending payment, or payment under review
+     */
+    public function canInitiatePayment(): bool
+    {
+        return ! ($this->hasSuccessfulPayment() || $this->hasPendingPayment() || $this->hasPaymentUnderManualReview());
     }
 
     /**

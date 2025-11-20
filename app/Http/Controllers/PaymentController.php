@@ -26,41 +26,90 @@ class PaymentController extends Controller
             'gateway' => 'required|string|in:sslcommerz',
         ]);
 
-        $registrationAmount = $registration->internalContest->registration_fee;
-
         try {
-            $additionalData = [
-                'callback_url' => route('payment.callback', ['gateway' => $validated['gateway']]),
-                'payer_reference' => $registration->email,
-            ];
+            // Use database transaction with locking to prevent race conditions
+            return DB::transaction(function () use ($registration, $validated) {
+                // Lock the registration row to prevent concurrent payment initiations
+                $registration = InternalContestRegistration::where('id', $registration->id)
+                    ->lockForUpdate()
+                    ->first();
 
-            // Add SSL Commerz specific fields if needed
-            if ($validated['gateway'] === 'sslcommerz') {
-                $additionalData = array_merge($additionalData, [
-                    'customer_name' => $registration->name,
-                    'customer_email' => $registration->email,
-                    'customer_phone' => $registration->phone,
-                    'product_name' => 'Contest Registration',
-                    'product_category' => 'registration',
-                ]);
-            }
+                if (! $registration) {
+                    return redirect()->back()->with('error', 'Registration not found');
+                }
 
-            $result = $this->paymentService->initiatePayment(
-                model: $registration,
-                gateway: $validated['gateway'],
-                amount: (float) $registrationAmount,
-                additionalData: $additionalData
-            );
+                // Authorization check: Ensure user owns this registration
+                if (auth()->check() && $registration->user_id !== auth()->id()) {
+                    abort(403, 'Unauthorized access to this registration');
+                }
 
-            if ($result['success']) {
-                return Inertia::location($result['payment_url']);
-            }
+                // Check if registration is free (no payment required)
+                if ($registration->isFree()) {
+                    return redirect()->back()->with('error', 'This registration does not require payment');
+                }
 
-            return redirect()->back()->with('error', $result['message'] ?? 'Payment initiation failed');
+                // Check if registration already has a successful payment
+                if ($registration->hasSuccessfulPayment()) {
+                    return redirect()->back()->with('error', 'Payment has already been completed for this registration');
+                }
+
+                // Check for pending or under review payments
+                $latestPayment = $registration->latestPayment();
+                if ($latestPayment) {
+                    if ($latestPayment->status->value === 'pending') {
+                        return redirect()->back()->with(
+                            'error',
+                            'A payment is already in progress. Please complete or cancel the existing payment before initiating a new one.'
+                        );
+                    }
+
+                    if ($latestPayment->status->value === 'under_manual_review') {
+                        return redirect()->back()->with(
+                            'info',
+                            'Your payment is currently under manual review by our team. Please wait for verification. You will be notified once the review is complete.'
+                        );
+                    }
+                }
+
+                $registrationAmount = $registration->internalContest->registration_fee;
+
+                $additionalData = [
+                    'callback_url' => route('payment.callback', ['gateway' => $validated['gateway']]),
+                    'payer_reference' => $registration->email,
+                ];
+
+                // Add SSL Commerz specific fields if needed
+                if ($validated['gateway'] === 'sslcommerz') {
+                    $additionalData = array_merge($additionalData, [
+                        'customer_name' => $registration->name,
+                        'customer_email' => $registration->email,
+                        'customer_phone' => $registration->phone,
+                        'product_name' => 'Contest Registration',
+                        'product_category' => 'registration',
+                    ]);
+                }
+
+                $result = $this->paymentService->initiatePayment(
+                    model: $registration,
+                    gateway: $validated['gateway'],
+                    amount: (float) $registrationAmount,
+                    additionalData: $additionalData
+                );
+
+                if ($result['success']) {
+                    return Inertia::location($result['payment_url']);
+                }
+
+                return redirect()->back()->with('error', $result['message'] ?? 'Payment initiation failed');
+            });
         } catch (\Exception $e) {
-            Log::error('Payment initiation error: '.$e->getMessage());
+            Log::error('Payment initiation error: '.$e->getMessage(), [
+                'registration_id' => $registration->id,
+                'user_id' => auth()->id(),
+                'exception' => $e,
+            ]);
 
-            return redirect()->back()->with('error', 'An error occurred while initiating payment');
+            return redirect()->back()->with('error', 'An error occurred while initiating payment. Please try again.');
         }
     }
 
@@ -87,28 +136,43 @@ class PaymentController extends Controller
                 return $this->handleFailedCallback('Invalid callback response');
             }
 
-            // Find the payment by transaction ID
-            $payment = Payment::where('transaction_id', $result['transaction_id'])->first();
+            // Use database transaction with row locking to prevent race conditions
+            return DB::transaction(function () use ($result, $callbackData) {
+                // Find and lock the payment by transaction ID
+                $payment = Payment::where('transaction_id', $result['transaction_id'])
+                    ->lockForUpdate()
+                    ->first();
 
-            if (! $payment) {
-                Log::error('Payment not found for callback', ['transaction_id' => $result['transaction_id']]);
+                if (! $payment) {
+                    Log::error('Payment not found for callback', ['transaction_id' => $result['transaction_id']]);
 
-                return $this->handleFailedCallback('Payment not found');
-            }
-            if (! isset($result['gateway_transaction_id']) || $payment->gateway_transaction_id !== $result['gateway_transaction_id']) {
+                    return $this->handleFailedCallback('Payment not found');
+                }
 
-                Log::error('Gateway transaction ID mismatch', [
-                    'expected' => $payment->gateway_transaction_id,
-                    'received' => $result['gateway_transaction_id'] ?? null,
-                ]);
+                // Verify gateway transaction ID match
+                if (! isset($result['gateway_transaction_id']) || $payment->gateway_transaction_id !== $result['gateway_transaction_id']) {
+                    Log::error('Gateway transaction ID mismatch', [
+                        'expected' => $payment->gateway_transaction_id,
+                        'received' => $result['gateway_transaction_id'] ?? null,
+                    ]);
 
-                return $this->handleFailedCallback('Gateway transaction ID mismatch');
+                    return $this->handleFailedCallback('Gateway transaction ID mismatch');
+                }
 
-            }
+                // Prevent processing already completed payments (idempotency)
+                if (in_array($payment->status->value, ['paid', 'refunded'])) {
+                    Log::info('Payment already processed, returning success', ['payment_id' => $payment->id]);
 
-            // Process the payment result using database transaction
-            DB::beginTransaction();
-            try {
+                    return $this->handleSuccessfulCallback($payment);
+                }
+
+                // Prevent processing payments under manual review
+                if ($payment->status->value === 'under_manual_review') {
+                    Log::info('Payment under manual review, ignoring callback', ['payment_id' => $payment->id]);
+
+                    return $this->handleManualReviewCallback($payment);
+                }
+
                 if ($result['success']) {
                     // Mark payment as successful and call model hook
                     $payment->payable->markPaymentAsSuccessful($payment, [
@@ -117,8 +181,6 @@ class PaymentController extends Controller
 
                     // Call the model-specific success handler
                     $payment->payable->onPaymentSuccessful($payment);
-
-                    DB::commit();
 
                     Log::info('Payment successful', ['payment_id' => $payment->id]);
 
@@ -132,16 +194,11 @@ class PaymentController extends Controller
                     // Call the model-specific failure handler
                     $payment->payable->onPaymentFailed($payment);
 
-                    DB::commit();
-
                     Log::warning('Payment failed', ['payment_id' => $payment->id, 'result' => $result]);
 
                     return $this->handleFailedCallback($result['message'] ?? 'Payment failed');
                 }
-            } catch (\Exception $e) {
-                DB::rollBack();
-                throw $e;
-            }
+            });
         } catch (\Exception $e) {
             Log::error('Payment callback error: '.$e->getMessage(), [
                 'gateway' => $gateway,
@@ -176,5 +233,23 @@ class PaymentController extends Controller
     protected function handleFailedCallback(string $message)
     {
         return Inertia::location(route('home').'?payment=failed&message='.urlencode($message));
+    }
+
+    /**
+     * Handle manual review payment callback
+     */
+    protected function handleManualReviewCallback(Payment $payment)
+    {
+        $payable = $payment->payable;
+
+        // Determine redirect URL based on payable type
+        $redirectUrl = match (true) {
+            $payable instanceof InternalContestRegistration => route('internal-contests.my-registration', [
+                'internalContest' => $payable->internalContest->slug,
+            ]),
+            default => route('home'),
+        };
+
+        return Inertia::location($redirectUrl.'?payment=under_review');
     }
 }

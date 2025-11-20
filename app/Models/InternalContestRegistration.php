@@ -94,6 +94,10 @@ class InternalContestRegistration extends Model implements Payable
             return 'paid';
         }
 
+        if ($this->hasPaymentUnderManualReview()) {
+            return 'under_review';
+        }
+
         if ($this->isCanceled()) {
             return 'canceled';
         }

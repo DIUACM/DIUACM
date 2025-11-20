@@ -262,8 +262,8 @@ export interface InternalContestMyRegistration {
     gender: string;
     transport_service_required: boolean;
     pickup_point: string | null;
-    status: string;
-    payment_status: string | null;
+    status: 'pending' | 'paid' | 'canceled' | 'under_review';
+    payment_status: 'pending' | 'paid' | 'failed' | 'canceled' | 'refunded' | 'under_manual_review' | null;
     payment_amount: number | null;
     payment_gateway: string | null;
     payment_transaction_id: string | null;

@@ -50,7 +50,7 @@ class InternalContestFactory extends Factory
                 ['initial' => 'ABC', 'full_name' => 'Dr. John Doe'],
                 ['initial' => 'XYZ', 'full_name' => 'Dr. Jane Smith'],
             ], fake()->numberBetween(1, 2)),
-            'status' => fake()->randomElement(['draft', 'published', 'closed']),
+            'status' => fake()->randomElement(['draft', 'published']),
         ];
     }
 }
