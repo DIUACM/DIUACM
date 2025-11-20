@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\VisibilityStatus;
 use App\Http\Resources\InternalContestDetailsResource;
+use App\Http\Resources\InternalContestMyRegistrationResource;
 use App\Http\Resources\InternalContestRegistrationViewResource;
 use App\Http\Resources\InternalContestResource;
 use App\Models\InternalContest;
@@ -55,10 +56,14 @@ class InternalContestController extends Controller
     /**
      * Show the registration page for the internal contest.
      */
-    public function registration(InternalContest $internalContest): Response
+    public function registration(InternalContest $internalContest)
     {
         if ($internalContest->status !== VisibilityStatus::PUBLISHED) {
             abort(404);
+        }
+
+        if ($internalContest->registrations()->where('user_id', request()->user()->id)->exists()) {
+            return redirect()->route('internal-contests.my-registration', $internalContest);
         }
 
         if (!$internalContest->isRegistrationOpen()) {
@@ -85,7 +90,7 @@ class InternalContestController extends Controller
         }
 
         if ($internalContest->registrations()->where('user_id', $request->user()->id)->exists()) {
-            return redirect()->back()->with('error', 'You are already registered for this contest.');
+            return redirect()->route('internal-contests.my-registration', $internalContest);
         }
 
         if ($internalContest->registrations()->where('student_id', $request->input('student_id'))->exists()) {
@@ -125,12 +130,10 @@ class InternalContestController extends Controller
         // If fee is 0, mark as paid? Or handle payment logic.
         if ($internalContest->registration_fee <= 0) {
             $registration->update(['payment_status' => \App\Enums\PaymentStatus::PAID]);
-            return redirect()->route('internal-contests.show', $internalContest)
-                ->with('success', 'Registration successful!');
         }
 
-        // Redirect to payment initiation
-        return redirect()->route('payment.registration.initiate', $registration);
+        return redirect()->route('internal-contests.my-registration', $internalContest)
+            ->with('success', 'Registration successful!');
     }
 
     /**
@@ -180,6 +183,20 @@ class InternalContestController extends Controller
         return response()->json([
             'valid' => true,
             'message' => 'Student ID is available.',
+        ]);
+    }
+
+    /**
+     * Show the user's registration for the internal contest.
+     */
+    public function myRegistration(Request $request, InternalContest $internalContest): Response
+    {
+        $registration = $internalContest->registrations()
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        return Inertia::render('internal-contests/my-registration', [
+            'registration' => InternalContestMyRegistrationResource::make($registration)->resolve(),
         ]);
     }
 }

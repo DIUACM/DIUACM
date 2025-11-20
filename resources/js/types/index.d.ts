@@ -243,3 +243,25 @@ export interface InternalContestRegistrationView extends InternalContest {
     };
     tshirt_size_guideline_url?: string;
 }
+
+export interface InternalContestMyRegistration {
+    id: number;
+    internal_contest: {
+        title: string;
+        slug: string;
+        registration_fee: number;
+    };
+    student_id: string;
+    name: string;
+    email: string;
+    phone: string;
+    department: string;
+    section: string;
+    lab_teacher_name: string | null;
+    tshirt_size: string | null;
+    gender: string;
+    transport_service_required: boolean;
+    pickup_point: string | null;
+    payment_status: string;
+    created_at: string;
+}
