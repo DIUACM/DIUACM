@@ -29,6 +29,7 @@ class InternalContestMyRegistrationResource extends JsonResource
                 'registration_fee' => (float) $this->internalContest->registration_fee,
                 'registration_deadline' => $this->internalContest->registration_deadline,
                 'registration_start_time' => $this->internalContest->registration_start_time,
+                'banner_image' => $this->internalContest->getFirstMediaUrl('banner_image'),
             ],
             'student_id' => $this->student_id,
             'name' => $this->name,

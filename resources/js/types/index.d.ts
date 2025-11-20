@@ -255,6 +255,7 @@ export interface InternalContestMyRegistration {
         registration_fee: number;
         registration_deadline: string;
         registration_start_time: string;
+        banner_image: string | null;
     };
     student_id: string;
     name: string;

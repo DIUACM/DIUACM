@@ -189,6 +189,17 @@ export default function MyRegistrationPage({ registration }: Props) {
                     {/* Sidebar */}
                     <div className="space-y-6">
                         <div className="sticky top-8 space-y-6">
+                            {/* Banner Image */}
+                            {registration.internal_contest.banner_image && (
+                                <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <img
+                                        src={registration.internal_contest.banner_image}
+                                        alt={registration.internal_contest.title}
+                                        className="h-48 w-full object-cover"
+                                    />
+                                </div>
+                            )}
+
                             {/* Status Card */}
                             <Card>
                                 <CardHeader>
