@@ -98,7 +98,7 @@ class PaymentService
     {
         $gatewayInstance = $this->gateway($payment->gateway);
         $result = $gatewayInstance->verifyPayment($payment->gateway_transaction_id);
-
+        
         if ($result['success'] && $result['status'] === 'Completed') {
             $payment->payable->markPaymentAsSuccessful($payment, [
                 'gateway_transaction_id' => $result['transaction_id'] ?? $payment->gateway_transaction_id,

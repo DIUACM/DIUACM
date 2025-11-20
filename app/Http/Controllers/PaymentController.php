@@ -56,13 +56,7 @@ class PaymentController extends Controller
                 // Check for pending or under review payments
                 $latestPayment = $registration->latestPayment();
                 if ($latestPayment) {
-                    if ($latestPayment->status->value === 'pending') {
-                        return redirect()->back()->with(
-                            'error',
-                            'A payment is already in progress. Please complete or cancel the existing payment before initiating a new one.'
-                        );
-                    }
-
+                  
                     if ($latestPayment->status->value === 'under_manual_review') {
                         return redirect()->back()->with(
                             'info',
