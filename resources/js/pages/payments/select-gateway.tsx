@@ -30,7 +30,7 @@ export default function SelectGateway({ registration }: Props) {
                     <div className="container mx-auto px-4 py-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <img src="/images/logo.png" alt="DIU ACM" className="h-10" />
+                                <img src="/images/diuacm-logo-rounded.webp" alt="DIU ACM" className="h-10" />
                                 <div className="h-8 w-px bg-gray-300" />
                                 <span className="text-sm font-medium text-gray-700">Secure Payment Gateway</span>
                             </div>

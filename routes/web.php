@@ -51,13 +51,13 @@ Route::prefix('contests')->name('contests.')->group(function () {
 // Internal contest routes
 Route::prefix('internal-contests')->name('internal-contests.')->group(function () {
     Route::get('/', [InternalContestController::class, 'index'])->name('index');
-    Route::get('/{internalContest:slug}', [InternalContestController::class, 'show'])->name('show');
+    Route::get('/{internalContest}', [InternalContestController::class, 'show'])->name('show');
 
     Route::middleware(['auth', 'verified'])->group(function () {
-        Route::get('/{internalContest:slug}/register', [InternalContestController::class, 'registration'])->name('registration');
-        Route::post('/{internalContest:slug}/register', [InternalContestController::class, 'storeRegistration'])->name('store-registration');
-        Route::post('/{internalContest:slug}/validate-student-id', [InternalContestController::class, 'validateStudentId'])->name('validate-student-id');
-        Route::get('/{internalContest:slug}/my-registration', [InternalContestController::class, 'myRegistration'])->name('my-registration');
+        Route::get('/{internalContest}/register', [InternalContestController::class, 'registration'])->name('registration');
+        Route::post('/{internalContest}/register', [InternalContestController::class, 'storeRegistration'])->name('store-registration');
+        Route::post('/{internalContest}/validate-student-id', [InternalContestController::class, 'validateStudentId'])->name('validate-student-id');
+        Route::get('/{internalContest}/my-registration', [InternalContestController::class, 'myRegistration'])->name('my-registration');
     });
 });
 
@@ -70,13 +70,13 @@ Route::prefix('programmers')->name('programmers.')->group(function () {
 // Blog routes
 Route::prefix('blog')->name('blog.')->group(function () {
     Route::get('/', [BlogController::class, 'index'])->name('index');
-    Route::get('/{blogPost:slug}', [BlogController::class, 'show'])->name('show');
+    Route::get('/{blogPost}', [BlogController::class, 'show'])->name('show');
 });
 
 // Gallery routes
 Route::prefix('galleries')->name('galleries.')->group(function () {
     Route::get('/', [GalleryController::class, 'index'])->name('index');
-    Route::get('/{gallery:slug}', [GalleryController::class, 'show'])->name('show');
+    Route::get('/{gallery}', [GalleryController::class, 'show'])->name('show');
 });
 
 // Tracker routes
