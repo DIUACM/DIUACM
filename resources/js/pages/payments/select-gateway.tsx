@@ -1,4 +1,5 @@
 import { initiateRegistrationPayment } from '@/actions/App/Http/Controllers/PaymentController';
+import BlankLayout from '@/layouts/blank-layout';
 import { Head, useForm } from '@inertiajs/react';
 import { ArrowLeft, CheckCircle, CreditCard, Lock, Shield } from 'lucide-react';
 
@@ -21,7 +22,7 @@ export default function SelectGateway({ registration }: Props) {
     };
 
     return (
-        <>
+        <BlankLayout>
             <Head title="Select Payment Method" />
             <div className="min-h-screen bg-white">
                 {/* Header */}
@@ -167,6 +168,6 @@ export default function SelectGateway({ registration }: Props) {
                     </div>
                 </div>
             </div>
-        </>
+        </BlankLayout>
     );
 }
