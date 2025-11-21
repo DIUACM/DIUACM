@@ -24,9 +24,9 @@ enum MfsType: string implements HasColor, HasIcon, HasLabel
     public function getColor(): string|array|null
     {
         return match ($this) {
-            self::BKASH => 'pink',
-            self::NAGAD => 'orange',
-            self::ROCKET => 'purple',
+            self::BKASH => 'danger',
+            self::NAGAD => 'warning',
+            self::ROCKET => 'primary',
         };
     }
 
