@@ -69,37 +69,23 @@ export default function MyRegistrationPage({ registration }: Props) {
 
                             {/* Info Cards */}
                             <div className="mt-6 space-y-4">
-                                {/* Personal Info */}
-                                <InfoCard title="Personal Information">
+                                {/* Registration Details */}
+                                <InfoCard title="Registration Details">
                                     <div className="grid gap-4 sm:grid-cols-2">
                                         <Field icon={User} label="Full Name" value={registration.name} />
                                         <Field icon={Mail} label="Email" value={registration.email} />
                                         <Field icon={Phone} label="Phone" value={registration.phone} />
                                         <Field icon={User} label="Student ID" value={registration.student_id} />
-                                    </div>
-                                </InfoCard>
-
-                                {/* Academic Info */}
-                                <InfoCard title="Academic Details">
-                                    <div className="grid gap-4 sm:grid-cols-2">
                                         <Field icon={GraduationCap} label="Department" value={registration.department} />
                                         <Field icon={BookOpen} label="Section" value={registration.section} />
                                         <Field label="Gender" value={<span className="capitalize">{registration.gender}</span>} />
                                         {registration.lab_teacher_name && <Field label="Lab Teacher" value={registration.lab_teacher_name} />}
+                                        {registration.tshirt_size && <Field icon={Shirt} label="T-Shirt Size" value={registration.tshirt_size} />}
+                                        {registration.pickup_point && (
+                                            <Field icon={MapPin} label="Pickup Point" value={registration.pickup_point} />
+                                        )}
                                     </div>
                                 </InfoCard>
-
-                                {/* Event Details */}
-                                {(registration.tshirt_size || registration.pickup_point) && (
-                                    <InfoCard title="Event Details">
-                                        <div className="grid gap-4 sm:grid-cols-2">
-                                            {registration.tshirt_size && <Field icon={Shirt} label="T-Shirt Size" value={registration.tshirt_size} />}
-                                            {registration.pickup_point && (
-                                                <Field icon={MapPin} label="Pickup Point" value={registration.pickup_point} />
-                                            )}
-                                        </div>
-                                    </InfoCard>
-                                )}
 
                                 {/* Payment History */}
                                 {registration.payment_history.length > 0 && (
