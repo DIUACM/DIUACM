@@ -105,26 +105,6 @@ class InternalContestRegistrationsTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('status')
-                    ->label('Registration Status')
-                    ->options([
-                        'paid' => 'Paid',
-                        'pending' => 'Pending',
-                        'canceled' => 'Canceled',
-                    ])
-                    ->query(function ($query, $state) {
-                        if (! $state['value']) {
-                            return $query;
-                        }
-
-                        return $query->where(function ($q) {
-                            // This will be handled by a custom query based on payment status
-                            // For now, we'll filter based on the computed status
-                        });
-                    })
-                    ->multiple()
-                    ->preload(),
-
                 SelectFilter::make('gender')
                     ->options(Gender::class)
                     ->multiple()
