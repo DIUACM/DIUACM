@@ -7,6 +7,7 @@ use App\Enums\MfsType;
 use App\Models\Payment;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -36,18 +37,18 @@ class MfsManualTransactionForm
                     ->schema([
                         Grid::make(2)
                             ->schema([
-                                Select::make('mfs_type')
+                                ToggleButtons::make('mfs_type')
                                     ->label('MFS Provider')
                                     ->options(MfsType::class)
                                     ->required()
-                                    ->native(false)
+                                    ->inline()
                                     ->helperText('Mobile financial service provider'),
-                                Select::make('status')
+                                ToggleButtons::make('status')
                                     ->label('Verification Status')
                                     ->options(MfsTransactionStatus::class)
                                     ->default(MfsTransactionStatus::PENDING)
                                     ->required()
-                                    ->native(false)
+                                    ->inline()
                                     ->helperText('Current verification status of this transaction'),
                             ]),
                         Grid::make(2)
