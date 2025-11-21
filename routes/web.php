@@ -103,6 +103,8 @@ Route::prefix('contact')->name('contact')->group(function () {
 
 // Payment routes
 Route::middleware('auth')->prefix('payments')->name('payment.')->group(function () {
+    Route::get('/registrations/{registration}/select-gateway', [PaymentController::class, 'showGatewaySelection'])
+        ->name('registration.select-gateway');
     Route::post('/registrations/{registration}', [PaymentController::class, 'initiateRegistrationPayment'])
         ->name('registration.initiate');
 });

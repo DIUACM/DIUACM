@@ -1,9 +1,8 @@
-import { initiateRegistrationPayment } from '@/actions/App/Http/Controllers/PaymentController';
 import { Button } from '@/components/ui/button';
 import MainLayout from '@/layouts/main-layout';
 import { cn } from '@/lib/utils';
 import { InternalContestMyRegistration } from '@/types';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertCircle,
     ArrowLeft,
@@ -29,8 +28,6 @@ type Props = {
 export default function MyRegistrationPage({ registration }: Props) {
     const { payment, status, is_confirmed, is_free, internal_contest } = registration;
     const showPayButton = !is_free && !is_confirmed && (!payment?.status || ['failed', 'canceled'].includes(payment.status));
-
-    const form = useForm({ gateway: 'sslcommerz' });
 
     return (
         <MainLayout>
@@ -149,13 +146,12 @@ export default function MyRegistrationPage({ registration }: Props) {
 
                                     {showPayButton && (
                                         <Button
-                                            onClick={() => form.post(initiateRegistrationPayment.url({ registration: registration.id }))}
+                                            onClick={() => router.visit(`/payments/registrations/${registration.id}/select-gateway`)}
                                             className="w-full"
                                             size="lg"
-                                            disabled={form.processing}
                                         >
                                             <CreditCard className="mr-2 h-4 w-4" />
-                                            {form.processing ? 'Processing...' : payment ? 'Retry Payment' : 'Pay Now'}
+                                            {payment ? 'Retry Payment' : 'Pay Now'}
                                         </Button>
                                     )}
                                 </div>

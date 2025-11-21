@@ -18,6 +18,39 @@ class PaymentController extends Controller
     ) {}
 
     /**
+     * Show payment gateway selection page
+     */
+    public function showGatewaySelection(InternalContestRegistration $registration)
+    {
+        // Authorization check: Ensure user owns this registration
+        if (auth()->check() && $registration->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized access to this registration');
+        }
+
+        // Check if registration is free (no payment required)
+        if ($registration->isFree()) {
+            return redirect()->route('internal-contests.my-registration', $registration->id)
+                ->with('error', 'This registration does not require payment');
+        }
+
+        // Check if registration already has a successful payment
+        if ($registration->hasSuccessfulPayment()) {
+            return redirect()->route('internal-contests.my-registration', $registration->id)
+                ->with('error', 'Payment has already been completed for this registration');
+        }
+
+        return Inertia::render('payments/select-gateway', [
+            'registration' => [
+                'id' => $registration->id,
+                'name' => $registration->name,
+                'email' => $registration->email,
+                'amount' => $registration->internalContest->registration_fee,
+                'contest_title' => $registration->internalContest->title,
+            ],
+        ]);
+    }
+
+    /**
      * Initiate payment for registration
      */
     public function initiateRegistrationPayment(Request $request, InternalContestRegistration $registration)
@@ -56,7 +89,7 @@ class PaymentController extends Controller
                 // Check for pending or under review payments
                 $latestPayment = $registration->latestPayment();
                 if ($latestPayment) {
-                  
+
                     if ($latestPayment->status->value === 'under_manual_review') {
                         return redirect()->back()->with(
                             'info',
