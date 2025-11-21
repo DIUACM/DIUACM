@@ -27,16 +27,12 @@ class PaymentController extends Controller
             abort(403, 'Unauthorized access to this registration');
         }
 
-        // Check if registration is free (no payment required)
-        if ($registration->isFree()) {
-            return redirect()->route('internal-contests.my-registration', $registration->id)
-                ->with('error', 'This registration does not require payment');
-        }
+        // Check if can initiate new payment
+        $paymentCheck = $registration->canInitiateNewPayment();
 
-        // Check if registration already has a successful payment
-        if ($registration->hasSuccessfulPayment()) {
-            return redirect()->route('internal-contests.my-registration', $registration->id)
-                ->with('error', 'Payment has already been completed for this registration');
+        if (! $paymentCheck['can_pay']) {
+            return redirect()->route('internal-contests.my-registration', $registration->internalContest)
+                ->with('error', $paymentCheck['message']);
         }
 
         return Inertia::render('payments/select-gateway', [
@@ -59,6 +55,11 @@ class PaymentController extends Controller
             'gateway' => 'required|string|in:sslcommerz',
         ]);
 
+        // Authorization check BEFORE transaction: Ensure user owns this registration
+        if (auth()->check() && $registration->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized access to this registration');
+        }
+
         try {
             // Use database transaction with locking to prevent race conditions
             return DB::transaction(function () use ($registration, $validated) {
@@ -71,31 +72,13 @@ class PaymentController extends Controller
                     return redirect()->back()->with('error', 'Registration not found');
                 }
 
-                // Authorization check: Ensure user owns this registration
-                if (auth()->check() && $registration->user_id !== auth()->id()) {
-                    abort(403, 'Unauthorized access to this registration');
-                }
+                // Check if can initiate new payment
+                $paymentCheck = $registration->canInitiateNewPayment();
 
-                // Check if registration is free (no payment required)
-                if ($registration->isFree()) {
-                    return redirect()->back()->with('error', 'This registration does not require payment');
-                }
+                if (! $paymentCheck['can_pay']) {
+                    $flashType = $paymentCheck['reason'] === 'under_review' ? 'info' : 'error';
 
-                // Check if registration already has a successful payment
-                if ($registration->hasSuccessfulPayment()) {
-                    return redirect()->back()->with('error', 'Payment has already been completed for this registration');
-                }
-
-                // Check for pending or under review payments
-                $latestPayment = $registration->latestPayment();
-                if ($latestPayment) {
-
-                    if ($latestPayment->status->value === 'under_manual_review') {
-                        return redirect()->back()->with(
-                            'info',
-                            'Your payment is currently under manual review by our team. Please wait for verification. You will be notified once the review is complete.'
-                        );
-                    }
+                    return redirect()->back()->with($flashType, $paymentCheck['message']);
                 }
 
                 $registrationAmount = $registration->internalContest->registration_fee;

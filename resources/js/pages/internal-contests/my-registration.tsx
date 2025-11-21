@@ -26,8 +26,8 @@ type Props = {
 };
 
 export default function MyRegistrationPage({ registration }: Props) {
-    const { payment, status, is_confirmed, is_free, internal_contest } = registration;
-    const showPayButton = !is_free && !is_confirmed && (!payment?.status || ['failed', 'canceled'].includes(payment.status));
+    const { payment, status, is_confirmed, is_free, internal_contest, can_pay } = registration;
+    const showPayButton = can_pay;
 
     return (
         <MainLayout>

@@ -247,14 +247,11 @@ export interface InternalContestRegistrationView extends InternalContest {
 export interface InternalContestMyRegistration {
     id: number;
     internal_contest: {
-        id: number;
         title: string;
         slug: string;
         semester: string;
-        description: string;
         registration_fee: number;
         registration_deadline: string;
-        registration_start_time: string;
         banner_image: string | null;
     };
     student_id: string;
@@ -266,31 +263,23 @@ export interface InternalContestMyRegistration {
     lab_teacher_name: string | null;
     tshirt_size: string | null;
     gender: string;
-    transport_service_required: boolean;
     pickup_point: string | null;
     status: 'pending' | 'paid' | 'canceled' | 'under_review';
     is_confirmed: boolean;
     is_free: boolean;
+    can_pay: boolean;
     payment: {
-        id: number;
         status: 'pending' | 'paid' | 'failed' | 'canceled' | 'refunded' | 'under_manual_review';
         amount: number;
-        currency: string;
-        gateway: string;
         transaction_id: string;
-        gateway_transaction_id: string;
         paid_at: string | null;
-        created_at: string;
     } | null;
     payment_history: Array<{
         id: number;
         status: 'pending' | 'paid' | 'failed' | 'canceled' | 'refunded' | 'under_manual_review';
         amount: number;
-        gateway: string;
         transaction_id: string;
         paid_at: string | null;
-        created_at: string;
     }>;
     registered_at: string;
-    updated_at: string;
 }

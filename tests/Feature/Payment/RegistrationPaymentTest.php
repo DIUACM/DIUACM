@@ -27,11 +27,12 @@ it('prevents payment initiation for already paid registration', function () {
     $this->registration->markPaymentAsSuccessful($payment);
 
     actingAs($this->user)
+        ->from(route('payment.registration.select-gateway', $this->registration))
         ->post(route('payment.registration.initiate', $this->registration), [
             'gateway' => 'sslcommerz',
         ])
         ->assertRedirect()
-        ->assertSessionHas('error', 'Payment has already been completed for this registration');
+        ->assertSessionHas('error', 'Payment has already been completed');
 });
 
 it('prevents payment initiation when payment is pending', function () {
@@ -39,11 +40,12 @@ it('prevents payment initiation when payment is pending', function () {
     $this->registration->createPayment('sslcommerz', 500);
 
     actingAs($this->user)
+        ->from(route('payment.registration.select-gateway', $this->registration))
         ->post(route('payment.registration.initiate', $this->registration), [
             'gateway' => 'sslcommerz',
         ])
         ->assertRedirect()
-        ->assertSessionHas('error', 'A payment is already in progress. Please complete or cancel the existing payment before initiating a new one.');
+        ->assertSessionHas('error', 'A payment is currently being processed. Please wait a few minutes and refresh the page.');
 });
 
 it('prevents payment initiation when payment is under manual review', function () {
@@ -52,11 +54,12 @@ it('prevents payment initiation when payment is under manual review', function (
     $payment->update(['status' => PaymentStatus::UNDER_MANUAL_REVIEW]);
 
     actingAs($this->user)
+        ->from(route('payment.registration.select-gateway', $this->registration))
         ->post(route('payment.registration.initiate', $this->registration), [
             'gateway' => 'sslcommerz',
         ])
         ->assertRedirect()
-        ->assertSessionHas('info', 'Your payment is currently under manual review by our team. Please wait for verification. You will be notified once the review is complete.');
+        ->assertSessionHas('info', 'Your payment is currently under manual review by our team. Please wait for verification.');
 });
 
 it('prevents payment initiation for free registrations', function () {
@@ -69,6 +72,7 @@ it('prevents payment initiation for free registrations', function () {
     ]);
 
     actingAs($this->user)
+        ->from(route('payment.registration.select-gateway', $freeRegistration))
         ->post(route('payment.registration.initiate', $freeRegistration), [
             'gateway' => 'sslcommerz',
         ])
@@ -79,13 +83,13 @@ it('prevents payment initiation for free registrations', function () {
 it('prevents unauthorized users from accessing another user registration payment', function () {
     $anotherUser = User::factory()->create();
 
-    // The authorization check happens inside the transaction
-    // and Laravel handles it by redirecting with an error
+    // The authorization check now happens before the transaction
     actingAs($anotherUser)
+        ->from(route('payment.registration.select-gateway', $this->registration))
         ->post(route('payment.registration.initiate', $this->registration), [
             'gateway' => 'sslcommerz',
         ])
-        ->assertRedirect(); // Laravel redirects on abort() in web routes
+        ->assertForbidden();
 });
 
 it('allows payment retry after failed payment', function () {

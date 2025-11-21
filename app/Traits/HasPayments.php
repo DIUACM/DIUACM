@@ -82,6 +82,55 @@ trait HasPayments
     }
 
     /**
+     * Check if a new payment can be initiated with detailed reason
+     * Returns array with 'can_pay' boolean and 'reason' string
+     */
+    public function canInitiateNewPayment(): array
+    {
+        // Check if already has successful payment
+        if ($this->hasSuccessfulPayment()) {
+            return [
+                'can_pay' => false,
+                'reason' => 'payment_completed',
+                'message' => 'Payment has already been completed',
+            ];
+        }
+
+        // Check if has payment under manual review
+        if ($this->hasPaymentUnderManualReview()) {
+            return [
+                'can_pay' => false,
+                'reason' => 'under_review',
+                'message' => 'Your payment is currently under manual review by our team. Please wait for verification.',
+            ];
+        }
+
+        // Check if has pending payment
+        if ($this->hasPendingPayment()) {
+            return [
+                'can_pay' => false,
+                'reason' => 'payment_pending',
+                'message' => 'A payment is currently being processed. Please wait a few minutes and refresh the page.',
+            ];
+        }
+
+        // Check if payment is required (for models that have this method)
+        if (method_exists($this, 'isFree') && $this->isFree()) {
+            return [
+                'can_pay' => false,
+                'reason' => 'no_payment_required',
+                'message' => 'This registration does not require payment',
+            ];
+        }
+
+        return [
+            'can_pay' => true,
+            'reason' => null,
+            'message' => null,
+        ];
+    }
+
+    /**
      * Get total paid amount
      */
     public function totalPaidAmount(): float
