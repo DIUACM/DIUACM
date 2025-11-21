@@ -140,7 +140,7 @@ class PaymentController extends Controller
                 if (! $payment) {
                     Log::error('Payment not found for callback', ['transaction_id' => $result['transaction_id']]);
 
-                    return $this->handleFailedCallback('Payment not found');
+                    return $this->handleFailedCallback('Payment not found', null);
                 }
 
                 // Verify gateway transaction ID match
@@ -150,7 +150,7 @@ class PaymentController extends Controller
                         'received' => $result['gateway_transaction_id'] ?? null,
                     ]);
 
-                    return $this->handleFailedCallback('Gateway transaction ID mismatch');
+                    return $this->handleFailedCallback('Gateway transaction ID mismatch', $payment);
                 }
 
                 // Prevent processing already completed payments (idempotency)
@@ -194,7 +194,7 @@ class PaymentController extends Controller
 
                         Log::info('Payment cancelled', ['payment_id' => $payment->id, 'result' => $result]);
 
-                        return $this->handleCancelledCallback($result['message'] ?? 'Payment was cancelled');
+                        return $this->handleCancelledCallback($result['message'] ?? 'Payment was cancelled', $payment);
                     } else {
                         // Mark payment as failed and call model hook
                         $payment->payable->markPaymentAsFailed($payment, [
@@ -206,7 +206,7 @@ class PaymentController extends Controller
 
                         Log::warning('Payment failed', ['payment_id' => $payment->id, 'result' => $result]);
 
-                        return $this->handleFailedCallback($result['message'] ?? 'Payment failed');
+                        return $this->handleFailedCallback($result['message'] ?? 'Payment failed', $payment);
                     }
                 }
             });
@@ -235,23 +235,47 @@ class PaymentController extends Controller
             default => route('home'),
         };
 
-        return Inertia::location($redirectUrl.'?payment=success');
+        return redirect($redirectUrl)->with('success', 'Payment completed successfully!');
     }
 
     /**
      * Handle failed payment callback
      */
-    protected function handleFailedCallback(string $message)
+    protected function handleFailedCallback(string $message, ?Payment $payment = null)
     {
-        return Inertia::location(route('home').'?payment=failed&message='.urlencode($message));
+        $redirectUrl = route('home');
+
+        if ($payment) {
+            $payable = $payment->payable;
+            $redirectUrl = match (true) {
+                $payable instanceof InternalContestRegistration => route('internal-contests.my-registration', [
+                    'internalContest' => $payable->internalContest->slug,
+                ]),
+                default => route('home'),
+            };
+        }
+
+        return redirect($redirectUrl)->with('error', $message);
     }
 
     /**
      * Handle cancelled payment callback
      */
-    protected function handleCancelledCallback(string $message)
+    protected function handleCancelledCallback(string $message, ?Payment $payment = null)
     {
-        return Inertia::location(route('home').'?payment=cancelled&message='.urlencode($message));
+        $redirectUrl = route('home');
+
+        if ($payment) {
+            $payable = $payment->payable;
+            $redirectUrl = match (true) {
+                $payable instanceof InternalContestRegistration => route('internal-contests.my-registration', [
+                    'internalContest' => $payable->internalContest->slug,
+                ]),
+                default => route('home'),
+            };
+        }
+
+        return redirect($redirectUrl)->with('info', $message);
     }
 
     /**
@@ -269,6 +293,6 @@ class PaymentController extends Controller
             default => route('home'),
         };
 
-        return Inertia::location($redirectUrl.'?payment=under_review');
+        return redirect($redirectUrl)->with('info', 'Your payment is currently under manual review by our team. Please wait for verification.');
     }
 }
