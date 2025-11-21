@@ -163,7 +163,41 @@ class SslCommerzGateway implements PaymentGatewayInterface
             $amount = $data['amount'] ?? 0;
             $currency = $data['currency'] ?? 'BDT';
 
-            // Validate the transaction with SSL Commerz
+            // Handle failed payments
+            if ($status === 'FAILED') {
+                $errorMessage = $data['error'] ?? 'Payment failed';
+
+                return [
+                    'success' => false,
+                    'status' => 'Failed',
+                    'transaction_id' => $tranId,
+                    'gateway_transaction_id' => $tranId,
+                    'bank_transaction_id' => $data['bank_tran_id'] ?? null,
+                    'amount' => $amount,
+                    'currency' => $currency,
+                    'message' => $errorMessage,
+                    'response' => $data,
+                ];
+            }
+
+            // Handle cancelled payments
+            if ($status === 'CANCELLED') {
+                $errorMessage = $data['error'] ?? 'Payment was cancelled';
+
+                return [
+                    'success' => false,
+                    'status' => 'Cancelled',
+                    'transaction_id' => $tranId,
+                    'gateway_transaction_id' => $tranId,
+                    'bank_transaction_id' => $data['bank_tran_id'] ?? null,
+                    'amount' => $amount,
+                    'currency' => $currency,
+                    'message' => $errorMessage,
+                    'response' => $data,
+                ];
+            }
+
+            // Validate the transaction with SSL Commerz for successful payments
             $validated = $this->sslCommerz->orderValidate($data, $tranId, $amount, $currency);
 
             if ($validated === true) {

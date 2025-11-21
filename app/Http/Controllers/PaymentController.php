@@ -180,17 +180,34 @@ class PaymentController extends Controller
 
                     return $this->handleSuccessfulCallback($payment);
                 } else {
-                    // Mark payment as failed and call model hook
-                    $payment->payable->markPaymentAsFailed($payment, [
-                        'callback_response' => $result['response'] ?? $callbackData,
-                    ]);
+                    // Check if payment was cancelled vs failed
+                    $status = $result['status'] ?? 'Failed';
 
-                    // Call the model-specific failure handler
-                    $payment->payable->onPaymentFailed($payment);
+                    if (strtolower($status) === 'cancelled') {
+                        // Mark payment as cancelled and call model hook
+                        $payment->payable->markPaymentAsCancelled($payment, [
+                            'callback_response' => $result['response'] ?? $callbackData,
+                        ]);
 
-                    Log::warning('Payment failed', ['payment_id' => $payment->id, 'result' => $result]);
+                        // Call the model-specific cancellation handler
+                        $payment->payable->onPaymentCancelled($payment);
 
-                    return $this->handleFailedCallback($result['message'] ?? 'Payment failed');
+                        Log::info('Payment cancelled', ['payment_id' => $payment->id, 'result' => $result]);
+
+                        return $this->handleCancelledCallback($result['message'] ?? 'Payment was cancelled');
+                    } else {
+                        // Mark payment as failed and call model hook
+                        $payment->payable->markPaymentAsFailed($payment, [
+                            'callback_response' => $result['response'] ?? $callbackData,
+                        ]);
+
+                        // Call the model-specific failure handler
+                        $payment->payable->onPaymentFailed($payment);
+
+                        Log::warning('Payment failed', ['payment_id' => $payment->id, 'result' => $result]);
+
+                        return $this->handleFailedCallback($result['message'] ?? 'Payment failed');
+                    }
                 }
             });
         } catch (\Exception $e) {
@@ -227,6 +244,14 @@ class PaymentController extends Controller
     protected function handleFailedCallback(string $message)
     {
         return Inertia::location(route('home').'?payment=failed&message='.urlencode($message));
+    }
+
+    /**
+     * Handle cancelled payment callback
+     */
+    protected function handleCancelledCallback(string $message)
+    {
+        return Inertia::location(route('home').'?payment=cancelled&message='.urlencode($message));
     }
 
     /**

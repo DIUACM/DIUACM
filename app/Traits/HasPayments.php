@@ -138,6 +138,17 @@ trait HasPayments
     }
 
     /**
+     * Mark payment as cancelled
+     */
+    public function markPaymentAsCancelled(Payment $payment, array $gatewayResponse = []): bool
+    {
+        return $payment->update([
+            'status' => PaymentStatus::CANCELED,
+            'gateway_response' => array_merge($payment->gateway_response ?? [], $gatewayResponse),
+        ]);
+    }
+
+    /**
      * Generate a unique transaction ID
      */
     protected function generateTransactionId(): string

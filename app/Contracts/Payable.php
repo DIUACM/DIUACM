@@ -44,6 +44,11 @@ interface Payable
     public function markPaymentAsFailed(Payment $payment, array $gatewayResponse = []): bool;
 
     /**
+     * Mark payment as cancelled
+     */
+    public function markPaymentAsCancelled(Payment $payment, array $gatewayResponse = []): bool;
+
+    /**
      * Handle successful payment
      *
      * This method is called when a payment is successfully processed.
