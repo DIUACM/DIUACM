@@ -60,13 +60,20 @@ class MfsManualTransactionForm
                                     ->maxLength(20)
                                     ->placeholder('01XXXXXXXXX')
                                     ->helperText('Mobile number used to send payment'),
-                                TextInput::make('mfs_transaction_id')
-                                    ->label('MFS Transaction ID')
+                                TextInput::make('receiver_number')
+                                    ->label('Receiver Number')
+                                    ->tel()
                                     ->required()
-                                    ->maxLength(255)
-                                    ->placeholder('e.g., BKD12345678')
-                                    ->helperText('Transaction ID from MFS provider'),
+                                    ->maxLength(20)
+                                    ->placeholder('01XXXXXXXXX')
+                                    ->helperText('Mobile number that received the payment'),
                             ]),
+                        TextInput::make('mfs_transaction_id')
+                            ->label('MFS Transaction ID')
+                            ->required()
+                            ->maxLength(255)
+                            ->placeholder('e.g., BKD12345678')
+                            ->helperText('Transaction ID from MFS provider'),
                         TextInput::make('amount')
                             ->label('Transaction Amount')
                             ->required()

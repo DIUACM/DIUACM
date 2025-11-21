@@ -17,6 +17,7 @@ class MfsManualTransaction extends Model
         'payment_id',
         'status',
         'sender_number',
+        'receiver_number',
         'mfs_transaction_id',
         'mfs_type',
         'amount',

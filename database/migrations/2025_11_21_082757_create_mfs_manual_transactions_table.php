@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('payment_id')->unique()->constrained()->cascadeOnDelete();
             $table->string('status')->default('pending');
             $table->string('sender_number');
+            $table->string('receiver_number');
             $table->string('mfs_transaction_id');
             $table->string('mfs_type');
             $table->decimal('amount', 10, 2);
