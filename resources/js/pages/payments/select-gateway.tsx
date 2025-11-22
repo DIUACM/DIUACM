@@ -129,10 +129,11 @@ export default function SelectGateway({ registration }: Props) {
                                                 </div>
                                             </div>
                                             <div className="shrink-0">
-                                                <div className="hidden peer-checked:block">
+                                                {form.data.gateway === 'sslcommerz' ? (
                                                     <CheckCircle className="h-7 w-7 text-emerald-600" />
-                                                </div>
-                                                <div className="h-6 w-6 rounded-full border-2 border-gray-300 transition-all group-hover:border-emerald-400 peer-checked:hidden" />
+                                                ) : (
+                                                    <div className="h-6 w-6 rounded-full border-2 border-gray-300 transition-all group-hover:border-emerald-400" />
+                                                )}
                                             </div>
                                         </div>
                                     </label>
@@ -172,10 +173,11 @@ export default function SelectGateway({ registration }: Props) {
                                                 </div>
                                             </div>
                                             <div className="shrink-0">
-                                                <div className="hidden peer-checked:block">
+                                                {form.data.gateway === 'mfs_manual' ? (
                                                     <CheckCircle className="h-7 w-7 text-blue-600" />
-                                                </div>
-                                                <div className="h-6 w-6 rounded-full border-2 border-gray-300 transition-all group-hover:border-blue-400 peer-checked:hidden" />
+                                                ) : (
+                                                    <div className="h-6 w-6 rounded-full border-2 border-gray-300 transition-all group-hover:border-blue-400" />
+                                                )}
                                             </div>
                                         </div>
                                     </label>
