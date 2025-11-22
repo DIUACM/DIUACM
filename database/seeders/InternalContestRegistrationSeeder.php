@@ -16,47 +16,76 @@ class InternalContestRegistrationSeeder extends Seeder
     {
         $this->command->info('🎫 Creating Internal Contest Registrations...');
 
-        // Get the admin user
-        $admin = User::where('email', 'sourov2305101004@diu.edu.bd')->first();
+        // Clear existing registrations
+        $existingCount = InternalContestRegistration::count();
+        if ($existingCount > 0) {
+            $this->command->info("🗑️  Clearing {$existingCount} existing registrations...");
+            InternalContestRegistration::truncate();
+        }
 
-        if (! $admin) {
-            $this->command->warn('⚠️  Admin user not found. Skipping registration creation.');
+        // Get all internal contests
+        $contests = InternalContest::all();
+
+        if ($contests->count() < 2) {
+            $this->command->warn('⚠️  Need at least 2 contests. Found: ' . $contests->count());
 
             return;
         }
 
-        // Get the contest that is currently open for registration
-        $openContest = InternalContest::where('status', 'published')
-            ->where('registration_start_time', '<=', now())
-            ->where('registration_deadline', '>=', now())
-            ->first();
+        // Get all users
+        $users = User::all();
 
-        if (! $openContest) {
-            $this->command->warn('⚠️  No open contest found for registration.');
+        if ($users->count() < 1000) {
+            $this->command->warn('⚠️  Need at least 1000 users for unique registrations. Found: ' . $users->count());
 
             return;
         }
 
-        // Create registration for admin user
-        $registration = InternalContestRegistration::create([
-            'internal_contest_id' => $openContest->id,
-            'user_id' => $admin->id,
-            'name' => $admin->name,
-            'email' => $admin->email,
-            'student_id' => '201-15-14088',
-            'phone' => '01712345678',
-            'section' => 'PC',
-            'department' => 'CSE',
-            'lab_teacher_name' => 'Dr. Rashidul Alam Shakir',
-            'tshirt_size' => 'L',
-            'gender' => 'male',
-            'transport_service_required' => true,
-            'pickup_point' => 'DIU Main Gate',
-        ]);
+        $this->command->info("📊 Found {$contests->count()} contests and {$users->count()} users");
+
+        // Get the first two contests
+        $contest1 = $contests->first();
+        $contest2 = $contests->skip(1)->first();
+
+        // Split users - first 500 for contest 1, next 500 for contest 2
+        $users1 = $users->take(500);
+        $users2 = $users->skip(500)->take(500);
+
+        $this->command->info("🎯 Creating 500 registrations for: {$contest1->title}");
+        $progressBar1 = $this->command->getOutput()->createProgressBar(500);
+
+        foreach ($users1 as $user) {
+            InternalContestRegistration::factory()->create([
+                'internal_contest_id' => $contest1->id,
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ]);
+            $progressBar1->advance();
+        }
+
+        $progressBar1->finish();
+        $this->command->newLine();
+
+        $this->command->info("🎯 Creating 500 registrations for: {$contest2->title}");
+        $progressBar2 = $this->command->getOutput()->createProgressBar(500);
+
+        foreach ($users2 as $user) {
+            InternalContestRegistration::factory()->create([
+                'internal_contest_id' => $contest2->id,
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ]);
+            $progressBar2->advance();
+        }
+
+        $progressBar2->finish();
+        $this->command->newLine();
 
         $this->command->info('✅ Internal Contest Registrations created successfully!');
-        $this->command->info("   - Admin registered for: {$openContest->title}");
-        $this->command->info("   - Registration ID: #{$registration->id}");
-        $this->command->info("   - Status: {$registration->getStatus()}");
+        $this->command->info("   - Contest 1: {$contest1->title} - 500 registrations");
+        $this->command->info("   - Contest 2: {$contest2->title} - 500 registrations");
+        $this->command->info('   - Total: 1000 registrations');
     }
 }
