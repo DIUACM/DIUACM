@@ -20,10 +20,28 @@ class InternalContestRegistrationViewResource extends InternalContestResource
                 'pickup_points' => $this->pickup_points,
                 'departments' => $this->departments,
                 'sections' => $this->sections,
-                'lab_teacher_names' => $this->lab_teacher_names,
+                'lab_teacher_names' => $this->formatLabTeacherNames(),
                 'tshirt_sizes' => $this->tshirt_sizes,
             ],
             'tshirt_size_guideline_url' => $this->getFirstMediaUrl('tshirt_size_guideline'),
         ]);
+    }
+
+    /**
+     * Format lab teacher names as "Full Name (Initial)"
+     */
+    private function formatLabTeacherNames(): ?array
+    {
+        if (! $this->lab_teacher_names) {
+            return null;
+        }
+
+        return collect($this->lab_teacher_names)->map(function ($teacher) {
+            if (is_array($teacher) && isset($teacher['full_name'], $teacher['initial'])) {
+                return ['name' => "{$teacher['full_name']} ({$teacher['initial']})"];
+            }
+
+            return $teacher;
+        })->toArray();
     }
 }
