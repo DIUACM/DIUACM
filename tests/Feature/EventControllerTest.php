@@ -93,18 +93,17 @@ it('returns event details for published event', function () {
     $response = $this->get(route('events.show', $event));
 
     $response->assertSuccessful();
-    $response->assertJsonStructure([
-        'data' => [
-            'id',
-            'title',
-            'description',
-            'starting_at',
-            'ending_at',
-            'participation_scope',
-            'type',
-            'event_link',
-        ],
-    ]);
+    $response->assertInertia(fn ($page) => $page
+        ->component('events/show')
+        ->has('event.id')
+        ->has('event.title')
+        ->has('event.description')
+        ->has('event.starting_at')
+        ->has('event.ending_at')
+        ->has('event.participation_scope')
+        ->has('event.type')
+        ->has('event.event_link')
+    );
 });
 
 it('returns 404 for unpublished event', function () {
@@ -129,21 +128,19 @@ it('loads attendees only when attendance is open', function () {
     $response = $this->get(route('events.show', $event));
 
     $response->assertSuccessful();
-    $response->assertJsonStructure([
-        'data' => [
-            'attendees_count',
-            'attendance' => [
-                '*' => [
-                    'name',
-                    'username',
-                    'avatar',
-                    'student_id',
-                    'department',
-                    'attended_at',
-                ],
-            ],
-        ],
-    ]);
+    $response->assertInertia(fn ($page) => $page
+        ->component('events/show')
+        ->has('event.attendees_count')
+        ->has('event.attendance', 3)
+        ->has('event.attendance.0', fn ($attendee) => $attendee
+            ->has('name')
+            ->has('username')
+            ->has('avatar')
+            ->has('student_id')
+            ->has('department')
+            ->has('attended_at')
+        )
+    );
 });
 
 it('does not load attendees when attendance is closed', function () {
@@ -158,8 +155,11 @@ it('does not load attendees when attendance is closed', function () {
     $response = $this->get(route('events.show', $event));
 
     $response->assertSuccessful();
-    $response->assertJsonMissing(['attendance']);
-    $response->assertJsonMissing(['attendees_count']);
+    $response->assertInertia(fn ($page) => $page
+        ->component('events/show')
+        ->missing('event.attendance')
+        ->missing('event.attendees_count')
+    );
 });
 
 it('loads performance data for contest events', function () {
@@ -181,21 +181,19 @@ it('loads performance data for contest events', function () {
     $response = $this->get(route('events.show', $event));
 
     $response->assertSuccessful();
-    $response->assertJsonStructure([
-        'data' => [
-            'performance' => [
-                '*' => [
-                    'name',
-                    'username',
-                    'avatar',
-                    'student_id',
-                    'department',
-                    'solve_count',
-                    'upsolve_count',
-                ],
-            ],
-        ],
-    ]);
+    $response->assertInertia(fn ($page) => $page
+        ->component('events/show')
+        ->has('event.performance', 3)
+        ->has('event.performance.0', fn ($performer) => $performer
+            ->has('name')
+            ->has('username')
+            ->has('avatar')
+            ->has('student_id')
+            ->has('department')
+            ->has('solve_count')
+            ->has('upsolve_count')
+        )
+    );
 });
 
 it('does not load performance data for non-contest events', function () {
@@ -207,7 +205,10 @@ it('does not load performance data for non-contest events', function () {
     $response = $this->get(route('events.show', $event));
 
     $response->assertSuccessful();
-    $response->assertJsonMissing(['performance']);
+    $response->assertInertia(fn ($page) => $page
+        ->component('events/show')
+        ->missing('event.performance')
+    );
 });
 
 it('does not trigger N+1 queries when loading attendees', function () {
