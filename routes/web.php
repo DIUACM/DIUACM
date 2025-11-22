@@ -7,6 +7,7 @@ use App\Http\Controllers\ContestController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\InternalContestController;
+use App\Http\Controllers\InternalContestRegistrationPaymentController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgrammerController;
@@ -101,11 +102,11 @@ Route::prefix('contact')->name('contact')->group(function () {
     Route::post('/', [ContactController::class, 'store'])->name('.store');
 });
 
-// Payment routes
+// Payment routes for Internal Contest Registration
 Route::middleware('auth')->prefix('payments')->name('payment.')->group(function () {
-    Route::get('/registrations/{registration}/select-gateway', [PaymentController::class, 'showGatewaySelection'])
+    Route::get('/registrations/{registration}/select-gateway', [InternalContestRegistrationPaymentController::class, 'showGatewaySelection'])
         ->name('registration.select-gateway');
-    Route::post('/registrations/{registration}', [PaymentController::class, 'initiateRegistrationPayment'])
+    Route::post('/registrations/{registration}', [InternalContestRegistrationPaymentController::class, 'initiatePayment'])
         ->name('registration.initiate');
 });
 
