@@ -78,7 +78,6 @@ class InternalContestRegistrationsTable
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->sortable()
                     ->state(fn ($record) => $record->getStatus())
                     ->colors([
                         'success' => 'paid',
