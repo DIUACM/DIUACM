@@ -21,5 +21,5 @@ return [
     'success_url' => '/payments/callback/sslcommerz',
     'failed_url' => '/payments/callback/sslcommerz',
     'cancel_url' => '/payments/callback/sslcommerz',
-    'ipn_url' => '/payments/callback/sslcommerz',
+    'ipn_url' => '/payments/ipn/sslcommerz',
 ];

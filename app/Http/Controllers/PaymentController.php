@@ -311,4 +311,125 @@ class PaymentController extends Controller
 
         return redirect($redirectUrl)->with('info', 'Your payment is currently under manual review by our team. Please wait for verification.');
     }
+
+    /**
+     * Handle IPN (Instant Payment Notification) from payment gateway
+     * This is a server-to-server callback, not user-facing
+     */
+    public function handleIPN(Request $request, string $gateway)
+    {
+        try {
+            // Get IPN data from request
+            $ipnData = $request->all();
+
+            Log::info('Payment IPN received', [
+                'gateway' => $gateway,
+                'data' => $ipnData,
+            ]);
+
+            // Handle the IPN through payment service
+            $result = $this->paymentService->handleCallback($gateway, $ipnData);
+
+            if (! isset($result['transaction_id'])) {
+                Log::error('Payment IPN missing transaction_id', ['result' => $result]);
+
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Invalid IPN response',
+                ], 400);
+            }
+
+            // Use database transaction with row locking to prevent race conditions
+            DB::transaction(function () use ($result, $ipnData) {
+                // Find and lock the payment by transaction ID
+                $payment = Payment::where('transaction_id', $result['transaction_id'])
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $payment) {
+                    Log::error('Payment not found for IPN', ['transaction_id' => $result['transaction_id']]);
+
+                    return;
+                }
+
+                // Verify gateway transaction ID match
+                if (! isset($result['gateway_transaction_id']) || $payment->gateway_transaction_id !== $result['gateway_transaction_id']) {
+                    Log::error('Gateway transaction ID mismatch in IPN', [
+                        'expected' => $payment->gateway_transaction_id,
+                        'received' => $result['gateway_transaction_id'] ?? null,
+                    ]);
+
+                    return;
+                }
+
+                // Prevent processing already completed payments (idempotency)
+                if (in_array($payment->status->value, ['paid', 'refunded'])) {
+                    Log::info('Payment already processed in IPN, skipping', ['payment_id' => $payment->id]);
+
+                    return;
+                }
+
+                // Prevent processing payments under manual review
+                if ($payment->status->value === 'under_manual_review') {
+                    Log::info('Payment under manual review in IPN, skipping', ['payment_id' => $payment->id]);
+
+                    return;
+                }
+
+                if ($result['success']) {
+                    // Mark payment as successful and call model hook
+                    $payment->payable->markPaymentAsSuccessful($payment, [
+                        'ipn_response' => $result['response'] ?? $ipnData,
+                    ]);
+
+                    // Call the model-specific success handler
+                    $payment->payable->onPaymentSuccessful($payment);
+
+                    Log::info('Payment successful via IPN', ['payment_id' => $payment->id]);
+                } else {
+                    // Check if payment was cancelled vs failed
+                    $status = $result['status'] ?? 'Failed';
+
+                    if (strtolower($status) === 'cancelled') {
+                        // Mark payment as cancelled and call model hook
+                        $payment->payable->markPaymentAsCancelled($payment, [
+                            'ipn_response' => $result['response'] ?? $ipnData,
+                        ]);
+
+                        // Call the model-specific cancellation handler
+                        $payment->payable->onPaymentCancelled($payment);
+
+                        Log::info('Payment cancelled via IPN', ['payment_id' => $payment->id]);
+                    } else {
+                        // Mark payment as failed and call model hook
+                        $payment->payable->markPaymentAsFailed($payment, [
+                            'ipn_response' => $result['response'] ?? $ipnData,
+                        ]);
+
+                        // Call the model-specific failure handler
+                        $payment->payable->onPaymentFailed($payment);
+
+                        Log::warning('Payment failed via IPN', ['payment_id' => $payment->id]);
+                    }
+                }
+            });
+
+            // Return success response to payment gateway
+            return response()->json([
+                'status' => 'success',
+                'message' => 'IPN processed successfully',
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error('Payment IPN error: '.$e->getMessage(), [
+                'gateway' => $gateway,
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'An error occurred while processing IPN',
+            ], 500);
+        }
+    }
 }

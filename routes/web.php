@@ -112,3 +112,7 @@ Route::middleware('auth')->prefix('payments')->name('payment.')->group(function 
 // Public payment callback routes (no auth required)
 Route::match(['get', 'post'], '/payments/callback/{gateway}', [PaymentController::class, 'handleCallback'])
     ->name('payment.callback');
+
+// IPN (Instant Payment Notification) endpoint - server-to-server
+Route::post('/payments/ipn/{gateway}', [PaymentController::class, 'handleIPN'])
+    ->name('payment.ipn');
