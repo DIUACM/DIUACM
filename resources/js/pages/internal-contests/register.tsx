@@ -183,23 +183,18 @@ function PersonalInfoFields({ data, setData, errors, formSettings }: PersonalInf
                     {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
                 </div>
 
-                <div className="space-y-2">
-                    <Label htmlFor="gender">
-                        Gender <span className="text-red-500">*</span>
-                    </Label>
-                    <ContestFormSelect
-                        id="gender"
-                        label=""
-                        value={data.gender}
-                        onChange={(val) => setData('gender', val)}
-                        placeholder="Select Gender"
-                        required
-                        options={formSettings.genders}
-                        error={errors.gender}
-                        missingTitle="Gender Options Missing"
-                        missingDescription="Gender choices are not configured. Please contact the organizers."
-                    />
-                </div>
+                <ContestFormSelect
+                    id="gender"
+                    label="Gender"
+                    value={data.gender}
+                    onChange={(val) => setData('gender', val)}
+                    placeholder="Select Gender"
+                    required
+                    options={formSettings.genders}
+                    error={errors.gender}
+                    missingTitle="Gender Options Missing"
+                    missingDescription="Gender choices are not configured. Please contact the organizers."
+                />
 
                 <div className="space-y-2">
                     <Label htmlFor="email">

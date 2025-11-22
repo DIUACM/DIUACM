@@ -45,10 +45,12 @@ export function ContestFormSelect({
 
     return (
         <div className="space-y-2">
-            <Label htmlFor={id}>
-                {label}
-                {required && <span className="text-red-500">*</span>}
-            </Label>
+            {label && (
+                <Label htmlFor={id}>
+                    {label}
+                    {required && <span className="text-red-500">*</span>}
+                </Label>
+            )}
             <Select value={value} onValueChange={onChange} disabled={disabled} required={required}>
                 <SelectTrigger className={`h-11 w-full ${error ? 'border-red-500' : ''}`}>
                     <SelectValue placeholder={placeholder} />
