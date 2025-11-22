@@ -80,7 +80,7 @@ export function ContestFormSelect({
                 {required && <span className="text-red-500">*</span>}
             </Label>
             <Select value={value} onValueChange={onChange} disabled={disabled} required={required}>
-                <SelectTrigger className={`h-11 ${error ? 'border-red-500' : ''}`}>
+                <SelectTrigger className={`h-11 w-full ${error ? 'border-red-500' : ''}`}>
                     <SelectValue placeholder={placeholder} />
                 </SelectTrigger>
                 <SelectContent>

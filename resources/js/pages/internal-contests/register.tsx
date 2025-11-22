@@ -188,7 +188,7 @@ function PersonalInfoFields({ data, setData, errors }: PersonalInfoFieldsProps) 
                         Gender <span className="text-red-500">*</span>
                     </Label>
                     <Select value={data.gender} onValueChange={(val) => setData('gender', val)} required>
-                        <SelectTrigger className={`h-11 ${errors.gender ? 'border-red-500' : ''}`}>
+                        <SelectTrigger className={`h-11 w-full ${errors.gender ? 'border-red-500' : ''}`}>
                             <SelectValue placeholder="Select Gender" />
                         </SelectTrigger>
                         <SelectContent>
@@ -323,7 +323,7 @@ function AdditionalDetailsFields({ data, setData, errors, formSettings, tshirtSi
                             <div className="flex flex-col justify-center">
                                 <Label className="mb-2">Size Guide</Label>
                                 <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
-                                    <img src={tshirtSizeGuidelineUrl} alt="T-shirt Size Guide" className="h-auto w-full max-w-xs object-contain" />
+                                    <img src={tshirtSizeGuidelineUrl} alt="T-shirt Size Guide" className="w-full object-contain" />
                                 </div>
                             </div>
                         )}
