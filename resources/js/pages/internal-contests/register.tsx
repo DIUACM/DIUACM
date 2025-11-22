@@ -441,153 +441,157 @@ export default function InternalContestRegisterPage({ contest }: Props) {
 
             <section className="container mx-auto px-4 py-8">
                 <div className="grid gap-6 lg:grid-cols-3">
-                        {/* Main Content */}
-                        <div className="order-2 space-y-8 lg:order-1 lg:col-span-2">
-                            {/* Header */}
-                            <div className="text-center lg:text-left">
-                                <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Contest Registration</h2>
-                                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{contest.title}</p>
-                            </div>
+                    {/* Main Content */}
+                    <div className="order-2 space-y-8 lg:order-1 lg:col-span-2">
+                        {/* Header */}
+                        <div className="text-center lg:text-left">
+                            <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Contest Registration</h2>
+                            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{contest.title}</p>
+                        </div>
 
-                            {/* Progress Steps */}
-                            <ProgressSteps currentStep={step} />
+                        {/* Progress Steps */}
+                        <ProgressSteps currentStep={step} />
 
-                            {/* Registration Form */}
-                            <div className="rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-xl backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/80">
-                                <form onSubmit={handleSubmit} className="space-y-6">
-                                    {step === 1 && (
-                                        <StudentIdStep
+                        {/* Registration Form */}
+                        <div className="rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-xl backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/80">
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                {step === 1 && (
+                                    <StudentIdStep
+                                        data={data}
+                                        setData={setData}
+                                        errors={errors}
+                                        clearErrors={clearErrors}
+                                        isValidating={isValidatingId}
+                                        validationResult={idValidationResult}
+                                        setValidationResult={setIdValidationResult}
+                                        studentIdGuide={contest.form_settings.student_id_rules_guide}
+                                    />
+                                )}
+
+                                {step === 2 && (
+                                    <div className="space-y-6">
+                                        <PersonalInfoFields data={data} setData={setData} errors={errors} formSettings={contest.form_settings} />
+                                        <AcademicInfoFields data={data} setData={setData} errors={errors} formSettings={contest.form_settings} />
+                                        <AdditionalDetailsFields
                                             data={data}
                                             setData={setData}
                                             errors={errors}
-                                            clearErrors={clearErrors}
-                                            isValidating={isValidatingId}
-                                            validationResult={idValidationResult}
-                                            setValidationResult={setIdValidationResult}
-                                            studentIdGuide={contest.form_settings.student_id_rules_guide}
+                                            formSettings={contest.form_settings}
+                                            tshirtSizeGuidelineUrl={contest.tshirt_size_guideline_url}
                                         />
-                                    )}
-
-                                    {step === 2 && (
-                                        <div className="space-y-6">
-                                            <PersonalInfoFields data={data} setData={setData} errors={errors} formSettings={contest.form_settings} />
-                                            <AcademicInfoFields data={data} setData={setData} errors={errors} formSettings={contest.form_settings} />
-                                            <AdditionalDetailsFields
-                                                data={data}
-                                                setData={setData}
-                                                errors={errors}
-                                                formSettings={contest.form_settings}
-                                                tshirtSizeGuidelineUrl={contest.tshirt_size_guideline_url}
-                                            />
-                                        </div>
-                                    )}
-
-                                    {/* Form Actions */}
-                                    <div className="flex items-center justify-between border-t border-slate-200 pt-6 dark:border-slate-700">
-                                        {step > 1 ? (
-                                            <Button type="button" variant="outline" onClick={handlePrevStep} className="gap-2">
-                                                <ArrowLeft className="h-4 w-4" />
-                                                Previous
-                                            </Button>
-                                        ) : (
-                                            <div />
-                                        )}
-
-                                        {step < 2 ? (
-                                            <Button
-                                                type="button"
-                                                onClick={handleNextStep}
-                                                disabled={isValidatingId}
-                                                className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-3 font-medium text-white transition-all hover:from-blue-700 hover:to-cyan-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
-                                            >
-                                                {isValidatingId ? (
-                                                    <>
-                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                        Validating...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        Next
-                                                        <ArrowRight className="h-4 w-4" />
-                                                    </>
-                                                )}
-                                            </Button>
-                                        ) : (
-                                            <Button
-                                                type="submit"
-                                                disabled={processing}
-                                                className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-3 font-medium text-white transition-all hover:from-blue-700 hover:to-cyan-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
-                                            >
-                                                {processing ? (
-                                                    <>
-                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                        Submitting...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <CheckCircle2 className="h-4 w-4" />
-                                                        Complete Registration
-                                                    </>
-                                                )}
-                                            </Button>
-                                        )}
                                     </div>
-                                </form>
-                            </div>
+                                )}
+
+                                {/* Form Actions */}
+                                <div className="flex items-center justify-between border-t border-slate-200 pt-6 dark:border-slate-700">
+                                    {step > 1 ? (
+                                        <Button type="button" variant="outline" onClick={handlePrevStep} className="gap-2">
+                                            <ArrowLeft className="h-4 w-4" />
+                                            Previous
+                                        </Button>
+                                    ) : (
+                                        <div />
+                                    )}
+
+                                    {step < 2 ? (
+                                        <Button
+                                            type="button"
+                                            onClick={handleNextStep}
+                                            disabled={isValidatingId}
+                                            className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-3 font-medium text-white transition-all hover:from-blue-700 hover:to-cyan-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
+                                        >
+                                            {isValidatingId ? (
+                                                <>
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                    Validating...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    Next
+                                                    <ArrowRight className="h-4 w-4" />
+                                                </>
+                                            )}
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            type="submit"
+                                            disabled={processing}
+                                            className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-3 font-medium text-white transition-all hover:from-blue-700 hover:to-cyan-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
+                                        >
+                                            {processing ? (
+                                                <>
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                    Submitting...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckCircle2 className="h-4 w-4" />
+                                                    Complete Registration
+                                                </>
+                                            )}
+                                        </Button>
+                                    )}
+                                </div>
+                            </form>
                         </div>
+                    </div>
 
-                        {/* Sidebar */}
-                        <div className="order-1 space-y-6 lg:order-2 lg:sticky lg:top-6 lg:self-start">
-                            {/* Contest Banner */}
-                            {contest.banner_image && (
-                                <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-lg dark:border-slate-700">
-                                    <img src={contest.banner_image} alt={contest.title} className="h-auto w-full object-cover" />
+                    {/* Sidebar */}
+                    <div className="order-1 space-y-6 lg:sticky lg:top-6 lg:order-2 lg:self-start">
+                        {/* Contest Banner */}
+                        {contest.banner_image && (
+                            <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-lg dark:border-slate-700">
+                                <img src={contest.banner_image} alt={contest.title} className="h-auto w-full object-cover" />
+                            </div>
+                        )}
+
+                        {/* Contest Details Card */}
+                        <div className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/80">
+                            <h3 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Contest Details</h3>
+                            <div className="space-y-4">
+                                <div className="flex items-start gap-3">
+                                    <CalendarDays className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-500" />
+                                    <div>
+                                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Registration Deadline</p>
+                                        <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+                                            {contest.registration_deadline
+                                                ? new Intl.DateTimeFormat('en-US', {
+                                                      month: 'short',
+                                                      day: 'numeric',
+                                                      year: 'numeric',
+                                                  }).format(new Date(contest.registration_deadline))
+                                                : 'TBA'}
+                                        </p>
+                                    </div>
                                 </div>
-                            )}
 
-                            {/* Contest Details Card */}
-                            <div className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-lg backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/80">
-                                <h3 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Contest Details</h3>
-                                <div className="space-y-4">
+                                <div className="flex items-start gap-3">
+                                    <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center text-lg font-bold text-blue-500">
+                                        ৳
+                                    </span>
+                                    <div>
+                                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Registration Fee</p>
+                                        <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
+                                            {contest.registration_fee > 0 ? `৳${contest.registration_fee}` : 'Free'}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {contest.registration_limit && (
                                     <div className="flex items-start gap-3">
-                                        <CalendarDays className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-500" />
+                                        <Users className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-500" />
                                         <div>
-                                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Registration Deadline</p>
+                                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Participant Limit</p>
                                             <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-                                                {contest.registration_deadline
-                                                    ? new Intl.DateTimeFormat('en-US', {
-                                                          month: 'short',
-                                                          day: 'numeric',
-                                                          year: 'numeric',
-                                                      }).format(new Date(contest.registration_deadline))
-                                                    : 'TBA'}
+                                                {contest.registration_limit} Participants
                                             </p>
                                         </div>
                                     </div>
-
-                                    <div className="flex items-start gap-3">
-                                        <span className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center text-lg font-bold text-blue-500">৳</span>
-                                        <div>
-                                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Registration Fee</p>
-                                            <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">
-                                                {contest.registration_fee > 0 ? `৳${contest.registration_fee}` : 'Free'}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {contest.registration_limit && (
-                                        <div className="flex items-start gap-3">
-                                            <Users className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-500" />
-                                            <div>
-                                                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Participant Limit</p>
-                                                <p className="mt-1 text-sm font-semibold text-slate-900 dark:text-white">{contest.registration_limit} Participants</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                                )}
                             </div>
                         </div>
                     </div>
+                </div>
             </section>
         </MainLayout>
     );

@@ -27,7 +27,7 @@ class InternalContestRegistrationSeeder extends Seeder
         $contests = InternalContest::all();
 
         if ($contests->count() < 2) {
-            $this->command->warn('⚠️  Need at least 2 contests. Found: ' . $contests->count());
+            $this->command->warn('⚠️  Need at least 2 contests. Found: '.$contests->count());
 
             return;
         }
@@ -36,7 +36,7 @@ class InternalContestRegistrationSeeder extends Seeder
         $users = User::all();
 
         if ($users->count() < 1000) {
-            $this->command->warn('⚠️  Need at least 1000 users for unique registrations. Found: ' . $users->count());
+            $this->command->warn('⚠️  Need at least 1000 users for unique registrations. Found: '.$users->count());
 
             return;
         }

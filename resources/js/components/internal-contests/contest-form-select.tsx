@@ -61,7 +61,7 @@ export function ContestFormSelect({
                     {options.map((option, index) => {
                         const optionValue = typeof option === 'string' ? option : option.value;
                         const optionLabel = typeof option === 'string' ? option : option.label;
-                        
+
                         return (
                             <SelectItem key={`${optionValue}-${index}`} value={optionValue}>
                                 {optionLabel}
