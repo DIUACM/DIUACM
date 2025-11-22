@@ -13,7 +13,7 @@ import MainLayout from '@/layouts/main-layout';
 import type { InternalContestRegistrationView, SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import axios from 'axios';
-import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle2, Loader2, XCircle } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowRight, CalendarDays, CheckCircle2, Loader2, Users, XCircle } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 type Props = {
@@ -119,52 +119,55 @@ export default function InternalContestRegisterPage({ contest }: Props) {
         <MainLayout>
             <Head title={`Register - ${contest.title}`} />
 
-            <section className="container mx-auto max-w-4xl px-4 py-12">
-                <div className="mb-8">
+            <section className="container mx-auto px-4 py-8">
+                <div className="mb-6">
                     <h1 className="mb-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">Contest Registration</h1>
                     <p className="text-slate-600 dark:text-slate-400">{contest.title}</p>
                 </div>
 
-                {/* Progress Steps */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-center gap-3">
-                        <div className="flex items-center gap-3">
-                            <div
-                                className={`flex h-10 w-10 items-center justify-center rounded-full border-2 font-semibold transition-all ${
-                                    step >= 1
-                                        ? 'border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                                        : 'border-slate-300 bg-white text-slate-500 dark:bg-slate-900'
-                                }`}
-                            >
-                                1
+                <div className="grid gap-8 lg:grid-cols-3">
+                    {/* Main Content */}
+                    <div className="lg:col-span-2">
+                        {/* Progress Steps */}
+                        <div className="mb-8">
+                            <div className="flex items-center justify-center gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div
+                                        className={`flex h-10 w-10 items-center justify-center rounded-full border-2 font-semibold transition-all ${
+                                            step >= 1
+                                                ? 'border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                                                : 'border-slate-300 bg-white text-slate-500 dark:bg-slate-900'
+                                        }`}
+                                    >
+                                        1
+                                    </div>
+                                    <span
+                                        className={`hidden text-sm font-medium sm:inline ${step >= 1 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}`}
+                                    >
+                                        Student ID
+                                    </span>
+                                </div>
+                                <div className={`h-0.5 w-16 transition-colors sm:w-24 ${step >= 2 ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
+                                <div className="flex items-center gap-3">
+                                    <div
+                                        className={`flex h-10 w-10 items-center justify-center rounded-full border-2 font-semibold transition-all ${
+                                            step >= 2
+                                                ? 'border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-500/30'
+                                                : 'border-slate-300 bg-white text-slate-500 dark:bg-slate-900'
+                                        }`}
+                                    >
+                                        2
+                                    </div>
+                                    <span
+                                        className={`hidden text-sm font-medium sm:inline ${step >= 2 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}`}
+                                    >
+                                        Complete Profile
+                                    </span>
+                                </div>
                             </div>
-                            <span
-                                className={`hidden text-sm font-medium sm:inline ${step >= 1 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}`}
-                            >
-                                Student ID
-                            </span>
                         </div>
-                        <div className={`h-0.5 w-16 transition-colors sm:w-24 ${step >= 2 ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
-                        <div className="flex items-center gap-3">
-                            <div
-                                className={`flex h-10 w-10 items-center justify-center rounded-full border-2 font-semibold transition-all ${
-                                    step >= 2
-                                        ? 'border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-500/30'
-                                        : 'border-slate-300 bg-white text-slate-500 dark:bg-slate-900'
-                                }`}
-                            >
-                                2
-                            </div>
-                            <span
-                                className={`hidden text-sm font-medium sm:inline ${step >= 2 ? 'text-blue-600 dark:text-blue-400' : 'text-slate-500'}`}
-                            >
-                                Complete Profile
-                            </span>
-                        </div>
-                    </div>
-                </div>
 
-                <Card className="border-slate-200 shadow-sm dark:border-slate-700">
+                        <Card className="border-slate-200 shadow-sm dark:border-slate-700">
                     <form onSubmit={submit}>
                         <CardHeader className="border-b border-slate-200 dark:border-slate-700">
                             <CardTitle className="text-xl">{step === 1 ? 'Verify Student ID' : 'Complete Your Registration'}</CardTitle>
@@ -595,6 +598,63 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                         </CardFooter>
                     </form>
                 </Card>
+            </div>
+
+            {/* Sidebar */}
+            <div className="sticky top-8 space-y-6 self-start">
+                {/* Banner Image */}
+                {contest.banner_image && (
+                    <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm dark:border-slate-700">
+                        <img src={contest.banner_image} alt={contest.title} className="h-full w-full object-cover" />
+                    </div>
+                )}
+
+                {/* Contest Info */}
+                <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
+                    <h3 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Contest Details</h3>
+
+                    <div className="space-y-4">
+                        <div className="flex items-start gap-3">
+                            <CalendarDays className="mt-0.5 h-5 w-5 text-blue-500" />
+                            <div>
+                                <p className="text-sm font-medium text-slate-900 dark:text-white">Registration Deadline</p>
+                                <p className="text-sm text-slate-600 dark:text-slate-400">
+                                    {contest.registration_deadline
+                                        ? new Intl.DateTimeFormat('en-US', {
+                                              month: 'long',
+                                              day: 'numeric',
+                                              year: 'numeric',
+                                              hour: 'numeric',
+                                              minute: 'numeric',
+                                          }).format(new Date(contest.registration_deadline))
+                                        : 'Date TBA'}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-3">
+                            <span className="mt-0.5 flex h-5 w-5 items-center justify-center text-lg font-bold text-blue-500">৳</span>
+                            <div>
+                                <p className="text-sm font-medium text-slate-900 dark:text-white">Registration Fee</p>
+                                <p className="text-sm text-slate-600 dark:text-slate-400">
+                                    {contest.registration_fee > 0 ? `৳${contest.registration_fee}` : 'Free'}
+                                </p>
+                            </div>
+                        </div>
+
+                        {contest.registration_limit && (
+                            <div className="flex items-start gap-3">
+                                <Users className="mt-0.5 h-5 w-5 text-blue-500" />
+                                <div>
+                                    <p className="text-sm font-medium text-slate-900 dark:text-white">Registration Limit</p>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">{contest.registration_limit} Participants</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        </div>
             </section>
         </MainLayout>
     );
