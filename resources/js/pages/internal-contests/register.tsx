@@ -314,11 +314,11 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                             Academic Information
                                         </h3>
                                         <div className="grid gap-6 md:grid-cols-2">
-                                            {contest.form_settings.departments && contest.form_settings.departments.length > 0 ? (
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="department">
-                                                        Department <span className="text-red-500">*</span>
-                                                    </Label>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="department">
+                                                    Department <span className="text-red-500">*</span>
+                                                </Label>
+                                                {contest.form_settings.departments && contest.form_settings.departments.length > 0 ? (
                                                     <Select value={data.department} onValueChange={(val) => setData('department', val)} required>
                                                         <SelectTrigger className={`h-11 ${errors.department ? 'border-red-500' : ''}`}>
                                                             <SelectValue placeholder="Select Department" />
@@ -335,30 +335,23 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                                             })}
                                                         </SelectContent>
                                                     </Select>
-                                                    {errors.department && <p className="text-sm text-red-500">{errors.department}</p>}
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="department">
-                                                        Department <span className="text-red-500">*</span>
-                                                    </Label>
-                                                    <Input
-                                                        id="department"
-                                                        value={data.department}
-                                                        onChange={(e) => setData('department', e.target.value)}
-                                                        placeholder="Enter your department"
-                                                        className={`h-11 ${errors.department ? 'border-red-500' : ''}`}
-                                                        required
-                                                    />
-                                                    {errors.department && <p className="text-sm text-red-500">{errors.department}</p>}
-                                                </div>
-                                            )}
+                                                ) : (
+                                                    <Alert variant="destructive">
+                                                        <AlertCircle className="h-4 w-4" />
+                                                        <AlertTitle>Department Options Missing</AlertTitle>
+                                                        <AlertDescription>
+                                                            Department choices are not configured for this contest. Please contact the organizers.
+                                                        </AlertDescription>
+                                                    </Alert>
+                                                )}
+                                                {errors.department && <p className="text-sm text-red-500">{errors.department}</p>}
+                                            </div>
 
-                                            {contest.form_settings.sections && contest.form_settings.sections.length > 0 ? (
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="section">
-                                                        Section <span className="text-red-500">*</span>
-                                                    </Label>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="section">
+                                                    Section <span className="text-red-500">*</span>
+                                                </Label>
+                                                {contest.form_settings.sections && contest.form_settings.sections.length > 0 ? (
                                                     <Select value={data.section} onValueChange={(val) => setData('section', val)} required>
                                                         <SelectTrigger className={`h-11 ${errors.section ? 'border-red-500' : ''}`}>
                                                             <SelectValue placeholder="Select Section" />
@@ -375,35 +368,24 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                                             })}
                                                         </SelectContent>
                                                     </Select>
-                                                    {errors.section && <p className="text-sm text-red-500">{errors.section}</p>}
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="section">
-                                                        Section <span className="text-red-500">*</span>
-                                                    </Label>
-                                                    <Input
-                                                        id="section"
-                                                        value={data.section}
-                                                        onChange={(e) => setData('section', e.target.value)}
-                                                        placeholder="Enter your section"
-                                                        className={`h-11 ${errors.section ? 'border-red-500' : ''}`}
-                                                        required
-                                                    />
-                                                    {errors.section && <p className="text-sm text-red-500">{errors.section}</p>}
-                                                </div>
-                                            )}
+                                                ) : (
+                                                    <Alert variant="destructive">
+                                                        <AlertCircle className="h-4 w-4" />
+                                                        <AlertTitle>Section Options Missing</AlertTitle>
+                                                        <AlertDescription>
+                                                            Section choices are not configured for this contest. Please contact the organizers.
+                                                        </AlertDescription>
+                                                    </Alert>
+                                                )}
+                                                {errors.section && <p className="text-sm text-red-500">{errors.section}</p>}
+                                            </div>
 
-                                            {contest.form_settings.lab_teacher_names && contest.form_settings.lab_teacher_names.length > 0 ? (
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="lab_teacher_name">
-                                                        Lab Teacher <span className="text-red-500">*</span>
-                                                    </Label>
-                                                    <Select
-                                                        value={data.lab_teacher_name}
-                                                        onValueChange={(val) => setData('lab_teacher_name', val)}
-                                                        required
-                                                    >
+                                            <div className="space-y-2">
+                                                <Label htmlFor="lab_teacher_name">
+                                                    Lab Teacher <span className="text-red-500">*</span>
+                                                </Label>
+                                                {contest.form_settings.lab_teacher_names && contest.form_settings.lab_teacher_names.length > 0 ? (
+                                                    <Select value={data.lab_teacher_name} onValueChange={(val) => setData('lab_teacher_name', val)} required>
                                                         <SelectTrigger className={`h-11 ${errors.lab_teacher_name ? 'border-red-500' : ''}`}>
                                                             <SelectValue placeholder="Select Lab Teacher" />
                                                         </SelectTrigger>
@@ -419,24 +401,17 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                                             })}
                                                         </SelectContent>
                                                     </Select>
-                                                    {errors.lab_teacher_name && <p className="text-sm text-red-500">{errors.lab_teacher_name}</p>}
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="lab_teacher_name">
-                                                        Lab Teacher <span className="text-red-500">*</span>
-                                                    </Label>
-                                                    <Input
-                                                        id="lab_teacher_name"
-                                                        value={data.lab_teacher_name}
-                                                        onChange={(e) => setData('lab_teacher_name', e.target.value)}
-                                                        placeholder="Enter lab teacher name"
-                                                        className={`h-11 ${errors.lab_teacher_name ? 'border-red-500' : ''}`}
-                                                        required
-                                                    />
-                                                    {errors.lab_teacher_name && <p className="text-sm text-red-500">{errors.lab_teacher_name}</p>}
-                                                </div>
-                                            )}
+                                                ) : (
+                                                    <Alert variant="destructive">
+                                                        <AlertCircle className="h-4 w-4" />
+                                                        <AlertTitle>Lab Teacher Options Missing</AlertTitle>
+                                                        <AlertDescription>
+                                                            Lab teacher choices are not configured for this contest. Please contact the organizers.
+                                                        </AlertDescription>
+                                                    </Alert>
+                                                )}
+                                                {errors.lab_teacher_name && <p className="text-sm text-red-500">{errors.lab_teacher_name}</p>}
+                                            </div>
                                         </div>
                                     </div>
 
@@ -512,13 +487,12 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                                     />
                                                 </div>
 
-                                                {data.transport_service_required &&
-                                                    contest.form_settings.pickup_points &&
-                                                    contest.form_settings.pickup_points.length > 0 && (
-                                                        <div className="mt-4 space-y-2 border-t border-slate-200 pt-4 dark:border-slate-700">
-                                                            <Label htmlFor="pickup_point">
-                                                                Pickup Point <span className="text-red-500">*</span>
-                                                            </Label>
+                                                {data.transport_service_required && (
+                                                    <div className="mt-4 space-y-2 border-t border-slate-200 pt-4 dark:border-slate-700">
+                                                        <Label htmlFor="pickup_point">
+                                                            Pickup Point <span className="text-red-500">*</span>
+                                                        </Label>
+                                                        {contest.form_settings.pickup_points && contest.form_settings.pickup_points.length > 0 ? (
                                                             <Select value={data.pickup_point} onValueChange={(val) => setData('pickup_point', val)}>
                                                                 <SelectTrigger className="h-11">
                                                                     <SelectValue placeholder="Select Pickup Point" />
@@ -535,9 +509,18 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                                                     })}
                                                                 </SelectContent>
                                                             </Select>
-                                                            {errors.pickup_point && <p className="text-sm text-red-500">{errors.pickup_point}</p>}
-                                                        </div>
-                                                    )}
+                                                        ) : (
+                                                            <Alert variant="destructive">
+                                                                <AlertCircle className="h-4 w-4" />
+                                                                <AlertTitle>Pickup Points Missing</AlertTitle>
+                                                                <AlertDescription>
+                                                                    Pickup point choices are not configured for this contest. Please contact the organizers.
+                                                                </AlertDescription>
+                                                            </Alert>
+                                                        )}
+                                                        {errors.pickup_point && <p className="text-sm text-red-500">{errors.pickup_point}</p>}
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
