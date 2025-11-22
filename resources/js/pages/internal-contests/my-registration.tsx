@@ -78,9 +78,7 @@ export default function MyRegistrationPage({ registration }: Props) {
                                         <Field label="Gender" value={<span className="capitalize">{registration.gender}</span>} />
                                         {registration.lab_teacher_name && <Field label="Lab Teacher" value={registration.lab_teacher_name} />}
                                         {registration.tshirt_size && <Field icon={Shirt} label="T-Shirt Size" value={registration.tshirt_size} />}
-                                        {registration.pickup_point && (
-                                            <Field icon={MapPin} label="Pickup Point" value={registration.pickup_point} />
-                                        )}
+                                        {registration.pickup_point && <Field icon={MapPin} label="Pickup Point" value={registration.pickup_point} />}
                                     </div>
                                 </InfoCard>
 

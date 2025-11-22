@@ -24,7 +24,6 @@ class MfsManualTransactionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
 
-
     protected static ?string $recordTitleAttribute = 'mfs_transaction_id';
 
     protected static ?string $navigationLabel = 'MFS Transactions';

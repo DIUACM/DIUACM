@@ -111,9 +111,7 @@ export default function SelectGateway({ registration }: Props) {
                                                 </div>
                                                 <div>
                                                     <div className="text-base font-bold text-gray-900">SSLCommerz</div>
-                                                    <div className="mt-1 text-sm text-gray-600">
-                                                        Visa, Mastercard, bKash, Nagad & more
-                                                    </div>
+                                                    <div className="mt-1 text-sm text-gray-600">Visa, Mastercard, bKash, Nagad & more</div>
                                                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                                                         <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
                                                             Cards
@@ -146,9 +144,7 @@ export default function SelectGateway({ registration }: Props) {
                                 </div>
 
                                 {form.errors.gateway && (
-                                    <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-                                        {form.errors.gateway}
-                                    </div>
+                                    <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{form.errors.gateway}</div>
                                 )}
                             </div>
                         </div>
@@ -174,9 +170,8 @@ export default function SelectGateway({ registration }: Props) {
                             <div className="flex-1">
                                 <h3 className="font-semibold text-gray-900">Secure & Protected Payment</h3>
                                 <p className="mt-1.5 text-sm leading-relaxed text-gray-700">
-                                    Your payment information is encrypted with industry-standard 256-bit SSL encryption. We never
-                                    store your card details. All transactions are processed through PCI-DSS compliant payment
-                                    gateways.
+                                    Your payment information is encrypted with industry-standard 256-bit SSL encryption. We never store your card
+                                    details. All transactions are processed through PCI-DSS compliant payment gateways.
                                 </p>
                                 <div className="mt-3 flex flex-wrap gap-2">
                                     <span className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-gray-700 shadow-sm">
@@ -194,9 +189,7 @@ export default function SelectGateway({ registration }: Props) {
 
                     {/* Footer Info */}
                     <div className="mt-10 text-center">
-                        <p className="text-sm text-gray-500">
-                            © {new Date().getFullYear()} DIU ACM. All rights reserved.
-                        </p>
+                        <p className="text-sm text-gray-500">© {new Date().getFullYear()} DIU ACM. All rights reserved.</p>
                         <p className="mt-2 text-sm text-gray-600">
                             Need help?{' '}
                             <a href="/contact" className="font-medium text-emerald-600 transition-colors hover:text-emerald-700 hover:underline">
