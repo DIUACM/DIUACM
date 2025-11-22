@@ -239,7 +239,7 @@ export interface InternalContestRegistrationView extends InternalContest {
         sections?: string[];
         lab_teacher_names?: string[];
         tshirt_sizes?: string[];
-        genders?: string[];
+        genders?: Array<{ value: string; label: string }>;
     };
     tshirt_size_guideline_url?: string;
 }

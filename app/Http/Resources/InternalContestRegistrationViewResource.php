@@ -33,7 +33,10 @@ class InternalContestRegistrationViewResource extends InternalContestResource
      */
     private function getGenderOptions(): array
     {
-        return collect(Gender::cases())->map(fn($gender) => $gender->getLabel())->toArray();
+        return collect(Gender::cases())->map(fn($gender) => [
+            'value' => $gender->value,
+            'label' => $gender->getLabel(),
+        ])->toArray();
     }
 
     /**

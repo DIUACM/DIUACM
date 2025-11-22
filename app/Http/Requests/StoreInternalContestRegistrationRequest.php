@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\Gender;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreInternalContestRegistrationRequest extends FormRequest
 {
@@ -29,7 +31,7 @@ class StoreInternalContestRegistrationRequest extends FormRequest
             'section' => ['required', 'string', 'max:255'],
             'lab_teacher_name' => ['required', 'string', 'max:255'],
             'tshirt_size' => ['required', 'string', 'max:255'],
-            'gender' => ['required', 'string', 'in:male,female'],
+            'gender' => ['required', 'string', Rule::enum(Gender::class)],
             'transport_service_required' => ['boolean'],
             'pickup_point' => ['nullable', 'string', 'max:255', 'required_if:transport_service_required,true'],
         ];
@@ -51,7 +53,6 @@ class StoreInternalContestRegistrationRequest extends FormRequest
             'lab_teacher_name.required' => 'Lab teacher name is required.',
             'tshirt_size.required' => 'T-shirt size is required.',
             'gender.required' => 'Gender is required.',
-            'gender.in' => 'Gender must be either male or female.',
             'pickup_point.required_if' => 'Pickup point is required when transport service is selected.',
         ];
     }

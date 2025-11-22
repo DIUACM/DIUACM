@@ -4,12 +4,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+type SelectOption = string | { value: string; label: string };
+
 type ContestFormSelectProps = {
     id: string;
     label: string;
     value: string;
     onChange: (value: string) => void;
-    options?: string[] | null;
+    options?: SelectOption[] | null;
     placeholder?: string;
     required?: boolean;
     error?: string;
@@ -56,11 +58,16 @@ export function ContestFormSelect({
                     <SelectValue placeholder={placeholder} />
                 </SelectTrigger>
                 <SelectContent>
-                    {options.map((option, index) => (
-                        <SelectItem key={`${option}-${index}`} value={option}>
-                            {option}
-                        </SelectItem>
-                    ))}
+                    {options.map((option, index) => {
+                        const optionValue = typeof option === 'string' ? option : option.value;
+                        const optionLabel = typeof option === 'string' ? option : option.label;
+                        
+                        return (
+                            <SelectItem key={`${optionValue}-${index}`} value={optionValue}>
+                                {optionLabel}
+                            </SelectItem>
+                        );
+                    })}
                 </SelectContent>
             </Select>
             {error && <p className="text-sm text-red-500">{error}</p>}
