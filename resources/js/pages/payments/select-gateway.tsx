@@ -1,7 +1,7 @@
 import { initiateRegistrationPayment } from '@/actions/App/Http/Controllers/PaymentController';
 import BlankLayout from '@/layouts/blank-layout';
 import { Head, useForm } from '@inertiajs/react';
-import { ArrowLeft, CheckCircle, CreditCard, Lock, Smartphone } from 'lucide-react';
+import { CreditCard, Smartphone, ShieldCheck, Lock } from 'lucide-react';
 
 type Props = {
     registration: {
@@ -23,161 +23,105 @@ export default function SelectGateway({ registration }: Props) {
 
     return (
         <BlankLayout>
-            <Head title="Select Payment Method" />
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-slate-100">
-                {/* Background decorations */}
-                <div className="fixed inset-0 -z-10 overflow-hidden">
-                    <div className="absolute top-1/3 -left-20 h-64 w-64 rounded-full bg-blue-200/40 blur-3xl" />
-                    <div className="absolute top-10 right-20 h-32 w-32 rounded-full bg-cyan-200/50 blur-2xl" />
-                </div>
-
-                {/* Header */}
-                <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
-                    <div className="mx-auto max-w-5xl px-4 py-4">
-                        <div className="flex items-center gap-3">
-                            <img src="/images/diuacm-logo-rounded.webp" alt="DIU ACM" className="h-9 w-9" />
-                            <div className="h-6 w-px bg-slate-300" />
-                            <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-sm font-semibold text-transparent">Payment Gateway</span>
+            <Head title="Checkout" />
+            <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
+                <div className="w-full max-w-md space-y-8">
+                    
+                    {/* Header Section */}
+                    <div className="text-center">
+                        <div className="mx-auto h-12 w-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                            <ShieldCheck className="h-6 w-6 text-blue-600" />
                         </div>
+                        <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">
+                            Checkout
+                        </h2>
+                        <p className="mt-2 text-sm text-gray-600">
+                            Registration for <span className="font-medium text-gray-900">{registration.contest_title}</span>
+                        </p>
                     </div>
-                </header>
 
-                {/* Main Content */}
-                <div className="mx-auto max-w-5xl px-4 py-8">
-                    {/* Back Link */}
-                    <button
-                        onClick={() => window.history.back()}
-                        className="mb-6 flex items-center gap-1.5 text-sm text-slate-600 transition-colors hover:text-slate-900"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back
-                    </button>
-
-                    <div className="grid gap-6 lg:grid-cols-3">
-                        {/* Order Summary - Left Column */}
-                        <div className="lg:col-span-1">
-                            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-md">
-                                <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">Order Summary</h2>
-                                <div className="space-y-3 border-b border-slate-100 pb-4">
-                                    <div>
-                                        <div className="text-xs text-gray-500">Contest</div>
-                                        <div className="mt-0.5 text-sm font-medium text-gray-900">{registration.contest_title}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-xs text-gray-500">Name</div>
-                                        <div className="mt-0.5 text-sm font-medium text-gray-900">{registration.name}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-xs text-gray-500">Email</div>
-                                        <div className="mt-0.5 text-sm font-medium text-gray-900">{registration.email}</div>
-                                    </div>
-                                </div>
-                                <div className="mt-4 flex items-baseline justify-between">
-                                    <span className="text-sm font-medium text-gray-700">Total</span>
-                                    <div className="text-right">
-                                        <div className="text-2xl font-semibold text-gray-900">৳{registration.amount}</div>
-                                        <div className="text-xs text-gray-500">BDT</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Security Info */}
-                            <div className="mt-4 rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-cyan-50 p-4">
-                                <div className="flex items-start gap-3">
-                                    <Lock className="mt-0.5 h-4 w-4 text-blue-600" />
-                                    <div>
-                                        <div className="text-xs font-semibold text-slate-900">Secure Payment</div>
-                                        <div className="mt-1 text-xs leading-relaxed text-slate-600">
-                                            Protected by 256-bit SSL encryption.
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                    {/* Amount Card */}
+                    <div className="bg-white py-8 px-4 shadow-sm rounded-2xl border border-gray-100 relative overflow-hidden text-center">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Total Payable</p>
+                        <div className="flex items-center justify-center text-4xl font-extrabold text-gray-900">
+                            <span className="text-2xl font-medium text-gray-400 mr-1">৳</span>
+                            {registration.amount}
                         </div>
-
-                        {/* Payment Method - Right Column */}
-                        <div className="lg:col-span-2">
-                            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-md">
-                                <h2 className="mb-1 text-lg font-semibold text-slate-900">Payment Method</h2>
-                                <p className="mb-6 text-sm text-slate-600">Select your preferred payment option</p>
-
-                                <form onSubmit={handleSubmit}>
-                                    <div className="space-y-3">
-                                        {/* SSLCommerz Option */}
-                                        <label className="block cursor-pointer">
-                                            <input
-                                                type="radio"
-                                                name="gateway"
-                                                value="sslcommerz"
-                                                checked={form.data.gateway === 'sslcommerz'}
-                                                onChange={(e) => form.setData('gateway', e.target.value)}
-                                                className="peer sr-only"
-                                            />
-                                            <div className="flex items-center justify-between rounded-lg border-2 p-4 transition-all peer-checked:border-blue-600 peer-checked:bg-gradient-to-r peer-checked:from-blue-50 peer-checked:to-cyan-50 hover:border-slate-300">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 shadow-sm">
-                                                        <CreditCard className="h-6 w-6 text-white" />
-                                                    </div>
-                                                    <div>
-                                                        <div className="font-semibold text-slate-900">SSLCommerz</div>
-                                                        <div className="text-sm text-slate-600">Cards, bKash, Nagad, Rocket</div>
-                                                    </div>
-                                                </div>
-                                                <div className="flex h-5 w-5 items-center justify-center rounded-full border-2 peer-checked:border-blue-600 peer-checked:bg-blue-600">
-                                                    {form.data.gateway === 'sslcommerz' && <CheckCircle className="h-5 w-5 text-white" />}
-                                                </div>
-                                            </div>
-                                        </label>
-
-                                        {/* MFS Manual Option */}
-                                        <label className="block cursor-pointer">
-                                            <input
-                                                type="radio"
-                                                name="gateway"
-                                                value="mfs_manual"
-                                                checked={form.data.gateway === 'mfs_manual'}
-                                                onChange={(e) => form.setData('gateway', e.target.value)}
-                                                className="peer sr-only"
-                                            />
-                                            <div className="flex items-center justify-between rounded-lg border-2 p-4 transition-all peer-checked:border-blue-600 peer-checked:bg-gradient-to-r peer-checked:from-blue-50 peer-checked:to-cyan-50 hover:border-slate-300">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-slate-600 to-slate-700 shadow-sm">
-                                                        <Smartphone className="h-6 w-6 text-white" />
-                                                    </div>
-                                                    <div>
-                                                        <div className="font-semibold text-slate-900">MFS Manual Payment</div>
-                                                        <div className="text-sm text-slate-600">bKash, Nagad, Rocket (Manual verification)</div>
-                                                    </div>
-                                                </div>
-                                                <div className="flex h-5 w-5 items-center justify-center rounded-full border-2 peer-checked:border-blue-600 peer-checked:bg-blue-600">
-                                                    {form.data.gateway === 'mfs_manual' && <CheckCircle className="h-5 w-5 text-white" />}
-                                                </div>
-                                            </div>
-                                        </label>
-                                    </div>
-
-                                    {form.errors.gateway && (
-                                        <div className="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{form.errors.gateway}</div>
-                                    )}
-
-                                    {/* Submit Button */}
-                                    <button
-                                        type="submit"
-                                        disabled={form.processing}
-                                        className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-4 py-3 font-semibold text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        <Lock className="h-4 w-4" />
-                                        {form.processing ? 'Processing...' : 'Continue to Payment'}
-                                    </button>
-                                </form>
-                            </div>
+                        <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-gray-500 bg-gray-50 py-1.5 px-3 rounded-full w-fit mx-auto">
+                            <Lock className="h-3 w-3" />
+                            Secured by 256-bit encryption
                         </div>
                     </div>
 
-                    {/* Footer */}
-                    <div className="mt-8 text-center text-xs text-slate-500">
-                        <p>© {new Date().getFullYear()} DIU ACM. All rights reserved.</p>
-                    </div>
+                    {/* Payment Methods */}
+                    <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+                        <div className="space-y-3">
+                            <p className="text-sm font-medium text-gray-700 px-1">Select Payment Method</p>
+                            
+                            {/* SSLCommerz */}
+                            <label className={`relative flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 group ${form.data.gateway === 'sslcommerz' ? 'border-blue-600 bg-blue-50/30' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
+                                <div className="flex items-center h-5 absolute right-4 top-1/2 -translate-y-1/2">
+                                    <input
+                                        type="radio"
+                                        name="gateway"
+                                        value="sslcommerz"
+                                        checked={form.data.gateway === 'sslcommerz'}
+                                        onChange={(e) => form.setData('gateway', e.target.value)}
+                                        className="h-5 w-5 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                    />
+                                </div>
+                                <div className="flex-shrink-0 h-12 w-12 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+                                    <CreditCard className="h-6 w-6" />
+                                </div>
+                                <div className="ml-4 flex-1 pr-8">
+                                    <span className="block text-sm font-bold text-gray-900">
+                                        Pay Online
+                                    </span>
+                                    <span className="block text-xs text-gray-500 mt-0.5">
+                                        Instant activation via Card, bKash, Nagad
+                                    </span>
+                                </div>
+                            </label>
+
+                            {/* MFS Manual */}
+                            <label className={`relative flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 group ${form.data.gateway === 'mfs_manual' ? 'border-blue-600 bg-blue-50/30' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
+                                <div className="flex items-center h-5 absolute right-4 top-1/2 -translate-y-1/2">
+                                    <input
+                                        type="radio"
+                                        name="gateway"
+                                        value="mfs_manual"
+                                        checked={form.data.gateway === 'mfs_manual'}
+                                        onChange={(e) => form.setData('gateway', e.target.value)}
+                                        className="h-5 w-5 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                    />
+                                </div>
+                                <div className="flex-shrink-0 h-12 w-12 rounded-lg bg-pink-100 flex items-center justify-center text-pink-600">
+                                    <Smartphone className="h-6 w-6" />
+                                </div>
+                                <div className="ml-4 flex-1 pr-8">
+                                    <span className="block text-sm font-bold text-gray-900">
+                                        Manual Send Money
+                                    </span>
+                                    <span className="block text-xs text-gray-500 mt-0.5">
+                                        Manually send money to our personal number
+                                    </span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={form.processing}
+                            className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg shadow-blue-600/20 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70 disabled:cursor-not-allowed transition-all transform active:scale-[0.98]"
+                        >
+                            {form.processing ? 'Processing...' : `Pay ৳${registration.amount}`}
+                        </button>
+                        
+                        <p className="text-center text-xs text-gray-400">
+                            By continuing, you agree to our Terms of Service
+                        </p>
+                    </form>
                 </div>
             </div>
         </BlankLayout>

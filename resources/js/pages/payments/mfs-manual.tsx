@@ -1,7 +1,7 @@
 import BlankLayout from '@/layouts/blank-layout';
 import { Head, useForm } from '@inertiajs/react';
 import { submitMfsManual } from '@/actions/App/Http/Controllers/PaymentController';
-import { ArrowLeft, AlertCircle, Copy } from 'lucide-react';
+import { ArrowLeft, Copy, Check, Smartphone } from 'lucide-react';
 import { useState } from 'react';
 
 type MfsType = {
@@ -31,11 +31,12 @@ type Props = {
 };
 
 export default function MfsManual({ payment, payable, receiver_numbers, mfs_types }: Props) {
-    const [selectedMfs, setSelectedMfs] = useState<string>('');
+    const [selectedMfs, setSelectedMfs] = useState<string>('bkash');
     const [copied, setCopied] = useState(false);
+    
     const form = useForm({
         transaction_id: payment.transaction_id,
-        mfs_type: '',
+        mfs_type: 'bkash',
         sender_number: '',
         mfs_transaction_id: '',
     });
@@ -63,210 +64,114 @@ export default function MfsManual({ payment, payable, receiver_numbers, mfs_type
 
     return (
         <BlankLayout>
-            <Head title="MFS Manual Payment" />
-            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-slate-100">
-                {/* Background decorations */}
-                <div className="fixed inset-0 -z-10 overflow-hidden">
-                    <div className="absolute top-1/3 -left-20 h-64 w-64 rounded-full bg-blue-200/40 blur-3xl" />
-                    <div className="absolute top-10 right-20 h-32 w-32 rounded-full bg-cyan-200/50 blur-2xl" />
-                </div>
+            <Head title="Send Money" />
+            <div className="min-h-screen bg-gray-100 flex justify-center sm:py-12 font-sans">
+                <div className="w-full max-w-md bg-white sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col h-screen sm:h-auto relative">
+                    
+                    {/* Top Bar */}
+                    <div className="bg-slate-900 text-white p-6 pb-16 relative overflow-hidden">
+                        {/* Decorative circles */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                        <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/20 rounded-full blur-2xl -ml-10 -mb-10"></div>
 
-                {/* Header */}
-                <header className="border-b border-slate-200 bg-white/80 backdrop-blur-sm">
-                    <div className="mx-auto max-w-5xl px-4 py-4">
-                        <div className="flex items-center gap-3">
-                            <img src="/images/diuacm-logo-rounded.webp" alt="DIU ACM" className="h-9 w-9" />
-                            <div className="h-6 w-px bg-slate-300" />
-                            <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-sm font-semibold text-transparent">MFS Payment</span>
+                        <div className="relative z-10 flex items-center justify-between mb-8">
+                            <button onClick={() => window.history.back()} className="p-2 -ml-2 hover:bg-white/10 rounded-full transition-colors">
+                                <ArrowLeft className="h-5 w-5" />
+                            </button>
+                            <span className="font-semibold tracking-wide text-sm uppercase opacity-80">Send Money</span>
+                            <div className="w-9"></div> {/* Spacer */}
                         </div>
-                    </div>
-                </header>
-
-                {/* Main Content */}
-                <div className="mx-auto max-w-5xl px-4 py-8">
-                    {/* Back Link */}
-                    <button
-                        onClick={() => window.history.back()}
-                        className="mb-6 flex items-center gap-1.5 text-sm text-slate-600 transition-colors hover:text-slate-900"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back
-                    </button>
-
-                    <div className="grid gap-6 lg:grid-cols-3">
-                        {/* Order Summary - Left Column */}
-                        <div className="lg:col-span-1">
-                            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-md">
-                                <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-slate-500">Payment Details</h2>
-                                <div className="space-y-3 border-b border-slate-100 pb-4">
-                                    <div>
-                                        <div className="text-xs text-slate-500">Contest</div>
-                                        <div className="mt-0.5 text-sm font-medium text-slate-900">{payable.contest_title}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-xs text-slate-500">Name</div>
-                                        <div className="mt-0.5 text-sm font-medium text-slate-900">{payable.name}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-xs text-slate-500">Transaction ID</div>
-                                        <div className="mt-0.5 font-mono text-sm font-medium text-slate-900">{payment.transaction_id}</div>
-                                    </div>
-                                </div>
-                                <div className="mt-4 flex items-baseline justify-between">
-                                    <span className="text-sm font-medium text-slate-700">Amount</span>
-                                    <div className="text-right">
-                                        <div className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-2xl font-bold text-transparent">৳{payment.amount}</div>
-                                        <div className="text-xs text-slate-500">{payment.currency}</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Info Notice */}
-                            <div className="mt-4 rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-cyan-50 p-4">
-                                <div className="flex gap-3">
-                                    <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
-                                    <div>
-                                        <div className="text-xs font-semibold text-slate-900">Manual Verification</div>
-                                        <div className="mt-1 text-xs leading-relaxed text-slate-600">
-                                            Verified within 24-48 hours.
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Payment Form - Right Column */}
-                        <div className="lg:col-span-2">
-                            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-md">
-                                <h2 className="mb-1 text-lg font-semibold text-slate-900">Complete Payment</h2>
-                                <p className="mb-6 text-sm text-slate-600">Follow the steps below to complete your payment</p>
-
-                                <form onSubmit={handleSubmit} className="space-y-6">
-                                    {/* Step 1: Select Provider */}
-                                    <div>
-                                        <label className="mb-3 block text-sm font-semibold text-slate-700">
-                                            Step 1: Select MFS Provider
-                                        </label>
-                                        <div className="grid grid-cols-3 gap-3">
-                                            {mfs_types.map((mfs) => (
-                                                <label key={mfs.value} className="cursor-pointer">
-                                                    <input
-                                                        type="radio"
-                                                        name="mfs_type"
-                                                        value={mfs.value}
-                                                        checked={selectedMfs === mfs.value}
-                                                        onChange={(e) => handleMfsChange(e.target.value)}
-                                                        className="peer sr-only"
-                                                    />
-                                                    <div className="flex flex-col items-center gap-2 rounded-lg border-2 p-4 shadow-sm transition-all peer-checked:border-blue-600 peer-checked:bg-gradient-to-br peer-checked:from-blue-50 peer-checked:to-cyan-50 hover:border-slate-300">
-                                                        <img
-                                                            src={`/images/mfs/${mfs.value}.svg`}
-                                                            alt={mfs.label}
-                                                            className="h-10 w-10 object-contain"
-                                                        />
-                                                        <span className="text-xs font-medium text-gray-900">{mfs.label}</span>
-                                                    </div>
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Step 2: Send Money */}
-                                    {selectedMfs && (
-                                        <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 p-4">
-                                            <label className="mb-2 block text-sm font-semibold text-slate-700">
-                                                Step 2: Send Money to This Number
-                                            </label>
-                                            <div className="flex items-center justify-between rounded-lg bg-white p-3 shadow-sm">
-                                                <div>
-                                                    <div className="text-xs text-slate-500">
-                                                        {mfs_types.find((m) => m.value === selectedMfs)?.label} Number
-                                                    </div>
-                                                    <div className="mt-1 font-mono text-lg font-semibold text-slate-900">
-                                                        {getReceiverNumber()}
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => copyToClipboard(getReceiverNumber())}
-                                                    className="flex items-center gap-1.5 rounded-md bg-gradient-to-r from-blue-600 to-cyan-600 px-3 py-2 text-xs font-medium text-white shadow-sm transition-all hover:from-blue-700 hover:to-cyan-700"
-                                                >
-                                                    <Copy className="h-3.5 w-3.5" />
-                                                    {copied ? 'Copied!' : 'Copy'}
-                                                </button>
-                                            </div>
-                                            <div className="mt-2 text-sm font-medium text-blue-700">
-                                                Amount to send: <span className="font-semibold">৳{payment.amount}</span>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Step 3: Enter Details */}
-                                    {selectedMfs && (
-                                        <div className="space-y-4">
-                                            <label className="block text-sm font-semibold text-slate-700">
-                                                Step 3: Enter Transaction Details
-                                            </label>
-                                            
-                                            <div>
-                                                <label htmlFor="sender_number" className="mb-1.5 block text-sm text-slate-700">
-                                                    Your Mobile Number
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    id="sender_number"
-                                                    placeholder="01XXXXXXXXX"
-                                                    value={form.data.sender_number}
-                                                    onChange={(e) => form.setData('sender_number', e.target.value)}
-                                                    className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 font-mono text-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                                                    required
-                                                />
-                                                {form.errors.sender_number && (
-                                                    <p className="mt-1 text-xs text-red-600">{form.errors.sender_number}</p>
-                                                )}
-                                            </div>
-
-                                            <div>
-                                                <label htmlFor="mfs_transaction_id" className="mb-1.5 block text-sm text-slate-700">
-                                                    Transaction ID
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    id="mfs_transaction_id"
-                                                    placeholder="Enter transaction ID from SMS"
-                                                    value={form.data.mfs_transaction_id}
-                                                    onChange={(e) => form.setData('mfs_transaction_id', e.target.value)}
-                                                    className="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 font-mono text-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                                                    required
-                                                />
-                                                {form.errors.mfs_transaction_id && (
-                                                    <p className="mt-1 text-xs text-red-600">{form.errors.mfs_transaction_id}</p>
-                                                )}
-                                                <p className="mt-1.5 text-xs text-slate-500">
-                                                    Check your SMS or app for the transaction ID
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Submit Button */}
-                                    {selectedMfs && (
-                                        <button
-                                            type="submit"
-                                            disabled={form.processing}
-                                            className="w-full rounded-lg bg-gradient-to-r from-blue-600 to-cyan-600 px-4 py-3 font-semibold text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
-                                        >
-                                            {form.processing ? 'Submitting...' : 'Submit Payment'}
-                                        </button>
-                                    )}
-                                </form>
-                            </div>
+                        <div className="relative z-10 text-center">
+                            <p className="text-blue-200 text-xs font-medium uppercase tracking-wider mb-2">Total Amount</p>
+                            <h1 className="text-4xl font-bold tracking-tight">৳{payment.amount}</h1>
                         </div>
                     </div>
 
-                    {/* Footer */}
-                    <div className="mt-8 text-center text-xs text-slate-500">
-                        <p>© {new Date().getFullYear()} DIU ACM. All rights reserved.</p>
+                    {/* Content Container - Overlapping */}
+                    <div className="flex-1 bg-gray-50 -mt-8 rounded-t-3xl px-6 pt-8 pb-6 overflow-y-auto relative z-20">
+                        
+                        {/* Provider Selection */}
+                        <div className="grid grid-cols-3 gap-3 mb-8">
+                            {mfs_types.map((mfs) => (
+                                <button
+                                    key={mfs.value}
+                                    onClick={() => handleMfsChange(mfs.value)}
+                                    className={`flex flex-col items-center p-3 rounded-2xl border-2 transition-all duration-200 ${
+                                        selectedMfs === mfs.value
+                                            ? 'border-blue-600 bg-white shadow-md scale-105'
+                                            : 'border-transparent bg-white/50 hover:bg-white hover:shadow-sm'
+                                    }`}
+                                >
+                                    <div className={`w-10 h-10 rounded-full mb-2 flex items-center justify-center transition-colors ${
+                                        mfs.value === 'bkash' ? 'bg-pink-50 text-pink-600' :
+                                        mfs.value === 'nagad' ? 'bg-orange-50 text-orange-600' :
+                                        'bg-purple-50 text-purple-600'
+                                    }`}>
+                                        <Smartphone className="h-5 w-5" />
+                                    </div>
+                                    <span className={`text-xs font-bold ${selectedMfs === mfs.value ? 'text-slate-900' : 'text-slate-500'}`}>
+                                        {mfs.label}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Receiver Info Card */}
+                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-8">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-3">Send Money To</p>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="text-xl font-bold text-slate-900 font-mono tracking-wide">{getReceiverNumber()}</p>
+                                    <p className="text-xs text-gray-500 mt-1 font-medium">Personal Account</p>
+                                </div>
+                                <button 
+                                    onClick={() => copyToClipboard(getReceiverNumber())}
+                                    className="p-2.5 bg-gray-50 hover:bg-blue-50 text-gray-400 hover:text-blue-600 rounded-xl transition-all active:scale-95"
+                                >
+                                    {copied ? <Check className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Form */}
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Your Wallet Number</label>
+                                <input
+                                    type="text"
+                                    value={form.data.sender_number}
+                                    onChange={(e) => form.setData('sender_number', e.target.value)}
+                                    className="w-full px-4 py-3.5 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-white shadow-sm text-slate-900 font-medium placeholder:text-gray-300"
+                                    placeholder="01XXXXXXXXX"
+                                    required
+                                />
+                                {form.errors.sender_number && (
+                                    <p className="mt-1 text-xs text-red-500 ml-1">{form.errors.sender_number}</p>
+                                )}
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Transaction ID</label>
+                                <input
+                                    type="text"
+                                    value={form.data.mfs_transaction_id}
+                                    onChange={(e) => form.setData('mfs_transaction_id', e.target.value)}
+                                    className="w-full px-4 py-3.5 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-white shadow-sm text-slate-900 font-medium placeholder:text-gray-300 uppercase"
+                                    placeholder="TrxID"
+                                    required
+                                />
+                                {form.errors.mfs_transaction_id && (
+                                    <p className="mt-1 text-xs text-red-500 ml-1">{form.errors.mfs_transaction_id}</p>
+                                )}
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={form.processing}
+                                className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl shadow-xl shadow-slate-900/20 hover:bg-slate-800 transition-all transform active:scale-[0.98] mt-6 disabled:opacity-70 disabled:cursor-not-allowed"
+                            >
+                                {form.processing ? 'Verifying...' : 'Confirm Payment'}
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
