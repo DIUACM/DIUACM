@@ -34,6 +34,16 @@ class InternalContest extends Model implements HasMedia
         'lab_teacher_names',
         'tshirt_sizes',
         'status',
+        'sslcommerz_enabled',
+        'bkash_enabled',
+        'bkash_receiver_number',
+        'bkash_instruction',
+        'rocket_enabled',
+        'rocket_receiver_number',
+        'rocket_instruction',
+        'nagad_enabled',
+        'nagad_receiver_number',
+        'nagad_instruction',
     ];
 
     protected function casts(): array
@@ -49,6 +59,10 @@ class InternalContest extends Model implements HasMedia
             'sections' => 'array',
             'lab_teacher_names' => 'array',
             'tshirt_sizes' => 'array',
+            'sslcommerz_enabled' => 'boolean',
+            'bkash_enabled' => 'boolean',
+            'rocket_enabled' => 'boolean',
+            'nagad_enabled' => 'boolean',
         ];
     }
 

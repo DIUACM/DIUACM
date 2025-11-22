@@ -8,6 +8,7 @@ use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
@@ -264,6 +265,127 @@ class InternalContestForm
                                             ->helperText('Leave empty to use default sizes: XS, S, M, L, XL, XXL, XXXL')
                                             ->defaultItems(0),
                                     ])
+                                    ->collapsible()
+                                    ->collapsed(),
+                            ]),
+
+                        Tabs\Tab::make('Payment Configuration')
+                            ->icon('heroicon-o-credit-card')
+                            ->schema([
+                                Section::make('SSLCommerz Gateway')
+                                    ->description('Enable or disable SSLCommerz payment gateway')
+                                    ->schema([
+                                        Toggle::make('sslcommerz_enabled')
+                                            ->label('Enable SSLCommerz')
+                                            ->default(false)
+                                            ->helperText('Allow participants to pay through SSLCommerz gateway'),
+                                    ]),
+
+                                Section::make('bKash Payment')
+                                    ->description('Configure bKash mobile financial service payment')
+                                    ->schema([
+                                        Toggle::make('bkash_enabled')
+                                            ->label('Enable bKash')
+                                            ->default(false)
+                                            ->helperText('Allow participants to pay through bKash'),
+                                        TextInput::make('bkash_receiver_number')
+                                            ->label('Receiver Number')
+                                            ->tel()
+                                            ->placeholder('01XXXXXXXXX')
+                                            ->maxLength(11)
+                                            ->helperText('bKash number where payments will be received'),
+                                        RichEditor::make('bkash_instruction')
+                                            ->label('Payment Instructions')
+                                            ->toolbarButtons([
+                                                'bold',
+                                                'italic',
+                                                'underline',
+                                                'strike',
+                                                'link',
+                                                'bulletList',
+                                                'orderedList',
+                                                'h2',
+                                                'h3',
+                                                'blockquote',
+                                                'codeBlock',
+                                            ])
+                                            ->placeholder('E.g., Send money to 01XXXXXXXXX and use your Student ID as reference')
+                                            ->helperText('Instructions shown to participants during payment')
+                                            ->columnSpanFull(),
+                                    ])
+                                    ->columns(2)
+                                    ->collapsible()
+                                    ->collapsed(),
+
+                                Section::make('Rocket Payment')
+                                    ->description('Configure Rocket mobile financial service payment')
+                                    ->schema([
+                                        Toggle::make('rocket_enabled')
+                                            ->label('Enable Rocket')
+                                            ->default(false)
+                                            ->helperText('Allow participants to pay through Rocket'),
+                                        TextInput::make('rocket_receiver_number')
+                                            ->label('Receiver Number')
+                                            ->tel()
+                                            ->placeholder('01XXXXXXXXX')
+                                            ->maxLength(11)
+                                            ->helperText('Rocket number where payments will be received'),
+                                        RichEditor::make('rocket_instruction')
+                                            ->label('Payment Instructions')
+                                            ->toolbarButtons([
+                                                'bold',
+                                                'italic',
+                                                'underline',
+                                                'strike',
+                                                'link',
+                                                'bulletList',
+                                                'orderedList',
+                                                'h2',
+                                                'h3',
+                                                'blockquote',
+                                                'codeBlock',
+                                            ])
+                                            ->placeholder('E.g., Send money to 01XXXXXXXXX and use your Student ID as reference')
+                                            ->helperText('Instructions shown to participants during payment')
+                                            ->columnSpanFull(),
+                                    ])
+                                    ->columns(2)
+                                    ->collapsible()
+                                    ->collapsed(),
+
+                                Section::make('Nagad Payment')
+                                    ->description('Configure Nagad mobile financial service payment')
+                                    ->schema([
+                                        Toggle::make('nagad_enabled')
+                                            ->label('Enable Nagad')
+                                            ->default(false)
+                                            ->helperText('Allow participants to pay through Nagad'),
+                                        TextInput::make('nagad_receiver_number')
+                                            ->label('Receiver Number')
+                                            ->tel()
+                                            ->placeholder('01XXXXXXXXX')
+                                            ->maxLength(11)
+                                            ->helperText('Nagad number where payments will be received'),
+                                        RichEditor::make('nagad_instruction')
+                                            ->label('Payment Instructions')
+                                            ->toolbarButtons([
+                                                'bold',
+                                                'italic',
+                                                'underline',
+                                                'strike',
+                                                'link',
+                                                'bulletList',
+                                                'orderedList',
+                                                'h2',
+                                                'h3',
+                                                'blockquote',
+                                                'codeBlock',
+                                            ])
+                                            ->placeholder('E.g., Send money to 01XXXXXXXXX and use your Student ID as reference')
+                                            ->helperText('Instructions shown to participants during payment')
+                                            ->columnSpanFull(),
+                                    ])
+                                    ->columns(2)
                                     ->collapsible()
                                     ->collapsed(),
                             ]),

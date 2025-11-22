@@ -30,6 +30,19 @@ return new class extends Migration
             $table->json('lab_teacher_names')->nullable();
             $table->json('tshirt_sizes')->nullable();
             $table->string('status')->default(VisibilityStatus::DRAFT);
+
+            // Payment Configuration
+            $table->boolean('sslcommerz_enabled')->default(false);
+            $table->boolean('bkash_enabled')->default(false);
+            $table->string('bkash_receiver_number')->nullable();
+            $table->text('bkash_instruction')->nullable();
+            $table->boolean('rocket_enabled')->default(false);
+            $table->string('rocket_receiver_number')->nullable();
+            $table->text('rocket_instruction')->nullable();
+            $table->boolean('nagad_enabled')->default(false);
+            $table->string('nagad_receiver_number')->nullable();
+            $table->text('nagad_instruction')->nullable();
+
             $table->timestamps();
         });
     }
