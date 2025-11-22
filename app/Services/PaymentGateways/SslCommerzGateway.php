@@ -3,21 +3,16 @@
 namespace App\Services\PaymentGateways;
 
 use App\Contracts\PaymentGatewayInterface;
-use App\Enums\PaymentStatus;
 use App\Library\SslCommerz\SslCommerzNotification;
-use App\Models\Payment;
 use Illuminate\Support\Facades\Log;
 
 class SslCommerzGateway implements PaymentGatewayInterface
 {
     protected SslCommerzNotification $sslCommerz;
 
-    protected array $config;
-
     public function __construct()
     {
         $this->sslCommerz = new SslCommerzNotification;
-        $this->config = config('sslcommerz');
     }
 
     public function getGatewayName(): string
@@ -75,75 +70,6 @@ class SslCommerzGateway implements PaymentGatewayInterface
             return [
                 'success' => false,
                 'message' => 'Payment gateway error: '.$e->getMessage(),
-            ];
-        }
-    }
-
-    public function verifyPayment(string $transactionId): array
-    {
-        try {
-            // In SSL Commerz, verification is done through the callback data
-            // This method can be used to query transaction status
-            $validationUrl = $this->config['apiDomain'].$this->config['apiUrl']['transaction_status'];
-
-            $storeId = $this->config['apiCredentials']['store_id'];
-            $storePassword = $this->config['apiCredentials']['store_password'];
-
-            $requestedUrl = $validationUrl.'?tran_id='.urlencode($transactionId).
-                '&store_id='.urlencode($storeId).
-                '&store_passwd='.urlencode($storePassword).'&format=json';
-
-            $handle = curl_init();
-            curl_setopt($handle, CURLOPT_URL, $requestedUrl);
-            curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
-
-            if ($this->config['connect_from_localhost']) {
-                curl_setopt($handle, CURLOPT_SSL_VERIFYHOST, 0);
-                curl_setopt($handle, CURLOPT_SSL_VERIFYPEER, 0);
-            } else {
-                curl_setopt($handle, CURLOPT_SSL_VERIFYHOST, 2);
-                curl_setopt($handle, CURLOPT_SSL_VERIFYPEER, 2);
-            }
-
-            $result = curl_exec($handle);
-            $code = curl_getinfo($handle, CURLINFO_HTTP_CODE);
-            curl_close($handle);
-
-            if ($code == 200) {
-                $resultData = json_decode($result, true);
-
-                if (isset($resultData['status'])) {
-                    $status = strtoupper($resultData['status']);
-
-                    if (in_array($status, ['VALID', 'VALIDATED'])) {
-                        return [
-                            'success' => true,
-                            'status' => 'Completed',
-                            'transaction_id' => $resultData['tran_id'] ?? $transactionId,
-                            'bank_transaction_id' => $resultData['bank_tran_id'] ?? null,
-                            'response' => $resultData,
-                        ];
-                    }
-
-                    return [
-                        'success' => false,
-                        'status' => $status,
-                        'message' => 'Payment verification failed with status: '.$status,
-                        'response' => $resultData,
-                    ];
-                }
-            }
-
-            return [
-                'success' => false,
-                'message' => 'Failed to verify payment',
-            ];
-        } catch (\Exception $e) {
-            Log::error('SSL Commerz payment verification error: '.$e->getMessage());
-
-            return [
-                'success' => false,
-                'message' => 'Verification error: '.$e->getMessage(),
             ];
         }
     }
@@ -227,67 +153,6 @@ class SslCommerzGateway implements PaymentGatewayInterface
                 'success' => false,
                 'message' => 'Callback processing error: '.$e->getMessage(),
             ];
-        }
-    }
-
-    public function refundPayment(Payment $payment, ?float $amount = null): array
-    {
-        Log::error('Refund function called for SSL Commerz');
-
-        return [
-            'success' => false,
-            'message' => 'Refund error: SSL Commerz refund not implemented',
-        ];
-    }
-
-    public function getPaymentStatus(string $transactionId): string
-    {
-        try {
-            $validationUrl = $this->config['apiDomain'].$this->config['apiUrl']['transaction_status'];
-
-            $storeId = $this->config['apiCredentials']['store_id'];
-            $storePassword = $this->config['apiCredentials']['store_password'];
-
-            $requestedUrl = $validationUrl.'?tran_id='.urlencode($transactionId).
-                '&store_id='.urlencode($storeId).
-                '&store_passwd='.urlencode($storePassword).'&format=json';
-
-            $handle = curl_init();
-            curl_setopt($handle, CURLOPT_URL, $requestedUrl);
-            curl_setopt($handle, CURLOPT_RETURNTRANSFER, true);
-
-            if ($this->config['connect_from_localhost']) {
-                curl_setopt($handle, CURLOPT_SSL_VERIFYHOST, 0);
-                curl_setopt($handle, CURLOPT_SSL_VERIFYPEER, 0);
-            } else {
-                curl_setopt($handle, CURLOPT_SSL_VERIFYHOST, 2);
-                curl_setopt($handle, CURLOPT_SSL_VERIFYPEER, 2);
-            }
-
-            $result = curl_exec($handle);
-            $code = curl_getinfo($handle, CURLINFO_HTTP_CODE);
-            curl_close($handle);
-
-            if ($code == 200) {
-                $resultData = json_decode($result, true);
-
-                if (isset($resultData['status'])) {
-                    $status = strtoupper($resultData['status']);
-
-                    return match ($status) {
-                        'VALID', 'VALIDATED' => PaymentStatus::PAID->value,
-                        'FAILED' => PaymentStatus::FAILED->value,
-                        'CANCELLED' => PaymentStatus::CANCELED->value,
-                        default => PaymentStatus::PENDING->value,
-                    };
-                }
-            }
-
-            return PaymentStatus::PENDING->value;
-        } catch (\Exception $e) {
-            Log::error('SSL Commerz status check error: '.$e->getMessage());
-
-            return PaymentStatus::PENDING->value;
         }
     }
 }

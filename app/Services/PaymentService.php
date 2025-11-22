@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Contracts\Payable;
 use App\Contracts\PaymentGatewayInterface;
-use App\Enums\PaymentStatus;
 use App\Models\Payment;
 use App\Services\PaymentGateways\SslCommerzGateway;
 
@@ -92,38 +91,6 @@ class PaymentService
     }
 
     /**
-     * Verify and complete a payment
-     */
-    public function verifyPayment(Payment $payment): array
-    {
-        $gatewayInstance = $this->gateway($payment->gateway);
-        $result = $gatewayInstance->verifyPayment($payment->gateway_transaction_id);
-        
-        if ($result['success'] && $result['status'] === 'Completed') {
-            $payment->payable->markPaymentAsSuccessful($payment, [
-                'gateway_transaction_id' => $result['transaction_id'] ?? $payment->gateway_transaction_id,
-                'verification_response' => $result['response'] ?? null,
-            ]);
-
-            return [
-                'success' => true,
-                'payment' => $payment->fresh(),
-                'message' => 'Payment verified successfully',
-            ];
-        }
-
-        $payment->payable->markPaymentAsFailed($payment, [
-            'verification_response' => $result['response'] ?? null,
-        ]);
-
-        return [
-            'success' => false,
-            'payment' => $payment->fresh(),
-            'message' => $result['message'] ?? 'Payment verification failed',
-        ];
-    }
-
-    /**
      * Handle payment callback
      */
     public function handleCallback(string $gateway, array $data): array
@@ -131,53 +98,6 @@ class PaymentService
         $gatewayInstance = $this->gateway($gateway);
 
         return $gatewayInstance->handleCallback($data);
-    }
-
-    /**
-     * Refund a payment
-     */
-    public function refundPayment(Payment $payment, ?float $amount = null): array
-    {
-        if ($payment->status !== PaymentStatus::PAID) {
-            return [
-                'success' => false,
-                'message' => 'Only successful payments can be refunded',
-            ];
-        }
-
-        $gatewayInstance = $this->gateway($payment->gateway);
-        $result = $gatewayInstance->refundPayment($payment, $amount);
-
-        if ($result['success']) {
-            $payment->update([
-                'status' => PaymentStatus::REFUNDED,
-                'gateway_response' => array_merge($payment->gateway_response ?? [], [
-                    'refund_response' => $result['response'] ?? null,
-                ]),
-            ]);
-
-            return [
-                'success' => true,
-                'payment' => $payment->fresh(),
-                'message' => 'Payment refunded successfully',
-            ];
-        }
-
-        return [
-            'success' => false,
-            'payment' => $payment,
-            'message' => $result['message'] ?? 'Refund failed',
-        ];
-    }
-
-    /**
-     * Check payment status
-     */
-    public function checkPaymentStatus(Payment $payment): string
-    {
-        $gatewayInstance = $this->gateway($payment->gateway);
-
-        return $gatewayInstance->getPaymentStatus($payment->gateway_transaction_id);
     }
 
     /**
