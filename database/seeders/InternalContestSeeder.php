@@ -82,6 +82,7 @@ class InternalContestSeeder extends Seeder
                 ['initial' => 'FTJ', 'full_name' => 'Fatema Tuz Johora'],
                 ['initial' => 'AKM', 'full_name' => 'Abdul Karim Miah'],
             ],
+            'tshirt_sizes' => ['S', 'M', 'L', 'XL', 'XXL'],
             'status' => 'published',
         ]);
         $paidEvents->push($event1);
@@ -164,6 +165,7 @@ class InternalContestSeeder extends Seeder
                 ['initial' => 'TNR', 'full_name' => 'Tanvir Nayem Rahman'],
                 ['initial' => 'SJA', 'full_name' => 'Sadia Jahan Ahmed'],
             ],
+            'tshirt_sizes' => ['S', 'M', 'L', 'XL', 'XXL'],
             'status' => 'published',
         ]);
         $paidEvents->push($event2);
