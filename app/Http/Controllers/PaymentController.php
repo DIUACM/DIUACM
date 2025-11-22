@@ -22,16 +22,13 @@ class PaymentController extends Controller
      */
     public function showGatewaySelection(InternalContestRegistration $registration)
     {
-        // Authorization check: Ensure user owns this registration
-        if (auth()->check() && $registration->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access to this registration');
-        }
+        $this->authorizeRegistrationOwnership($registration);
 
-        // Check if can initiate new payment
         $paymentCheck = $registration->canInitiateNewPayment();
 
         if (! $paymentCheck['can_pay']) {
-            return redirect()->route('internal-contests.my-registration', $registration->internalContest)
+            return redirect()
+                ->route('internal-contests.my-registration', $registration->internalContest)
                 ->with('error', $paymentCheck['message']);
         }
 
@@ -55,10 +52,7 @@ class PaymentController extends Controller
             'gateway' => 'required|string|in:sslcommerz',
         ]);
 
-        // Authorization check BEFORE transaction: Ensure user owns this registration
-        if (auth()->check() && $registration->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized access to this registration');
-        }
+        $this->authorizeRegistrationOwnership($registration);
 
         try {
             // Use database transaction with locking to prevent race conditions
@@ -129,7 +123,6 @@ class PaymentController extends Controller
     public function handleCallback(Request $request, string $gateway)
     {
         try {
-            // Get callback data from request
             $callbackData = $request->all();
 
             Log::info('Payment callback received', [
@@ -137,95 +130,9 @@ class PaymentController extends Controller
                 'data' => $callbackData,
             ]);
 
-            // Handle the callback through payment service
             $result = $this->paymentService->handleCallback($gateway, $callbackData);
 
-            if (! isset($result['transaction_id'])) {
-                Log::error('Payment callback missing transaction_id', ['result' => $result]);
-
-                return $this->handleFailedCallback('Invalid callback response');
-            }
-
-            // Use database transaction with row locking to prevent race conditions
-            return DB::transaction(function () use ($result, $callbackData) {
-                // Find and lock the payment by transaction ID
-                $payment = Payment::where('transaction_id', $result['transaction_id'])
-                    ->lockForUpdate()
-                    ->first();
-
-                if (! $payment) {
-                    Log::error('Payment not found for callback', ['transaction_id' => $result['transaction_id']]);
-
-                    return $this->handleFailedCallback('Payment not found', null);
-                }
-
-                // Verify gateway transaction ID match
-                if (! isset($result['gateway_transaction_id']) || $payment->gateway_transaction_id !== $result['gateway_transaction_id']) {
-                    Log::error('Gateway transaction ID mismatch', [
-                        'expected' => $payment->gateway_transaction_id,
-                        'received' => $result['gateway_transaction_id'] ?? null,
-                    ]);
-
-                    return $this->handleFailedCallback('Gateway transaction ID mismatch', $payment);
-                }
-
-                // Prevent processing already completed payments (idempotency)
-                if (in_array($payment->status->value, ['paid', 'refunded'])) {
-                    Log::info('Payment already processed, returning success', ['payment_id' => $payment->id]);
-
-                    return $this->handleSuccessfulCallback($payment);
-                }
-
-                // Prevent processing payments under manual review
-                if ($payment->status->value === 'under_manual_review') {
-                    Log::info('Payment under manual review, ignoring callback', ['payment_id' => $payment->id]);
-
-                    return $this->handleManualReviewCallback($payment);
-                }
-
-                if ($result['success']) {
-                    // Mark payment as successful and call model hook
-                    $payment->payable->markPaymentAsSuccessful($payment, [
-                        'callback_response' => $result['response'] ?? $callbackData,
-                    ]);
-
-                    // Call the model-specific success handler
-                    $payment->payable->onPaymentSuccessful($payment);
-
-                    Log::info('Payment successful', ['payment_id' => $payment->id]);
-
-                    return $this->handleSuccessfulCallback($payment);
-                } else {
-                    // Check if payment was cancelled vs failed
-                    $status = $result['status'] ?? 'Failed';
-
-                    if (strtolower($status) === 'cancelled') {
-                        // Mark payment as cancelled and call model hook
-                        $payment->payable->markPaymentAsCancelled($payment, [
-                            'callback_response' => $result['response'] ?? $callbackData,
-                        ]);
-
-                        // Call the model-specific cancellation handler
-                        $payment->payable->onPaymentCancelled($payment);
-
-                        Log::info('Payment cancelled', ['payment_id' => $payment->id, 'result' => $result]);
-
-                        return $this->handleCancelledCallback($result['message'] ?? 'Payment was cancelled', $payment);
-                    } else {
-                        // Mark payment as failed and call model hook
-                        $payment->payable->markPaymentAsFailed($payment, [
-                            'callback_response' => $result['response'] ?? $callbackData,
-                        ]);
-
-                        // Call the model-specific failure handler
-                        $payment->payable->onPaymentFailed($payment);
-
-                        Log::warning('Payment failed', ['payment_id' => $payment->id, 'result' => $result]);
-
-                        return $this->handleFailedCallback($result['message'] ?? 'Payment failed', $payment);
-                    }
-                }
-            });
+            return $this->processPaymentCallback($result, $callbackData);
         } catch (\Exception $e) {
             Log::error('Payment callback error: '.$e->getMessage(), [
                 'gateway' => $gateway,
@@ -241,17 +148,8 @@ class PaymentController extends Controller
      */
     protected function handleSuccessfulCallback(Payment $payment)
     {
-        $payable = $payment->payable;
-
-        // Determine redirect URL based on payable type
-        $redirectUrl = match (true) {
-            $payable instanceof InternalContestRegistration => route('internal-contests.my-registration', [
-                'internalContest' => $payable->internalContest->slug,
-            ]),
-            default => route('home'),
-        };
-
-        return redirect($redirectUrl)->with('success', 'Payment completed successfully!');
+        return redirect($this->getRedirectUrl($payment))
+            ->with('success', 'Payment completed successfully!');
     }
 
     /**
@@ -259,19 +157,8 @@ class PaymentController extends Controller
      */
     protected function handleFailedCallback(string $message, ?Payment $payment = null)
     {
-        $redirectUrl = route('home');
-
-        if ($payment) {
-            $payable = $payment->payable;
-            $redirectUrl = match (true) {
-                $payable instanceof InternalContestRegistration => route('internal-contests.my-registration', [
-                    'internalContest' => $payable->internalContest->slug,
-                ]),
-                default => route('home'),
-            };
-        }
-
-        return redirect($redirectUrl)->with('error', $message);
+        return redirect($this->getRedirectUrl($payment))
+            ->with('error', $message);
     }
 
     /**
@@ -279,19 +166,8 @@ class PaymentController extends Controller
      */
     protected function handleCancelledCallback(string $message, ?Payment $payment = null)
     {
-        $redirectUrl = route('home');
-
-        if ($payment) {
-            $payable = $payment->payable;
-            $redirectUrl = match (true) {
-                $payable instanceof InternalContestRegistration => route('internal-contests.my-registration', [
-                    'internalContest' => $payable->internalContest->slug,
-                ]),
-                default => route('home'),
-            };
-        }
-
-        return redirect($redirectUrl)->with('info', $message);
+        return redirect($this->getRedirectUrl($payment))
+            ->with('info', $message);
     }
 
     /**
@@ -299,17 +175,156 @@ class PaymentController extends Controller
      */
     protected function handleManualReviewCallback(Payment $payment)
     {
+        return redirect($this->getRedirectUrl($payment))
+            ->with('info', 'Your payment is currently under manual review by our team. Please wait for verification.');
+    }
+
+    /**
+     * Authorize that the user owns the registration
+     */
+    protected function authorizeRegistrationOwnership(InternalContestRegistration $registration): void
+    {
+        if (auth()->check() && $registration->user_id !== auth()->id()) {
+            abort(403, 'Unauthorized access to this registration');
+        }
+    }
+
+    /**
+     * Get redirect URL based on payable type
+     */
+    protected function getRedirectUrl(?Payment $payment = null): string
+    {
+        if (! $payment || ! $payment->payable) {
+            return route('home');
+        }
+
         $payable = $payment->payable;
 
-        // Determine redirect URL based on payable type
-        $redirectUrl = match (true) {
+        return match (true) {
             $payable instanceof InternalContestRegistration => route('internal-contests.my-registration', [
                 'internalContest' => $payable->internalContest->slug,
             ]),
             default => route('home'),
         };
+    }
 
-        return redirect($redirectUrl)->with('info', 'Your payment is currently under manual review by our team. Please wait for verification.');
+    /**
+     * Process payment callback with validation and locking
+     */
+    protected function processPaymentCallback(array $result, array $callbackData)
+    {
+        if (! isset($result['transaction_id'])) {
+            Log::error('Payment callback missing transaction_id', ['result' => $result]);
+
+            return $this->handleFailedCallback('Invalid callback response');
+        }
+
+        return DB::transaction(function () use ($result, $callbackData) {
+            $payment = Payment::where('transaction_id', $result['transaction_id'])
+                ->lockForUpdate()
+                ->first();
+
+            if (! $payment) {
+                Log::error('Payment not found for callback', ['transaction_id' => $result['transaction_id']]);
+
+                return $this->handleFailedCallback('Payment not found', null);
+            }
+
+            if (! $this->validateGatewayTransactionId($payment, $result)) {
+                return $this->handleFailedCallback('Gateway transaction ID mismatch', $payment);
+            }
+
+            if ($this->isPaymentAlreadyProcessed($payment)) {
+                return $this->handleSuccessfulCallback($payment);
+            }
+
+            if ($this->isPaymentUnderReview($payment)) {
+                return $this->handleManualReviewCallback($payment);
+            }
+
+            return $this->executePaymentAction($payment, $result, $callbackData);
+        });
+    }
+
+    /**
+     * Validate gateway transaction ID matches
+     */
+    protected function validateGatewayTransactionId(Payment $payment, array $result): bool
+    {
+        if (! isset($result['gateway_transaction_id']) || $payment->gateway_transaction_id !== $result['gateway_transaction_id']) {
+            Log::error('Gateway transaction ID mismatch', [
+                'expected' => $payment->gateway_transaction_id,
+                'received' => $result['gateway_transaction_id'] ?? null,
+            ]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if payment is already processed
+     */
+    protected function isPaymentAlreadyProcessed(Payment $payment): bool
+    {
+        if (in_array($payment->status->value, ['paid', 'refunded'])) {
+            Log::info('Payment already processed, returning success', ['payment_id' => $payment->id]);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if payment is under manual review
+     */
+    protected function isPaymentUnderReview(Payment $payment): bool
+    {
+        if ($payment->status->value === 'under_manual_review') {
+            Log::info('Payment under manual review, ignoring callback', ['payment_id' => $payment->id]);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Execute payment action based on result
+     */
+    protected function executePaymentAction(Payment $payment, array $result, array $callbackData)
+    {
+        if ($result['success']) {
+            $payment->payable->markPaymentAsSuccessful($payment, [
+                'callback_response' => $result['response'] ?? $callbackData,
+            ]);
+            $payment->payable->onPaymentSuccessful($payment);
+            Log::info('Payment successful', ['payment_id' => $payment->id]);
+
+            return $this->handleSuccessfulCallback($payment);
+        }
+
+        $status = $result['status'] ?? 'Failed';
+
+        if (strtolower($status) === 'cancelled') {
+            $payment->payable->markPaymentAsCancelled($payment, [
+                'callback_response' => $result['response'] ?? $callbackData,
+            ]);
+            $payment->payable->onPaymentCancelled($payment);
+            Log::info('Payment cancelled', ['payment_id' => $payment->id]);
+
+            return $this->handleCancelledCallback($result['message'] ?? 'Payment was cancelled', $payment);
+        }
+
+        $payment->payable->markPaymentAsFailed($payment, [
+            'callback_response' => $result['response'] ?? $callbackData,
+        ]);
+        $payment->payable->onPaymentFailed($payment);
+        Log::info('Payment failed', ['payment_id' => $payment->id]);
+
+        return $this->handleFailedCallback($result['message'] ?? 'Payment failed', $payment);
     }
 
     /**
@@ -319,7 +334,6 @@ class PaymentController extends Controller
     public function handleIPN(Request $request, string $gateway)
     {
         try {
-            // Get IPN data from request
             $ipnData = $request->all();
 
             Log::info('Payment IPN received', [
@@ -327,7 +341,6 @@ class PaymentController extends Controller
                 'data' => $ipnData,
             ]);
 
-            // Handle the IPN through payment service
             $result = $this->paymentService->handleCallback($gateway, $ipnData);
 
             if (! isset($result['transaction_id'])) {
@@ -339,9 +352,7 @@ class PaymentController extends Controller
                 ], 400);
             }
 
-            // Use database transaction with row locking to prevent race conditions
             DB::transaction(function () use ($result, $ipnData) {
-                // Find and lock the payment by transaction ID
                 $payment = Payment::where('transaction_id', $result['transaction_id'])
                     ->lockForUpdate()
                     ->first();
@@ -352,74 +363,43 @@ class PaymentController extends Controller
                     return;
                 }
 
-                // Verify gateway transaction ID match
-                if (! isset($result['gateway_transaction_id']) || $payment->gateway_transaction_id !== $result['gateway_transaction_id']) {
-                    Log::error('Gateway transaction ID mismatch in IPN', [
-                        'expected' => $payment->gateway_transaction_id,
-                        'received' => $result['gateway_transaction_id'] ?? null,
-                    ]);
-
+                if (! $this->validateGatewayTransactionId($payment, $result)) {
                     return;
                 }
 
-                // Prevent processing already completed payments (idempotency)
-                if (in_array($payment->status->value, ['paid', 'refunded'])) {
-                    Log::info('Payment already processed in IPN, skipping', ['payment_id' => $payment->id]);
-
-                    return;
-                }
-
-                // Prevent processing payments under manual review
-                if ($payment->status->value === 'under_manual_review') {
-                    Log::info('Payment under manual review in IPN, skipping', ['payment_id' => $payment->id]);
-
+                if ($this->isPaymentAlreadyProcessed($payment) || $this->isPaymentUnderReview($payment)) {
                     return;
                 }
 
                 if ($result['success']) {
-                    // Mark payment as successful and call model hook
                     $payment->payable->markPaymentAsSuccessful($payment, [
                         'ipn_response' => $result['response'] ?? $ipnData,
                     ]);
-
-                    // Call the model-specific success handler
                     $payment->payable->onPaymentSuccessful($payment);
-
                     Log::info('Payment successful via IPN', ['payment_id' => $payment->id]);
                 } else {
-                    // Check if payment was cancelled vs failed
                     $status = $result['status'] ?? 'Failed';
 
                     if (strtolower($status) === 'cancelled') {
-                        // Mark payment as cancelled and call model hook
                         $payment->payable->markPaymentAsCancelled($payment, [
                             'ipn_response' => $result['response'] ?? $ipnData,
                         ]);
-
-                        // Call the model-specific cancellation handler
                         $payment->payable->onPaymentCancelled($payment);
-
                         Log::info('Payment cancelled via IPN', ['payment_id' => $payment->id]);
                     } else {
-                        // Mark payment as failed and call model hook
                         $payment->payable->markPaymentAsFailed($payment, [
                             'ipn_response' => $result['response'] ?? $ipnData,
                         ]);
-
-                        // Call the model-specific failure handler
                         $payment->payable->onPaymentFailed($payment);
-
-                        Log::warning('Payment failed via IPN', ['payment_id' => $payment->id]);
+                        Log::info('Payment failed via IPN', ['payment_id' => $payment->id]);
                     }
                 }
             });
 
-            // Return success response to payment gateway
             return response()->json([
                 'status' => 'success',
                 'message' => 'IPN processed successfully',
             ], 200);
-
         } catch (\Exception $e) {
             Log::error('Payment IPN error: '.$e->getMessage(), [
                 'gateway' => $gateway,

@@ -105,15 +105,6 @@ trait HasPayments
             ];
         }
 
-        // Check if has pending payment
-        if ($this->hasPendingPayment()) {
-            return [
-                'can_pay' => false,
-                'reason' => 'payment_pending',
-                'message' => 'A payment is currently being processed. Please wait a few minutes and refresh the page.',
-            ];
-        }
-
         // Check if payment is required (for models that have this method)
         if (method_exists($this, 'isFree') && $this->isFree()) {
             return [
