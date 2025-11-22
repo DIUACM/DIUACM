@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { ContestFormSelect } from '@/components/internal-contests/contest-form-select';
 import MainLayout from '@/layouts/main-layout';
 import type { InternalContestRegistrationView, SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/react';
@@ -103,17 +104,7 @@ export default function InternalContestRegisterPage({ contest }: Props) {
         post(storeRegistrationRoute.url(contest.slug));
     };
 
-    // Helper to safely get name from repeater items
-    const getItemName = (item: string | { name?: string; full_name?: string }) => {
-        if (typeof item === 'string') return item;
-        return item.name || item.full_name || '';
-    };
-
-    // Helper to safely get value from repeater items
-    const getItemValue = (item: string | { name?: string; full_name?: string }) => {
-        if (typeof item === 'string') return item;
-        return item.name || item.full_name || ''; // Use name/full_name as value if no specific code/id
-    };
+    const hasTshirtSizeOptions = Boolean(contest.form_settings.tshirt_sizes?.length);
 
     return (
         <MainLayout>
@@ -314,104 +305,44 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                             Academic Information
                                         </h3>
                                         <div className="grid gap-6 md:grid-cols-2">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="department">
-                                                    Department <span className="text-red-500">*</span>
-                                                </Label>
-                                                {contest.form_settings.departments && contest.form_settings.departments.length > 0 ? (
-                                                    <Select value={data.department} onValueChange={(val) => setData('department', val)} required>
-                                                        <SelectTrigger className={`h-11 ${errors.department ? 'border-red-500' : ''}`}>
-                                                            <SelectValue placeholder="Select Department" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {contest.form_settings.departments.map((dept, index: number) => {
-                                                                const value = getItemValue(dept);
-                                                                const label = getItemName(dept);
-                                                                return (
-                                                                    <SelectItem key={`${value}-${index}`} value={value}>
-                                                                        {label}
-                                                                    </SelectItem>
-                                                                );
-                                                            })}
-                                                        </SelectContent>
-                                                    </Select>
-                                                ) : (
-                                                    <Alert variant="destructive">
-                                                        <AlertCircle className="h-4 w-4" />
-                                                        <AlertTitle>Department Options Missing</AlertTitle>
-                                                        <AlertDescription>
-                                                            Department choices are not configured for this contest. Please contact the organizers.
-                                                        </AlertDescription>
-                                                    </Alert>
-                                                )}
-                                                {errors.department && <p className="text-sm text-red-500">{errors.department}</p>}
-                                            </div>
+                                            <ContestFormSelect
+                                                id="department"
+                                                label="Department"
+                                                value={data.department}
+                                                onChange={(val) => setData('department', val)}
+                                                placeholder="Select Department"
+                                                required
+                                                options={contest.form_settings.departments}
+                                                error={errors.department}
+                                                missingTitle="Department Options Missing"
+                                                missingDescription="Department choices are not configured for this contest. Please contact the organizers."
+                                            />
 
-                                            <div className="space-y-2">
-                                                <Label htmlFor="section">
-                                                    Section <span className="text-red-500">*</span>
-                                                </Label>
-                                                {contest.form_settings.sections && contest.form_settings.sections.length > 0 ? (
-                                                    <Select value={data.section} onValueChange={(val) => setData('section', val)} required>
-                                                        <SelectTrigger className={`h-11 ${errors.section ? 'border-red-500' : ''}`}>
-                                                            <SelectValue placeholder="Select Section" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {contest.form_settings.sections.map((sec, index: number) => {
-                                                                const value = getItemValue(sec);
-                                                                const label = getItemName(sec);
-                                                                return (
-                                                                    <SelectItem key={`${value}-${index}`} value={value}>
-                                                                        {label}
-                                                                    </SelectItem>
-                                                                );
-                                                            })}
-                                                        </SelectContent>
-                                                    </Select>
-                                                ) : (
-                                                    <Alert variant="destructive">
-                                                        <AlertCircle className="h-4 w-4" />
-                                                        <AlertTitle>Section Options Missing</AlertTitle>
-                                                        <AlertDescription>
-                                                            Section choices are not configured for this contest. Please contact the organizers.
-                                                        </AlertDescription>
-                                                    </Alert>
-                                                )}
-                                                {errors.section && <p className="text-sm text-red-500">{errors.section}</p>}
-                                            </div>
+                                            <ContestFormSelect
+                                                id="section"
+                                                label="Section"
+                                                value={data.section}
+                                                onChange={(val) => setData('section', val)}
+                                                placeholder="Select Section"
+                                                required
+                                                options={contest.form_settings.sections}
+                                                error={errors.section}
+                                                missingTitle="Section Options Missing"
+                                                missingDescription="Section choices are not configured for this contest. Please contact the organizers."
+                                            />
 
-                                            <div className="space-y-2">
-                                                <Label htmlFor="lab_teacher_name">
-                                                    Lab Teacher <span className="text-red-500">*</span>
-                                                </Label>
-                                                {contest.form_settings.lab_teacher_names && contest.form_settings.lab_teacher_names.length > 0 ? (
-                                                    <Select value={data.lab_teacher_name} onValueChange={(val) => setData('lab_teacher_name', val)} required>
-                                                        <SelectTrigger className={`h-11 ${errors.lab_teacher_name ? 'border-red-500' : ''}`}>
-                                                            <SelectValue placeholder="Select Lab Teacher" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {contest.form_settings.lab_teacher_names.map((teacher, index: number) => {
-                                                                const value = getItemValue(teacher);
-                                                                const label = getItemName(teacher);
-                                                                return (
-                                                                    <SelectItem key={`${value}-${index}`} value={value}>
-                                                                        {label}
-                                                                    </SelectItem>
-                                                                );
-                                                            })}
-                                                        </SelectContent>
-                                                    </Select>
-                                                ) : (
-                                                    <Alert variant="destructive">
-                                                        <AlertCircle className="h-4 w-4" />
-                                                        <AlertTitle>Lab Teacher Options Missing</AlertTitle>
-                                                        <AlertDescription>
-                                                            Lab teacher choices are not configured for this contest. Please contact the organizers.
-                                                        </AlertDescription>
-                                                    </Alert>
-                                                )}
-                                                {errors.lab_teacher_name && <p className="text-sm text-red-500">{errors.lab_teacher_name}</p>}
-                                            </div>
+                                            <ContestFormSelect
+                                                id="lab_teacher_name"
+                                                label="Lab Teacher"
+                                                value={data.lab_teacher_name}
+                                                onChange={(val) => setData('lab_teacher_name', val)}
+                                                placeholder="Select Lab Teacher"
+                                                required
+                                                options={contest.form_settings.lab_teacher_names}
+                                                error={errors.lab_teacher_name}
+                                                missingTitle="Lab Teacher Options Missing"
+                                                missingDescription="Lab teacher choices are not configured for this contest. Please contact the organizers."
+                                            />
                                         </div>
                                     </div>
 
@@ -421,54 +352,34 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                             Additional Details
                                         </h3>
                                         <div className="space-y-6">
-                                            {contest.form_settings.tshirt_sizes && contest.form_settings.tshirt_sizes.length > 0 ? (
-                                                <div className="rounded-lg border border-slate-200 p-5 dark:border-slate-700">
-                                                    <div className="grid gap-6 md:grid-cols-2">
-                                                        <div className="space-y-2">
-                                                            <Label htmlFor="tshirt_size">
-                                                                T-Shirt Size <span className="text-red-500">*</span>
-                                                            </Label>
-                                                            <Select
-                                                                value={data.tshirt_size}
-                                                                onValueChange={(val) => setData('tshirt_size', val)}
-                                                                required
-                                                            >
-                                                                <SelectTrigger className={`h-11 ${errors.tshirt_size ? 'border-red-500' : ''}`}>
-                                                                    <SelectValue placeholder="Select Size" />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    {contest.form_settings.tshirt_sizes.map((size) => (
-                                                                        <SelectItem key={size} value={size}>
-                                                                            {size}
-                                                                        </SelectItem>
-                                                                    ))}
-                                                                </SelectContent>
-                                                            </Select>
-                                                            {errors.tshirt_size && <p className="text-sm text-red-500">{errors.tshirt_size}</p>}
-                                                        </div>
-                                                        {contest.tshirt_size_guideline_url && (
-                                                            <div className="flex flex-col justify-center">
-                                                                <Label className="mb-2">Size Guide</Label>
-                                                                <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
-                                                                    <img
-                                                                        src={contest.tshirt_size_guideline_url}
-                                                                        alt="T-shirt Size Guide"
-                                                                        className="h-auto w-full max-w-xs object-contain"
-                                                                    />
-                                                                </div>
+                                            <div className="rounded-lg border border-slate-200 p-5 dark:border-slate-700">
+                                                <div className="grid gap-6 md:grid-cols-2">
+                                                    <ContestFormSelect
+                                                        id="tshirt_size"
+                                                        label="T-Shirt Size"
+                                                        value={data.tshirt_size}
+                                                        onChange={(val) => setData('tshirt_size', val)}
+                                                        placeholder="Select Size"
+                                                        required
+                                                        options={contest.form_settings.tshirt_sizes}
+                                                        error={errors.tshirt_size}
+                                                        missingTitle="Error"
+                                                        missingDescription="T-Shirt size options are not configured for this contest. Please contact the organizers."
+                                                    />
+                                                    {contest.tshirt_size_guideline_url && hasTshirtSizeOptions && (
+                                                        <div className="flex flex-col justify-center">
+                                                            <Label className="mb-2">Size Guide</Label>
+                                                            <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
+                                                                <img
+                                                                    src={contest.tshirt_size_guideline_url}
+                                                                    alt="T-shirt Size Guide"
+                                                                    className="h-auto w-full max-w-xs object-contain"
+                                                                />
                                                             </div>
-                                                        )}
-                                                    </div>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            ) : (
-                                                <Alert variant="destructive">
-                                                    <AlertCircle className="h-4 w-4" />
-                                                    <AlertTitle>Error</AlertTitle>
-                                                    <AlertDescription>
-                                                        T-Shirt size options are not configured for this contest. Please contact the organizers.
-                                                    </AlertDescription>
-                                                </Alert>
-                                            )}
+                                            </div>
 
                                             <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-5 dark:border-slate-700 dark:bg-slate-800/30">
                                                 <div className="flex items-center justify-between">
@@ -489,36 +400,18 @@ export default function InternalContestRegisterPage({ contest }: Props) {
 
                                                 {data.transport_service_required && (
                                                     <div className="mt-4 space-y-2 border-t border-slate-200 pt-4 dark:border-slate-700">
-                                                        <Label htmlFor="pickup_point">
-                                                            Pickup Point <span className="text-red-500">*</span>
-                                                        </Label>
-                                                        {contest.form_settings.pickup_points && contest.form_settings.pickup_points.length > 0 ? (
-                                                            <Select value={data.pickup_point} onValueChange={(val) => setData('pickup_point', val)}>
-                                                                <SelectTrigger className="h-11">
-                                                                    <SelectValue placeholder="Select Pickup Point" />
-                                                                </SelectTrigger>
-                                                                <SelectContent>
-                                                                    {contest.form_settings.pickup_points.map((point, index: number) => {
-                                                                        const value = getItemValue(point);
-                                                                        const label = getItemName(point);
-                                                                        return (
-                                                                            <SelectItem key={`${value}-${index}`} value={value}>
-                                                                                {label}
-                                                                            </SelectItem>
-                                                                        );
-                                                                    })}
-                                                                </SelectContent>
-                                                            </Select>
-                                                        ) : (
-                                                            <Alert variant="destructive">
-                                                                <AlertCircle className="h-4 w-4" />
-                                                                <AlertTitle>Pickup Points Missing</AlertTitle>
-                                                                <AlertDescription>
-                                                                    Pickup point choices are not configured for this contest. Please contact the organizers.
-                                                                </AlertDescription>
-                                                            </Alert>
-                                                        )}
-                                                        {errors.pickup_point && <p className="text-sm text-red-500">{errors.pickup_point}</p>}
+                                                        <ContestFormSelect
+                                                            id="pickup_point"
+                                                            label="Pickup Point"
+                                                            value={data.pickup_point}
+                                                            onChange={(val) => setData('pickup_point', val)}
+                                                            placeholder="Select Pickup Point"
+                                                            required
+                                                            options={contest.form_settings.pickup_points}
+                                                            error={errors.pickup_point}
+                                                            missingTitle="Pickup Points Missing"
+                                                            missingDescription="Pickup point choices are not configured for this contest. Please contact the organizers."
+                                                        />
                                                     </div>
                                                 )}
                                             </div>
