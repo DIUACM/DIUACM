@@ -443,9 +443,9 @@ export default function InternalContestRegisterPage({ contest }: Props) {
             <Head title={`Register - ${contest.title}`} />
 
             <section className="container mx-auto px-4 py-8">
-                <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
+                <div className="grid gap-6 lg:grid-cols-3">
                         {/* Main Content */}
-                        <div className="order-2 space-y-8 lg:order-1">
+                        <div className="order-2 space-y-8 lg:order-1 lg:col-span-2">
                             {/* Header */}
                             <div className="text-center lg:text-left">
                                 <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Contest Registration</h2>
