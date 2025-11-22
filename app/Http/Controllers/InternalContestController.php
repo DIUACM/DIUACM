@@ -103,7 +103,7 @@ class InternalContestController extends Controller
         $registration = $internalContest->registrations()->create([
             'user_id' => $request->user()->id,
             'name' => $validated['name'],
-            'email' => $validated['email'],
+            'email' => $request->user()->email,
             'student_id' => $validated['student_id'],
             'phone' => $validated['phone'],
             'department' => $validated['department'],
@@ -178,7 +178,7 @@ class InternalContestController extends Controller
     /**
      * Show the user's registration for the internal contest.
      */
-    public function myRegistration(Request $request, InternalContest $internalContest): Response
+    public function myRegistration(Request $request, InternalContest $internalContest)
     {
         $registration = $internalContest->registrations()
             ->where('user_id', $request->user()->id)
@@ -188,7 +188,12 @@ class InternalContestController extends Controller
                 },
                 'payments' => fn ($query) => $query->latest()->limit(5),
             ])
-            ->firstOrFail();
+            ->first();
+
+        if (! $registration) {
+            return redirect()->route('internal-contests.registration', $internalContest)
+                ->with('error', 'You have not registered for this contest yet.');
+        }
 
         return Inertia::render('internal-contests/my-registration', [
             'registration' => InternalContestMyRegistrationResource::make($registration)->resolve(),

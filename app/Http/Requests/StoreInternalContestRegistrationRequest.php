@@ -24,7 +24,6 @@ class StoreInternalContestRegistrationRequest extends FormRequest
         return [
             'student_id' => ['required', 'string', 'max:255'],
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255'],
             'phone' => ['required', 'string', 'max:255'],
             'department' => ['required', 'string', 'max:255'],
             'section' => ['required', 'string', 'max:255'],
@@ -46,8 +45,6 @@ class StoreInternalContestRegistrationRequest extends FormRequest
         return [
             'student_id.required' => 'Student ID is required.',
             'name.required' => 'Full name is required.',
-            'email.required' => 'Email address is required.',
-            'email.email' => 'Please provide a valid email address.',
             'phone.required' => 'Phone number is required.',
             'department.required' => 'Department is required.',
             'section.required' => 'Section is required.',
@@ -69,7 +66,6 @@ class StoreInternalContestRegistrationRequest extends FormRequest
         return [
             'student_id' => 'Student ID',
             'name' => 'Full Name',
-            'email' => 'Email Address',
             'phone' => 'Phone Number',
             'department' => 'Department',
             'section' => 'Section',

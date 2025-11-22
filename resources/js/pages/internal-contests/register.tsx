@@ -281,8 +281,9 @@ export default function InternalContestRegisterPage({ contest }: Props) {
                                                     value={data.email}
                                                     onChange={(e) => setData('email', e.target.value)}
                                                     placeholder="your.email@example.com"
-                                                    className="h-11"
+                                                    className="h-11 bg-slate-100 dark:bg-slate-800"
                                                     required
+                                                    readOnly
                                                 />
                                                 {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
                                             </div>
