@@ -24,6 +24,14 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
             <Head title={`${programmer.name} - Programmer Profile`} />
 
             <div className="container mx-auto px-4 py-8">
+                <div className="mb-6">
+                    <Button asChild variant="ghost" className="px-2">
+                        <Link href="/programmers">
+                            <ArrowLeft className="mr-1 h-4 w-4" /> Back to Programmers
+                        </Link>
+                    </Button>
+                </div>
+
                 <div className="mb-8">
                     <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
                         {/* Profile Picture */}
@@ -280,14 +288,6 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                         </div>
                     </div>
                 )}
-
-                <div className="mt-8">
-                    <Button asChild variant="ghost" className="px-2">
-                        <Link href="/programmers">
-                            <ArrowLeft className="mr-1 h-4 w-4" /> Back to Programmers
-                        </Link>
-                    </Button>
-                </div>
             </div>
         </MainLayout>
     );
