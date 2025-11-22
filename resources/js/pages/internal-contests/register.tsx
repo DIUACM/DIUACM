@@ -4,7 +4,6 @@ import {
 } from '@/actions/App/Http/Controllers/InternalContestController';
 import { ContestFormSelect } from '@/components/internal-contests/contest-form-select';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -368,66 +367,6 @@ function AdditionalDetailsFields({ data, setData, errors, formSettings, tshirtSi
     );
 }
 
-type ContestSidebarProps = {
-    contest: InternalContestRegistrationView;
-};
-
-function ContestSidebar({ contest }: ContestSidebarProps) {
-    return (
-        <div className="sticky top-8 space-y-6 self-start">
-            {contest.banner_image && (
-                <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm dark:border-slate-700">
-                    <img src={contest.banner_image} alt={contest.title} className="h-full w-full object-cover" />
-                </div>
-            )}
-
-            <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-                <h3 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Contest Details</h3>
-
-                <div className="space-y-4">
-                    <div className="flex items-start gap-3">
-                        <CalendarDays className="mt-0.5 h-5 w-5 text-blue-500" />
-                        <div>
-                            <p className="text-sm font-medium text-slate-900 dark:text-white">Registration Deadline</p>
-                            <p className="text-sm text-slate-600 dark:text-slate-400">
-                                {contest.registration_deadline
-                                    ? new Intl.DateTimeFormat('en-US', {
-                                          month: 'long',
-                                          day: 'numeric',
-                                          year: 'numeric',
-                                          hour: 'numeric',
-                                          minute: 'numeric',
-                                      }).format(new Date(contest.registration_deadline))
-                                    : 'Date TBA'}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-start gap-3">
-                        <span className="mt-0.5 flex h-5 w-5 items-center justify-center text-lg font-bold text-blue-500">৳</span>
-                        <div>
-                            <p className="text-sm font-medium text-slate-900 dark:text-white">Registration Fee</p>
-                            <p className="text-sm text-slate-600 dark:text-slate-400">
-                                {contest.registration_fee > 0 ? `৳${contest.registration_fee}` : 'Free'}
-                            </p>
-                        </div>
-                    </div>
-
-                    {contest.registration_limit && (
-                        <div className="flex items-start gap-3">
-                            <Users className="mt-0.5 h-5 w-5 text-blue-500" />
-                            <div>
-                                <p className="text-sm font-medium text-slate-900 dark:text-white">Registration Limit</p>
-                                <p className="text-sm text-slate-600 dark:text-slate-400">{contest.registration_limit} Participants</p>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-}
-
 export default function InternalContestRegisterPage({ contest }: Props) {
     const { auth } = usePage<SharedData>().props;
     const user = auth.user;
@@ -503,114 +442,153 @@ export default function InternalContestRegisterPage({ contest }: Props) {
         <MainLayout>
             <Head title={`Register - ${contest.title}`} />
 
-            <section className="container mx-auto px-4 py-8">
-                <div className="mb-6">
-                    <h1 className="mb-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">Contest Registration</h1>
-                    <p className="text-slate-600 dark:text-slate-400">{contest.title}</p>
-                </div>
-
-                <div className="grid gap-8 lg:grid-cols-3">
-                    <div className="lg:col-span-2">
-                        <ProgressSteps currentStep={step} />
-
-                        <Card className="border-slate-200 shadow-sm dark:border-slate-700">
-                            <form onSubmit={handleSubmit}>
-                                <CardHeader className="border-b border-slate-200 dark:border-slate-700">
-                                    <CardTitle className="text-xl">{step === 1 ? 'Verify Student ID' : 'Complete Your Registration'}</CardTitle>
-                                    <CardDescription>
-                                        {step === 1
-                                            ? 'Enter your student ID to verify your eligibility.'
-                                            : 'Fill in all required fields to complete your registration.'}
-                                    </CardDescription>
-                                </CardHeader>
-
-                                <CardContent className="space-y-6 p-6">
-                                    {step === 1 && (
-                                        <StudentIdStep
-                                            data={data}
-                                            setData={setData}
-                                            errors={errors}
-                                            clearErrors={clearErrors}
-                                            isValidating={isValidatingId}
-                                            validationResult={idValidationResult}
-                                            setValidationResult={setIdValidationResult}
-                                            studentIdGuide={contest.form_settings.student_id_rules_guide}
-                                        />
-                                    )}
-
-                                    {step === 2 && (
-                                        <div className="space-y-6">
-                                            <PersonalInfoFields data={data} setData={setData} errors={errors} />
-                                            <AcademicInfoFields data={data} setData={setData} errors={errors} formSettings={contest.form_settings} />
-                                            <AdditionalDetailsFields
-                                                data={data}
-                                                setData={setData}
-                                                errors={errors}
-                                                formSettings={contest.form_settings}
-                                                tshirtSizeGuidelineUrl={contest.tshirt_size_guideline_url}
-                                            />
-                                        </div>
-                                    )}
-                                </CardContent>
-
-                                <CardFooter className="border-t border-slate-200 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-800/30">
-                                    <div className="flex w-full items-center justify-between">
-                                        {step > 1 ? (
-                                            <Button type="button" variant="outline" onClick={handlePrevStep} className="gap-2">
-                                                <ArrowLeft className="h-4 w-4" />
-                                                Previous
-                                            </Button>
-                                        ) : (
-                                            <div />
-                                        )}
-
-                                        {step < 2 ? (
-                                            <Button
-                                                type="button"
-                                                onClick={handleNextStep}
-                                                disabled={isValidatingId}
-                                                className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 font-medium text-white transition-all hover:from-blue-700 hover:to-cyan-700 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
-                                            >
-                                                {isValidatingId ? (
-                                                    <>
-                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                        Validating...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        Next
-                                                        <ArrowRight className="h-4 w-4" />
-                                                    </>
-                                                )}
-                                            </Button>
-                                        ) : (
-                                            <Button
-                                                type="submit"
-                                                disabled={processing}
-                                                className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 font-medium text-white transition-all hover:from-blue-700 hover:to-cyan-700 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
-                                            >
-                                                {processing ? (
-                                                    <>
-                                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                                        Submitting...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <CheckCircle2 className="h-4 w-4" />
-                                                        Complete Registration
-                                                    </>
-                                                )}
-                                            </Button>
-                                        )}
-                                    </div>
-                                </CardFooter>
-                            </form>
-                        </Card>
+            <div className="flex min-h-screen items-center justify-center px-4 py-12">
+                <div className="w-full max-w-4xl space-y-8">
+                    {/* Header */}
+                    <div className="text-center">
+                        <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Contest Registration</h2>
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{contest.title}</p>
                     </div>
 
-                    <ContestSidebar contest={contest} />
+                    {/* Progress Steps */}
+                    <ProgressSteps currentStep={step} />
+
+                    {/* Contest Info Banner */}
+                    {contest.banner_image && (
+                        <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm dark:border-slate-700">
+                            <img src={contest.banner_image} alt={contest.title} className="h-48 w-full object-cover" />
+                        </div>
+                    )}
+
+                    {/* Contest Details */}
+                    <div className="grid gap-4 sm:grid-cols-3">
+                        <div className="rounded-xl border border-slate-200 bg-white/80 p-4 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/80">
+                            <div className="flex items-center gap-3">
+                                <CalendarDays className="h-5 w-5 text-blue-500" />
+                                <div>
+                                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Deadline</p>
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                        {contest.registration_deadline
+                                            ? new Intl.DateTimeFormat('en-US', {
+                                                  month: 'short',
+                                                  day: 'numeric',
+                                                  year: 'numeric',
+                                              }).format(new Date(contest.registration_deadline))
+                                            : 'TBA'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="rounded-xl border border-slate-200 bg-white/80 p-4 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/80">
+                            <div className="flex items-center gap-3">
+                                <span className="flex h-5 w-5 items-center justify-center text-lg font-bold text-blue-500">৳</span>
+                                <div>
+                                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Fee</p>
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                        {contest.registration_fee > 0 ? `৳${contest.registration_fee}` : 'Free'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {contest.registration_limit && (
+                            <div className="rounded-xl border border-slate-200 bg-white/80 p-4 backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/80">
+                                <div className="flex items-center gap-3">
+                                    <Users className="h-5 w-5 text-blue-500" />
+                                    <div>
+                                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Limit</p>
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-white">{contest.registration_limit} Participants</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Registration Form */}
+                    <div className="rounded-2xl border border-slate-200 bg-white/80 p-8 shadow-xl backdrop-blur-sm dark:border-slate-700 dark:bg-slate-800/80">
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            {step === 1 && (
+                                <StudentIdStep
+                                    data={data}
+                                    setData={setData}
+                                    errors={errors}
+                                    clearErrors={clearErrors}
+                                    isValidating={isValidatingId}
+                                    validationResult={idValidationResult}
+                                    setValidationResult={setIdValidationResult}
+                                    studentIdGuide={contest.form_settings.student_id_rules_guide}
+                                />
+                            )}
+
+                            {step === 2 && (
+                                <div className="space-y-6">
+                                    <PersonalInfoFields data={data} setData={setData} errors={errors} />
+                                    <AcademicInfoFields data={data} setData={setData} errors={errors} formSettings={contest.form_settings} />
+                                    <AdditionalDetailsFields
+                                        data={data}
+                                        setData={setData}
+                                        errors={errors}
+                                        formSettings={contest.form_settings}
+                                        tshirtSizeGuidelineUrl={contest.tshirt_size_guideline_url}
+                                    />
+                                </div>
+                            )}
+
+                            {/* Form Actions */}
+                            <div className="flex items-center justify-between border-t border-slate-200 pt-6 dark:border-slate-700">
+                                {step > 1 ? (
+                                    <Button type="button" variant="outline" onClick={handlePrevStep} className="gap-2">
+                                        <ArrowLeft className="h-4 w-4" />
+                                        Previous
+                                    </Button>
+                                ) : (
+                                    <div />
+                                )}
+
+                                {step < 2 ? (
+                                    <Button
+                                        type="button"
+                                        onClick={handleNextStep}
+                                        disabled={isValidatingId}
+                                        className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-3 font-medium text-white transition-all hover:from-blue-700 hover:to-cyan-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
+                                    >
+                                        {isValidatingId ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                Validating...
+                                            </>
+                                        ) : (
+                                            <>
+                                                Next
+                                                <ArrowRight className="h-4 w-4" />
+                                            </>
+                                        )}
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        type="submit"
+                                        disabled={processing}
+                                        className="gap-2 bg-gradient-to-r from-blue-600 to-cyan-600 px-6 py-3 font-medium text-white transition-all hover:from-blue-700 hover:to-cyan-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
+                                    >
+                                        {processing ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                Submitting...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle2 className="h-4 w-4" />
+                                                Complete Registration
+                                            </>
+                                        )}
+                                    </Button>
+                                )}
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </section>
+            </div>
         </MainLayout>
     );
 }
