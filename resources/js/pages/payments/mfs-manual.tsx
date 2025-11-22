@@ -31,10 +31,10 @@ type Props = {
 };
 
 export default function MfsManual({ payment, payable, receiver_numbers, mfs_types }: Props) {
-    const [selectedMfs, setSelectedMfs] = useState<string>('bkash');
+    const [selectedMfs, setSelectedMfs] = useState<string>('');
     const form = useForm({
         transaction_id: payment.transaction_id,
-        mfs_type: 'bkash',
+        mfs_type: '',
         sender_number: '',
         mfs_transaction_id: '',
     });
@@ -50,7 +50,12 @@ export default function MfsManual({ payment, payable, receiver_numbers, mfs_type
     };
 
     const getReceiverNumber = () => {
+        if (!selectedMfs) return 'N/A';
         return receiver_numbers[selectedMfs as keyof typeof receiver_numbers] || 'N/A';
+    };
+
+    const getMfsLogo = (mfsType: string) => {
+        return `/images/mfs/${mfsType}.svg`;
     };
 
     const getMfsColor = (mfsType: string) => {
@@ -170,93 +175,111 @@ export default function MfsManual({ payment, payable, receiver_numbers, mfs_type
                                                 className="peer sr-only"
                                             />
                                             <div
-                                                className={`flex items-center justify-center rounded-xl border-2 border-gray-200 bg-white p-4 shadow-sm transition-all peer-checked:border-transparent peer-checked:shadow-md hover:border-gray-300 hover:shadow-md ${selectedMfs === mfs.value ? `bg-gradient-to-br ${getMfsColor(mfs.value)} text-white` : ''}`}
+                                                className={`flex flex-col items-center justify-center gap-3 rounded-xl border-2 p-6 shadow-sm transition-all hover:shadow-md ${
+                                                    selectedMfs === mfs.value
+                                                        ? 'border-blue-500 bg-blue-50 shadow-md ring-2 ring-blue-200'
+                                                        : 'border-gray-200 bg-white hover:border-gray-300'
+                                                }`}
                                             >
-                                                <div className="text-center">
-                                                    <Smartphone className="mx-auto mb-2 h-8 w-8" />
-                                                    <div className="font-bold">{mfs.label}</div>
+                                                <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-white p-2 shadow-sm">
+                                                    <img src={getMfsLogo(mfs.value)} alt={mfs.label} className="h-full w-full object-contain" />
                                                 </div>
+                                                <div className="text-center font-bold text-gray-900">{mfs.label}</div>
                                             </div>
                                         </label>
                                     ))}
                                 </div>
 
-                                {/* Receiver Number Display */}
-                                <div className="mb-6 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 p-5">
-                                    <div className="flex items-start gap-3">
-                                        <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
-                                        <div className="flex-1">
-                                            <div className="mb-1 text-sm font-medium text-blue-900">Send Money To:</div>
-                                            <div className="font-mono text-2xl font-bold text-blue-700">{getReceiverNumber()}</div>
-                                            <div className="mt-1 text-sm text-blue-600">
-                                                Amount: ৳{payment.amount} via {mfs_types.find((m) => m.value === selectedMfs)?.label}
+                                {/* Receiver Number Display - Only show when MFS is selected */}
+                                {selectedMfs && (
+                                    <div className="mb-6 animate-in fade-in slide-in-from-top-2 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 p-5">
+                                        <div className="flex items-start gap-3">
+                                            <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+                                            <div className="flex-1">
+                                                <div className="mb-1 text-sm font-medium text-blue-900">Send Money To:</div>
+                                                <div className="font-mono text-2xl font-bold text-blue-700">{getReceiverNumber()}</div>
+                                                <div className="mt-1 text-sm text-blue-600">
+                                                    Amount: ৳{payment.amount} via {mfs_types.find((m) => m.value === selectedMfs)?.label}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                )}
 
-                                {/* Form Fields */}
-                                <div className="space-y-4">
-                                    <div>
-                                        <label htmlFor="sender_number" className="mb-2 block text-sm font-semibold text-gray-700">
-                                            Your Sender Number <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="sender_number"
-                                            placeholder="01XXXXXXXXX"
-                                            value={form.data.sender_number}
-                                            onChange={(e) => form.setData('sender_number', e.target.value)}
-                                            className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 font-mono transition-colors focus:border-blue-500 focus:outline-none"
-                                            required
-                                        />
-                                        {form.errors.sender_number && (
-                                            <p className="mt-1 text-sm text-red-600">{form.errors.sender_number}</p>
-                                        )}
-                                    </div>
+                                {/* Form Fields - Only show when MFS is selected */}
+                                {selectedMfs && (
+                                    <div className="animate-in fade-in slide-in-from-top-4 space-y-4">
+                                        <div>
+                                            <label htmlFor="sender_number" className="mb-2 block text-sm font-semibold text-gray-700">
+                                                Your Sender Number <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="sender_number"
+                                                placeholder="01XXXXXXXXX"
+                                                value={form.data.sender_number}
+                                                onChange={(e) => form.setData('sender_number', e.target.value)}
+                                                className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 font-mono transition-colors focus:border-blue-500 focus:outline-none"
+                                                required
+                                            />
+                                            {form.errors.sender_number && (
+                                                <p className="mt-1 text-sm text-red-600">{form.errors.sender_number}</p>
+                                            )}
+                                        </div>
 
-                                    <div>
-                                        <label htmlFor="mfs_transaction_id" className="mb-2 block text-sm font-semibold text-gray-700">
-                                            MFS Transaction ID <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            id="mfs_transaction_id"
-                                            placeholder="Enter the transaction ID from your MFS app"
-                                            value={form.data.mfs_transaction_id}
-                                            onChange={(e) => form.setData('mfs_transaction_id', e.target.value)}
-                                            className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 font-mono transition-colors focus:border-blue-500 focus:outline-none"
-                                            required
-                                        />
-                                        {form.errors.mfs_transaction_id && (
-                                            <p className="mt-1 text-sm text-red-600">{form.errors.mfs_transaction_id}</p>
-                                        )}
-                                        <p className="mt-1 text-xs text-gray-500">
-                                            You can find this in your MFS transaction history or confirmation SMS
-                                        </p>
+                                        <div>
+                                            <label htmlFor="mfs_transaction_id" className="mb-2 block text-sm font-semibold text-gray-700">
+                                                MFS Transaction ID <span className="text-red-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="mfs_transaction_id"
+                                                placeholder="Enter the transaction ID from your MFS app"
+                                                value={form.data.mfs_transaction_id}
+                                                onChange={(e) => form.setData('mfs_transaction_id', e.target.value)}
+                                                className="w-full rounded-lg border-2 border-gray-300 px-4 py-3 font-mono transition-colors focus:border-blue-500 focus:outline-none"
+                                                required
+                                            />
+                                            {form.errors.mfs_transaction_id && (
+                                                <p className="mt-1 text-sm text-red-600">{form.errors.mfs_transaction_id}</p>
+                                            )}
+                                            <p className="mt-1 text-xs text-gray-500">
+                                                You can find this in your MFS transaction history or confirmation SMS
+                                            </p>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
+
+                                {/* Prompt to select MFS if none selected */}
+                                {!selectedMfs && (
+                                    <div className="rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+                                        <Smartphone className="mx-auto mb-3 h-12 w-12 text-gray-400" />
+                                        <p className="text-sm font-medium text-gray-600">Please select an MFS provider to continue</p>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        {/* Submit Button */}
-                        <button
-                            type="submit"
-                            disabled={form.processing}
-                            className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 font-semibold text-white shadow-lg transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                            {form.processing ? (
-                                <>
-                                    <Loader2 className="h-5 w-5 animate-spin" />
-                                    <span>Submitting...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Send className="h-5 w-5" />
-                                    <span>Submit for Manual Review</span>
-                                </>
-                            )}
-                        </button>
+                        {/* Submit Button - Only show when MFS is selected */}
+                        {selectedMfs && (
+                            <button
+                                type="submit"
+                                disabled={form.processing}
+                                className="group relative flex w-full animate-in fade-in slide-in-from-bottom-2 items-center justify-center gap-2 overflow-hidden rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 font-semibold text-white shadow-lg transition-all hover:from-blue-700 hover:to-blue-800 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {form.processing ? (
+                                    <>
+                                        <Loader2 className="h-5 w-5 animate-spin" />
+                                        <span>Submitting...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Send className="h-5 w-5" />
+                                        <span>Submit for Manual Review</span>
+                                    </>
+                                )}
+                            </button>
+                        )}
                     </form>
 
                     {/* Security Notice */}
