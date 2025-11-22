@@ -4,14 +4,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertCircle } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-export type RepeaterOption = string | { name?: string; full_name?: string };
-
 type ContestFormSelectProps = {
     id: string;
     label: string;
     value: string;
     onChange: (value: string) => void;
-    options?: RepeaterOption[] | null;
+    options?: string[] | null;
     placeholder?: string;
     required?: boolean;
     error?: string;
@@ -19,32 +17,6 @@ type ContestFormSelectProps = {
     missingDescription: ReactNode;
     disabled?: boolean;
 };
-
-type NormalizedOption = {
-    label: string;
-    value: string;
-    key: string;
-};
-
-function normalizeOptions(options: RepeaterOption[]): NormalizedOption[] {
-    return options.map((option, index) => {
-        if (typeof option === 'string') {
-            return {
-                label: option,
-                value: option,
-                key: `${option}-${index}`,
-            };
-        }
-
-        const label = option.name ?? option.full_name ?? '';
-
-        return {
-            label,
-            value: label,
-            key: `${label || 'option'}-${index}`,
-        };
-    });
-}
 
 export function ContestFormSelect({
     id,
@@ -71,8 +43,6 @@ export function ContestFormSelect({
         );
     }
 
-    const normalizedOptions = normalizeOptions(options);
-
     return (
         <div className="space-y-2">
             <Label htmlFor={id}>
@@ -84,9 +54,9 @@ export function ContestFormSelect({
                     <SelectValue placeholder={placeholder} />
                 </SelectTrigger>
                 <SelectContent>
-                    {normalizedOptions.map((option) => (
-                        <SelectItem key={option.key} value={option.value}>
-                            {option.label}
+                    {options.map((option, index) => (
+                        <SelectItem key={`${option}-${index}`} value={option}>
+                            {option}
                         </SelectItem>
                     ))}
                 </SelectContent>

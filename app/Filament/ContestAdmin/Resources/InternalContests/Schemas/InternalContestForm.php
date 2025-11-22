@@ -177,14 +177,14 @@ class InternalContestForm
                                     ->schema([
                                         Repeater::make('pickup_points')
                                             ->label('')
-                                            ->grid(2)
+                                            ->grid(3)
                                             ->reorderable()
-                                            ->schema([
+                                            ->simple(
                                                 TextInput::make('name')
-                                                    ->label('Location Name')
+                                                    ->hiddenLabel()
                                                     ->required()
-                                                    ->placeholder('e.g., Main Campus Office, SAC Building'),
-                                            ])
+                                                    ->placeholder('e.g., Main Campus Office, SAC Building')
+                                            )
                                             ->addActionLabel('Add Pickup Point')
                                             ->defaultItems(0),
                                     ])
@@ -196,26 +196,26 @@ class InternalContestForm
                                     ->schema([
                                         Repeater::make('departments')
                                             ->label('Departments')
-                                            ->grid(3)
+                                            ->grid(4)
                                             ->reorderable()
-                                            ->schema([
+                                            ->simple(
                                                 TextInput::make('name')
-                                                    ->label('Department')
+                                                    ->hiddenLabel()
                                                     ->required()
-                                                    ->placeholder('e.g., CSE, EEE, BBA'),
-                                            ])
+                                                    ->placeholder('e.g., CSE, EEE, BBA')
+                                            )
                                             ->addActionLabel('Add Department')
                                             ->defaultItems(0),
                                         Repeater::make('sections')
                                             ->label('Sections')
-                                            ->grid(4)
+                                            ->grid(6)
                                             ->reorderable()
-                                            ->schema([
+                                            ->simple(
                                                 TextInput::make('name')
-                                                    ->label('Section')
+                                                    ->hiddenLabel()
                                                     ->required()
-                                                    ->placeholder('e.g., A, B, C'),
-                                            ])
+                                                    ->placeholder('e.g., A, B, C')
+                                            )
                                             ->addActionLabel('Add Section')
                                             ->defaultItems(0),
                                     ])

@@ -233,13 +233,13 @@ export interface InternalContestDetails extends InternalContest {
 
 export interface InternalContestRegistrationView extends InternalContest {
     form_settings: {
-        student_id_rules?: string;
         student_id_rules_guide?: string;
-        pickup_points?: Array<string | { name?: string; full_name?: string }>;
-        departments?: Array<string | { name?: string; full_name?: string }>;
-        sections?: Array<string | { name?: string; full_name?: string }>;
-        lab_teacher_names?: Array<string | { name?: string; full_name?: string }>;
+        pickup_points?: string[];
+        departments?: string[];
+        sections?: string[];
+        lab_teacher_names?: string[];
         tshirt_sizes?: string[];
+        genders?: string[];
     };
     tshirt_size_guideline_url?: string;
 }

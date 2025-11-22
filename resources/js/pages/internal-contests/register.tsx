@@ -6,7 +6,6 @@ import { ContestFormSelect } from '@/components/internal-contests/contest-form-s
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import MainLayout from '@/layouts/main-layout';
 import type { InternalContestRegistrationView, SharedData } from '@/types';
@@ -161,9 +160,10 @@ type PersonalInfoFieldsProps = {
     data: RegistrationFormData;
     setData: <K extends keyof RegistrationFormData>(key: K, value: RegistrationFormData[K]) => void;
     errors: Partial<Record<keyof RegistrationFormData, string>>;
+    formSettings: InternalContestRegistrationView['form_settings'];
 };
 
-function PersonalInfoFields({ data, setData, errors }: PersonalInfoFieldsProps) {
+function PersonalInfoFields({ data, setData, errors, formSettings }: PersonalInfoFieldsProps) {
     return (
         <div>
             <h3 className="mb-4 text-sm font-semibold tracking-wide text-slate-700 uppercase dark:text-slate-300">Personal Information</h3>
@@ -187,16 +187,18 @@ function PersonalInfoFields({ data, setData, errors }: PersonalInfoFieldsProps) 
                     <Label htmlFor="gender">
                         Gender <span className="text-red-500">*</span>
                     </Label>
-                    <Select value={data.gender} onValueChange={(val) => setData('gender', val)} required>
-                        <SelectTrigger className={`h-11 w-full ${errors.gender ? 'border-red-500' : ''}`}>
-                            <SelectValue placeholder="Select Gender" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="male">Male</SelectItem>
-                            <SelectItem value="female">Female</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    {errors.gender && <p className="text-sm text-red-500">{errors.gender}</p>}
+                    <ContestFormSelect
+                        id="gender"
+                        label=""
+                        value={data.gender}
+                        onChange={(val) => setData('gender', val)}
+                        placeholder="Select Gender"
+                        required
+                        options={formSettings.genders}
+                        error={errors.gender}
+                        missingTitle="Gender Options Missing"
+                        missingDescription="Gender choices are not configured. Please contact the organizers."
+                    />
                 </div>
 
                 <div className="space-y-2">
@@ -473,7 +475,7 @@ export default function InternalContestRegisterPage({ contest }: Props) {
 
                                     {step === 2 && (
                                         <div className="space-y-6">
-                                            <PersonalInfoFields data={data} setData={setData} errors={errors} />
+                                            <PersonalInfoFields data={data} setData={setData} errors={errors} formSettings={contest.form_settings} />
                                             <AcademicInfoFields data={data} setData={setData} errors={errors} formSettings={contest.form_settings} />
                                             <AdditionalDetailsFields
                                                 data={data}
