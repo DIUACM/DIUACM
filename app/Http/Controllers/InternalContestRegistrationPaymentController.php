@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\InternalContestRegistration;
-use App\Models\Payment;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
