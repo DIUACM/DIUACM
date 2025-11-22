@@ -14,20 +14,22 @@ import blog from '@/routes/blog';
 import contests from '@/routes/contests';
 import events from '@/routes/events';
 import galleries from '@/routes/galleries';
+import internalContests from '@/routes/internal-contests';
 import profile from '@/routes/profile';
 import programmers from '@/routes/programmers';
 import trackers from '@/routes/trackers';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { BarChart3, Calendar, FileText, Home, Image, Info, KeyRound, LogIn, LogOut, Mail, Menu, Trophy, User, Users, X } from 'lucide-react';
+import { Archive, BarChart3, Calendar, FileText, Home, Image, Info, KeyRound, LogIn, LogOut, Mail, Menu, Trophy, User, Users, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppearanceToggleDropdown from './appearance-dropdown';
 
 // Navigation items
 const menuItems = [
     { name: 'Home', href: home.url(), icon: Home },
-    { name: 'Events', href: events.index.url(), icon: Calendar },
-    { name: 'Contests', href: contests.index.url(), icon: Trophy },
+    { name: 'Regular Events', href: events.index.url(), icon: Calendar },
+    { name: 'Registrations', href: internalContests.index.url(), icon: Trophy },
+    { name: 'Archive', href: contests.index.url(), icon: Archive },
     { name: 'Gallery', href: galleries.index.url(), icon: Image },
     { name: 'Blog', href: blog.index.url(), icon: FileText },
     { name: 'Trackers', href: trackers.index.url(), icon: BarChart3 },
