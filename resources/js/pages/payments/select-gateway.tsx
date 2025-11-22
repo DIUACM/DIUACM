@@ -1,7 +1,7 @@
 import { initiateRegistrationPayment } from '@/actions/App/Http/Controllers/PaymentController';
 import BlankLayout from '@/layouts/blank-layout';
 import { Head, useForm } from '@inertiajs/react';
-import { ArrowLeft, CheckCircle, CreditCard, Lock, Shield } from 'lucide-react';
+import { ArrowLeft, CheckCircle, CreditCard, Lock, Shield, Smartphone } from 'lucide-react';
 
 type Props = {
     registration: {
@@ -133,6 +133,49 @@ export default function SelectGateway({ registration }: Props) {
                                                     <CheckCircle className="h-7 w-7 text-emerald-600" />
                                                 </div>
                                                 <div className="h-6 w-6 rounded-full border-2 border-gray-300 transition-all group-hover:border-emerald-400 peer-checked:hidden" />
+                                            </div>
+                                        </div>
+                                    </label>
+
+                                    {/* MFS Manual Option */}
+                                    <label className="group relative block cursor-pointer">
+                                        <input
+                                            type="radio"
+                                            name="gateway"
+                                            value="mfs_manual"
+                                            checked={form.data.gateway === 'mfs_manual'}
+                                            onChange={(e) => form.setData('gateway', e.target.value)}
+                                            className="peer sr-only"
+                                        />
+                                        <div className="flex items-center justify-between rounded-xl border-2 border-gray-200 bg-white p-5 shadow-sm transition-all peer-checked:border-blue-500 peer-checked:bg-gradient-to-r peer-checked:from-blue-50 peer-checked:to-indigo-50 peer-checked:shadow-md hover:border-gray-300 hover:shadow-md">
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg transition-transform group-hover:scale-105">
+                                                    <Smartphone className="h-7 w-7 text-white" />
+                                                </div>
+                                                <div>
+                                                    <div className="text-base font-bold text-gray-900">MFS Manual</div>
+                                                    <div className="mt-1 text-sm text-gray-600">Pay via bKash, Nagad, or Rocket (Manual)</div>
+                                                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                                                        <span className="inline-flex items-center rounded-full bg-pink-100 px-2 py-0.5 text-xs font-medium text-pink-700">
+                                                            bKash
+                                                        </span>
+                                                        <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+                                                            Nagad
+                                                        </span>
+                                                        <span className="inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+                                                            Rocket
+                                                        </span>
+                                                        <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
+                                                            Manual Review
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="shrink-0">
+                                                <div className="hidden peer-checked:block">
+                                                    <CheckCircle className="h-7 w-7 text-blue-600" />
+                                                </div>
+                                                <div className="h-6 w-6 rounded-full border-2 border-gray-300 transition-all group-hover:border-blue-400 peer-checked:hidden" />
                                             </div>
                                         </div>
                                     </label>

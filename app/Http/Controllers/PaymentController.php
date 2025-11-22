@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\Payable;
+use App\Enums\MfsTransactionStatus;
+use App\Enums\MfsType;
+use App\Enums\PaymentStatus;
 use App\Models\InternalContestRegistration;
+use App\Models\MfsManualTransaction;
 use App\Models\Payment;
 use App\Services\PaymentService;
 use Illuminate\Http\Request;
@@ -49,7 +53,7 @@ class PaymentController extends Controller
     public function initiateRegistrationPayment(Request $request, InternalContestRegistration $registration)
     {
         $validated = $request->validate([
-            'gateway' => 'required|string|in:sslcommerz',
+            'gateway' => 'required|string|in:sslcommerz,mfs_manual',
         ]);
 
         $this->authorizeRegistrationOwnership($registration);
@@ -410,6 +414,149 @@ class PaymentController extends Controller
                 'status' => 'error',
                 'message' => 'An error occurred while processing IPN',
             ], 500);
+        }
+    }
+
+    /**
+     * Show MFS Manual payment form
+     */
+    public function showMfsManualForm(Request $request)
+    {
+        $transactionId = $request->get('transaction_id');
+
+        if (! $transactionId) {
+            return redirect()->route('home')->with('error', 'Invalid payment transaction');
+        }
+
+        // Find the payment by transaction ID
+        $payment = Payment::where('transaction_id', $transactionId)
+            ->where('gateway', 'mfs_manual')
+            ->where('status', PaymentStatus::PENDING)
+            ->first();
+
+        if (! $payment) {
+            return redirect()->route('home')->with('error', 'Payment not found or already processed');
+        }
+
+        // Get payable model (registration)
+        $payable = $payment->payable;
+
+        if (! $payable) {
+            return redirect()->route('home')->with('error', 'Associated registration not found');
+        }
+
+        // Authorize ownership
+        if ($payable instanceof InternalContestRegistration) {
+            $this->authorizeRegistrationOwnership($payable);
+        }
+
+        // MFS receiver numbers - you can make this configurable via env or config
+        $receiverNumbers = [
+            'bkash' => config('services.mfs.bkash_number', '01XXXXXXXXX'),
+            'nagad' => config('services.mfs.nagad_number', '01XXXXXXXXX'),
+            'rocket' => config('services.mfs.rocket_number', '01XXXXXXXXX'),
+        ];
+
+        return Inertia::render('payments/mfs-manual', [
+            'payment' => [
+                'id' => $payment->id,
+                'transaction_id' => $payment->transaction_id,
+                'amount' => $payment->amount,
+                'currency' => $payment->currency,
+            ],
+            'payable' => [
+                'type' => $payable->getMorphClass(),
+                'name' => $payable->name ?? 'N/A',
+                'email' => $payable->email ?? 'N/A',
+                'contest_title' => $payable instanceof InternalContestRegistration ? $payable->internalContest->title : 'N/A',
+            ],
+            'receiver_numbers' => $receiverNumbers,
+            'mfs_types' => collect(MfsType::cases())->map(fn ($type) => [
+                'value' => $type->value,
+                'label' => $type->getLabel(),
+            ]),
+        ]);
+    }
+
+    /**
+     * Submit MFS Manual payment
+     */
+    public function submitMfsManual(Request $request)
+    {
+        $validated = $request->validate([
+            'transaction_id' => 'required|string',
+            'mfs_type' => 'required|string|in:bkash,nagad,rocket',
+            'sender_number' => 'required|string|regex:/^01[0-9]{9}$/',
+            'mfs_transaction_id' => 'required|string|min:5|max:50',
+        ]);
+
+        try {
+            return DB::transaction(function () use ($validated) {
+                // Lock the payment record
+                $payment = Payment::where('transaction_id', $validated['transaction_id'])
+                    ->where('gateway', 'mfs_manual')
+                    ->lockForUpdate()
+                    ->first();
+
+                if (! $payment) {
+                    return redirect()->route('home')->with('error', 'Payment not found');
+                }
+
+                // Check if payment is still pending
+                if ($payment->status !== PaymentStatus::PENDING) {
+                    return redirect($this->getRedirectUrl($payment))
+                        ->with('info', 'This payment has already been processed');
+                }
+
+                // Get receiver number based on MFS type
+                $receiverNumbers = [
+                    'bkash' => config('services.mfs.bkash_number', '01XXXXXXXXX'),
+                    'nagad' => config('services.mfs.nagad_number', '01XXXXXXXXX'),
+                    'rocket' => config('services.mfs.rocket_number', '01XXXXXXXXX'),
+                ];
+
+                $receiverNumber = $receiverNumbers[$validated['mfs_type']] ?? null;
+
+                // Create MFS Manual Transaction record
+                MfsManualTransaction::create([
+                    'payment_id' => $payment->id,
+                    'status' => MfsTransactionStatus::PENDING,
+                    'sender_number' => $validated['sender_number'],
+                    'receiver_number' => $receiverNumber,
+                    'mfs_transaction_id' => $validated['mfs_transaction_id'],
+                    'mfs_type' => MfsType::from($validated['mfs_type']),
+                    'amount' => $payment->amount,
+                ]);
+
+                // Update payment status to under manual review
+                $payment->update([
+                    'status' => PaymentStatus::UNDER_MANUAL_REVIEW,
+                    'gateway_response' => array_merge($payment->gateway_response ?? [], [
+                        'mfs_submission' => [
+                            'mfs_type' => $validated['mfs_type'],
+                            'sender_number' => $validated['sender_number'],
+                            'mfs_transaction_id' => $validated['mfs_transaction_id'],
+                            'submitted_at' => now()->toIso8601String(),
+                        ],
+                    ]),
+                ]);
+
+                Log::info('MFS Manual payment submitted for review', [
+                    'payment_id' => $payment->id,
+                    'transaction_id' => $payment->transaction_id,
+                    'mfs_type' => $validated['mfs_type'],
+                ]);
+
+                return redirect($this->getRedirectUrl($payment))
+                    ->with('success', 'Payment submitted successfully! Your payment is under manual review. You will be notified once verified.');
+            });
+        } catch (\Exception $e) {
+            Log::error('MFS Manual payment submission error: '.$e->getMessage(), [
+                'transaction_id' => $validated['transaction_id'] ?? null,
+                'exception' => $e,
+            ]);
+
+            return redirect()->back()->with('error', 'An error occurred while submitting payment. Please try again.');
         }
     }
 }
