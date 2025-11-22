@@ -31,12 +31,12 @@ type Props = {
 };
 
 export default function MfsManual({ payment, payable, receiver_numbers, mfs_types }: Props) {
-    const [selectedMfs, setSelectedMfs] = useState<string>('bkash');
+    const [selectedMfs, setSelectedMfs] = useState<string>('');
     const [copied, setCopied] = useState(false);
     
     const form = useForm({
         transaction_id: payment.transaction_id,
-        mfs_type: 'bkash',
+        mfs_type: '',
         sender_number: '',
         mfs_transaction_id: '',
     });
@@ -102,13 +102,11 @@ export default function MfsManual({ payment, payable, receiver_numbers, mfs_type
                                             : 'border-transparent bg-white/50 hover:bg-white hover:shadow-sm'
                                     }`}
                                 >
-                                    <div className={`w-10 h-10 rounded-full mb-2 flex items-center justify-center transition-colors ${
-                                        mfs.value === 'bkash' ? 'bg-pink-50 text-pink-600' :
-                                        mfs.value === 'nagad' ? 'bg-orange-50 text-orange-600' :
-                                        'bg-purple-50 text-purple-600'
-                                    }`}>
-                                        <Smartphone className="h-5 w-5" />
-                                    </div>
+                                    <img 
+                                        src={`/images/mfs/${mfs.value}.svg`} 
+                                        alt={mfs.label} 
+                                        className="w-10 h-10 object-contain mb-2"
+                                    />
                                     <span className={`text-xs font-bold ${selectedMfs === mfs.value ? 'text-slate-900' : 'text-slate-500'}`}>
                                         {mfs.label}
                                     </span>
@@ -116,62 +114,70 @@ export default function MfsManual({ payment, payable, receiver_numbers, mfs_type
                             ))}
                         </div>
 
-                        {/* Receiver Info Card */}
-                        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-8">
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-3">Send Money To</p>
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-xl font-bold text-slate-900 font-mono tracking-wide">{getReceiverNumber()}</p>
-                                    <p className="text-xs text-gray-500 mt-1 font-medium">Personal Account</p>
+                        {selectedMfs ? (
+                            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                {/* Receiver Info Card */}
+                                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 mb-8">
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-3">Send Money To</p>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <p className="text-xl font-bold text-slate-900 font-mono tracking-wide">{getReceiverNumber()}</p>
+                                            <p className="text-xs text-gray-500 mt-1 font-medium">Personal Account</p>
+                                        </div>
+                                        <button 
+                                            onClick={() => copyToClipboard(getReceiverNumber())}
+                                            className="p-2.5 bg-gray-50 hover:bg-blue-50 text-gray-400 hover:text-blue-600 rounded-xl transition-all active:scale-95"
+                                        >
+                                            {copied ? <Check className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />}
+                                        </button>
+                                    </div>
                                 </div>
-                                <button 
-                                    onClick={() => copyToClipboard(getReceiverNumber())}
-                                    className="p-2.5 bg-gray-50 hover:bg-blue-50 text-gray-400 hover:text-blue-600 rounded-xl transition-all active:scale-95"
-                                >
-                                    {copied ? <Check className="h-5 w-5 text-green-500" /> : <Copy className="h-5 w-5" />}
-                                </button>
-                            </div>
-                        </div>
 
-                        {/* Form */}
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Your Wallet Number</label>
-                                <input
-                                    type="text"
-                                    value={form.data.sender_number}
-                                    onChange={(e) => form.setData('sender_number', e.target.value)}
-                                    className="w-full px-4 py-3.5 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-white shadow-sm text-slate-900 font-medium placeholder:text-gray-300"
-                                    placeholder="01XXXXXXXXX"
-                                    required
-                                />
-                                {form.errors.sender_number && (
-                                    <p className="mt-1 text-xs text-red-500 ml-1">{form.errors.sender_number}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Transaction ID</label>
-                                <input
-                                    type="text"
-                                    value={form.data.mfs_transaction_id}
-                                    onChange={(e) => form.setData('mfs_transaction_id', e.target.value)}
-                                    className="w-full px-4 py-3.5 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-white shadow-sm text-slate-900 font-medium placeholder:text-gray-300 uppercase"
-                                    placeholder="TrxID"
-                                    required
-                                />
-                                {form.errors.mfs_transaction_id && (
-                                    <p className="mt-1 text-xs text-red-500 ml-1">{form.errors.mfs_transaction_id}</p>
-                                )}
-                            </div>
+                                {/* Form */}
+                                <form onSubmit={handleSubmit} className="space-y-5">
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Your Wallet Number</label>
+                                        <input
+                                            type="text"
+                                            value={form.data.sender_number}
+                                            onChange={(e) => form.setData('sender_number', e.target.value)}
+                                            className="w-full px-4 py-3.5 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-white shadow-sm text-slate-900 font-medium placeholder:text-gray-300"
+                                            placeholder="01XXXXXXXXX"
+                                            required
+                                        />
+                                        {form.errors.sender_number && (
+                                            <p className="mt-1 text-xs text-red-500 ml-1">{form.errors.sender_number}</p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 ml-1">Transaction ID</label>
+                                        <input
+                                            type="text"
+                                            value={form.data.mfs_transaction_id}
+                                            onChange={(e) => form.setData('mfs_transaction_id', e.target.value)}
+                                            className="w-full px-4 py-3.5 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 bg-white shadow-sm text-slate-900 font-medium placeholder:text-gray-300 uppercase"
+                                            placeholder="TrxID"
+                                            required
+                                        />
+                                        {form.errors.mfs_transaction_id && (
+                                            <p className="mt-1 text-xs text-red-500 ml-1">{form.errors.mfs_transaction_id}</p>
+                                        )}
+                                    </div>
 
-                            <button
-                                type="submit"
-                                disabled={form.processing}
-                                className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl shadow-xl shadow-slate-900/20 hover:bg-slate-800 transition-all transform active:scale-[0.98] mt-6 disabled:opacity-70 disabled:cursor-not-allowed"
-                            >
-                                {form.processing ? 'Verifying...' : 'Confirm Payment'}
-                            </button>
-                        </form>
+                                    <button
+                                        type="submit"
+                                        disabled={form.processing}
+                                        className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl shadow-xl shadow-slate-900/20 hover:bg-slate-800 transition-all transform active:scale-[0.98] mt-6 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    >
+                                        {form.processing ? 'Verifying...' : 'Confirm Payment'}
+                                    </button>
+                                </form>
+                            </div>
+                        ) : (
+                            <div className="text-center py-12 text-gray-400 animate-in fade-in zoom-in duration-300">
+                                <p className="text-sm">Select a wallet provider above to continue</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
