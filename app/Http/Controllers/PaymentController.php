@@ -36,13 +36,19 @@ class PaymentController extends Controller
                 ->with('error', $paymentCheck['message']);
         }
 
+        $contest = $registration->internalContest;
+
         return Inertia::render('payments/select-gateway', [
             'registration' => [
                 'id' => $registration->id,
                 'name' => $registration->name,
                 'email' => $registration->email,
-                'amount' => $registration->internalContest->registration_fee,
-                'contest_title' => $registration->internalContest->title,
+                'amount' => $contest->registration_fee,
+                'contest_title' => $contest->title,
+            ],
+            'payment_config' => [
+                'sslcommerz_enabled' => $contest->sslcommerz_enabled,
+                'mfs_manual_enabled' => $contest->bkash_enabled || $contest->rocket_enabled || $contest->nagad_enabled,
             ],
         ]);
     }
@@ -445,17 +451,12 @@ class PaymentController extends Controller
             return redirect()->route('home')->with('error', 'Associated registration not found');
         }
 
-        // Authorize ownership
-        if ($payable instanceof InternalContestRegistration) {
-            $this->authorizeRegistrationOwnership($payable);
-        }
+        // Get MFS configuration based on payable type
+        $mfsConfig = $this->getMfsConfigForPayable($payable);
 
-        // MFS receiver numbers - you can make this configurable via env or config
-        $receiverNumbers = [
-            'bkash' => config('services.mfs.bkash_number', '01XXXXXXXXX'),
-            'nagad' => config('services.mfs.nagad_number', '01XXXXXXXXX'),
-            'rocket' => config('services.mfs.rocket_number', '01XXXXXXXXX'),
-        ];
+        if (empty($mfsConfig['mfs_types'])) {
+            return redirect()->route('home')->with('error', 'No payment methods available');
+        }
 
         return Inertia::render('payments/mfs-manual', [
             'payment' => [
@@ -464,17 +465,10 @@ class PaymentController extends Controller
                 'amount' => $payment->amount,
                 'currency' => $payment->currency,
             ],
-            'payable' => [
-                'type' => $payable->getMorphClass(),
-                'name' => $payable->name ?? 'N/A',
-                'email' => $payable->email ?? 'N/A',
-                'contest_title' => $payable instanceof InternalContestRegistration ? $payable->internalContest->title : 'N/A',
-            ],
-            'receiver_numbers' => $receiverNumbers,
-            'mfs_types' => collect(MfsType::cases())->map(fn ($type) => [
-                'value' => $type->value,
-                'label' => $type->getLabel(),
-            ]),
+            'payable' => $mfsConfig['payable_info'],
+            'receiver_numbers' => $mfsConfig['receiver_numbers'],
+            'instructions' => $mfsConfig['instructions'],
+            'mfs_types' => $mfsConfig['mfs_types'],
         ]);
     }
 
@@ -508,14 +502,9 @@ class PaymentController extends Controller
                         ->with('info', 'This payment has already been processed');
                 }
 
-                // Get receiver number based on MFS type
-                $receiverNumbers = [
-                    'bkash' => config('services.mfs.bkash_number', '01XXXXXXXXX'),
-                    'nagad' => config('services.mfs.nagad_number', '01XXXXXXXXX'),
-                    'rocket' => config('services.mfs.rocket_number', '01XXXXXXXXX'),
-                ];
-
-                $receiverNumber = $receiverNumbers[$validated['mfs_type']] ?? null;
+                // Get receiver number from payable-specific configuration
+                $payable = $payment->payable;
+                $receiverNumber = $this->getReceiverNumberForPayable($payable, $validated['mfs_type']);
 
                 // Create MFS Manual Transaction record
                 MfsManualTransaction::create([
@@ -558,5 +547,111 @@ class PaymentController extends Controller
 
             return redirect()->back()->with('error', 'An error occurred while submitting payment. Please try again.');
         }
+    }
+
+    /**
+     * Get MFS configuration for a payable model
+     */
+    protected function getMfsConfigForPayable(Payable $payable): array
+    {
+        // Handle InternalContestRegistration
+        if ($payable instanceof InternalContestRegistration) {
+            $this->authorizeRegistrationOwnership($payable);
+
+            $contest = $payable->internalContest;
+            $mfsTypes = [];
+            $receiverNumbers = [];
+            $instructions = [];
+
+            if ($contest->bkash_enabled && $contest->bkash_receiver_number) {
+                $mfsTypes[] = ['value' => 'bkash', 'label' => 'bKash'];
+                $receiverNumbers['bkash'] = $contest->bkash_receiver_number;
+                $instructions['bkash'] = $contest->bkash_instruction;
+            }
+
+            if ($contest->rocket_enabled && $contest->rocket_receiver_number) {
+                $mfsTypes[] = ['value' => 'rocket', 'label' => 'Rocket'];
+                $receiverNumbers['rocket'] = $contest->rocket_receiver_number;
+                $instructions['rocket'] = $contest->rocket_instruction;
+            }
+
+            if ($contest->nagad_enabled && $contest->nagad_receiver_number) {
+                $mfsTypes[] = ['value' => 'nagad', 'label' => 'Nagad'];
+                $receiverNumbers['nagad'] = $contest->nagad_receiver_number;
+                $instructions['nagad'] = $contest->nagad_instruction;
+            }
+
+            return [
+                'mfs_types' => $mfsTypes,
+                'receiver_numbers' => $receiverNumbers,
+                'instructions' => $instructions,
+                'payable_info' => [
+                    'type' => $payable->getMorphClass(),
+                    'name' => $payable->name ?? 'N/A',
+                    'email' => $payable->email ?? 'N/A',
+                    'contest_title' => $contest->title,
+                ],
+            ];
+        }
+
+        // Fallback to config for other payable types
+        return $this->getDefaultMfsConfig($payable);
+    }
+
+    /**
+     * Get default MFS configuration from config file
+     */
+    protected function getDefaultMfsConfig(Payable $payable): array
+    {
+        $mfsTypes = [];
+        $receiverNumbers = [];
+        $instructions = [];
+
+        $enabledConfig = config('mfsgateway.enabled', []);
+        $receiverConfig = config('mfsgateway.default_receiver_numbers', []);
+        $instructionConfig = config('mfsgateway.default_instructions', []);
+
+        foreach (['bkash', 'rocket', 'nagad'] as $type) {
+            if (($enabledConfig[$type] ?? false) && ! empty($receiverConfig[$type])) {
+                $mfsTypes[] = ['value' => $type, 'label' => ucfirst($type)];
+                $receiverNumbers[$type] = $receiverConfig[$type];
+                $instructions[$type] = $instructionConfig[$type] ?? null;
+            }
+        }
+
+        return [
+            'mfs_types' => $mfsTypes,
+            'receiver_numbers' => $receiverNumbers,
+            'instructions' => $instructions,
+            'payable_info' => [
+                'type' => get_class($payable),
+                'name' => $payable->name ?? 'N/A',
+                'email' => $payable->email ?? 'N/A',
+                'contest_title' => 'N/A',
+            ],
+        ];
+    }
+
+    /**
+     * Get receiver number for a specific MFS type from payable configuration
+     */
+    protected function getReceiverNumberForPayable(Payable $payable, string $mfsType): ?string
+    {
+        // Handle InternalContestRegistration
+        if ($payable instanceof InternalContestRegistration) {
+            $contest = $payable->internalContest;
+
+            return match ($mfsType) {
+                'bkash' => $contest->bkash_receiver_number,
+                'rocket' => $contest->rocket_receiver_number,
+                'nagad' => $contest->nagad_receiver_number,
+                default => null,
+            };
+        }
+
+        // Fallback to config for other payable types
+        $receiverConfig = config('mfsgateway.default_receiver_numbers', []);
+
+        return $receiverConfig[$mfsType] ?? null;
     }
 }

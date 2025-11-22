@@ -22,16 +22,13 @@ type Props = {
         email: string;
         contest_title: string;
     };
-    receiver_numbers: {
-        bkash: string;
-        nagad: string;
-        rocket: string;
-    };
+    receiver_numbers: Record<string, string>;
+    instructions: Record<string, string | null>;
     mfs_types: MfsType[];
 };
 
-export default function MfsManual({ payment, payable, receiver_numbers, mfs_types }: Props) {
-    const [selectedMfs, setSelectedMfs] = useState<string>('');
+export default function MfsManual({ payment, payable, receiver_numbers, instructions, mfs_types }: Props) {
+    const [selectedMfs, setSelectedMfs] = useState<string>(mfs_types[0]?.value || '');
     const [copied, setCopied] = useState(false);
     
     const form = useForm({
@@ -132,6 +129,17 @@ export default function MfsManual({ payment, payable, receiver_numbers, mfs_type
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* Instructions */}
+                                {instructions[selectedMfs] && (
+                                    <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl mb-6">
+                                        <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider mb-2">Payment Instructions</p>
+                                        <div 
+                                            className="text-sm text-gray-700 prose prose-sm max-w-none prose-headings:text-gray-900 prose-headings:font-bold prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5"
+                                            dangerouslySetInnerHTML={{ __html: instructions[selectedMfs] || '' }}
+                                        />
+                                    </div>
+                                )}
 
                                 {/* Form */}
                                 <form onSubmit={handleSubmit} className="space-y-5">
