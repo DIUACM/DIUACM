@@ -328,7 +328,7 @@ class InternalContestForm
                                             ->label('Receiver Number')
                                             ->tel()
                                             ->placeholder('01XXXXXXXXX')
-                                            ->maxLength(11)
+                                            ->maxLength(12)
                                             ->helperText('Rocket number where payments will be received'),
                                         RichEditor::make('rocket_instruction')
                                             ->label('Payment Instructions')
