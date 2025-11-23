@@ -6,7 +6,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 use function Pest\Laravel\get;
 
 it('displays programmers list page', function () {
-    User::factory()->count(3)->create();
+    User::factory()->count(3)->withHandles()->create();
 
     get('/programmers')
         ->assertOk()
@@ -18,8 +18,8 @@ it('displays programmers list page', function () {
 });
 
 it('can search programmers by name', function () {
-    User::factory()->create(['name' => 'John Doe']);
-    User::factory()->create(['name' => 'Jane Smith']);
+    User::factory()->withHandles()->create(['name' => 'John Doe']);
+    User::factory()->withHandles()->create(['name' => 'Jane Smith']);
 
     get('/programmers?search=John')
         ->assertOk()
@@ -51,10 +51,54 @@ it('displays programmer details page', function () {
         );
 });
 
+it('only shows users with at least one programming handle', function () {
+    // Users with handles - should be shown
+    User::factory()->create([
+        'name' => 'Alice',
+        'codeforces_handle' => 'alice_cf',
+        'atcoder_handle' => null,
+        'vjudge_handle' => null,
+    ]);
+    User::factory()->create([
+        'name' => 'Bob',
+        'codeforces_handle' => null,
+        'atcoder_handle' => 'bob_ac',
+        'vjudge_handle' => null,
+    ]);
+    User::factory()->create([
+        'name' => 'Charlie',
+        'codeforces_handle' => null,
+        'atcoder_handle' => null,
+        'vjudge_handle' => 'charlie_vj',
+    ]);
+
+    // Users without any handles - should NOT be shown
+    User::factory()->create([
+        'name' => 'Dave',
+        'codeforces_handle' => null,
+        'atcoder_handle' => null,
+        'vjudge_handle' => null,
+    ]);
+    User::factory()->create([
+        'name' => 'Eve',
+        'codeforces_handle' => '',
+        'atcoder_handle' => '',
+        'vjudge_handle' => '',
+    ]);
+
+    get('/programmers')
+        ->assertOk()
+        ->assertInertia(
+            fn (Assert $page) => $page
+                ->component('programmers/index')
+                ->has('programmers.data', 3)
+        );
+});
+
 it('orders programmers by rating then name', function () {
-    User::factory()->create(['name' => 'Alice', 'max_cf_rating' => 1200]);
-    User::factory()->create(['name' => 'Bob', 'max_cf_rating' => 1500]);
-    User::factory()->create(['name' => 'Charlie', 'max_cf_rating' => -1]);
+    User::factory()->withHandles()->create(['name' => 'Alice', 'max_cf_rating' => 1200]);
+    User::factory()->withHandles()->create(['name' => 'Bob', 'max_cf_rating' => 1500]);
+    User::factory()->withHandles()->create(['name' => 'Charlie', 'max_cf_rating' => -1]);
 
     get('/programmers')
         ->assertOk()

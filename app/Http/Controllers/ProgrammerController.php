@@ -26,6 +26,16 @@ class ProgrammerController extends Controller
                 'max_cf_rating',
                 'codeforces_handle',
             ])
+            ->where(function ($query) {
+                $query->whereNotNull('codeforces_handle')
+                    ->orWhereNotNull('atcoder_handle')
+                    ->orWhereNotNull('vjudge_handle');
+            })
+            ->where(function ($query) {
+                $query->where('codeforces_handle', '!=', '')
+                    ->orWhere('atcoder_handle', '!=', '')
+                    ->orWhere('vjudge_handle', '!=', '');
+            })
             ->when($request->get('search'), function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
