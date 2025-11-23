@@ -1,152 +1,87 @@
 import { Button } from '@/components/ui/button';
 import MainLayout from '@/layouts/main-layout';
-import { Link, router } from '@inertiajs/react';
-import { AlertCircle, ArrowLeft, Home, RefreshCw, ServerCrash } from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { Home, RefreshCw } from 'lucide-react';
 
-type ErrorPageProps = {
+interface ErrorPageProps {
     status: number;
-    auth: {
-        user: {
-            id: number;
-            name: string;
-            email: string;
-        } | null;
-    };
-};
+}
 
-const errorMessages: Record<number, { title: string; description: string; icon: typeof ServerCrash }> = {
-    403: {
-        title: 'Access Forbidden',
-        description: "You don't have permission to access this resource. Please contact an administrator if you believe this is a mistake.",
-        icon: AlertCircle,
-    },
-    404: {
-        title: 'Page Not Found',
-        description: "The page you're looking for doesn't exist. It might have been moved or deleted.",
-        icon: AlertCircle,
-    },
-    500: {
-        title: 'Server Error',
-        description: 'Something went wrong on our end. Our team has been notified and is working to fix the issue.',
-        icon: ServerCrash,
-    },
-    503: {
-        title: 'Service Unavailable',
-        description: "We're currently performing maintenance. Please check back shortly.",
-        icon: ServerCrash,
-    },
-};
+export default function ErrorPage({ status }: ErrorPageProps) {
+    const title =
+        {
+            503: '503: Service Unavailable',
+            500: '500: Server Error',
+            404: '404: Page Not Found',
+            403: '403: Forbidden',
+        }[status] || `${status}: Error`;
 
-export default function ErrorPage({ status, auth }: ErrorPageProps) {
-    const error = errorMessages[status] || {
-        title: 'Error',
-        description: 'An unexpected error occurred.',
-        icon: AlertCircle,
-    };
+    const description =
+        {
+            503: 'Sorry, we are doing some maintenance. Please check back soon.',
+            500: 'Whoops, something went wrong on our servers.',
+            404: 'Sorry, the page you are looking for could not be found.',
+            403: 'Sorry, you are forbidden from accessing this page.',
+        }[status] || 'An unexpected error occurred.';
 
-    const Icon = error.icon;
-
-    const handleGoBack = () => {
-        if (window.history.length > 1) {
-            window.history.back();
-        } else {
-            router.visit('/');
-        }
-    };
-
-    const handleRefresh = () => {
-        router.reload();
-    };
+    const suggestion =
+        {
+            503: 'Our team is working to restore the service. Please try again in a few minutes.',
+            500: "We've been notified about this issue and are working to fix it.",
+            404: "Check the URL for typos, or use the navigation menu to find what you're looking for.",
+            403: 'If you believe you should have access to this page, please contact support.',
+        }[status] || 'Please try refreshing the page or contact support if the problem persists.';
 
     return (
         <MainLayout>
-            <div className="flex min-h-[calc(100vh-16rem)] items-center justify-center px-4 py-16">
+            <div className="flex min-h-screen items-center justify-center px-4 py-12">
                 <div className="w-full max-w-2xl text-center">
-                    {/* Error Icon and Status */}
-                    <div className="mb-8 flex flex-col items-center gap-4">
-                        <div className="rounded-full bg-red-100 p-6 dark:bg-red-950/30">
-                            <Icon className="h-16 w-16 text-red-600 dark:text-red-400" />
-                        </div>
-                        <div className="text-8xl font-bold text-slate-800 dark:text-slate-200">{status}</div>
-                    </div>
-
-                    {/* Error Message */}
-                    <div className="mb-8 space-y-4">
-                        <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 sm:text-4xl">
-                            {error.title}
-                        </h1>
-                        <p className="mx-auto max-w-md text-lg text-slate-600 dark:text-slate-400">
-                            {error.description}
-                        </p>
+                    {/* Error Content */}
+                    <div className="mb-8">
+                        <h1 className="mb-4 text-6xl font-bold text-slate-900 dark:text-white">{status}</h1>
+                        <h2 className="mb-4 text-2xl font-semibold text-slate-700 dark:text-slate-300">{title.split(': ')[1] || title}</h2>
+                        <p className="mx-auto mb-6 max-w-md text-lg text-slate-600 dark:text-slate-400">{description}</p>
+                        <p className="mx-auto max-w-lg text-sm text-slate-500 dark:text-slate-500">{suggestion}</p>
                     </div>
 
                     {/* Action Buttons */}
                     <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-                        <Button onClick={handleGoBack} variant="default" size="lg" className="w-full sm:w-auto">
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Go Back
+                        <Button
+                            asChild
+                            size="lg"
+                            className="min-w-[160px] rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-8 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
+                        >
+                            <Link href="/">
+                                <Home className="mr-2 h-4 w-4" />
+                                Go Home
+                            </Link>
                         </Button>
 
-                        <Link href="/">
-                            <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                                <Home className="mr-2 h-4 w-4" />
-                                Home Page
-                            </Button>
-                        </Link>
-
-                        {status !== 403 && (
-                            <Button onClick={handleRefresh} variant="ghost" size="lg" className="w-full sm:w-auto">
-                                <RefreshCw className="mr-2 h-4 w-4" />
-                                Retry
-                            </Button>
-                        )}
+                        <Button
+                            size="lg"
+                            variant="outline"
+                            className="min-w-[160px] rounded-full border border-slate-200 bg-white/80 px-8 font-medium text-slate-700 shadow-md backdrop-blur-sm transition-all hover:border-slate-300 hover:bg-white hover:text-slate-800 hover:shadow-xl dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                            onClick={() => window.location.reload()}
+                        >
+                            <RefreshCw className="mr-2 h-4 w-4" />
+                            Try Again
+                        </Button>
                     </div>
 
                     {/* Additional Help */}
-                    {status === 404 && (
-                        <div className="mt-12">
-                            <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
-                                Looking for something specific?
+                    {status === 500 && (
+                        <div className="mt-12 rounded-2xl border border-amber-200 bg-amber-50/50 p-6 dark:border-amber-800 dark:bg-amber-900/20">
+                            <p className="text-sm text-amber-700 dark:text-amber-300">
+                                <strong>Error ID:</strong> {Date.now().toString(36).toUpperCase()}
                             </p>
-                            <div className="flex flex-wrap justify-center gap-2">
-                                <Link href="/contests">
-                                    <Button variant="link" size="sm">
-                                        Contests
-                                    </Button>
-                                </Link>
-                                <Link href="/events">
-                                    <Button variant="link" size="sm">
-                                        Events
-                                    </Button>
-                                </Link>
-                                <Link href="/blog">
-                                    <Button variant="link" size="sm">
-                                        Blog
-                                    </Button>
-                                </Link>
-                                <Link href="/about">
-                                    <Button variant="link" size="sm">
-                                        About
-                                    </Button>
-                                </Link>
-                                <Link href="/contact">
-                                    <Button variant="link" size="sm">
-                                        Contact
-                                    </Button>
-                                </Link>
-                            </div>
+                            <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">Please include this ID when contacting support</p>
                         </div>
                     )}
 
-                    {/* Support Information */}
-                    {(status === 500 || status === 503) && (
-                        <div className="mt-12 rounded-lg border border-slate-200 bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-900/50">
-                            <p className="text-sm text-slate-600 dark:text-slate-400">
-                                If this problem persists, please{' '}
-                                <Link href="/contact" className="font-medium text-blue-600 hover:underline dark:text-blue-400">
-                                    contact our support team
-                                </Link>
-                                .
+                    {status === 503 && (
+                        <div className="mt-12 rounded-2xl border border-blue-200 bg-blue-50/50 p-6 dark:border-blue-800 dark:bg-blue-900/20">
+                            <p className="text-sm text-blue-700 dark:text-blue-300">
+                                Follow us on social media for maintenance updates and announcements.
                             </p>
                         </div>
                     )}
