@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\MfsTransactionStatus;
 use App\Enums\MfsType;
+use App\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -32,8 +33,29 @@ class MfsManualTransaction extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::updating(function (MfsManualTransaction $transaction) {
+            if ($transaction->isDirty('status')) {
+                $transaction->updatePaymentStatus();
+            }
+        });
+    }
+
     public function payment(): BelongsTo
     {
         return $this->belongsTo(Payment::class);
+    }
+
+    protected function updatePaymentStatus(): void
+    {
+        $paymentStatus = match ($this->status) {
+            MfsTransactionStatus::VERIFIED => PaymentStatus::PAID,
+            MfsTransactionStatus::INVALID => PaymentStatus::FAILED,
+            MfsTransactionStatus::REFUNDED => PaymentStatus::REFUNDED,
+            MfsTransactionStatus::PENDING => PaymentStatus::UNDER_MANUAL_REVIEW,
+        };
+
+        $this->payment->update(['status' => $paymentStatus]);
     }
 }
