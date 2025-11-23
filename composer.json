@@ -18,6 +18,7 @@
         "pxlrbt/filament-environment-indicator": "^3.3"
     },
     "require-dev": {
+        "deployer/deployer": "^7.5",
         "fakerphp/faker": "^1.23",
         "laravel/boost": "^1.8",
         "laravel/pail": "^1.2.2",
