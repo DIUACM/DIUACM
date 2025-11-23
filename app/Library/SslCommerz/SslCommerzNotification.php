@@ -237,7 +237,7 @@ class SslCommerzNotification extends AbstractSslCommerz
         $appUrl = env('APP_URL');
         
         if (empty($appUrl)) {
-            throw new \InvalidArgumentException('APP_URL environment variable is not set or is empty');
+            $appUrl = request()->getSchemeAndHttpHost();
         }
         
         $this->successUrl = rtrim($appUrl, '/').$this->config['success_url'];
@@ -253,7 +253,7 @@ class SslCommerzNotification extends AbstractSslCommerz
         $appUrl = env('APP_URL');
         
         if (empty($appUrl)) {
-            throw new \InvalidArgumentException('APP_URL environment variable is not set or is empty');
+            $appUrl = request()->getSchemeAndHttpHost();
         }
         
         $this->failedUrl = rtrim($appUrl, '/').$this->config['failed_url'];
@@ -269,7 +269,7 @@ class SslCommerzNotification extends AbstractSslCommerz
         $appUrl = env('APP_URL');
         
         if (empty($appUrl)) {
-            throw new \InvalidArgumentException('APP_URL environment variable is not set or is empty');
+            $appUrl = request()->getSchemeAndHttpHost();
         }
         
         $this->cancelUrl = rtrim($appUrl, '/').$this->config['cancel_url'];
@@ -285,7 +285,7 @@ class SslCommerzNotification extends AbstractSslCommerz
         $appUrl = env('APP_URL');
         
         if (empty($appUrl)) {
-            throw new \InvalidArgumentException('APP_URL environment variable is not set or is empty');
+            $appUrl = request()->getSchemeAndHttpHost();
         }
         
         $this->ipnUrl = rtrim($appUrl, '/').$this->config['ipn_url'];
