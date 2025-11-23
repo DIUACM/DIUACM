@@ -47,6 +47,13 @@ class InternalContestMyRegistrationResource extends JsonResource
                 'gateway' => $latestPayment->gateway,
                 'transaction_id' => $latestPayment->transaction_id,
                 'paid_at' => $latestPayment->paid_at,
+                'mfs_transaction' => $latestPayment->mfsManualTransaction ? [
+                    'sender_number' => $latestPayment->mfsManualTransaction->sender_number,
+                    'receiver_number' => $latestPayment->mfsManualTransaction->receiver_number,
+                    'mfs_transaction_id' => $latestPayment->mfsManualTransaction->mfs_transaction_id,
+                    'mfs_type' => $latestPayment->mfsManualTransaction->mfs_type->value,
+                    'amount' => (float) $latestPayment->mfsManualTransaction->amount,
+                ] : null,
             ] : null,
             'payment_history' => $this->payments->map(fn ($payment) => [
                 'id' => $payment->id,
@@ -55,6 +62,13 @@ class InternalContestMyRegistrationResource extends JsonResource
                 'gateway' => $payment->gateway,
                 'transaction_id' => $payment->transaction_id,
                 'paid_at' => $payment->paid_at,
+                'mfs_transaction' => $payment->mfsManualTransaction ? [
+                    'sender_number' => $payment->mfsManualTransaction->sender_number,
+                    'receiver_number' => $payment->mfsManualTransaction->receiver_number,
+                    'mfs_transaction_id' => $payment->mfsManualTransaction->mfs_transaction_id,
+                    'mfs_type' => $payment->mfsManualTransaction->mfs_type->value,
+                    'amount' => (float) $payment->mfsManualTransaction->amount,
+                ] : null,
             ]),
             'registered_at' => $this->created_at,
         ];

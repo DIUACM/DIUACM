@@ -143,6 +143,33 @@ export default function MyRegistrationPage({ registration }: Props) {
                                                 <p className="mb-1 text-xs text-muted-foreground">Transaction ID</p>
                                                 <p className="font-mono text-xs break-all">{payment.transaction_id}</p>
                                             </div>
+                                            {payment.mfs_transaction && (
+                                                <div className="space-y-3 rounded-lg border bg-muted/50 p-3">
+                                                    <p className="text-xs font-semibold text-muted-foreground uppercase">MFS Details</p>
+                                                    <div className="grid gap-2 text-sm">
+                                                        <div className="flex justify-between">
+                                                            <span className="text-muted-foreground">Type</span>
+                                                            <span className="font-medium uppercase">{payment.mfs_transaction.mfs_type}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-muted-foreground">From</span>
+                                                            <span className="font-mono text-xs">{payment.mfs_transaction.sender_number}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-muted-foreground">To</span>
+                                                            <span className="font-mono text-xs">{payment.mfs_transaction.receiver_number}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-muted-foreground">MFS Txn ID</span>
+                                                            <span className="font-mono text-xs">{payment.mfs_transaction.mfs_transaction_id}</span>
+                                                        </div>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-muted-foreground">Amount</span>
+                                                            <span className="font-medium">৳{payment.mfs_transaction.amount}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </>
                                     )}
 
@@ -317,18 +344,44 @@ function Badge({ status }: { status: string }) {
 
 function PaymentItem({ payment }: { payment: InternalContestMyRegistration['payment_history'][0] }) {
     return (
-        <div className="flex items-start justify-between gap-3 rounded-lg border bg-muted/30 p-3">
-            <div className="flex-1">
-                <div className="mb-1 flex items-center justify-between">
-                    <Badge status={payment.status} />
-                    <span className="text-sm font-bold">৳{payment.amount}</span>
+        <div className="rounded-lg border bg-muted/30 p-3">
+            <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                    <div className="mb-1 flex items-center justify-between">
+                        <Badge status={payment.status} />
+                        <span className="text-sm font-bold">৳{payment.amount}</span>
+                    </div>
+                    <p className="mb-1 text-xs text-muted-foreground">
+                        <span className="uppercase font-medium">{payment.gateway}</span>
+                        {payment.paid_at && <> • {formatDate(payment.paid_at)}</>}
+                    </p>
+                    <p className="font-mono text-xs text-muted-foreground">{payment.transaction_id}</p>
                 </div>
-                <p className="mb-1 text-xs text-muted-foreground">
-                    <span className="uppercase font-medium">{payment.gateway}</span>
-                    {payment.paid_at && <> • {formatDate(payment.paid_at)}</>}
-                </p>
-                <p className="font-mono text-xs text-muted-foreground">{payment.transaction_id}</p>
             </div>
+            {payment.mfs_transaction && (
+                <div className="mt-3 space-y-1.5 rounded border-t bg-muted/50 pt-3 text-xs">
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">MFS Type:</span>
+                        <span className="font-medium uppercase">{payment.mfs_transaction.mfs_type}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">From:</span>
+                        <span className="font-mono">{payment.mfs_transaction.sender_number}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">To:</span>
+                        <span className="font-mono">{payment.mfs_transaction.receiver_number}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">MFS Txn:</span>
+                        <span className="font-mono">{payment.mfs_transaction.mfs_transaction_id}</span>
+                    </div>
+                    <div className="flex justify-between">
+                        <span className="text-muted-foreground">MFS Amount:</span>
+                        <span className="font-medium">৳{payment.mfs_transaction.amount}</span>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

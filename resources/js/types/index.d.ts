@@ -274,6 +274,13 @@ export interface InternalContestMyRegistration {
         gateway: string;
         transaction_id: string;
         paid_at: string | null;
+        mfs_transaction: {
+            sender_number: string;
+            receiver_number: string;
+            mfs_transaction_id: string;
+            mfs_type: string;
+            amount: number;
+        } | null;
     } | null;
     payment_history: Array<{
         id: number;
@@ -282,6 +289,13 @@ export interface InternalContestMyRegistration {
         gateway: string;
         transaction_id: string;
         paid_at: string | null;
+        mfs_transaction: {
+            sender_number: string;
+            receiver_number: string;
+            mfs_transaction_id: string;
+            mfs_type: string;
+            amount: number;
+        } | null;
     }>;
     registered_at: string;
 }
