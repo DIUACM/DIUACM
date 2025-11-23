@@ -15,7 +15,8 @@
         "laravel/socialite": "^5.23",
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.11",
-        "pxlrbt/filament-environment-indicator": "^3.3"
+        "pxlrbt/filament-environment-indicator": "^3.3",
+        "sentry/sentry-laravel": "^4.19"
     },
     "require-dev": {
         "deployer/deployer": "^7.5",
