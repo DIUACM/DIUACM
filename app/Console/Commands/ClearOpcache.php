@@ -35,7 +35,7 @@ class ClearOpcache extends Command
             $this->info($response->body());
         } else {
             $this->error('Failed to clear OPcache.');
-            $this->error('Status: ' . $response->status());
+            $this->error('Status: '.$response->status());
         }
     }
 }

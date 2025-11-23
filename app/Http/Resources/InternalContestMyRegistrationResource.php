@@ -44,6 +44,7 @@ class InternalContestMyRegistrationResource extends JsonResource
             'payment' => $latestPayment ? [
                 'status' => $latestPayment->status->value,
                 'amount' => (float) $latestPayment->amount,
+                'gateway' => $latestPayment->gateway,
                 'transaction_id' => $latestPayment->transaction_id,
                 'paid_at' => $latestPayment->paid_at,
             ] : null,
@@ -51,6 +52,7 @@ class InternalContestMyRegistrationResource extends JsonResource
                 'id' => $payment->id,
                 'status' => $payment->status->value,
                 'amount' => (float) $payment->amount,
+                'gateway' => $payment->gateway,
                 'transaction_id' => $payment->transaction_id,
                 'paid_at' => $payment->paid_at,
             ]),

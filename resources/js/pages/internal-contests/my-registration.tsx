@@ -128,6 +128,10 @@ export default function MyRegistrationPage({ registration }: Props) {
                                                     <span className="text-muted-foreground">Status</span>
                                                     <Badge status={payment.status} />
                                                 </div>
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-muted-foreground">Gateway</span>
+                                                    <span className="font-medium uppercase">{payment.gateway}</span>
+                                                </div>
                                                 {payment.paid_at && (
                                                     <div className="flex justify-between text-sm">
                                                         <span className="text-muted-foreground">Paid On</span>
@@ -319,7 +323,10 @@ function PaymentItem({ payment }: { payment: InternalContestMyRegistration['paym
                     <Badge status={payment.status} />
                     <span className="text-sm font-bold">৳{payment.amount}</span>
                 </div>
-                {payment.paid_at && <p className="mb-1 text-xs text-muted-foreground">{formatDate(payment.paid_at)}</p>}
+                <p className="mb-1 text-xs text-muted-foreground">
+                    <span className="uppercase font-medium">{payment.gateway}</span>
+                    {payment.paid_at && <> • {formatDate(payment.paid_at)}</>}
+                </p>
                 <p className="font-mono text-xs text-muted-foreground">{payment.transaction_id}</p>
             </div>
         </div>

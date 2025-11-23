@@ -271,6 +271,7 @@ export interface InternalContestMyRegistration {
     payment: {
         status: 'pending' | 'paid' | 'failed' | 'canceled' | 'refunded' | 'under_manual_review';
         amount: number;
+        gateway: string;
         transaction_id: string;
         paid_at: string | null;
     } | null;
@@ -278,6 +279,7 @@ export interface InternalContestMyRegistration {
         id: number;
         status: 'pending' | 'paid' | 'failed' | 'canceled' | 'refunded' | 'under_manual_review';
         amount: number;
+        gateway: string;
         transaction_id: string;
         paid_at: string | null;
     }>;
