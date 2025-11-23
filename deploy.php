@@ -64,8 +64,24 @@ task('upload:assets', function () {
     $hostname = currentHost()->getHostname();
     $port = get('port');
     $releasePath = get('release_path');
+    $archiveName = 'build-assets.tar.gz';
 
-    runLocally("scp -r -P {$port} public/build {$user}@{$hostname}:{$releasePath}/public/");
+    // Create archive locally
+    writeln('Creating archive...');
+    runLocally("tar -czf {$archiveName} -C public build");
+
+    // Upload archive to server
+    writeln('Uploading archive...');
+    runLocally("scp -P {$port} {$archiveName} {$user}@{$hostname}:{$releasePath}/");
+
+    // Extract archive on server
+    writeln('Extracting archive on server...');
+    run("tar -xzf {$releasePath}/{$archiveName} -C {$releasePath}/public/");
+
+    // Clean up archive on both local and server
+    writeln('Cleaning up...');
+    runLocally("rm {$archiveName}");
+    run("rm {$releasePath}/{$archiveName}");
 })->desc('Upload built assets to server');
 
 // Skip npm tasks on server by overriding them
