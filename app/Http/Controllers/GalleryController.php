@@ -36,7 +36,7 @@ class GalleryController extends Controller
             ->withQueryString();
 
         return Inertia::render('gallery/index', [
-            'galleries' => GalleryResource::collection($galleries),
+            'galleries' => $galleries->through(fn ($gallery) => GalleryResource::make($gallery)->resolve()),
             'filters' => [
                 'search' => $request->get('search'),
             ],

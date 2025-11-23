@@ -40,7 +40,7 @@ class BlogController extends Controller
             ->withQueryString();
 
         return Inertia::render('blog/index', [
-            'blogPosts' => BlogResource::collection($blogPosts),
+            'blogPosts' => $blogPosts->through(fn ($post) => BlogResource::make($post)->resolve()),
             'filters' => [
                 'search' => $request->get('search'),
             ],

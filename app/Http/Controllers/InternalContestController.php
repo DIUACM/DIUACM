@@ -33,7 +33,7 @@ class InternalContestController extends Controller
             ->withQueryString();
 
         return Inertia::render('internal-contests/index', [
-            'contests' => InternalContestResource::collection($contests),
+            'contests' => $contests->through(fn ($contest) => InternalContestResource::make($contest)->resolve()),
             'filters' => [
                 'search' => $request->get('search'),
             ],

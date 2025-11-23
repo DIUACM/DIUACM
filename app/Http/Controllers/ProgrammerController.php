@@ -24,11 +24,11 @@ class ProgrammerController extends Controller
             })
             ->orderBy('max_cf_rating', 'desc')
             ->orderBy('name')
-            ->paginate(20)
+            ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('programmers/index', [
-            'programmers' => ProgrammerResource::collection($programmers),
+            'programmers' => $programmers->through(fn ($user) => ProgrammerResource::make($user)->resolve()),
             'filters' => [
                 'search' => $request->get('search'),
                 'department' => $request->get('department'),

@@ -44,7 +44,7 @@ class EventController extends Controller
             ->withQueryString();
 
         return Inertia::render('events/index', [
-            'events' => EventResource::collection($events),
+            'events' => $events->through(fn ($event) => EventResource::make($event)->resolve()),
             'filters' => [
                 'search' => $request->get('search'),
                 'type' => $request->get('type'),

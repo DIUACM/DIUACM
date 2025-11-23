@@ -33,7 +33,7 @@ class ContestController extends Controller
             ->withQueryString();
 
         return Inertia::render('contests/index', [
-            'contests' => ContestResource::collection($contests),
+            'contests' => $contests->through(fn ($contest) => ContestResource::make($contest)->resolve()),
             'filters' => [
                 'search' => $request->get('search'),
                 'contest_type' => $request->get('contest_type'),
