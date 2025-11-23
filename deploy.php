@@ -73,6 +73,12 @@ task('deploy:npm', function () {
     writeln('Skipping npm install on server (assets built locally)');
 });
 
+// Clear OPcache
+task('opcache:clear', function () {
+    writeln('Clearing OPcache...');
+    run('{{bin/php}} {{release_or_current_path}}/artisan opcache:clear');
+})->desc('Clear OPcache');
+
 // Hooks
 
 // Build assets locally before deployment starts
@@ -82,6 +88,6 @@ before('deploy', 'build:assets');
 after('deploy:vendors', 'upload:assets');
 
 // Clear OPcache after deployment
-after('deploy:success', 'artisan:opcache:clear');
+after('deploy:success', 'opcache:clear');
 
 after('deploy:failed', 'deploy:unlock');
