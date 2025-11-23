@@ -42,7 +42,6 @@ class InternalContestRegistrationPaymentController extends Controller
             ],
             'payment_config' => [
                 'sslcommerz_enabled' => $contest->sslcommerz_enabled,
-                'mfs_manual_enabled' => $contest->bkash_enabled || $contest->rocket_enabled || $contest->nagad_enabled,
             ],
         ]);
     }
@@ -53,7 +52,7 @@ class InternalContestRegistrationPaymentController extends Controller
     public function initiatePayment(Request $request, InternalContestRegistration $registration)
     {
         $validated = $request->validate([
-            'gateway' => 'required|string|in:sslcommerz,mfs_manual',
+            'gateway' => 'required|string|in:sslcommerz',
         ]);
 
         $this->authorizeRegistrationOwnership($registration);
@@ -139,61 +138,5 @@ class InternalContestRegistrationPaymentController extends Controller
         if (auth()->check() && $registration->user_id !== auth()->id()) {
             abort(403, 'Unauthorized access to this registration');
         }
-    }
-
-    /**
-     * Get MFS configuration for a registration
-     */
-    public function getMfsConfig(InternalContestRegistration $registration): array
-    {
-        $contest = $registration->internalContest;
-        $mfsTypes = [];
-        $receiverNumbers = [];
-        $instructions = [];
-
-        if ($contest->bkash_enabled && $contest->bkash_receiver_number) {
-            $mfsTypes[] = ['value' => 'bkash', 'label' => 'bKash'];
-            $receiverNumbers['bkash'] = $contest->bkash_receiver_number;
-            $instructions['bkash'] = $contest->bkash_instruction;
-        }
-
-        if ($contest->rocket_enabled && $contest->rocket_receiver_number) {
-            $mfsTypes[] = ['value' => 'rocket', 'label' => 'Rocket'];
-            $receiverNumbers['rocket'] = $contest->rocket_receiver_number;
-            $instructions['rocket'] = $contest->rocket_instruction;
-        }
-
-        if ($contest->nagad_enabled && $contest->nagad_receiver_number) {
-            $mfsTypes[] = ['value' => 'nagad', 'label' => 'Nagad'];
-            $receiverNumbers['nagad'] = $contest->nagad_receiver_number;
-            $instructions['nagad'] = $contest->nagad_instruction;
-        }
-
-        return [
-            'mfs_types' => $mfsTypes,
-            'receiver_numbers' => $receiverNumbers,
-            'instructions' => $instructions,
-            'payable_info' => [
-                'type' => $registration->getMorphClass(),
-                'name' => $registration->name ?? 'N/A',
-                'email' => $registration->email ?? 'N/A',
-                'contest_title' => $contest->title,
-            ],
-        ];
-    }
-
-    /**
-     * Get receiver number for a specific MFS type
-     */
-    public function getReceiverNumber(InternalContestRegistration $registration, string $mfsType): ?string
-    {
-        $contest = $registration->internalContest;
-
-        return match ($mfsType) {
-            'bkash' => $contest->bkash_receiver_number,
-            'rocket' => $contest->rocket_receiver_number,
-            'nagad' => $contest->nagad_receiver_number,
-            default => null,
-        };
     }
 }

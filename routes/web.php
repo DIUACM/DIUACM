@@ -117,11 +117,3 @@ Route::match(['get', 'post'], '/payments/callback/{gateway}', [PaymentController
 // IPN (Instant Payment Notification) endpoint - server-to-server
 Route::post('/payments/ipn/{gateway}', [PaymentController::class, 'handleIPN'])
     ->name('payment.ipn');
-
-// MFS Manual payment routes (auth required)
-Route::middleware('auth')->prefix('payments')->name('payment.')->group(function () {
-    Route::get('/mfs-manual', [PaymentController::class, 'showMfsManualForm'])
-        ->name('mfs-manual.show');
-    Route::post('/mfs-manual', [PaymentController::class, 'submitMfsManual'])
-        ->name('mfs-manual.submit');
-});

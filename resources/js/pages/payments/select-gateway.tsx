@@ -1,7 +1,7 @@
 import { initiatePayment } from '@/actions/App/Http/Controllers/InternalContestRegistrationPaymentController';
 import BlankLayout from '@/layouts/blank-layout';
 import { Head, useForm } from '@inertiajs/react';
-import { CreditCard, Smartphone, ShieldCheck, Lock } from 'lucide-react';
+import { CreditCard, ShieldCheck, Lock } from 'lucide-react';
 
 type Props = {
     registration: {
@@ -13,12 +13,11 @@ type Props = {
     };
     payment_config: {
         sslcommerz_enabled: boolean;
-        mfs_manual_enabled: boolean;
     };
 };
 
 export default function SelectGateway({ registration, payment_config }: Props) {
-    const form = useForm({ gateway: payment_config.sslcommerz_enabled ? 'sslcommerz' : 'mfs_manual' });
+    const form = useForm({ gateway: 'sslcommerz' });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -90,34 +89,7 @@ export default function SelectGateway({ registration, payment_config }: Props) {
                                 </label>
                             )}
 
-                            {/* MFS Manual */}
-                            {payment_config.mfs_manual_enabled && (
-                                <label className={`relative flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-200 group ${form.data.gateway === 'mfs_manual' ? 'border-blue-600 bg-blue-50/30' : 'border-gray-100 bg-white hover:border-gray-200'}`}>
-                                    <div className="flex items-center h-5 absolute right-4 top-1/2 -translate-y-1/2">
-                                        <input
-                                            type="radio"
-                                            name="gateway"
-                                            value="mfs_manual"
-                                            checked={form.data.gateway === 'mfs_manual'}
-                                            onChange={(e) => form.setData('gateway', e.target.value)}
-                                            className="h-5 w-5 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div className="flex-shrink-0 h-12 w-12 rounded-lg bg-pink-100 flex items-center justify-center text-pink-600">
-                                        <Smartphone className="h-6 w-6" />
-                                    </div>
-                                    <div className="ml-4 flex-1 pr-8">
-                                        <span className="block text-sm font-bold text-gray-900">
-                                            Manual Send Money
-                                        </span>
-                                        <span className="block text-xs text-gray-500 mt-0.5">
-                                            Manually send money to our personal number
-                                        </span>
-                                    </div>
-                                </label>
-                            )}
-
-                            {!payment_config.sslcommerz_enabled && !payment_config.mfs_manual_enabled && (
+                            {!payment_config.sslcommerz_enabled && (
                                 <div className="text-center py-8 text-gray-500">
                                     <p className="text-sm">No payment methods are currently available</p>
                                 </div>

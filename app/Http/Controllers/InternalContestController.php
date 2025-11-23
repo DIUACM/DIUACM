@@ -187,7 +187,6 @@ class InternalContestController extends Controller
                     $query->select('id', 'title', 'slug', 'description', 'registration_fee', 'registration_deadline', 'registration_start_time', 'semester');
                 },
                 'payments' => fn ($query) => $query->latest()->limit(5),
-                'payments.mfsManualTransaction',
             ])
             ->first();
 

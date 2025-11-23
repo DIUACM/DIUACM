@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Contracts\Payable;
 use App\Contracts\PaymentGatewayInterface;
 use App\Models\Payment;
-use App\Services\PaymentGateways\MfsManualGateway;
 use App\Services\PaymentGateways\SslCommerzGateway;
 
 class PaymentService
@@ -24,7 +23,6 @@ class PaymentService
     {
         // $this->gateways['bkash'] = app(BkashGateway::class);
         $this->gateways['sslcommerz'] = app(SslCommerzGateway::class);
-        $this->gateways['mfs_manual'] = app(MfsManualGateway::class);
     }
 
     /**
