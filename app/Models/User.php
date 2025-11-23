@@ -117,6 +117,18 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
     }
 
     /**
+     * Scope a query to only programmers (users with at least one programming handle).
+     */
+    public function scopeHasProgrammingHandle($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('codeforces_handle', '!=', '')
+                ->orWhere('atcoder_handle', '!=', '')
+                ->orWhere('vjudge_handle', '!=', '');
+        });
+    }
+
+    /**
      * Scope a query to search users by various fields.
      */
     public function scopeSearch($query, ?string $search)
