@@ -4,8 +4,6 @@ namespace App\Filament\ContestAdmin\Resources\MfsManualTransactions\Schemas;
 
 use App\Enums\MfsTransactionStatus;
 use App\Enums\MfsType;
-use App\Models\Payment;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Components\Grid;
@@ -18,20 +16,6 @@ class MfsManualTransactionForm
     {
         return $schema
             ->components([
-                Section::make('Payment Reference')
-                    ->columnSpanFull()
-                    ->schema([
-                        Select::make('payment_id')
-                            ->label('Payment')
-                            ->relationship('payment', 'transaction_id')
-                            ->getOptionLabelFromRecordUsing(fn (Payment $record): string => "{$record->transaction_id} - ৳{$record->amount} ({$record->status->getLabel()})")
-                            ->searchable(['transaction_id', 'gateway_transaction_id'])
-                            ->preload()
-                            ->required()
-                            ->native(false)
-                            ->helperText('Select the payment this MFS transaction is for'),
-                    ]),
-
                 Section::make('MFS Transaction Details')
                     ->columnSpanFull()
                     ->schema([
