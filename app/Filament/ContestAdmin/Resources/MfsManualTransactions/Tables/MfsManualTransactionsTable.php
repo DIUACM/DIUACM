@@ -4,10 +4,14 @@ namespace App\Filament\ContestAdmin\Resources\MfsManualTransactions\Tables;
 
 use App\Enums\MfsTransactionStatus;
 use App\Enums\MfsType;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\ToggleButtons;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -34,7 +38,58 @@ class MfsManualTransactionsTable
                     ->label('Status')
                     ->badge()
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->action(
+                        Action::make('updateStatus')
+                            ->label('Update Status')
+                            ->modalHeading(fn ($record) => 'Update MFS Transaction Status')
+                            ->modalDescription(fn ($record) => "Transaction ID: {$record->mfs_transaction_id}")
+                            ->schema([
+                                Section::make('Transaction Information')
+                                    ->schema([
+                                        Grid::make(2)
+                                            ->schema([
+                                                \Filament\Infolists\Components\TextEntry::make('mfs_type')
+                                                    ->label('MFS Provider')
+                                                    ->badge(),
+                                                \Filament\Infolists\Components\TextEntry::make('amount')
+                                                    ->label('Amount')
+                                                    ->money('BDT')
+                                                    ->weight('bold'),
+                                            ]),
+                                        Grid::make(2)
+                                            ->schema([
+                                                \Filament\Infolists\Components\TextEntry::make('sender_number')
+                                                    ->label('Sender Number')
+                                                    ->copyable(),
+                                                \Filament\Infolists\Components\TextEntry::make('receiver_number')
+                                                    ->label('Receiver Number')
+                                                    ->copyable(),
+                                            ]),
+                                        \Filament\Infolists\Components\TextEntry::make('mfs_transaction_id')
+                                            ->label('MFS Transaction ID')
+                                            ->copyable()
+                                            ->weight('medium'),
+                                    ])
+                                    ->columnSpanFull(),
+                                Section::make('Update Status')
+                                    ->schema([
+                                        ToggleButtons::make('status')
+                                            ->label('Verification Status')
+                                            ->options(MfsTransactionStatus::class)
+                                            ->required()
+                                            ->inline()
+                                            ->default(fn ($record) => $record->status),
+                                    ])
+                                    ->columnSpanFull(),
+                            ])
+                            ->action(function ($record, array $data) {
+                                $record->update(['status' => $data['status']]);
+                            })
+                            ->successNotificationTitle('Status updated successfully')
+                            ->modalSubmitActionLabel('Update Status')
+                            ->modalWidth('2xl')
+                    ),
                 TextColumn::make('sender_number')
                     ->label('Sender Number')
                     ->searchable()
