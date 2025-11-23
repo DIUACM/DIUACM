@@ -81,4 +81,7 @@ before('deploy', 'build:assets');
 // Upload assets after the release is prepared but before going live
 after('deploy:vendors', 'upload:assets');
 
+// Clear OPcache after deployment
+after('deploy:success', 'artisan:opcache:clear');
+
 after('deploy:failed', 'deploy:unlock');
