@@ -66,21 +66,17 @@ export default function MfsManual({ payment, payable, receiver_numbers, instruct
                 <div className="w-full max-w-md bg-white sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col h-screen sm:h-auto relative">
                     
                     {/* Top Bar */}
-                    <div className="bg-slate-900 text-white p-6 pb-16 relative overflow-hidden">
+                    <div className="bg-slate-900 text-white p-6 pb-10 relative overflow-hidden">
                         {/* Decorative circles */}
                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 rounded-full blur-2xl -mr-10 -mt-10"></div>
                         <div className="absolute bottom-0 left-0 w-24 h-24 bg-purple-500/20 rounded-full blur-2xl -ml-10 -mb-10"></div>
 
-                        <div className="relative z-10 flex items-center justify-between mb-8">
+                        <div className="relative z-10 flex items-center justify-between">
                             <button onClick={() => window.history.back()} className="p-2 -ml-2 hover:bg-white/10 rounded-full transition-colors">
                                 <ArrowLeft className="h-5 w-5" />
                             </button>
                             <span className="font-semibold tracking-wide text-sm uppercase opacity-80">Send Money</span>
                             <div className="w-9"></div> {/* Spacer */}
-                        </div>
-                        <div className="relative z-10 text-center">
-                            <p className="text-blue-200 text-xs font-medium uppercase tracking-wider mb-2">Total Amount</p>
-                            <h1 className="text-4xl font-bold tracking-tight">৳{payment.amount}</h1>
                         </div>
                     </div>
 
