@@ -352,7 +352,7 @@ function PaymentItem({ payment }: { payment: InternalContestMyRegistration['paym
                         <span className="text-sm font-bold">৳{payment.amount}</span>
                     </div>
                     <p className="mb-1 text-xs text-muted-foreground">
-                        <span className="uppercase font-medium">{payment.gateway}</span>
+                        <span className="font-medium uppercase">{payment.gateway}</span>
                         {payment.paid_at && <> • {formatDate(payment.paid_at)}</>}
                     </p>
                     <p className="font-mono text-xs text-muted-foreground">{payment.transaction_id}</p>

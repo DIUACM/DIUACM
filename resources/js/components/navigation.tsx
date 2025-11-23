@@ -20,15 +20,31 @@ import programmers from '@/routes/programmers';
 import trackers from '@/routes/trackers';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Archive, BarChart3, Calendar, ChevronDown, FileText, Home, Image, Info, KeyRound, LogIn, LogOut, Mail, Menu, Trophy, User, Users, X } from 'lucide-react';
+import {
+    Archive,
+    BarChart3,
+    Calendar,
+    ChevronDown,
+    FileText,
+    Home,
+    Image,
+    Info,
+    KeyRound,
+    LogIn,
+    LogOut,
+    Mail,
+    Menu,
+    Trophy,
+    User,
+    Users,
+    X,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppearanceToggleDropdown from './appearance-dropdown';
 
 // Navigation structure with categories
 const navigationCategories = {
-    main: [
-        { name: 'Home', href: home.url(), icon: Home },
-    ],
+    main: [{ name: 'Home', href: home.url(), icon: Home }],
     activities: {
         label: 'Activities',
         items: [
