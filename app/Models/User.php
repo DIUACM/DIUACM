@@ -91,7 +91,7 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
     public function rankLists()
     {
         return $this->belongsToMany(RankList::class, 'rank_list_user')
-            ->withPivot('score');
+            ->withPivot('score', 'position');
     }
 
     public function teams()
@@ -142,5 +142,31 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
     public function getRouteKeyName(): string
     {
         return 'username';
+    }
+
+    /**
+     * Get the cached avatar URL for the user.
+     */
+    public function getAvatarUrlAttribute(): string
+    {
+        return cache()->remember(
+            key: "user.{$this->id}.avatar",
+            ttl: now()->addDay(),
+            callback: fn () => $this->getFirstMediaUrl('profile_picture')
+        );
+    }
+
+    /**
+     * Clear avatar cache when user is updated.
+     */
+    protected static function booted(): void
+    {
+        static::updated(function (User $user) {
+            cache()->forget("user.{$user->id}.avatar");
+        });
+
+        static::deleted(function (User $user) {
+            cache()->forget("user.{$user->id}.avatar");
+        });
     }
 }

@@ -41,7 +41,7 @@ class UpdateProfileRequest extends FormRequest
             'vjudge_handle' => ['nullable', 'string', 'max:50'],
             'department' => ['nullable', 'string', 'max:100'],
             'student_id' => ['nullable', 'string', 'max:20'],
-            'profile_picture' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
         ];
     }
 
@@ -60,9 +60,9 @@ class UpdateProfileRequest extends FormRequest
             'username.max' => 'Username must not exceed 20 characters.',
             'username.regex' => 'Username can only contain letters, numbers, underscores, and hyphens.',
             'username.unique' => 'This username is already taken.',
-            'profile_picture.image' => 'Profile picture must be an image.',
-            'profile_picture.mimes' => 'Profile picture must be a JPEG, PNG, JPG, or GIF file.',
-            'profile_picture.max' => 'Profile picture must not exceed 2MB.',
+            'avatar.image' => 'Avatar must be an image.',
+            'avatar.mimes' => 'Avatar must be a JPEG, PNG, JPG, or GIF file.',
+            'avatar.max' => 'Avatar must not exceed 2MB.',
         ];
     }
 }

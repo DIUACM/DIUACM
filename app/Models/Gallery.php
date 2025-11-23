@@ -23,12 +23,14 @@ class Gallery extends Model implements HasMedia
         'slug',
         'description',
         'status',
+        'show_in_homepage',
     ];
 
     protected function casts(): array
     {
         return [
             'status' => VisibilityStatus::class,
+            'show_in_homepage' => 'boolean',
         ];
     }
 
@@ -46,7 +48,7 @@ class Gallery extends Model implements HasMedia
             ->registerMediaConversions(function (?Media $media = null) {
                 $this
                     ->addMediaConversion('thumb')
-                    ->fit(Fit::Contain, 500, 300)
+                    ->fit(Fit::Contain, 1000, 600)
                     ->queued();
             });
     }

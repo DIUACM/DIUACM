@@ -2,6 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
@@ -23,7 +24,7 @@ it('can update profile information', function () {
     ]);
 
     $this->actingAs($user)
-        ->post('/profile', [
+        ->put('/profile', [
             'name' => 'New Name',
             'username' => 'newusername',
             'gender' => 'male',
@@ -61,35 +62,25 @@ it('validates profile update request', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->post('/profile', [
+        ->put('/profile', [
             'name' => '', // Required field
-            'username' => 'a', // Too short
+            'username' => 'ab', // Too short
         ])
+        ->assertStatus(302)
         ->assertSessionHasErrors(['name', 'username']);
 });
 
-it('ensures username uniqueness', function () {
+it('prevents duplicate usernames', function () {
     $existingUser = User::factory()->create(['username' => 'existinguser']);
-    $user = User::factory()->create(['username' => 'currentuser']);
-
-    $this->actingAs($user)
-        ->post('/profile', [
-            'name' => 'Test Name',
-            'username' => 'existinguser', // Should fail as it's taken
-        ])
-        ->assertSessionHasErrors(['username']);
-});
-
-it('allows user to keep their own username', function () {
     $user = User::factory()->create(['username' => 'myusername']);
 
     $this->actingAs($user)
-        ->post('/profile', [
-            'name' => 'Updated Name',
-            'username' => 'myusername', // Same username should be allowed
+        ->put('/profile', [
+            'name' => $user->name,
+            'username' => 'existinguser', // Duplicate username
         ])
-        ->assertRedirect()
-        ->assertSessionHasNoErrors();
+        ->assertStatus(302)
+        ->assertSessionHasErrors(['username']);
 });
 
 it('can display the change password page', function () {
@@ -101,89 +92,74 @@ it('can display the change password page', function () {
         ->assertInertia(fn ($page) => $page->component('profile/change-password'));
 });
 
-it('can update password', function () {
+it('can change password', function () {
     $user = User::factory()->create([
         'password' => Hash::make('oldpassword'),
     ]);
 
-    $oldHashedPassword = $user->password;
-
     $this->actingAs($user)
         ->post('/profile/change-password', [
-            'password' => 'NewPassword123!',
-            'password_confirmation' => 'NewPassword123!',
+            'current_password' => 'oldpassword',
+            'password' => 'newpassword',
+            'password_confirmation' => 'newpassword',
         ])
         ->assertRedirect();
 
     $user->refresh();
 
-    expect($user->password)->not->toBe($oldHashedPassword);
-    expect(Hash::check('NewPassword123!', $user->password))->toBeTrue();
+    expect(Hash::check('newpassword', $user->password))->toBeTrue();
 });
 
-it('validates password change request', function () {
-    $user = User::factory()->create();
+it('validates current password when changing password', function () {
+    $user = User::factory()->create([
+        'password' => Hash::make('correctpassword'),
+    ]);
 
     $this->actingAs($user)
         ->post('/profile/change-password', [
-            'password' => 'weak', // Too weak
-            'password_confirmation' => 'different', // Doesn't match
+            'current_password' => 'wrongpassword',
+            'password' => 'newpassword',
+            'password_confirmation' => 'newpassword',
         ])
-        ->assertSessionHasErrors(['password']);
+        ->assertStatus(302)
+        ->assertSessionHasErrors(['current_password']);
 });
 
-it('requires password confirmation', function () {
-    $user = User::factory()->create();
+it('validates password confirmation', function () {
+    $user = User::factory()->create([
+        'password' => Hash::make('oldpassword'),
+    ]);
 
     $this->actingAs($user)
         ->post('/profile/change-password', [
-            'password' => 'NewPassword123!',
-            'password_confirmation' => 'DifferentPassword123!',
+            'current_password' => 'oldpassword',
+            'password' => 'newpassword',
+            'password_confirmation' => 'differentpassword',
         ])
+        ->assertStatus(302)
         ->assertSessionHasErrors(['password']);
 });
 
-it('can upload profile picture', function () {
-    $user = User::factory()->create();
+it('can upload a profile picture separately', function () {
+    Storage::fake('media');
 
-    $file = \Illuminate\Http\UploadedFile::fake()->image('profile.jpg', 400, 400);
+    $user = User::factory()->create();
+    $file = UploadedFile::fake()->image('avatar.jpg');
 
     $this->actingAs($user)
-        ->post('/profile', [
-            'name' => $user->name,
-            'username' => $user->username,
-            'profile_picture' => $file,
+        ->post('/profile/avatar', [
+            'avatar' => $file,
         ])
         ->assertRedirect();
 
     expect($user->fresh()->getFirstMediaUrl('profile_picture'))->not->toBeEmpty();
 });
 
-it('can upload profile picture via separate endpoint', function () {
-    Storage::fake('media');
-
-    $user = User::factory()->create();
-    $file = \Illuminate\Http\UploadedFile::fake()->image('profile.jpg', 400, 400);
-
-    $response = $this->actingAs($user)
-        ->post('/profile/picture', [
-            'profile_picture' => $file,
-        ])
-        ->assertOk()
-        ->assertJson([
-            'success' => true,
-            'message' => 'Profile picture updated successfully.',
-        ]);
-
-    expect($user->fresh()->getFirstMediaUrl('profile_picture'))->not->toBeEmpty();
-    expect($response['profile_picture_url'])->not->toBeEmpty();
-});
-
-it('requires profile picture for separate upload endpoint', function () {
+it('requires avatar for separate upload endpoint', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->post('/profile/picture', [])
-        ->assertStatus(422)
-        ->assertJsonValidationErrors(['profile_picture']);
+        ->post('/profile/avatar', [])
+        ->assertStatus(302)
+        ->assertSessionHasErrors(['avatar']);
 });

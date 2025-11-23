@@ -7,11 +7,16 @@ use App\Enums\ParticipationScope;
 use App\Enums\VisibilityStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Event extends Model
+class Event extends Model implements HasMedia
 {
     /** @use HasFactory<\Database\Factories\EventFactory> */
     use HasFactory;
+
+    use InteractsWithMedia;
 
     protected $fillable = [
         'title',
@@ -141,5 +146,18 @@ class Event extends Model
         return $this->belongsToMany(User::class, 'event_user_stats')
             ->withPivot(['solve_count', 'upsolve_count', 'participation'])
             ->withTimestamps();
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this
+            ->addMediaCollection('event_images')
+            ->useDisk(diskName: 'media')
+            ->registerMediaConversions(function (?Media $media = null) {
+                $this
+                    ->addMediaConversion('thumb')
+                    ->width(1000)
+                    ->queued();
+            });
     }
 }

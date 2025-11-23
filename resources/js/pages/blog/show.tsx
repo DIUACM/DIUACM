@@ -1,25 +1,11 @@
 import { Separator } from '@/components/ui/separator';
 import MainLayout from '@/layouts/main-layout';
+import type { BlogPostDetails } from '@/types';
 import { Head } from '@inertiajs/react';
 import { Calendar, User } from 'lucide-react';
 
-type BlogPost = {
-    id: number;
-    title: string;
-    slug: string;
-    content: string;
-    author: {
-        name: string;
-        username: string;
-    };
-    published_at: string;
-    is_featured: boolean;
-    featured_image_url?: string;
-    reading_time: number;
-};
-
 type BlogShowPageProps = {
-    blogPost: BlogPost;
+    blogPost: BlogPostDetails;
 };
 
 export default function BlogShowPage({ blogPost }: BlogShowPageProps) {
@@ -27,7 +13,7 @@ export default function BlogShowPage({ blogPost }: BlogShowPageProps) {
         <MainLayout>
             <Head title={blogPost.title} />
 
-            <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+            <div className="container mx-auto px-4 py-8">
                 <div>
                     {/* Blog post header */}
                     <div className="mb-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">

@@ -4,11 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Cropper from 'react-easy-crop';
 
 interface ImageCropperProps {
-    onComplete: (croppedImage: string) => Promise<void>;
+    onComplete: (croppedImageFile: File) => Promise<void>;
     onCancel: () => void;
 }
 
@@ -34,6 +34,15 @@ export function ImageCropper({ onComplete, onCancel }: ImageCropperProps) {
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<CropArea | null>(null);
     const [isDragging, setIsDragging] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Auto-trigger file picker when modal opens
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            fileInputRef.current?.click();
+        }, 100);
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -62,45 +71,7 @@ export function ImageCropper({ onComplete, onCancel }: ImageCropperProps) {
         setCroppedAreaPixels(croppedAreaPixels);
     }, []);
 
-    const compressImage = async (dataUrl: string, maxSizeMB: number): Promise<string> => {
-        const image = new Image();
-        image.src = dataUrl;
-
-        return new Promise((resolve) => {
-            image.onload = () => {
-                let quality = 0.9;
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d')!;
-
-                // Start with original dimensions
-                let width = image.width;
-                let height = image.height;
-
-                // Scale down if dimensions are too large
-                const MAX_DIMENSION = 1200;
-                if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
-                    const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height);
-                    width *= ratio;
-                    height *= ratio;
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                ctx.drawImage(image, 0, 0, width, height);
-
-                // Compress with reducing quality until size is under maxSizeMB
-                let compressedDataUrl;
-                do {
-                    compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-                    quality -= 0.1;
-                } while (quality > 0.1 && (compressedDataUrl.length * 3) / 4 / (1024 * 1024) > maxSizeMB);
-
-                resolve(compressedDataUrl);
-            };
-        });
-    };
-
-    const getCroppedImage = async (imageSrc: string, pixelCrop: CropArea): Promise<string> => {
+    const getCroppedImage = async (imageSrc: string, pixelCrop: CropArea): Promise<File> => {
         const image = new Image();
         image.src = imageSrc;
 
@@ -110,14 +81,37 @@ export function ImageCropper({ onComplete, onCancel }: ImageCropperProps) {
                 const ctx = canvas.getContext('2d');
                 if (!ctx) throw new Error('No 2d context');
 
-                canvas.width = pixelCrop.width;
-                canvas.height = pixelCrop.height;
+                // Maximum resolution for the final image
+                const MAX_DIMENSION = 800;
 
-                ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, pixelCrop.width, pixelCrop.height);
+                // Calculate scaled dimensions while maintaining aspect ratio
+                let finalWidth = pixelCrop.width;
+                let finalHeight = pixelCrop.height;
 
-                const croppedDataUrl = canvas.toDataURL('image/jpeg');
-                const compressedDataUrl = await compressImage(croppedDataUrl, 1); // 1MB limit
-                resolve(compressedDataUrl);
+                if (finalWidth > MAX_DIMENSION || finalHeight > MAX_DIMENSION) {
+                    const ratio = Math.min(MAX_DIMENSION / finalWidth, MAX_DIMENSION / finalHeight);
+                    finalWidth = Math.round(finalWidth * ratio);
+                    finalHeight = Math.round(finalHeight * ratio);
+                }
+
+                canvas.width = finalWidth;
+                canvas.height = finalHeight;
+
+                // Draw the cropped portion, scaled to final dimensions
+                ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, finalWidth, finalHeight);
+
+                // Convert canvas to blob with compression
+                canvas.toBlob(
+                    async (blob) => {
+                        if (!blob) throw new Error('Failed to create blob');
+
+                        // Create a File object from the blob
+                        const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
+                        resolve(file);
+                    },
+                    'image/jpeg',
+                    0.9, // Quality setting (0.9 = 90% quality)
+                );
             };
         });
     };
@@ -126,8 +120,8 @@ export function ImageCropper({ onComplete, onCancel }: ImageCropperProps) {
         if (image && croppedAreaPixels && !isProcessing) {
             try {
                 setIsProcessing(true);
-                const croppedImage = await getCroppedImage(image, croppedAreaPixels);
-                await onComplete(croppedImage);
+                const croppedImageFile = await getCroppedImage(image, croppedAreaPixels);
+                await onComplete(croppedImageFile);
             } catch (error) {
                 console.error('Error saving image:', error);
             } finally {
@@ -146,6 +140,7 @@ export function ImageCropper({ onComplete, onCancel }: ImageCropperProps) {
                 <div className="space-y-6">
                     {!image ? (
                         <div
+                            onClick={() => fileInputRef.current?.click()}
                             onDrop={handleDrop}
                             onDragOver={(e) => {
                                 e.preventDefault();
@@ -163,13 +158,19 @@ export function ImageCropper({ onComplete, onCancel }: ImageCropperProps) {
                                 'cursor-pointer',
                             )}
                         >
-                            <p className="text-center text-sm text-muted-foreground">Drag and drop your image here, or click to select</p>
-                            <Button asChild variant="secondary">
-                                <label>
-                                    Choose Image
-                                    <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-                                </label>
-                            </Button>
+                            <svg className="h-12 w-12 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                            </svg>
+                            <div className="text-center">
+                                <p className="mb-1 text-sm font-medium text-slate-900 dark:text-white">Click to upload or drag and drop</p>
+                                <p className="text-xs text-muted-foreground">PNG, JPG, GIF up to 2MB</p>
+                            </div>
+                            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                         </div>
                     ) : (
                         <div className="space-y-6">
@@ -198,6 +199,8 @@ export function ImageCropper({ onComplete, onCancel }: ImageCropperProps) {
                                     onClick={() => {
                                         setImage(null);
                                         setZoom(1);
+                                        // Trigger file picker again after clearing
+                                        setTimeout(() => fileInputRef.current?.click(), 100);
                                     }}
                                     disabled={isProcessing}
                                 >

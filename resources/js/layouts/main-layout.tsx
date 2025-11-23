@@ -1,13 +1,34 @@
+// import Footer from '@/components/footer';
+// import Navigation from '@/components/navigation';
 import Footer from '@/components/footer';
 import Navigation from '@/components/navigation';
-import { ReactNode } from 'react';
-import { Toaster } from 'sonner';
+import type { SharedData } from '@/types';
+import { usePage } from '@inertiajs/react';
+import { useEffect, type ReactNode } from 'react';
+import { toast, Toaster } from 'sonner';
 
 interface MainLayoutProps {
     children: ReactNode;
 }
 
 export default function MainLayout({ children }: MainLayoutProps) {
+    const { flash } = usePage<SharedData>().props;
+
+    useEffect(() => {
+        if (flash?.success) {
+            toast.success(flash.success);
+        }
+        if (flash?.error) {
+            toast.error(flash.error);
+        }
+        if (flash?.info) {
+            toast.info(flash.info);
+        }
+        if (flash?.warning) {
+            toast.warning(flash.warning);
+        }
+    }, [flash]);
+
     return (
         <>
             {/* Background elements */}
@@ -20,6 +41,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             <Navigation />
 
             {children}
+
             <Footer />
 
             <Toaster position="top-right" expand={true} richColors closeButton />

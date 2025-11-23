@@ -1,31 +1,12 @@
-import { BlogCard, BlogListItem } from '@/components/blog/blog-card';
+import { BlogCard } from '@/components/blog/blog-card';
 import { BlogFilters } from '@/components/blog/blog-filters';
 import { CustomPagination } from '@/components/ui/custom-pagination';
 import MainLayout from '@/layouts/main-layout';
+import type { BlogPost, PaginatedData } from '@/types';
 import { Head } from '@inertiajs/react';
 
-type PaginatedBlogs = {
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    from: number;
-    to: number;
-    data: BlogListItem[];
-    first_page_url: string;
-    last_page_url: string;
-    next_page_url: string | null;
-    prev_page_url: string | null;
-    path: string;
-    links: Array<{
-        url: string | null;
-        label: string;
-        active: boolean;
-    }>;
-};
-
 type BlogPageProps = {
-    blogPosts: PaginatedBlogs;
+    blogPosts: PaginatedData<BlogPost>;
     filters: {
         search?: string;
     };
@@ -57,7 +38,7 @@ export default function BlogPage({ blogPosts, filters }: BlogPageProps) {
                 ) : (
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {blogPosts.data.map((blog) => (
-                            <BlogCard key={blog.id} blog={blog} />
+                            <BlogCard key={blog.slug} blog={blog} />
                         ))}
                     </div>
                 )}

@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Filament\Forms;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Forms\Components\TextInput::configureUsing(function (Forms\Components\TextInput $textInput): void {
+            $textInput->dehydrateStateUsing(function (?string $state): ?string {
+                return is_string($state) ? trim($state) : $state;
+            });
+        });
     }
 }

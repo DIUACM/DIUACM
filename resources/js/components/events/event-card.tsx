@@ -1,17 +1,8 @@
 import { Badge } from '@/components/ui/badge';
+import type { Event } from '@/types';
 import { Link } from '@inertiajs/react';
 import { isAfter, isWithinInterval } from 'date-fns';
 import { ArrowUpRight, CalendarDays, Clock, Users } from 'lucide-react';
-
-export type EventListItem = {
-    id: number;
-    title: string;
-    starting_at: string;
-    ending_at: string;
-    participation_scope: string;
-    type: string;
-    attendees_count?: number;
-};
 
 export function formatDateRange(startIso: string, endIso: string) {
     const start = new Date(startIso);
@@ -64,7 +55,7 @@ export function humanizeScope(v?: string) {
 }
 
 type Props = {
-    event: EventListItem;
+    event: Event;
 };
 
 export function EventCard({ event }: Props) {

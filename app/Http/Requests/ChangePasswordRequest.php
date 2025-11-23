@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class ChangePasswordRequest extends FormRequest
 {
@@ -23,11 +24,12 @@ class ChangePasswordRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'password' => [
-                'required',
-                'confirmed',
-                'min:8',
-            ],
+            'current_password' => ['required', 'string', function ($attribute, $value, $fail) {
+                if (! Hash::check($value, Auth::user()->password)) {
+                    $fail('The current password is incorrect.');
+                }
+            }],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ];
     }
 
@@ -39,9 +41,10 @@ class ChangePasswordRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'password.required' => 'Password is required.',
+            'current_password.required' => 'Current password is required.',
+            'password.required' => 'New password is required.',
+            'password.min' => 'New password must be at least 8 characters long.',
             'password.confirmed' => 'Password confirmation does not match.',
-            'password.min' => 'Password must be at least 8 characters long.',
         ];
     }
 }
