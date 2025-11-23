@@ -1,4 +1,4 @@
-import { initiateRegistrationPayment } from '@/actions/App/Http/Controllers/PaymentController';
+import { initiatePayment } from '@/actions/App/Http/Controllers/InternalContestRegistrationPaymentController';
 import BlankLayout from '@/layouts/blank-layout';
 import { Head, useForm } from '@inertiajs/react';
 import { CreditCard, Smartphone, ShieldCheck, Lock } from 'lucide-react';
@@ -22,7 +22,7 @@ export default function SelectGateway({ registration, payment_config }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        form.post(initiateRegistrationPayment.url({ registration: registration.id }));
+        form.post(initiatePayment.url({ registration: registration.id }));
     };
 
     return (
