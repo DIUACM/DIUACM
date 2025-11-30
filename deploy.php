@@ -64,14 +64,36 @@ task('upload:assets', function () {
     $hostname = currentHost()->getHostname();
     $port = get('port');
     $releasePath = get('release_path');
+    $archiveName = 'build-assets.tar.gz';
 
-    runLocally("scp -r -P {$port} public/build {$user}@{$hostname}:{$releasePath}/public/");
+    // Create archive locally
+    writeln('Creating archive...');
+    runLocally("tar -czf {$archiveName} -C public build");
+
+    // Upload archive to server
+    writeln('Uploading archive...');
+    runLocally("scp -P {$port} {$archiveName} {$user}@{$hostname}:{$releasePath}/");
+
+    // Extract archive on server
+    writeln('Extracting archive on server...');
+    run("tar -xzf {$releasePath}/{$archiveName} -C {$releasePath}/public/");
+
+    // Clean up archive on both local and server
+    writeln('Cleaning up...');
+    runLocally("rm {$archiveName}");
+    run("rm {$releasePath}/{$archiveName}");
 })->desc('Upload built assets to server');
 
 // Skip npm tasks on server by overriding them
 task('deploy:npm', function () {
     writeln('Skipping npm install on server (assets built locally)');
 });
+
+// Clear OPcache
+task('opcache:clear', function () {
+    writeln('Clearing OPcache...');
+    run('{{bin/php}} {{release_or_current_path}}/artisan opcache:clear');
+})->desc('Clear OPcache');
 
 // Hooks
 
@@ -80,5 +102,8 @@ before('deploy', 'build:assets');
 
 // Upload assets after the release is prepared but before going live
 after('deploy:vendors', 'upload:assets');
+
+// Clear OPcache after deployment
+after('deploy:success', 'opcache:clear');
 
 after('deploy:failed', 'deploy:unlock');

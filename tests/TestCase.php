@@ -3,7 +3,6 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Illuminate\Support\Facades\Artisan;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -11,7 +10,6 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        // Clear all Laravel caches before each test
-        Artisan::call('optimize:clear');
+        $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class);
     }
 }

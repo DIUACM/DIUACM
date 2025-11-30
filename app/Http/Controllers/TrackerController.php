@@ -3,46 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Enums\VisibilityStatus;
+use App\Http\Resources\TrackerDetailsResource;
+use App\Http\Resources\TrackerResource;
 use App\Models\EventUserStat;
 use App\Models\RankList;
 use App\Models\Tracker;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use RalphJSmit\Laravel\SEO\Support\SEOData;
 
 class TrackerController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(): Response
     {
         $trackers = Tracker::query()
-            ->select(['id', 'title', 'slug', 'description'])
             ->published()
-            ->search($request->get('search'))
             ->orderBy('order')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10)
-            ->withQueryString();
-
-        $search = $request->get('search');
-        $seoDescription = $search
-            ? "Search results for '{$search}' in trackers. Track competitive programming performance across various contests and events."
-            : 'View performance trackers and leaderboards for competitive programming contests and events at DIU ACM.';
+            ->orderBy('title')
+            ->select('id', 'title', 'slug', 'description')
+            ->get();
 
         return Inertia::render('trackers/index', [
-            'trackers' => $trackers,
-            'filters' => [
-                'search' => $search,
-            ],
-        ])->withViewData([
-            'SEOData' => new SEOData(
-                title: $search ? "Search: {$search}" : 'Trackers',
-                description: $seoDescription,
-            ),
+            'trackers' => TrackerResource::collection($trackers)->resolve(),
         ]);
     }
 
@@ -70,7 +54,10 @@ class TrackerController extends Controller
                 $selectedRankList = $tracker->rankLists->first();
             }
             if (! $selectedRankList) {
-                abort(404);
+                $tracker->selectedRankList = null;
+                $tracker->availableRankLists = [];
+
+                return $tracker;
             }
 
             $selectedRankList = RankList::query()
@@ -104,51 +91,134 @@ class TrackerController extends Controller
 
             $selectedRankList->setRelation('users', $selectedRankList->users->sortByDesc(fn ($u) => (float) ($u->pivot->score ?? 0))->values());
 
-            // Process users for frontend display
-            $processedUsers = $selectedRankList->users->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'username' => $user->username,
-                    'department' => $user->department,
-                    'student_id' => $user->student_id,
-                    'profile_picture' => $user->getFirstMediaUrl('profile_picture', 'thumb'),
-                    'score' => $user->pivot->score ?? 0,
-                    'event_stats' => $user->getAttribute('event_stats'),
-                ];
-            });
+            $tracker->selectedRankList = $selectedRankList;
+            $tracker->availableRankLists = $tracker->rankLists;
 
-            // Prepare available rank lists for switching
-            $availableRankLists = $tracker->rankLists->map(function ($rankList) {
-                return [
-                    'id' => $rankList->id,
-                    'keyword' => $rankList->keyword,
-                ];
-            });
-
-            return [
-                'tracker' => [
-                    'id' => $tracker->id,
-                    'title' => $tracker->title,
-                    'slug' => $tracker->slug,
-                ],
-                'selectedRankList' => [
-                    'id' => $selectedRankList->id,
-                    'keyword' => $selectedRankList->keyword,
-                    'consider_strict_attendance' => $selectedRankList->consider_strict_attendance,
-                    'events' => $selectedRankList->events->toArray(),
-                    'users' => $processedUsers,
-                ],
-                'availableRankLists' => $availableRankLists,
-            ];
+            return $tracker;
         });
 
-        return Inertia::render('trackers/show', $cachedData)->withViewData([
-            'SEOData' => new SEOData(
-                title: $cachedData['tracker']['title'],
-                description: "View the {$cachedData['tracker']['title']} leaderboard and track competitive programming performance across various contests and events.",
-            ),
+        return Inertia::render('trackers/show', TrackerDetailsResource::make($cachedData)->resolve());
+    }
+
+    public function export(Request $request, string $slug)
+    {
+        $keyword = $request->get('keyword', '');
+        $format = $request->get('format', 'json');
+
+        $tracker = Tracker::query()
+            ->where('slug', $slug)
+            ->where('status', VisibilityStatus::PUBLISHED)
+            ->firstOrFail();
+
+        $tracker->load(['rankLists:id,tracker_id,keyword']);
+
+        $selectedRankList = null;
+        if ($keyword) {
+            $selectedRankList = $tracker->rankLists->firstWhere('keyword', $keyword);
+        }
+        if (! $selectedRankList) {
+            $selectedRankList = $tracker->rankLists->first();
+        }
+        if (! $selectedRankList) {
+            abort(404);
+        }
+
+        $selectedRankList = RankList::query()
+            ->whereKey($selectedRankList->id)
+            ->select('id', 'tracker_id', 'keyword', 'consider_strict_attendance')
+            ->firstOrFail();
+
+        $considerStrict = $selectedRankList->consider_strict_attendance;
+        $selectedRankList->load([
+            'events' => function ($query) use ($considerStrict) {
+                $columns = ['events.id', 'title', 'starting_at'];
+                if ($considerStrict) {
+                    $columns[] = 'strict_attendance';
+                }
+                $query->where('status', VisibilityStatus::PUBLISHED)
+                    ->orderByDesc('starting_at')
+                    ->select($columns);
+            },
+            'users' => function ($query) {
+                $query->select('users.id', 'users.name', 'users.username', 'users.department', 'users.student_id');
+            },
         ]);
+
+        $userIds = $selectedRankList->users->pluck('id');
+        $eventIds = $selectedRankList->events->pluck('id');
+
+        if ($userIds->isNotEmpty() && $eventIds->isNotEmpty()) {
+            $this->processEventStats($selectedRankList, $userIds, $eventIds);
+        }
+
+        $selectedRankList->setRelation('users', $selectedRankList->users->sortByDesc(fn ($u) => (float) ($u->pivot->score ?? 0))->values());
+
+        $exportData = [
+            'tracker' => [
+                'title' => $tracker->title,
+                'slug' => $tracker->slug,
+                'ranklist' => $selectedRankList->keyword,
+            ],
+            'users' => $selectedRankList->users->map(function ($user, $index) use ($selectedRankList) {
+                $userData = [
+                    'rank' => $index + 1,
+                    'name' => $user->name,
+                    'username' => $user->username,
+                    'student_id' => $user->student_id,
+                    'department' => $user->department,
+                    'score' => $user->pivot->score ?? 0,
+                ];
+
+                $eventStats = (array) $user->getAttribute('event_stats');
+                foreach ($selectedRankList->events as $event) {
+                    $stat = $eventStats[$event->id] ?? null;
+                    $userData["event_{$event->id}_solves"] = $stat ? $stat['solve_count'] : 0;
+                    $userData["event_{$event->id}_upsolves"] = $stat ? $stat['upsolve_count'] : 0;
+                    $userData["event_{$event->id}_participation"] = $stat ? $stat['participation'] : false;
+                }
+
+                return $userData;
+            }),
+            'events' => $selectedRankList->events->map(function ($event) {
+                return [
+                    'id' => $event->id,
+                    'title' => $event->title,
+                    'starting_at' => $event->starting_at,
+                ];
+            }),
+        ];
+
+        if ($format === 'csv') {
+            $headers = [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => "attachment; filename=\"{$tracker->slug}_{$selectedRankList->keyword}.csv\"",
+            ];
+
+            $callback = function () use ($exportData, $selectedRankList) {
+                $file = fopen('php://output', 'w');
+
+                // CSV Headers
+                $headerRow = ['Rank', 'Name', 'Username', 'Student ID', 'Department', 'Score'];
+                foreach ($selectedRankList->events as $event) {
+                    $headerRow[] = "{$event->title} - Solves";
+                    $headerRow[] = "{$event->title} - Upsolves";
+                    $headerRow[] = "{$event->title} - Participation";
+                }
+                fputcsv($file, $headerRow);
+
+                // CSV Data
+                foreach ($exportData['users'] as $userData) {
+                    fputcsv($file, array_values($userData));
+                }
+
+                fclose($file);
+            };
+
+            return response()->stream($callback, 200, $headers);
+        }
+
+        // Default to JSON
+        return response()->json($exportData);
     }
 
     private function processEventStats(RankList $selectedRankList, $userIds, $eventIds): void
@@ -215,132 +285,5 @@ class TrackerController extends Controller
             }
             $user->setAttribute('event_stats', (object) $userEventStats);
         });
-    }
-
-    public function export(Request $request, string $slug): HttpResponse|JsonResponse
-    {
-        $format = $request->query('format', 'json');
-        if (! in_array($format, ['json', 'csv'])) {
-            abort(400, 'Invalid format. Use json or csv.');
-        }
-
-        $keyword = $request->get('keyword', '');
-
-        // Create cache key for export data
-        $cacheKey = "tracker_export_{$slug}_{$keyword}_{$format}";
-
-        $exportData = Cache::remember($cacheKey, now()->addMinutes(15), function () use ($slug, $keyword) {
-            // Find tracker by slug
-            $tracker = Tracker::query()
-                ->where('slug', $slug)
-                ->where('status', VisibilityStatus::PUBLISHED)
-                ->firstOrFail();
-
-            $tracker->load(['rankLists:id,tracker_id,keyword']);
-
-            $selectedRankList = null;
-            if ($keyword) {
-                $selectedRankList = $tracker->rankLists->firstWhere('keyword', $keyword);
-            }
-            if (! $selectedRankList) {
-                $selectedRankList = $tracker->rankLists->first();
-            }
-            if (! $selectedRankList) {
-                abort(404);
-            }
-
-            $selectedRankList = RankList::query()
-                ->whereKey($selectedRankList->id)
-                ->select('id', 'tracker_id', 'keyword', 'consider_strict_attendance')
-                ->firstOrFail();
-
-            $considerStrict = $selectedRankList->consider_strict_attendance;
-            $selectedRankList->load([
-                'events' => function ($query) use ($considerStrict) {
-                    $columns = ['events.id', 'title', 'starting_at'];
-                    if ($considerStrict) {
-                        $columns[] = 'strict_attendance';
-                    }
-                    $query->where('status', VisibilityStatus::PUBLISHED)
-                        ->orderByDesc('starting_at')
-                        ->select($columns);
-                },
-                'users' => function ($query) {
-                    $query->select('users.id', 'users.name', 'users.email', 'users.username', 'users.codeforces_handle', 'users.vjudge_handle', 'users.atcoder_handle', 'users.department', 'users.student_id');
-                },
-            ]);
-
-            $userIds = $selectedRankList->users->pluck('id');
-            $eventIds = $selectedRankList->events->pluck('id');
-
-            if ($userIds->isNotEmpty() && $eventIds->isNotEmpty()) {
-                $this->processEventStats($selectedRankList, $userIds, $eventIds);
-            }
-
-            $selectedRankList->setRelation('users', $selectedRankList->users->sortByDesc(fn ($u) => (float) ($u->pivot->score ?? 0))->values());
-
-            // Prepare export data
-            return [
-                'tracker' => $tracker,
-                'selectedRankList' => $selectedRankList,
-                'users' => $selectedRankList->users->map(function ($user, $index) {
-                    return [
-                        'rank' => $index + 1,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'username' => $user->username,
-                        'codeforces_handle' => $user->codeforces_handle,
-                        'vjudge_handle' => $user->vjudge_handle,
-                        'atcoder_handle' => $user->atcoder_handle,
-                        'score' => $user->pivot->score ?? 0,
-                    ];
-                }),
-            ];
-        });
-
-        $filename = sprintf(
-            '%s_%s_%s.%s',
-            str_replace(' ', '_', $exportData['tracker']->title),
-            $exportData['selectedRankList']->keyword,
-            now()->format('Y-m-d_H-i-s'),
-            $format
-        );
-
-        if ($format === 'json') {
-            return response()->json($exportData['users'], 200, [
-                'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-            ]);
-        }
-
-        // CSV format
-        $csvContent = $this->generateCsv($exportData['users']->toArray());
-
-        return response($csvContent, 200, [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
-        ]);
-    }
-
-    private function generateCsv(array $data): string
-    {
-        if (empty($data)) {
-            return '';
-        }
-
-        $output = fopen('php://temp', 'r+');
-
-        // Add CSV headers
-        fputcsv($output, array_keys($data[0]));
-
-        // Add data rows
-        foreach ($data as $row) {
-            fputcsv($output, $row);
-        }
-
-        rewind($output);
-        $csv = stream_get_contents($output);
-        fclose($output);
-
-        return $csv;
     }
 }

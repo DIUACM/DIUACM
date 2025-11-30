@@ -8,6 +8,7 @@ use App\Enums\VisibilityStatus;
 use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\MarkdownEditor;
+use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Infolists\Components\TextEntry;
@@ -45,6 +46,26 @@ class EventForm
                                     ->inline()
                                     ->required(),
                             ]),
+                    ]),
+
+                Section::make('Event Images')
+                    ->columnSpanFull()
+                    ->schema([
+                        SpatieMediaLibraryFileUpload::make('event_images')
+                            ->collection('event_images')
+                            ->helperText('Upload event images (JPEG, PNG, WebP, max 10MB each). Drag to reorder.')
+                            ->visibility('public')
+                            ->image()
+                            ->imageEditor()
+                            ->panelLayout('grid')
+                            ->multiple()
+                            ->reorderable()
+                            ->appendFiles()
+                            ->openable()
+                            ->downloadable()
+                            ->maxFiles(6)
+                            ->maxSize(10240)
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp']),
                     ]),
 
                 Section::make('Event Schedule')

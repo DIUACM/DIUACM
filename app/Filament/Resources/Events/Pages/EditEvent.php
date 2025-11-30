@@ -21,4 +21,12 @@ class EditEvent extends EditRecord
     {
         return true;
     }
+
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        // Load the hidden event_password attribute for the form
+        $data['event_password'] = $this->record->getAttributeValue('event_password');
+
+        return $data;
+    }
 }

@@ -1,33 +1,26 @@
+import PageHeader from '@/components/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import MainLayout from '@/layouts/main-layout';
 import { contact } from '@/routes';
+import { Head } from '@inertiajs/react';
 import { Calendar, Database, Eye, Lock, Mail, Shield } from 'lucide-react';
 
 export default function PrivacyPolicyPage() {
     return (
         <MainLayout>
+            <Head title="Privacy Policy" />
+
             <div className="container mx-auto px-4 py-16">
                 {/* Header section */}
-                <div className="mb-12 text-center">
-                    <h1 className="mb-4 text-4xl font-bold text-slate-900 dark:text-white">
-                        Privacy{' '}
-                        <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent dark:from-blue-400 dark:to-cyan-300">
-                            Policy
-                        </span>
-                    </h1>
-                    <div className="mx-auto mb-6 h-1.5 w-20 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500"></div>
-                    <p className="mx-auto max-w-xl text-lg text-slate-600 dark:text-slate-300">
-                        How we collect, use, and protect your personal information
-                    </p>
-                    <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
-                        Last updated:{' '}
-                        {new Date().toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                        })}
-                    </p>
-                </div>
+                <PageHeader title="Privacy" gradientText="Policy" description="How we collect, use, and protect your personal information" />
+                <p className="mb-12 text-center text-sm text-slate-500 dark:text-slate-400">
+                    Last updated:{' '}
+                    {new Date().toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                    })}
+                </p>
 
                 {/* Introduction */}
                 <Card className="mb-8 overflow-hidden border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">
@@ -212,8 +205,8 @@ export default function PrivacyPolicyPage() {
                                 <p>Daffodil International University</p>
                                 <p>
                                     Email:{' '}
-                                    <a href="mailto:contact@diuacm.com" className="text-blue-600 hover:underline dark:text-blue-400">
-                                        contact@diuacm.com
+                                    <a href="mailto:info@diuacm.com" className="text-blue-600 hover:underline dark:text-blue-400">
+                                        info@diuacm.com
                                     </a>
                                 </p>
                                 <p>

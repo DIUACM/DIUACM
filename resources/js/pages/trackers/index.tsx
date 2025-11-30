@@ -1,71 +1,49 @@
-import { TrackerCard, TrackerListItem } from '@/components/trackers/tracker-card';
-import { TrackersFilters } from '@/components/trackers/trackers-filters';
-import { CustomPagination } from '@/components/ui/custom-pagination';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import MainLayout from '@/layouts/main-layout';
-import { Head } from '@inertiajs/react';
-
-type PaginatedTrackers = {
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-    from: number;
-    to: number;
-    data: TrackerListItem[];
-    first_page_url: string;
-    last_page_url: string;
-    next_page_url: string | null;
-    prev_page_url: string | null;
-    path: string;
-    links: Array<{
-        url: string | null;
-        label: string;
-        active: boolean;
-    }>;
-};
+import type { Tracker } from '@/types';
+import { Head, Link } from '@inertiajs/react';
+import { TrendingUp } from 'lucide-react';
 
 type TrackersPageProps = {
-    trackers: PaginatedTrackers;
-    filters: {
-        search?: string;
-    };
+    trackers: Tracker[];
 };
 
-export default function TrackersPage({ trackers, filters }: TrackersPageProps) {
+export default function TrackersPage({ trackers }: TrackersPageProps) {
     return (
         <MainLayout>
-            <Head title="Trackers" />
+            <Head title="Performance Trackers" />
 
             <section className="container mx-auto px-4 py-16">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold tracking-tight">Trackers</h1>
-                    <p className="mt-1 text-slate-600 dark:text-slate-300">Track performance and rankings across contests and events.</p>
+                    <h1 className="text-3xl font-bold tracking-tight">Performance Trackers</h1>
+                    <p className="mt-1 text-slate-600 dark:text-slate-300">
+                        Track competitive programming performance across various contests and events.
+                    </p>
                 </div>
 
-                <div className="mb-6">
-                    <TrackersFilters filters={filters} />
-                </div>
-
-                <div className="space-y-4">
-                    {trackers.data.length === 0 && (
-                        <div className="flex flex-col items-center justify-center py-12">
-                            <div className="mb-4 text-6xl">📊</div>
-                            <p className="mb-2 text-lg text-slate-500">No trackers found</p>
-                            <p className="text-sm text-slate-400">
-                                {Object.values(filters).some(Boolean)
-                                    ? 'Try adjusting your filters to see more trackers.'
-                                    : 'There are no trackers available at the moment.'}
-                            </p>
-                        </div>
-                    )}
-                    {trackers.data.map((tracker) => (
-                        <TrackerCard key={tracker.id} tracker={tracker} />
-                    ))}
-                </div>
-
-                {trackers.data.length > 0 && trackers.last_page > 1 && (
-                    <div className="mt-8 flex justify-center">
-                        <CustomPagination currentPage={trackers.current_page} totalPages={trackers.last_page} />
+                {trackers.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center rounded-lg border border-slate-200 bg-slate-50 py-16 dark:border-slate-700 dark:bg-slate-800/50">
+                        <div className="mb-4 text-6xl">📊</div>
+                        <p className="mb-2 text-lg text-slate-500 dark:text-slate-400">No trackers available</p>
+                        <p className="text-sm text-slate-400 dark:text-slate-500">There are no performance trackers available at the moment.</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {trackers.map((tracker) => (
+                            <Link key={tracker.slug} href={`/trackers/${tracker.slug}`}>
+                                <Card className="group cursor-pointer transition-all hover:shadow-lg dark:hover:shadow-slate-900/50">
+                                    <CardHeader>
+                                        <div className="mb-2 flex items-start justify-between">
+                                            <div className="rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 p-3 dark:from-blue-900/20 dark:to-indigo-900/20">
+                                                <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                                            </div>
+                                        </div>
+                                        <CardTitle className="line-clamp-2 text-xl">{tracker.title}</CardTitle>
+                                        {tracker.description && <CardDescription className="line-clamp-3">{tracker.description}</CardDescription>}
+                                    </CardHeader>
+                                </Card>
+                            </Link>
+                        ))}
                     </div>
                 )}
             </section>

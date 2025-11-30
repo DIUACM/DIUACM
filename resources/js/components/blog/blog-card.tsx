@@ -1,28 +1,14 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import type { BlogPost } from '@/types';
 import { Link } from '@inertiajs/react';
 import { Calendar, User } from 'lucide-react';
 import { useState } from 'react';
 
-export type BlogListItem = {
-    id: number;
-    title: string;
-    slug: string;
-    excerpt: string;
-    author: {
-        name: string;
-        username: string;
-    };
-    published_at: string;
-    is_featured: boolean;
-    featured_image_url?: string;
-    reading_time: number;
+type BlogCardProps = {
+    blog: BlogPost;
 };
-
-interface BlogCardProps {
-    blog: BlogListItem;
-}
 
 export function BlogCard({ blog }: BlogCardProps) {
     const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +26,7 @@ export function BlogCard({ blog }: BlogCardProps) {
                             )}
                         />
                         <img
-                            src={blog.featured_image_url || '/images/fallback-gallery-image.jpeg'}
+                            src={blog.featured_image || '/images/fallback-gallery-image.jpeg'}
                             alt={blog.title}
                             className={cn(
                                 'absolute inset-0 h-full w-full object-cover transition-all duration-500 group-hover:scale-105',

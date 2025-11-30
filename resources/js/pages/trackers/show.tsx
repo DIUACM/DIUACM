@@ -4,56 +4,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import MainLayout from '@/layouts/main-layout';
-import trackers from '@/routes/trackers';
-import { Head, Link, usePage } from '@inertiajs/react';
+import type { EventStat, TrackerAvailableRankList, TrackerRankListDetails } from '@/types';
+import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, BarChart3, Download, FileText, Info, Shield, TrendingUp, Users } from 'lucide-react';
 
-type EventStat = {
-    solve_count: number;
-    upsolve_count: number;
-    participation: boolean;
-} | null;
-
-type Event = {
-    id: number;
-    title: string;
-    starting_at: string;
-    strict_attendance?: boolean;
-};
-
-type User = {
-    id: number;
-    name: string;
-    username: string;
-    profile_picture: string;
-    score: number;
-    event_stats: Record<number, EventStat>;
-};
-
-type RankList = {
-    id: number;
-    keyword: string;
-    consider_strict_attendance: boolean;
-    events: Event[];
-    users: User[];
-};
-
-type Tracker = {
-    id: number;
+type TrackersShowPageProps = {
     title: string;
     slug: string;
+    description: string | null;
+    selected_rank_list: TrackerRankListDetails | null;
+    available_rank_lists: TrackerAvailableRankList[];
 };
 
-type PageProps = {
-    tracker: Tracker;
-    selectedRankList: RankList | null;
-    availableRankLists: Array<{
-        id: number;
-        keyword: string;
-    }>;
-};
-
-function StatCell({ stat }: { stat: EventStat }) {
+function StatCell({ stat }: { stat: EventStat | null }) {
     if (stat === null) {
         return (
             <div className="px-4 py-3">
@@ -103,22 +66,19 @@ function StatCell({ stat }: { stat: EventStat }) {
     );
 }
 
-export default function TrackersShow() {
-    const { props } = usePage<PageProps>();
-    const { tracker, selectedRankList, availableRankLists } = props;
+export default function TrackersShowPage({ title, slug, selected_rank_list, available_rank_lists }: TrackersShowPageProps) {
+    const selectedRankList = selected_rank_list;
+    const availableRankLists = available_rank_lists;
 
     if (!selectedRankList) {
         return (
             <MainLayout>
-                <Head title={tracker.title} />
+                <Head title={title} />
                 <div className="container mx-auto px-4 py-8">
                     <div className="text-center">
-                        <h1 className="mb-4 text-4xl font-bold text-slate-900 dark:text-white">{tracker.title}</h1>
+                        <h1 className="mb-4 text-4xl font-bold text-slate-900 dark:text-white">{title}</h1>
                         <p className="text-slate-600 dark:text-slate-300">No rank list available</p>
-                        <Link
-                            href={trackers.index.url()}
-                            className="mt-4 inline-flex items-center gap-2 text-blue-600 hover:underline dark:text-blue-400"
-                        >
+                        <Link href="/trackers" className="mt-4 inline-flex items-center gap-2 text-blue-600 hover:underline dark:text-blue-400">
                             <ArrowLeft className="h-4 w-4" />
                             Back to Trackers
                         </Link>
@@ -133,19 +93,19 @@ export default function TrackersShow() {
 
     return (
         <MainLayout>
-            <Head title={`${tracker.title} - ${selectedRankList.keyword}`} />
+            <Head title={`${title} - ${selectedRankList.keyword}`} />
             <div className="container mx-auto px-4 py-8">
                 <div className="space-y-6">
                     {/* Header Section */}
                     <div className="text-center lg:text-left">
                         <Link
-                            href={trackers.index.url()}
+                            href="/trackers"
                             className="mb-4 inline-flex items-center gap-2 text-sm text-blue-600 hover:underline dark:text-blue-400"
                         >
                             <ArrowLeft className="h-4 w-4" />
                             Back to Trackers
                         </Link>
-                        <h1 className="mb-4 text-2xl font-bold text-slate-900 dark:text-white">{tracker.title}</h1>
+                        <h1 className="mb-4 text-2xl font-bold text-slate-900 dark:text-white">{title}</h1>
                     </div>
 
                     {/* Ranklist Navigation and Stats */}
@@ -158,11 +118,11 @@ export default function TrackersShow() {
                                         <h3 className="mb-3 text-lg font-semibold text-slate-900 dark:text-white">Available Rankings</h3>
                                         <div className="flex flex-wrap gap-2">
                                             {availableRankLists.map((rankList) => {
-                                                const isActive = rankList.id === selectedRankList.id;
-                                                const href = `/trackers/${tracker.slug}?keyword=${rankList.keyword}`;
+                                                const isActive = rankList.keyword === selectedRankList.keyword;
+                                                const href = `/trackers/${slug}?keyword=${rankList.keyword}`;
 
                                                 return (
-                                                    <Link key={rankList.id} href={href}>
+                                                    <Link key={rankList.keyword} href={href}>
                                                         <Button
                                                             variant={isActive ? 'default' : 'outline'}
                                                             size="sm"
@@ -214,9 +174,7 @@ export default function TrackersShow() {
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem asChild>
                                                 <a
-                                                    href={trackers.export.url(tracker.slug, {
-                                                        query: { keyword: selectedRankList.keyword, format: 'json' },
-                                                    })}
+                                                    href={`/trackers/${slug}/export?keyword=${selectedRankList.keyword}&format=json`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="flex items-center gap-2"
@@ -227,9 +185,7 @@ export default function TrackersShow() {
                                             </DropdownMenuItem>
                                             <DropdownMenuItem asChild>
                                                 <a
-                                                    href={trackers.export.url(tracker.slug, {
-                                                        query: { keyword: selectedRankList.keyword, format: 'csv' },
-                                                    })}
+                                                    href={`/trackers/${slug}/export?keyword=${selectedRankList.keyword}&format=csv`}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="flex items-center gap-2"
@@ -265,96 +221,101 @@ export default function TrackersShow() {
                                 {/* Table */}
                                 <div className="inline-block min-w-full align-middle">
                                     <div className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
-                                        <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                                            {/* Table Header */}
-                                            <thead className="bg-slate-50 dark:bg-slate-800">
-                                                <tr>
-                                                    <th className="sticky left-0 z-10 bg-slate-50 px-4 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase dark:bg-slate-800 dark:text-slate-400">
-                                                        Rank
-                                                    </th>
-                                                    <th className="sticky left-16 z-10 bg-slate-50 px-4 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase dark:bg-slate-800 dark:text-slate-400">
-                                                        User
-                                                    </th>
-                                                    <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase dark:text-slate-400">
-                                                        Score
-                                                    </th>
-                                                    {events.map((event) => (
-                                                        <th
-                                                            key={event.id}
-                                                            className="min-w-48 px-4 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase dark:text-slate-400"
-                                                        >
-                                                            <div className="space-y-1">
-                                                                <Link
-                                                                    href={`/events/${event.id}`}
-                                                                    className="block truncate text-xs font-semibold text-blue-600 transition-colors hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
-                                                                    title={event.title}
-                                                                >
-                                                                    {event.title.length > 30 ? `${event.title.substring(0, 30)}...` : event.title}
-                                                                </Link>
-                                                                <div className="flex flex-wrap items-center gap-2">
-                                                                    <span className="text-xs text-slate-500 dark:text-slate-400">
-                                                                        {new Date(event.starting_at).toLocaleDateString('en-US', {
-                                                                            month: 'short',
-                                                                            day: 'numeric',
-                                                                            year: 'numeric',
-                                                                        })}
-                                                                    </span>
-                                                                    {selectedRankList.consider_strict_attendance && event.strict_attendance && (
-                                                                        <Badge
-                                                                            variant="outline"
-                                                                            className="border-orange-200 bg-orange-50 text-xs text-orange-700 dark:border-orange-800 dark:bg-orange-900/20 dark:text-orange-400"
-                                                                            title="Strict attendance enforced"
-                                                                        >
-                                                                            <Shield className="mr-1 h-3 w-3" />
-                                                                            SA
-                                                                        </Badge>
-                                                                    )}
-                                                                </div>
-                                                            </div>
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                                                {/* Table Header */}
+                                                <thead className="bg-slate-50 dark:bg-slate-800">
+                                                    <tr>
+                                                        <th className="sticky left-0 z-10 bg-slate-50 px-4 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase dark:bg-slate-800 dark:text-slate-400">
+                                                            Rank
                                                         </th>
-                                                    ))}
-                                                </tr>
-                                            </thead>
-
-                                            {/* Table Body */}
-                                            <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-800">
-                                                {users.map((user, index) => (
-                                                    <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                                        {/* Rank */}
-                                                        <td className="sticky left-0 z-10 bg-white px-4 py-3 text-sm font-medium text-slate-900 hover:bg-slate-50 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700/50">
-                                                            {index + 1}
-                                                        </td>
-
-                                                        {/* User */}
-                                                        <td className="sticky left-16 z-10 bg-white px-4 py-3 hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700/50">
-                                                            <Link href={`/programmers/${user.username}`} className="group flex items-center gap-3">
-                                                                <Avatar className="h-8 w-8">
-                                                                    <AvatarImage src={user.profile_picture || ''} alt={user.name} />
-                                                                    <AvatarFallback className="bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300">
-                                                                        {user.name.charAt(0).toUpperCase()}
-                                                                    </AvatarFallback>
-                                                                </Avatar>
-                                                                <span className="truncate text-sm font-medium text-slate-900 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
-                                                                    {user.name.length > 20 ? `${user.name.substring(0, 20)}...` : user.name}
-                                                                </span>
-                                                            </Link>
-                                                        </td>
-
-                                                        {/* Score */}
-                                                        <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">
-                                                            {typeof user.score === 'number' ? user.score.toFixed(1) : user.score}
-                                                        </td>
-
-                                                        {/* Event Scores */}
+                                                        <th className="sticky left-16 z-10 bg-slate-50 px-4 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase dark:bg-slate-800 dark:text-slate-400">
+                                                            User
+                                                        </th>
+                                                        <th className="px-4 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase dark:text-slate-400">
+                                                            Score
+                                                        </th>
                                                         {events.map((event) => (
-                                                            <td key={event.id}>
-                                                                <StatCell stat={user.event_stats[event.id] || null} />
-                                                            </td>
+                                                            <th
+                                                                key={event.id}
+                                                                className="min-w-48 px-4 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase dark:text-slate-400"
+                                                            >
+                                                                <div className="space-y-1">
+                                                                    <Link
+                                                                        href={`/events/${event.id}`}
+                                                                        className="block truncate text-xs font-semibold text-blue-600 transition-colors hover:text-blue-800 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
+                                                                        title={event.title}
+                                                                    >
+                                                                        {event.title.length > 30 ? `${event.title.substring(0, 30)}...` : event.title}
+                                                                    </Link>
+                                                                    <div className="flex flex-wrap items-center gap-2">
+                                                                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                                                                            {new Date(event.starting_at).toLocaleDateString('en-US', {
+                                                                                month: 'short',
+                                                                                day: 'numeric',
+                                                                                year: 'numeric',
+                                                                            })}
+                                                                        </span>
+                                                                        {selectedRankList.consider_strict_attendance && event.strict_attendance && (
+                                                                            <Badge
+                                                                                variant="outline"
+                                                                                className="border-orange-200 bg-orange-50 text-xs text-orange-700 dark:border-orange-800 dark:bg-orange-900/20 dark:text-orange-400"
+                                                                                title="Strict attendance enforced"
+                                                                            >
+                                                                                <Shield className="mr-1 h-3 w-3" />
+                                                                                SA
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </th>
                                                         ))}
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                                </thead>
+
+                                                {/* Table Body */}
+                                                <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-800">
+                                                    {users.map((user, index) => (
+                                                        <tr key={user.username} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                                            {/* Rank */}
+                                                            <td className="sticky left-0 z-10 bg-white px-4 py-3 text-sm font-medium text-slate-900 hover:bg-slate-50 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700/50">
+                                                                {index + 1}
+                                                            </td>
+
+                                                            {/* User */}
+                                                            <td className="sticky left-16 z-10 bg-white px-4 py-3 hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700/50">
+                                                                <Link
+                                                                    href={`/programmers/${user.username}`}
+                                                                    className="group flex items-center gap-3"
+                                                                >
+                                                                    <Avatar className="h-8 w-8">
+                                                                        <AvatarImage src={user.avatar || ''} alt={user.name} />
+                                                                        <AvatarFallback className="bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300">
+                                                                            {user.name.charAt(0).toUpperCase()}
+                                                                        </AvatarFallback>
+                                                                    </Avatar>
+                                                                    <span className="truncate text-sm font-medium text-slate-900 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                                                                        {user.name.length > 20 ? `${user.name.substring(0, 20)}...` : user.name}
+                                                                    </span>
+                                                                </Link>
+                                                            </td>
+
+                                                            {/* Score */}
+                                                            <td className="px-4 py-3 text-sm font-medium text-slate-900 dark:text-white">
+                                                                {typeof user.score === 'number' ? user.score.toFixed(1) : user.score}
+                                                            </td>
+
+                                                            {/* Event Scores */}
+                                                            {events.map((event) => (
+                                                                <td key={event.id}>
+                                                                    <StatCell stat={user.event_stats[event.id] || null} />
+                                                                </td>
+                                                            ))}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
 

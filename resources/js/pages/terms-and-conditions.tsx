@@ -1,33 +1,26 @@
+import PageHeader from '@/components/page-header';
 import { Card, CardContent } from '@/components/ui/card';
 import MainLayout from '@/layouts/main-layout';
 import { contact } from '@/routes';
+import { Head } from '@inertiajs/react';
 import { AlertTriangle, FileText, Gavel, Mail, Shield, Users } from 'lucide-react';
 
 export default function TermsAndConditionsPage() {
     return (
         <MainLayout>
+            <Head title="Terms & Conditions" />
+
             <div className="container mx-auto px-4 py-16">
                 {/* Header section */}
-                <div className="mb-12 text-center">
-                    <h1 className="mb-4 text-4xl font-bold text-slate-900 dark:text-white">
-                        Terms{' '}
-                        <span className="bg-gradient-to-r from-blue-600 to-cyan-500 bg-clip-text text-transparent dark:from-blue-400 dark:to-cyan-300">
-                            & Conditions
-                        </span>
-                    </h1>
-                    <div className="mx-auto mb-6 h-1.5 w-20 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500"></div>
-                    <p className="mx-auto max-w-xl text-lg text-slate-600 dark:text-slate-300">
-                        Terms and conditions for using DIU ACM website and services
-                    </p>
-                    <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
-                        Last updated:{' '}
-                        {new Date().toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                        })}
-                    </p>
-                </div>
+                <PageHeader title="Terms" gradientText="& Conditions" description="Terms and conditions for using DIU ACM website and services" />
+                <p className="mb-12 text-center text-sm text-slate-500 dark:text-slate-400">
+                    Last updated:{' '}
+                    {new Date().toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                    })}
+                </p>
 
                 {/* Agreement to Terms */}
                 <Card className="mb-8 overflow-hidden border border-slate-200 bg-white shadow-md dark:border-slate-700 dark:bg-slate-800">
@@ -298,7 +291,7 @@ export default function TermsAndConditionsPage() {
                             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Contact Information</h2>
                         </div>
                         <div className="space-y-4 text-slate-600 dark:text-slate-300">
-                            <p>If you have any questions about these Terms and Conditions, please contact us:</p>
+                            <p>If you have any questions about these Terms & Conditions, please contact us:</p>
                             <div className="rounded-lg bg-slate-50 p-4 dark:bg-slate-700/50">
                                 <p>
                                     <strong>DIU ACM</strong>
@@ -306,8 +299,8 @@ export default function TermsAndConditionsPage() {
                                 <p>Daffodil International University</p>
                                 <p>
                                     Email:{' '}
-                                    <a href="mailto:contact@diuacm.com" className="text-blue-600 hover:underline dark:text-blue-400">
-                                        contact@diuacm.com
+                                    <a href="mailto:info@diuacm.com" className="text-blue-600 hover:underline dark:text-blue-400">
+                                        info@diuacm.com
                                     </a>
                                 </p>
                                 <p>

@@ -1,96 +1,16 @@
-import { CopyButton } from '@/components/programmers/copy-button';
+import { CopyButton } from '@/components/copy-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import MainLayout from '@/layouts/main-layout';
-import programmers from '@/routes/programmers';
+import { formatContestDate, getRatingColor, getRatingTitle } from '@/lib/codeforces';
+import type { ProgrammerDetails } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Calendar, GraduationCap, MapPin, Target, Trophy, Users } from 'lucide-react';
 
-type ContestMember = {
-    name: string;
-    username: string;
-    student_id: string;
-    profile_picture: string;
-};
-
-type Contest = {
-    id: number;
-    name: string;
-    date: string | null;
-    team_name: string;
-    rank: number | null;
-    solve_count: number | null;
-    members: ContestMember[];
-};
-
-type RanklistItem = {
-    keyword: string;
-    user_position: number | null;
-    user_score: number;
-    total_users: number;
-    events_count: number;
-};
-
-type TrackerPerformance = {
-    slug: string;
-    title: string;
-    ranklists: RanklistItem[];
-};
-
-type Programmer = {
-    id: number;
-    name: string;
-    username: string;
-    student_id: string;
-    department: string;
-    max_cf_rating: number | null;
-    codeforces_handle: string | null;
-    atcoder_handle: string | null;
-    vjudge_handle: string | null;
-    profile_picture: string;
-    contests: Contest[];
-    tracker_performance: TrackerPerformance[];
-};
-
 type ProgrammerDetailsPageProps = {
-    programmer: Programmer;
+    programmer: ProgrammerDetails;
 };
-
-function formatContestDate(iso: string) {
-    const d = new Date(iso);
-    return new Intl.DateTimeFormat('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    }).format(d);
-}
-
-function getRatingColor(rating: number | null) {
-    if (!rating || rating === -1) return 'bg-gray-500';
-    if (rating >= 2400) return 'bg-red-500';
-    if (rating >= 2100) return 'bg-orange-500';
-    if (rating >= 1900) return 'bg-purple-500';
-    if (rating >= 1600) return 'bg-blue-500';
-    if (rating >= 1400) return 'bg-cyan-500';
-    if (rating >= 1200) return 'bg-green-500';
-    return 'bg-gray-500';
-}
-
-function getRatingTitle(rating: number | null) {
-    if (!rating || rating === -1) return 'Unrated';
-    if (rating >= 2400) return 'International Grandmaster';
-    if (rating >= 2300) return 'Grandmaster';
-    if (rating >= 2100) return 'International Master';
-    if (rating >= 1900) return 'Candidate Master';
-    if (rating >= 1600) return 'Expert';
-    if (rating >= 1400) return 'Specialist';
-    if (rating >= 1200) return 'Pupil';
-    return 'Newbie';
-}
 
 export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsPageProps) {
     const initials = programmer.name
@@ -104,12 +24,20 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
             <Head title={`${programmer.name} - Programmer Profile`} />
 
             <div className="container mx-auto px-4 py-8">
+                <div className="mb-6">
+                    <Button asChild variant="ghost" className="px-2">
+                        <Link href="/programmers">
+                            <ArrowLeft className="mr-1 h-4 w-4" /> Back to Programmers
+                        </Link>
+                    </Button>
+                </div>
+
                 <div className="mb-8">
                     <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
                         {/* Profile Picture */}
                         <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full bg-slate-100 ring-2 ring-slate-200 sm:h-32 sm:w-32 dark:bg-slate-800 dark:ring-slate-700">
-                            {programmer.profile_picture ? (
-                                <img src={programmer.profile_picture} alt={`${programmer.name}'s profile`} className="h-full w-full object-cover" />
+                            {programmer.avatar ? (
+                                <img src={programmer.avatar} alt={`${programmer.name}'s profile`} className="h-full w-full object-cover" />
                             ) : (
                                 <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-cyan-500 text-xl font-semibold text-white sm:text-2xl">
                                     {initials}
@@ -205,15 +133,15 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                 </div>
 
                 {/* Tracker Performance */}
-                {Array.isArray(programmer.tracker_performance) && programmer.tracker_performance.length > 0 && (
+                {Array.isArray(programmer.trackers) && programmer.trackers.length > 0 && (
                     <div className="mb-8">
                         <h2 className="mb-6 flex items-center text-xl font-semibold text-slate-900 dark:text-white">
                             <Target className="mr-2 h-5 w-5 text-purple-600 dark:text-purple-400" />
-                            Tracker Performance ({programmer.tracker_performance.length})
+                            Tracker Performance ({programmer.trackers.length})
                         </h2>
 
                         <div className="space-y-6">
-                            {programmer.tracker_performance.map((tracker) => (
+                            {programmer.trackers.map((tracker) => (
                                 <Card key={tracker.slug} className="transition-shadow hover:shadow-md">
                                     <CardContent>
                                         <div className="mb-4">
@@ -221,7 +149,7 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                         </div>
 
                                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                            {tracker.ranklists.map((rankList) => (
+                                            {tracker.rank_lists.map((rankList) => (
                                                 <Link
                                                     key={rankList.keyword}
                                                     href={`/trackers/${tracker.slug}?keyword=${encodeURIComponent(rankList.keyword)}`}
@@ -229,12 +157,12 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                                 >
                                                     <div className="mb-3 flex items-center justify-between">
                                                         <h4 className="font-medium">{rankList.keyword}</h4>
-                                                        {rankList.user_position && (
+                                                        {rankList.position && (
                                                             <Badge
                                                                 variant="outline"
                                                                 className="bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300"
                                                             >
-                                                                #{rankList.user_position}
+                                                                #{rankList.position}
                                                             </Badge>
                                                         )}
                                                     </div>
@@ -246,7 +174,7 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                                                 <span>Total Users</span>
                                                             </div>
                                                             <span className="font-medium text-slate-900 dark:text-slate-100">
-                                                                {rankList.total_users}
+                                                                {rankList.total_user_count}
                                                             </span>
                                                         </div>
 
@@ -256,7 +184,7 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                                                 <span>Events</span>
                                                             </div>
                                                             <span className="font-medium text-slate-900 dark:text-slate-100">
-                                                                {rankList.events_count}
+                                                                {rankList.event_count}
                                                             </span>
                                                         </div>
 
@@ -265,9 +193,7 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                                                 <Trophy className="h-4 w-4 text-amber-500" />
                                                                 <span>Score</span>
                                                             </div>
-                                                            <span className="font-medium text-amber-600 dark:text-amber-400">
-                                                                {rankList.user_score}
-                                                            </span>
+                                                            <span className="font-medium text-amber-600 dark:text-amber-400">{rankList.score}</span>
                                                         </div>
                                                     </div>
                                                 </Link>
@@ -302,14 +228,14 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
 
                                             <div className="flex items-center gap-2">
                                                 <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
-                                                    {contest.team_name}
+                                                    {contest.team.name}
                                                 </Badge>
-                                                {contest.rank && (
+                                                {contest.team.rank && (
                                                     <Badge
                                                         variant="outline"
                                                         className="bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
                                                     >
-                                                        Rank #{contest.rank}
+                                                        Rank #{contest.team.rank}
                                                     </Badge>
                                                 )}
                                             </div>
@@ -317,22 +243,18 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
 
                                         <div>
                                             <h4 className="mb-3 text-sm font-medium text-slate-700 dark:text-slate-300">
-                                                Team Members ({contest.members.length})
+                                                Team Members ({contest.team.members.length})
                                             </h4>
                                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-                                                {contest.members.map((member) => (
+                                                {contest.team.members.map((member) => (
                                                     <Link
                                                         key={member.username}
                                                         href={`/programmers/${member.username}`}
                                                         className="flex items-center gap-3 rounded-lg bg-slate-50/50 p-2 transition-colors hover:bg-slate-100/50 dark:bg-slate-800/30 dark:hover:bg-slate-800/50"
                                                     >
                                                         <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
-                                                            {member.profile_picture ? (
-                                                                <img
-                                                                    src={member.profile_picture}
-                                                                    alt={member.name}
-                                                                    className="h-full w-full object-cover"
-                                                                />
+                                                            {member.avatar ? (
+                                                                <img src={member.avatar} alt={member.name} className="h-full w-full object-cover" />
                                                             ) : (
                                                                 <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-500 to-cyan-500 text-xs text-white">
                                                                     {member.name?.charAt(0) || '?'}
@@ -351,11 +273,11 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                                 ))}
                                             </div>
 
-                                            {contest.solve_count !== null && (
+                                            {contest.team.solve_count !== null && (
                                                 <div className="mt-3 flex items-center gap-2 border-t border-slate-200 pt-3 dark:border-slate-700">
                                                     <Trophy className="h-4 w-4 text-blue-500" />
                                                     <span className="text-sm text-slate-600 dark:text-slate-400">
-                                                        {contest.solve_count} problems solved
+                                                        {contest.team.solve_count} problems solved
                                                     </span>
                                                 </div>
                                             )}
@@ -366,14 +288,6 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                         </div>
                     </div>
                 )}
-
-                <div className="mt-8">
-                    <Button asChild variant="ghost" className="px-2">
-                        <Link href={programmers.index.url()}>
-                            <ArrowLeft className="mr-1 h-4 w-4" /> Back to Programmers
-                        </Link>
-                    </Button>
-                </div>
             </div>
         </MainLayout>
     );

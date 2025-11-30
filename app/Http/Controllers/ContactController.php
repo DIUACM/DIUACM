@@ -10,10 +10,7 @@ use Inertia\Response;
 
 class ContactController extends Controller
 {
-    /**
-     * Display the contact page.
-     */
-    public function index(): Response
+    public function contact(): Response
     {
         return Inertia::render('contact');
     }
