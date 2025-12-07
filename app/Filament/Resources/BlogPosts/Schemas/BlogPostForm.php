@@ -41,7 +41,8 @@ class BlogPostForm
                         Select::make('user_id')
                             ->label('Author')
                             ->relationship('author', 'name')
-                            ->searchable()
+                            ->searchable(['name', 'username', 'email', 'student_id', 'codeforces_handle', 'atcoder_handle', 'vjudge_handle'])
+                            ->getOptionLabelFromRecordUsing(fn (\App\Models\User $record): string => "{$record->name} ({$record->student_id})")
                             ->preload()
                             ->required()
                             ->default(fn () => Auth::user()?->id ?? 1),
