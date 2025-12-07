@@ -44,7 +44,8 @@ class TeamForm
                             ->relationship('members', 'name')
                             ->multiple()
                             ->preload()
-                            ->searchable()
+                            ->searchable(['name', 'username', 'email', 'student_id', 'codeforces_handle', 'atcoder_handle', 'vjudge_handle'])
+                            ->getOptionLabelFromRecordUsing(fn (\App\Models\User $record): string => "{$record->name} ({$record->student_id})")
                             ->helperText('Select one or more team members'),
                     ]),
 

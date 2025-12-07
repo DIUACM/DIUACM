@@ -34,6 +34,10 @@ class UsersRelationManager extends RelationManager
                 : $record->name)
             ->inverseRelationship('rankLists')
             ->columns([
+                TextColumn::make('pivot.position')
+                    ->label('Position')
+                    ->numeric()
+                    ->sortable(['pivot_position']),
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
@@ -79,6 +83,23 @@ class UsersRelationManager extends RelationManager
                             ->with('attendees:id')
                             ->get()
                             ->pluck('attendees.*.id')
+                            ->flatten()
+                            ->unique()
+                            ->values()
+                            ->all();
+
+                        if (! empty($userIds)) {
+                            $this->ownerRecord->users()->syncWithoutDetaching($userIds);
+                        }
+                    }),
+                Action::make('attachUsersFromSolveStats')
+                    ->label('Attach Users from Solve Stats')
+                    ->action(function (): void {
+                        $userIds = $this->ownerRecord
+                            ->events()
+                            ->with('eventUserStats:id,event_id,user_id')
+                            ->get()
+                            ->pluck('eventUserStats.*.user_id')
                             ->flatten()
                             ->unique()
                             ->values()

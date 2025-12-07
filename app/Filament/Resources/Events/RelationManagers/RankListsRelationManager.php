@@ -53,7 +53,9 @@ class RankListsRelationManager extends RelationManager
                     ->preloadRecordSelect()
                     ->label('Attach Rank List')
                     ->modalHeading('Attach Rank List with Weight')
+                    ->modalDescription('Only active rank lists are shown here. Weight is typically 1 for onsite contests and 0.5 for online contests.')
                     ->recordSelectSearchColumns(['keyword', 'description'])
+                    ->recordSelectOptionsQuery(fn ($query) => $query->where('is_active', true))
                     ->schema(function (AttachAction $action): array {
                         return [
                             $action->getRecordSelect(),

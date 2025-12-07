@@ -79,7 +79,6 @@ class EventFactory extends Factory
             'event_password' => $hasPassword ? fake()->password(8, 16) : null,
             'open_for_attendance' => $openForAttendance,
             'strict_attendance' => $openForAttendance ? fake()->boolean(30) : false, // 30% chance if attendance is open
-            'auto_update_score' => fake()->boolean(60), // 60% chance of auto score update
             'type' => $eventType,
             'participation_scope' => fake()->randomElement(ParticipationScope::cases()),
         ];
@@ -100,7 +99,6 @@ class EventFactory extends Factory
                 'Algorithm Contest',
                 'Team Contest',
             ]),
-            'auto_update_score' => true,
             'open_for_attendance' => true,
         ]);
     }
@@ -119,7 +117,6 @@ class EventFactory extends Factory
                 'Algorithm Analysis Class',
                 'Mathematics for Programming',
             ]),
-            'auto_update_score' => false,
         ]);
     }
 

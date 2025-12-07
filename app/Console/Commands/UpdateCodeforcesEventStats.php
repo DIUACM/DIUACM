@@ -66,54 +66,23 @@ class UpdateCodeforcesEventStats extends Command
 
             $this->line("Processing event #{$event->id} — {$event->title} (contest {$contestId})");
 
-            // Get all users associated via ranklists
+            // Get all users who have a Codeforces handle
             $users = User::query()
-                ->whereHas('rankLists', function ($q) use ($event): void {
-                    $q->whereHas('events', function ($qq) use ($event): void {
-                        $qq->where('events.id', $event->id);
-                    });
-                })
+                ->whereNotNull('codeforces_handle')
+                ->where('codeforces_handle', '!=', '')
                 ->get(['id', 'name', 'codeforces_handle']);
 
             if ($users->isEmpty()) {
-                $this->warn('  No users associated via ranklists.');
+                $this->warn('  No users with Codeforces handles found.');
 
                 continue;
             }
 
-            // Partition users based on presence of a handle
-            $withHandles = $users->filter(function ($u) {
-                $h = $u->codeforces_handle;
-
-                return $h !== null && trim((string) $h) !== '';
-            });
-            $withoutHandles = $users->reject(function ($u) {
-                $h = $u->codeforces_handle;
-
-                return $h !== null && trim((string) $h) !== '';
-            });
-
-            // Users without a handle are marked absent with zero stats
-            foreach ($withoutHandles as $user) {
-                EventUserStat::updateOrCreate([
-                    'event_id' => $event->id,
-                    'user_id' => $user->id,
-                ], [
-                    'solve_count' => 0,
-                    'upsolve_count' => 0,
-                    'participation' => false,
-                ]);
-                $this->line("  · {$user->name} — no Codeforces handle, set absent");
-            }
-
-            if ($withHandles->isEmpty()) {
-                continue;
-            }
-
-            // Fetch standings for valid handles
-            $handles = $withHandles->pluck('codeforces_handle')->implode(';');
+            // Fetch standings for all handles
+            $handles = $users->pluck('codeforces_handle')->implode(';');
             $url = 'https://codeforces.com/api/contest.standings?contestId='.urlencode((string) $contestId).'&showUnofficial=true&handles='.urlencode($handles);
             // $this->line($url);
+
 
             $cacheKey = "codeforces_standings_{$contestId}_".md5($handles);
 
@@ -142,7 +111,7 @@ class UpdateCodeforcesEventStats extends Command
 
             $rows = collect($payload['result']['rows'] ?? []);
 
-            foreach ($withHandles as $user) {
+            foreach ($users as $user) {
                 // Find the contest row (participation) and practice row (upsolve)
                 $contestRow = $rows->first(function ($row) use ($user) {
                     $handle = strtolower($row['party']['members'][0]['handle'] ?? '');
@@ -158,6 +127,11 @@ class UpdateCodeforcesEventStats extends Command
                     return $handle === strtolower((string) $user->codeforces_handle)
                         && $type === 'PRACTICE';
                 });
+
+                // Skip users with no data from the API
+                if (! is_array($contestRow) && ! is_array($practiceRow)) {
+                    continue;
+                }
 
                 // Calculate stats similar to the TS reference: points > 0 counts as solved; upsolve exclude problems solved in contest
                 [$solve, $upsolve] = $this->calculateUserStats(

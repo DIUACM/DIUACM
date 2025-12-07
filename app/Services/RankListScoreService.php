@@ -105,6 +105,9 @@ class RankListScoreService
         // Batch update all scores at once
         $this->updateUserScores($userScores);
 
+        // Calculate and update positions after scores are updated
+        $this->updatePositions($rankList->id);
+
         return [
             'success' => true,
             'message' => 'Successfully processed ranklist: '.$rankList->keyword,
@@ -184,6 +187,9 @@ class RankListScoreService
         // Update the specific user's score
         $this->updateUserScores([$userScore]);
 
+        // Calculate and update positions after score is updated
+        $this->updatePositions($rankList->id);
+
         return [
             'success' => true,
             'message' => "Successfully updated score for user {$user->name} in ranklist {$rankList->keyword}",
@@ -255,6 +261,45 @@ class RankListScoreService
                         'score' => $scoreData['score'],
                     ]
                 );
+        }
+    }
+
+    /**
+     * Update positions for all users in a ranklist based on their scores
+     */
+    private function updatePositions(int $rankListId): void
+    {
+        // Get all users with their scores, ordered by score descending
+        $users = DB::table('rank_list_user')
+            ->where('rank_list_id', $rankListId)
+            ->orderBy('score', 'desc')
+            ->orderBy('user_id', 'asc') // Secondary sort for consistent ordering when scores are equal
+            ->get(['user_id', 'score']);
+
+        $position = 1;
+        $previousScore = null;
+        $sameScoreCount = 0;
+
+        foreach ($users as $index => $user) {
+            // If score is the same as previous, maintain same position
+            if ($previousScore !== null && $user->score === $previousScore) {
+                $sameScoreCount++;
+            } else {
+                // New score, update position accounting for tied positions
+                if ($sameScoreCount > 0) {
+                    $position += $sameScoreCount + 1;
+                    $sameScoreCount = 0;
+                } elseif ($index > 0) {
+                    $position++;
+                }
+            }
+
+            DB::table('rank_list_user')
+                ->where('rank_list_id', $rankListId)
+                ->where('user_id', $user->user_id)
+                ->update(['position' => $position]);
+
+            $previousScore = $user->score;
         }
     }
 

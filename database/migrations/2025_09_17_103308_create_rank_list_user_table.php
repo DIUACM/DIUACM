@@ -17,8 +17,10 @@ return new class extends Migration
             $table->foreignIdFor(RankList::class)->constrained('rank_lists')->cascadeOnDelete();
             $table->foreignIdFor(User::class)->constrained('users')->cascadeOnDelete();
             $table->float('score')->default(0);
+            $table->unsignedInteger('position')->nullable();
 
             $table->unique(['rank_list_id', 'user_id']);
+            $table->index(['rank_list_id', 'position']);
         });
     }
 
