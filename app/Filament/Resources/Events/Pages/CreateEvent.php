@@ -136,7 +136,7 @@ class CreateEvent extends CreateRecord
     private function fetchVJudgeContest(string $contest_link): void
     {
         try {
-            $response = Http::timeout(15)->get("https://fetcher.sourov2305101004.workers.dev/?url=" . urlencode($contest_link));
+            $response = Http::timeout(15)->get('https://fetcher.sourov2305101004.workers.dev/?url='.urlencode($contest_link));
 
             if (! $response->successful()) {
                 throw new \Exception('Failed to fetch contest page');

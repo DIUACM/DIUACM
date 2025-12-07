@@ -23,6 +23,7 @@ class TrackerDetailsResource extends TrackerResource
                         'title' => $event->title,
                         'starting_at' => $event->starting_at,
                         'strict_attendance' => $event->strict_attendance ?? null,
+                        'weight' => $event->pivot->weight ?? null,
                     ];
                 }),
                 'users' => $this->selectedRankList->users->map(function ($user) {
@@ -30,6 +31,7 @@ class TrackerDetailsResource extends TrackerResource
                         (new PublicUserResource($user))->toArray(request()),
                         [
                             'score' => $user->pivot->score ?? 0,
+                            'position' => $user->pivot->position ?? 0,
                             'event_stats' => $user->getAttribute('event_stats'),
                         ]
                     );

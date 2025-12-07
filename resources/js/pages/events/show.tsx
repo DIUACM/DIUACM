@@ -238,6 +238,52 @@ export default function EventDetailsPage({ event, auth }: Props) {
                         )}
                     </div>
 
+                    {/* Ranklists */}
+                    {event.ranklists && event.ranklists.length > 0 && (
+                        <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+                            <div className="mb-3 flex items-center gap-2">
+                                <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                                    Rated for {event.ranklists.length} {event.ranklists.length === 1 ? 'Ranklist' : 'Ranklists'}
+                                </h3>
+                            </div>
+                            <div className="flex flex-wrap gap-3">
+                                {event.ranklists.map((ranklist, index) => (
+                                    <Link
+                                        key={index}
+                                        href={`/trackers/${ranklist.tracker_slug}?keyword=${ranklist.keyword}`}
+                                        className="group rounded-lg border border-blue-200 bg-white p-3 shadow-sm transition-all hover:border-blue-400 hover:bg-blue-50 hover:shadow-md dark:border-blue-800/30 dark:bg-slate-800 dark:hover:border-blue-600 dark:hover:bg-blue-900/20"
+                                    >
+                                        <div className="space-y-1.5">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                                                        {ranklist.tracker_title}
+                                                    </div>
+                                                    <div className="text-xs text-slate-500 dark:text-slate-400">({ranklist.keyword})</div>
+                                                </div>
+                                                <Badge className="shrink-0 bg-blue-100 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400">
+                                                    ×{ranklist.weight}
+                                                </Badge>
+                                            </div>
+                                            <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
+                                                <span>View Ranklist</span>
+                                                <svg
+                                                    className="h-3 w-3 transition-transform group-hover:translate-x-0.5"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Action Buttons */}
                     <div className="flex flex-wrap gap-3">
                         {event.event_link && (

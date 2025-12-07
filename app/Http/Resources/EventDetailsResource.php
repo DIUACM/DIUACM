@@ -40,6 +40,17 @@ class EventDetailsResource extends EventResource
                     );
                 });
             }),
+            'ranklists' => $this->when($this->relationLoaded('rankLists'), function () {
+                return $this->rankLists->map(function ($rankList) {
+                    return [
+                        'name' => $rankList->tracker?->title.' ('.$rankList->keyword.')',
+                        'weight' => $rankList->pivot->weight,
+                        'tracker_title' => $rankList->tracker?->title,
+                        'tracker_slug' => $rankList->tracker?->slug,
+                        'keyword' => $rankList->keyword,
+                    ];
+                });
+            }),
         ]);
     }
 }

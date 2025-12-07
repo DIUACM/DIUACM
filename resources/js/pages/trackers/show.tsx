@@ -256,6 +256,11 @@ export default function TrackersShowPage({ title, slug, selected_rank_list, avai
                                                                                 year: 'numeric',
                                                                             })}
                                                                         </span>
+                                                                        {event.weight !== null && event.weight !== undefined && (
+                                                                            <Badge variant="secondary" className="text-xs">
+                                                                                Weight: {event.weight}
+                                                                            </Badge>
+                                                                        )}
                                                                         {selectedRankList.consider_strict_attendance && event.strict_attendance && (
                                                                             <Badge
                                                                                 variant="outline"
@@ -275,11 +280,11 @@ export default function TrackersShowPage({ title, slug, selected_rank_list, avai
 
                                                 {/* Table Body */}
                                                 <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-700 dark:bg-slate-800">
-                                                    {users.map((user, index) => (
+                                                    {users.map((user) => (
                                                         <tr key={user.username} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                                             {/* Rank */}
                                                             <td className="sticky left-0 z-10 bg-white px-4 py-3 text-sm font-medium text-slate-900 hover:bg-slate-50 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700/50">
-                                                                {index + 1}
+                                                                {user.position}
                                                             </td>
 
                                                             {/* User */}
