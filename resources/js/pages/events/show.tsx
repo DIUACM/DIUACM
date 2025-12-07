@@ -10,6 +10,9 @@ import type { Auth, EventDetails } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { isAfter, isWithinInterval } from 'date-fns';
 import { ArrowLeft, CalendarDays, Clock, MapPin, Medal, TrendingUp, Users } from 'lucide-react';
+import { useState } from 'react';
+import Lightbox from 'yet-another-react-lightbox';
+import 'yet-another-react-lightbox/styles.css';
 
 type Props = {
     event: EventDetails;
@@ -17,6 +20,9 @@ type Props = {
 };
 
 export default function EventDetailsPage({ event, auth }: Props) {
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxIndex, setLightboxIndex] = useState(0);
+
     const now = new Date();
     const start = new Date(event.starting_at);
     const end = new Date(event.ending_at);
@@ -335,9 +341,21 @@ export default function EventDetailsPage({ event, auth }: Props) {
                         <h2 className="mb-4 text-xl font-semibold text-slate-900 dark:text-white">Event Gallery</h2>
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             {event.images.map((image, index) => (
-                                <div key={index} className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700">
-                                    <img src={image.thumbnail} alt={`Event image ${index + 1}`} className="h-64 w-full object-cover" />
-                                </div>
+                                <button
+                                    key={index}
+                                    onClick={() => {
+                                        setLightboxIndex(index);
+                                        setLightboxOpen(true);
+                                    }}
+                                    className="group relative overflow-hidden rounded-lg border border-slate-200 bg-slate-100 transition-all hover:border-slate-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600"
+                                >
+                                    <img
+                                        src={image.thumbnail}
+                                        alt={`Event image ${index + 1}`}
+                                        className="h-64 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                    />
+                                    <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
+                                </button>
                             ))}
                         </div>
                     </div>
@@ -635,6 +653,19 @@ export default function EventDetailsPage({ event, auth }: Props) {
                     </div>
                 )}
             </section>
+
+            {/* Lightbox */}
+            {event.images && event.images.length > 0 && (
+                <Lightbox
+                    open={lightboxOpen}
+                    close={() => setLightboxOpen(false)}
+                    slides={event.images.map((image) => ({
+                        src: image.url,
+                        alt: image.name,
+                    }))}
+                    index={lightboxIndex}
+                />
+            )}
         </MainLayout>
     );
 }

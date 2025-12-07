@@ -116,6 +116,11 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
             ->withTimestamps();
     }
 
+    public function jobExperiences()
+    {
+        return $this->hasMany(JobExperience::class);
+    }
+
     /**
      * Scope a query to only programmers (users with at least one programming handle).
      */
