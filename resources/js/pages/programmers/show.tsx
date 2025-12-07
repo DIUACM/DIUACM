@@ -7,12 +7,19 @@ import { formatContestDate, getRatingColor, getRatingTitle } from '@/lib/codefor
 import type { ProgrammerDetails } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Briefcase, Calendar, ExternalLink, GraduationCap, MapPin, Target, Trophy, Users } from 'lucide-react';
+import { useState } from 'react';
+import Lightbox from 'yet-another-react-lightbox';
+import 'yet-another-react-lightbox/styles.css';
 
 type ProgrammerDetailsPageProps = {
     programmer: ProgrammerDetails;
 };
 
 export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsPageProps) {
+    const [lightboxOpen, setLightboxOpen] = useState(false);
+    const [lightboxIndex, setLightboxIndex] = useState(0);
+    const [lightboxSlides, setLightboxSlides] = useState<Array<{ src: string; alt: string }>>([]);
+
     const initials = programmer.name
         .split(' ')
         .map((n) => n[0])
@@ -268,20 +275,27 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                                 {job.images && job.images.length > 0 && (
                                                     <div className="mt-4">
                                                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                                                            {job.images.map((image) => (
-                                                                <a
+                                                            {job.images.map((image, imageIndex) => (
+                                                                <button
                                                                     key={image.url}
-                                                                    href={image.url}
-                                                                    target="_blank"
-                                                                    rel="noopener noreferrer"
-                                                                    className="group relative aspect-video overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800"
+                                                                    onClick={() => {
+                                                                        const slides = job.images!.map((img) => ({
+                                                                            src: img.url,
+                                                                            alt: img.name,
+                                                                        }));
+                                                                        setLightboxSlides(slides);
+                                                                        setLightboxIndex(imageIndex);
+                                                                        setLightboxOpen(true);
+                                                                    }}
+                                                                    className="group relative overflow-hidden rounded-lg border border-slate-200 bg-slate-100 transition-all hover:border-slate-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600"
                                                                 >
                                                                     <img
                                                                         src={image.thumbnail}
                                                                         alt={image.name}
-                                                                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                                                                        className="h-64 w-full object-cover transition-transform duration-300 group-hover:scale-105"
                                                                     />
-                                                                </a>
+                                                                    <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
+                                                                </button>
                                                             ))}
                                                         </div>
                                                     </div>
@@ -378,6 +392,9 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                     </div>
                 )}
             </div>
+
+            {/* Lightbox */}
+            <Lightbox open={lightboxOpen} close={() => setLightboxOpen(false)} slides={lightboxSlides} index={lightboxIndex} />
         </MainLayout>
     );
 }
