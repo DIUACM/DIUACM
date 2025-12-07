@@ -240,7 +240,7 @@ export default function EventDetailsPage({ event, auth }: Props) {
 
                     {/* Ranklists */}
                     {event.ranklists && event.ranklists.length > 0 && (
-                        <div className="mb-4 rounded-lg border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 dark:border-slate-700 dark:from-slate-900 dark:to-slate-800">
+                        <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
                             <div className="mb-3 flex items-center gap-2">
                                 <TrendingUp className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -252,10 +252,9 @@ export default function EventDetailsPage({ event, auth }: Props) {
                                     <Link
                                         key={index}
                                         href={`/trackers/${ranklist.tracker_slug}?keyword=${ranklist.keyword}`}
-                                        className="group relative overflow-hidden rounded-lg border border-blue-200 bg-white p-3 shadow-sm transition-all hover:border-blue-400 hover:shadow-md dark:border-blue-800/30 dark:bg-slate-800 dark:hover:border-blue-600"
+                                        className="group rounded-lg border border-blue-200 bg-white p-3 shadow-sm transition-all hover:border-blue-400 hover:bg-blue-50 hover:shadow-md dark:border-blue-800/30 dark:bg-slate-800 dark:hover:border-blue-600 dark:hover:bg-blue-900/20"
                                     >
-                                        <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100 dark:from-blue-900/20" />
-                                        <div className="relative space-y-1.5">
+                                        <div className="space-y-1.5">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="min-w-0 flex-1">
                                                     <div className="text-sm font-semibold text-slate-900 dark:text-white">
