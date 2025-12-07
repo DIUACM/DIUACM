@@ -34,6 +34,10 @@ class UsersRelationManager extends RelationManager
                 : $record->name)
             ->inverseRelationship('rankLists')
             ->columns([
+                TextColumn::make('pivot.position')
+                    ->label('Position')
+                    ->numeric()
+                    ->sortable(['pivot_position']),
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
