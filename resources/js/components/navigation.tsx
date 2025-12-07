@@ -49,7 +49,6 @@ const navigationCategories = {
         label: 'Activities',
         items: [
             { name: 'Regular Events', href: events.index.url(), icon: Calendar },
-            { name: 'Registrations', href: internalContests.index.url(), icon: Trophy },
             { name: 'Archive', href: contests.index.url(), icon: Archive },
         ],
     },
@@ -75,7 +74,6 @@ const navigationCategories = {
 const menuItems = [
     { name: 'Home', href: home.url(), icon: Home },
     { name: 'Regular Events', href: events.index.url(), icon: Calendar },
-    { name: 'Registrations', href: internalContests.index.url(), icon: Trophy },
     { name: 'Archive', href: contests.index.url(), icon: Archive },
     { name: 'Gallery', href: galleries.index.url(), icon: Image },
     { name: 'Blog', href: blog.index.url(), icon: FileText },
