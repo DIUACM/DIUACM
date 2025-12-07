@@ -176,12 +176,27 @@ export interface TrackerPerformance {
     rank_lists: TrackerRankList[];
 }
 
+export interface JobExperience {
+    id: number;
+    company_name: string;
+    position: string;
+    description: string | null;
+    location: string | null;
+    company_website: string | null;
+    start_date: string;
+    end_date: string | null;
+    is_current: boolean;
+    duration: string;
+    images: GalleryImage[];
+}
+
 export interface ProgrammerDetails extends Programmer {
     atcoder_handle: string | null;
     vjudge_handle: string | null;
     codeforces_handle: string | null;
     trackers: TrackerPerformance[];
     contests: ProgrammerContest[];
+    job_experiences: JobExperience[];
 }
 // ********* Trackers Interface Added *********
 export interface Tracker {

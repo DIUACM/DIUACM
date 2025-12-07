@@ -47,12 +47,12 @@ export default function GalleryShowPage({ gallery }: GalleryShowPageProps) {
                                         setLightboxIndex(index);
                                         setLightboxOpen(true);
                                     }}
-                                    className="group relative aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100 transition-all hover:border-slate-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600"
+                                    className="group relative overflow-hidden rounded-lg border border-slate-200 bg-slate-100 transition-all hover:border-slate-300 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600"
                                 >
                                     <img
                                         src={image.thumbnail}
                                         alt={image.name}
-                                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                        className="h-64 w-full object-cover transition-transform duration-300 group-hover:scale-105"
                                     />
                                     <div className="absolute inset-0 bg-black/0 transition-colors group-hover:bg-black/10" />
                                 </button>
