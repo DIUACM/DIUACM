@@ -133,19 +133,15 @@ class UpdateAtcoderEventStats extends Command
             return self::SUCCESS;
         }
 
-        // Get all unique users across all events
-        $eventIds = collect($contestData)->pluck('event.id');
+        // Get all users who have an AtCoder handle
         $users = User::query()
-            ->whereHas('rankLists', function ($q) use ($eventIds): void {
-                $q->whereHas('events', function ($qq) use ($eventIds): void {
-                    $qq->whereIn('events.id', $eventIds);
-                });
-            })
+            ->whereNotNull('atcoder_handle')
+            ->where('atcoder_handle', '!=', '')
             ->get(['id', 'name', 'atcoder_handle'])
             ->unique('id');
 
         if ($users->isEmpty()) {
-            $this->warn('No users found across all events.');
+            $this->warn('No users with AtCoder handles found.');
 
             return self::SUCCESS;
         }
@@ -166,34 +162,8 @@ class UpdateAtcoderEventStats extends Command
     {
         $handle = trim((string) $user->atcoder_handle);
 
-        // If user has no handle, mark as absent for all relevant events
+        // Skip users without handles (shouldn't happen as we filter in the query)
         if ($handle === '') {
-            foreach ($contestData as $contestId => $data) {
-                $event = $data['event'];
-
-                // Check if user is associated with this specific event
-                $isUserAssociated = User::query()
-                    ->where('id', $user->id)
-                    ->whereHas('rankLists', function ($q) use ($event): void {
-                        $q->whereHas('events', function ($qq) use ($event): void {
-                            $qq->where('events.id', $event->id);
-                        });
-                    })
-                    ->exists();
-
-                if ($isUserAssociated) {
-                    EventUserStat::updateOrCreate([
-                        'event_id' => $event->id,
-                        'user_id' => $user->id,
-                    ], [
-                        'solve_count' => 0,
-                        'upsolve_count' => 0,
-                        'participation' => false,
-                    ]);
-                    $this->line("  · {$user->name} — no AtCoder handle, set absent for {$event->title}");
-                }
-            }
-
             return;
         }
 
@@ -220,20 +190,6 @@ class UpdateAtcoderEventStats extends Command
             $startEpoch = $data['start_epoch'];
             $endEpoch = $startEpoch + $data['duration'];
 
-            // Check if user is associated with this specific event
-            $isUserAssociated = User::query()
-                ->where('id', $user->id)
-                ->whereHas('rankLists', function ($q) use ($event): void {
-                    $q->whereHas('events', function ($qq) use ($event): void {
-                        $qq->where('events.id', $event->id);
-                    });
-                })
-                ->exists();
-
-            if (! $isUserAssociated) {
-                continue;
-            }
-
             $contestSubmissions = $submissionsByContest[$contestId] ?? [];
 
             $solved = [];
@@ -258,6 +214,11 @@ class UpdateAtcoderEventStats extends Command
                         $upsolved[$pid] = true;
                     }
                 }
+            }
+
+            // Skip if user has no data for this contest
+            if (empty($contestSubmissions)) {
+                continue;
             }
 
             EventUserStat::updateOrCreate([
