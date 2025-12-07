@@ -185,6 +185,7 @@ export interface TrackerEvent {
     title: string;
     starting_at: string;
     strict_attendance?: boolean;
+    weight?: number;
 }
 export interface EventStat {
     event_id: number;
@@ -195,6 +196,7 @@ export interface EventStat {
 
 export interface TrackerUser extends PublicUser {
     score: number;
+    position: number;
     event_stats: Record<number, EventStat | null>;
 }
 

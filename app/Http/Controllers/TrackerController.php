@@ -91,7 +91,7 @@ class TrackerController extends Controller
                 $this->processEventStats($selectedRankList, $userIds, $eventIds);
             }
 
-            $selectedRankList->setRelation('users', $selectedRankList->users->sortByDesc(fn ($u) => (float) ($u->pivot->score ?? 0))->values());
+            $selectedRankList->setRelation('users', $selectedRankList->users->sortBy(fn ($u) => (int) ($u->pivot->position ?? 0))->values());
 
             $tracker->selectedRankList = $selectedRankList;
             $tracker->availableRankLists = $tracker->rankLists;
@@ -155,7 +155,7 @@ class TrackerController extends Controller
             $this->processEventStats($selectedRankList, $userIds, $eventIds);
         }
 
-        $selectedRankList->setRelation('users', $selectedRankList->users->sortByDesc(fn ($u) => (float) ($u->pivot->score ?? 0))->values());
+        $selectedRankList->setRelation('users', $selectedRankList->users->sortBy(fn ($u) => (int) ($u->pivot->position ?? 0))->values());
 
         $exportData = [
             'tracker' => [
@@ -163,9 +163,9 @@ class TrackerController extends Controller
                 'slug' => $tracker->slug,
                 'ranklist' => $selectedRankList->keyword,
             ],
-            'users' => $selectedRankList->users->map(function ($user, $index) use ($selectedRankList) {
+            'users' => $selectedRankList->users->map(function ($user) use ($selectedRankList) {
                 $userData = [
-                    'rank' => $index + 1,
+                    'rank' => $user->pivot->position ?? 0,
                     'name' => $user->name,
                     'username' => $user->username,
                     'student_id' => $user->student_id,
@@ -188,6 +188,7 @@ class TrackerController extends Controller
                     'id' => $event->id,
                     'title' => $event->title,
                     'starting_at' => $event->starting_at,
+                    'weight' => $event->pivot->weight ?? null,
                 ];
             }),
         ];
