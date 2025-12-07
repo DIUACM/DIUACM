@@ -88,6 +88,23 @@ class UsersRelationManager extends RelationManager
                             $this->ownerRecord->users()->syncWithoutDetaching($userIds);
                         }
                     }),
+                Action::make('attachUsersFromSolveStats')
+                    ->label('Attach Users from Solve Stats')
+                    ->action(function (): void {
+                        $userIds = $this->ownerRecord
+                            ->events()
+                            ->with('eventUserStats:id,event_id,user_id')
+                            ->get()
+                            ->pluck('eventUserStats.*.user_id')
+                            ->flatten()
+                            ->unique()
+                            ->values()
+                            ->all();
+
+                        if (! empty($userIds)) {
+                            $this->ownerRecord->users()->syncWithoutDetaching($userIds);
+                        }
+                    }),
                 Action::make('recalculateAllScores')
                     ->label('Recalculate All Scores')
                     ->icon('heroicon-o-calculator')
