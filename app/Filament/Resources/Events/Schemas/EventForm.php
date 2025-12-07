@@ -125,6 +125,10 @@ class EventForm
                                 Checkbox::make('strict_attendance')
                                     ->label('Strict Attendance')
                                     ->helperText('If enabled then the users who didn\'t give attendance their solve count won\'t be counted.'),
+
+                                Checkbox::make('consider_partial_accept')
+                                    ->label('Consider Partial Accept')
+                                    ->helperText('Enable this for VJudge score calculation to include partial accepts.'),
                             ]),
                     ]),
 

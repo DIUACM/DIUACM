@@ -28,6 +28,7 @@ class Event extends Model implements HasMedia
         'event_password',
         'open_for_attendance',
         'strict_attendance',
+        'consider_partial_accept',
         'type',
         'participation_scope',
     ];
@@ -48,6 +49,7 @@ class Event extends Model implements HasMedia
             'ending_at' => 'datetime',
             'open_for_attendance' => 'boolean',
             'strict_attendance' => 'boolean',
+            'consider_partial_accept' => 'boolean',
             'type' => EventType::class,
             'participation_scope' => ParticipationScope::class,
             'status' => VisibilityStatus::class,
