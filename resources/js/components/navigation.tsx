@@ -14,7 +14,6 @@ import blog from '@/routes/blog';
 import contests from '@/routes/contests';
 import events from '@/routes/events';
 import galleries from '@/routes/galleries';
-import internalContests from '@/routes/internal-contests';
 import profile from '@/routes/profile';
 import programmers from '@/routes/programmers';
 import trackers from '@/routes/trackers';

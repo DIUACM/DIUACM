@@ -59,14 +59,14 @@ class RankListsRelationManager extends RelationManager
                     ->schema(function (AttachAction $action): array {
                         $event = $this->getOwnerRecord();
                         $defaultWeight = 1;
-                        
+
                         if ($event->event_link && (
                             str_contains($event->event_link, 'atcoder.jp') ||
                             str_contains($event->event_link, 'codeforces.com')
                         )) {
                             $defaultWeight = 0.5;
                         }
-                        
+
                         return [
                             $action->getRecordSelect(),
                             TextInput::make('weight')

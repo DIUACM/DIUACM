@@ -83,7 +83,6 @@ class UpdateCodeforcesEventStats extends Command
             $url = 'https://codeforces.com/api/contest.standings?contestId='.urlencode((string) $contestId).'&showUnofficial=true&handles='.urlencode($handles);
             // $this->line($url);
 
-
             $cacheKey = "codeforces_standings_{$contestId}_".md5($handles);
 
             $payload = Cache::remember($cacheKey, now()->addHours(2), function () use ($url, $contestId) {
