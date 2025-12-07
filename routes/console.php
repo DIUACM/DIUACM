@@ -9,6 +9,6 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('app:update-codeforces-ratings')->daily();
-Schedule::command('app:update-codeforces-event-stats')->everySixHours();
-Schedule::command('app:update-atcoder-event-stats')->everySixHours();
-Schedule::command('app:recalculate-ranklist-score')->everySixHours();
+Schedule::command('app:update-codeforces-event-stats')->everyTwoHours();
+Schedule::command('app:update-atcoder-event-stats')->everyTwoHours();
+Schedule::command('app:recalculate-ranklist-score')->everyTwoHours();
