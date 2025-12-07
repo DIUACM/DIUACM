@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\VJudgeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\ContactController;
@@ -117,3 +118,10 @@ Route::match(['get', 'post'], '/payments/callback/{gateway}', [PaymentController
 // IPN (Instant Payment Notification) endpoint - server-to-server
 Route::post('/payments/ipn/{gateway}', [PaymentController::class, 'handleIPN'])
     ->name('payment.ipn');
+
+// VJudge API routes
+Route::get('/api/events/vjudge', [VJudgeController::class, 'getActiveContests'])
+    ->middleware('auth');
+Route::post('/api/events/{eventId}/vjudge-update', [VJudgeController::class, 'processContestData'])
+    ->middleware('auth')
+    ->where('eventId', '[0-9]+');
