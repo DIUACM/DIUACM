@@ -24,7 +24,8 @@ class JobExperienceForm
                         Select::make('user_id')
                             ->label('User')
                             ->relationship('user', 'name')
-                            ->searchable(['name', 'username', 'student_id'])
+                            ->searchable(['name', 'username', 'email', 'student_id', 'codeforces_handle', 'atcoder_handle', 'vjudge_handle'])
+                            ->getOptionLabelFromRecordUsing(fn (\App\Models\User $record): string => "{$record->name} ({$record->student_id})")
                             ->preload()
                             ->required()
                             ->helperText('Select the user this job experience belongs to'),
