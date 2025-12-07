@@ -66,8 +66,8 @@ class EventController extends Controller
 
         $userColumns = array_map(fn ($col) => "users.{$col}", self::USER_PUBLIC_COLUMNS);
 
-        // Load event images
-        $event->load('media');
+        // Load event images and ranklists
+        $event->load('media', 'rankLists.tracker');
 
         // Only load attendees count and attendees if attendance is open
         if ($event->open_for_attendance) {

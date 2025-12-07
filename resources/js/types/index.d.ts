@@ -88,6 +88,14 @@ export interface Event {
     type: string;
     attendees_count?: number;
 }
+export interface EventRankList {
+    name: string;
+    weight: number;
+    tracker_title: string;
+    tracker_slug: string;
+    keyword: string;
+}
+
 export interface EventDetails extends Event {
     description: string;
     event_link: string;
@@ -95,6 +103,7 @@ export interface EventDetails extends Event {
     images: GalleryImage[];
     attendance?: Array<PublicUser & { attended_at: string }>;
     performance?: Array<PublicUser & { solve_count: number; upsolve_count: number }>;
+    ranklists?: EventRankList[];
 }
 
 // ********* Blogpost Interface Added *********
