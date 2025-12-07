@@ -71,7 +71,7 @@ class ProgrammerDetailsResource extends ProgrammerResource
                         'end_date' => $job->end_date?->toIso8601String(),
                         'is_current' => $job->is_current,
                         'duration' => $job->duration,
-                        'images' => GalleryMediaResource::collection($job->getMedia('images')),
+                        'images' => GalleryMediaResource::collection($job->getMedia('images'))->resolve(),
                     ];
                 });
             }),
