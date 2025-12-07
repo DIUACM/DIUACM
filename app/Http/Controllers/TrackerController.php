@@ -44,7 +44,9 @@ class TrackerController extends Controller
                 ->where('status', VisibilityStatus::PUBLISHED)
                 ->firstOrFail();
 
-            $tracker->load(['rankLists:id,tracker_id,keyword']);
+            $tracker->load(['rankLists' => function ($query) {
+                $query->select('id', 'tracker_id', 'keyword')->orderBy('order');
+            }]);
 
             $selectedRankList = null;
             if ($keyword) {
@@ -110,7 +112,9 @@ class TrackerController extends Controller
             ->where('status', VisibilityStatus::PUBLISHED)
             ->firstOrFail();
 
-        $tracker->load(['rankLists:id,tracker_id,keyword']);
+        $tracker->load(['rankLists' => function ($query) {
+            $query->select('id', 'tracker_id', 'keyword')->orderBy('order');
+        }]);
 
         $selectedRankList = null;
         if ($keyword) {
