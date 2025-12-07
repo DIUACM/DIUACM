@@ -95,14 +95,17 @@ class UsersRelationManager extends RelationManager
                 Action::make('attachUsersFromSolveStats')
                     ->label('Attach Users from Solve Stats')
                     ->action(function (): void {
-                        $userIds = $this->ownerRecord
-                            ->events()
-                            ->with('eventUserStats:id,event_id,user_id')
-                            ->get()
-                            ->pluck('eventUserStats.*.user_id')
-                            ->flatten()
-                            ->unique()
-                            ->values()
+                        $eventIds = $this->ownerRecord->events()->pluck('events.id')->all();
+
+                        if (empty($eventIds)) {
+                            return;
+                        }
+
+                        $userIds = \App\Models\EventUserStat::query()
+                            ->whereIn('event_id', $eventIds)
+                            ->where('participation', true)
+                            ->distinct()
+                            ->pluck('user_id')
                             ->all();
 
                         if (! empty($userIds)) {
