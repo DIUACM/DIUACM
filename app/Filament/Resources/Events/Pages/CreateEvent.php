@@ -99,7 +99,7 @@ class CreateEvent extends CreateRecord
                             'type' => EventType::CONTEST,
                             'status' => VisibilityStatus::PUBLISHED,
                             'participation_scope' => ParticipationScope::OPEN_FOR_ALL,
-                            'open_for_attendance' => true,
+                            'open_for_attendance' => false,
                         ]);
 
                         Notification::make()
@@ -136,7 +136,7 @@ class CreateEvent extends CreateRecord
     private function fetchVJudgeContest(string $contest_link): void
     {
         try {
-            $response = Http::timeout(15)->get($contest_link);
+            $response = Http::timeout(15)->get("https://fetcher.sourov2305101004.workers.dev/?url=" . urlencode($contest_link));
 
             if (! $response->successful()) {
                 throw new \Exception('Failed to fetch contest page');
@@ -187,15 +187,52 @@ class CreateEvent extends CreateRecord
 
     private function fetchAtCoderContest(string $contest_link): void
     {
-        // AtCoder doesn't have a public API, so we'll provide manual input guidance
-        Notification::make()
-            ->title('AtCoder Contest Detection')
-            ->body('AtCoder contests need to be entered manually. Please fill in the form with contest details.')
-            ->info()
-            ->persistent()
-            ->send();
+        try {
+            $response = Http::timeout(15)->get($contest_link);
 
-        // You could potentially scrape AtCoder pages here if needed
-        // For now, we'll just notify the user to input manually
+            if (! $response->successful()) {
+                throw new \Exception('Failed to fetch contest page');
+            }
+
+            $html = $response->body();
+
+            // Extract contest title from <title> tag
+            preg_match('/<title>(.*?) - AtCoder<\/title>/', $html, $titleMatches);
+            $title = $titleMatches[1] ?? null;
+
+            // Extract start time and end time from JavaScript variables
+            preg_match('/var startTime = moment\("([^"]+)"\);/', $html, $startMatches);
+            preg_match('/var endTime = moment\("([^"]+)"\);/', $html, $endMatches);
+
+            $startTime = $startMatches[1] ?? null;
+            $endTime = $endMatches[1] ?? null;
+
+            if ($title && $startTime && $endTime) {
+                $this->form->fill([
+                    'title' => html_entity_decode($title),
+                    'starting_at' => Carbon::parse($startTime)->setTimezone(config('app.timezone'))->toDateTimeString(),
+                    'ending_at' => Carbon::parse($endTime)->setTimezone(config('app.timezone'))->toDateTimeString(),
+                    'event_link' => $contest_link,
+                    'type' => EventType::CONTEST,
+                    'status' => VisibilityStatus::PUBLISHED,
+                    'participation_scope' => ParticipationScope::OPEN_FOR_ALL,
+                    'open_for_attendance' => false,
+                ]);
+
+                Notification::make()
+                    ->title('AtCoder Contest Data Fetched Successfully')
+                    ->body("Loaded: {$title}")
+                    ->success()
+                    ->send();
+            } else {
+                throw new \Exception('Unable to extract contest information');
+            }
+        } catch (\Exception $e) {
+            Notification::make()
+                ->title('Failed to Fetch AtCoder Contest')
+                ->body('Unable to load contest data. Please check the URL and try again.')
+                ->danger()
+                ->send();
+        }
     }
 }

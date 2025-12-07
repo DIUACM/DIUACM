@@ -119,6 +119,11 @@ Route::match(['get', 'post'], '/payments/callback/{gateway}', [PaymentController
 Route::post('/payments/ipn/{gateway}', [PaymentController::class, 'handleIPN'])
     ->name('payment.ipn');
 
+// Sanctum CSRF cookie route
+Route::get('/sanctum/csrf-cookie', function () {
+    return response()->json(['message' => 'CSRF cookie set']);
+})->middleware('web');
+
 // VJudge API routes
 Route::get('/api/events/vjudge', [VJudgeController::class, 'getActiveContests'])
     ->middleware('auth');
