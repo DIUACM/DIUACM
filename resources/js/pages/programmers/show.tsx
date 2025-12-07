@@ -6,7 +6,7 @@ import MainLayout from '@/layouts/main-layout';
 import { formatContestDate, getRatingColor, getRatingTitle } from '@/lib/codeforces';
 import type { ProgrammerDetails } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Calendar, GraduationCap, MapPin, Target, Trophy, Users } from 'lucide-react';
+import { ArrowLeft, Briefcase, Calendar, ExternalLink, GraduationCap, MapPin, Target, Trophy, Users } from 'lucide-react';
 
 type ProgrammerDetailsPageProps = {
     programmer: ProgrammerDetails;
@@ -198,6 +198,95 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                                     </div>
                                                 </Link>
                                             ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Job Experiences */}
+                {Array.isArray(programmer.job_experiences) && programmer.job_experiences.length > 0 && (
+                    <div className="mb-8">
+                        <h2 className="mb-6 flex items-center text-xl font-semibold text-slate-900 dark:text-white">
+                            <Briefcase className="mr-2 h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                            Work Experience ({programmer.job_experiences.length})
+                        </h2>
+
+                        <div className="space-y-4">
+                            {programmer.job_experiences.map((job) => (
+                                <Card key={job.id} className="transition-shadow hover:shadow-md">
+                                    <CardContent>
+                                        <div className="flex flex-col gap-4 sm:flex-row">
+                                            <div className="flex-1">
+                                                <div className="mb-3">
+                                                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{job.position}</h3>
+                                                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                                                        {job.company_website ? (
+                                                            <a
+                                                                href={job.company_website}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center gap-1 text-base font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                                                            >
+                                                                {job.company_name}
+                                                                <ExternalLink className="h-3 w-3" />
+                                                            </a>
+                                                        ) : (
+                                                            <p className="text-base font-medium text-slate-700 dark:text-slate-300">
+                                                                {job.company_name}
+                                                            </p>
+                                                        )}
+                                                        {job.is_current && (
+                                                            <Badge className="bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-300">
+                                                                Current
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="mb-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-600 dark:text-slate-400">
+                                                    <div className="flex items-center gap-1">
+                                                        <Calendar className="h-4 w-4" />
+                                                        <span>{job.duration}</span>
+                                                    </div>
+                                                    {job.location && (
+                                                        <div className="flex items-center gap-1">
+                                                            <MapPin className="h-4 w-4" />
+                                                            <span>{job.location}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {job.description && (
+                                                    <div className="prose prose-sm max-w-none text-slate-700 dark:prose-invert dark:text-slate-300">
+                                                        <div dangerouslySetInnerHTML={{ __html: job.description }} />
+                                                    </div>
+                                                )}
+
+                                                {job.images && job.images.length > 0 && (
+                                                    <div className="mt-4">
+                                                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                                                            {job.images.map((image) => (
+                                                                <a
+                                                                    key={image.url}
+                                                                    href={image.url}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="group relative aspect-video overflow-hidden rounded-lg bg-slate-100 dark:bg-slate-800"
+                                                                >
+                                                                    <img
+                                                                        src={image.thumbnail}
+                                                                        alt={image.name}
+                                                                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                                                                    />
+                                                                </a>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </CardContent>
                                 </Card>

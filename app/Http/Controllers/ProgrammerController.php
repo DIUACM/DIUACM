@@ -57,6 +57,9 @@ class ProgrammerController extends Controller
                 ])
                     ->orderBy('created_at', 'desc');
             },
+            'jobExperiences' => function ($query) {
+                $query->recent();
+            },
         ]);
 
         return Inertia::render('programmers/show', [

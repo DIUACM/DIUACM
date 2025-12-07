@@ -58,6 +58,23 @@ class ProgrammerDetailsResource extends ProgrammerResource
                     })
                     ->values();
             }),
+            'job_experiences' => $this->whenLoaded('jobExperiences', function () {
+                return $this->jobExperiences->map(function ($job) {
+                    return [
+                        'id' => $job->id,
+                        'company_name' => $job->company_name,
+                        'position' => $job->position,
+                        'description' => $job->description,
+                        'location' => $job->location,
+                        'company_website' => $job->company_website,
+                        'start_date' => $job->start_date?->toIso8601String(),
+                        'end_date' => $job->end_date?->toIso8601String(),
+                        'is_current' => $job->is_current,
+                        'duration' => $job->duration,
+                        'images' => GalleryMediaResource::collection($job->getMedia('images')),
+                    ];
+                });
+            }),
         ]);
     }
 }
