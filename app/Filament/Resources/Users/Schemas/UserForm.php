@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Users\Schemas;
 
 use App\Enums\Gender;
 use App\Models\User;
-use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
@@ -54,16 +53,18 @@ class UserForm
                                     ->avatar()
                                     ->imageEditor()
                                     ->image(),
-                                DateTimePicker::make('email_verified_at')
+                                TextEntry::make('email_verified_at')
                                     ->label('Email verified at')
-                                    ->displayFormat('M j, Y g:i A')
-                                    ->timezone('Asia/Dhaka'),
+                                    ->dateTime('M j, Y g:i A', timezone: 'Asia/Dhaka')
+                                    ->placeholder('Not verified')
+                                    ->hiddenOn('create'),
                                 TextInput::make('password')
                                     ->password()
                                     ->revealable()
                                     ->dehydrated(fn ($state) => filled($state))
                                     ->required(fn (?User $record): bool => $record === null),
-                            ]),
+                            ])
+                            ->columns(3),
                     ]),
 
                 Section::make('Competitive Profiles')
