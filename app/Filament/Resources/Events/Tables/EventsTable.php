@@ -85,6 +85,7 @@ class EventsTable
 
                 TextColumn::make('event_link')
                     ->label('Link')
+                    ->searchable()
                     ->url(fn ($record): ?string => $record->event_link ?: null, shouldOpenInNewTab: true)
                     ->copyable()
                     ->copyMessage('Link copied')
