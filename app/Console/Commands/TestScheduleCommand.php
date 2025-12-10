@@ -28,7 +28,7 @@ class TestScheduleCommand extends Command
     {
         $user = User::where('username', 'sourov-alt')->first();
 
-        if (!$user) {
+        if (! $user) {
             $this->error('User with username "sourov-alt" not found');
 
             return self::FAILURE;
