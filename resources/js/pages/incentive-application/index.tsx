@@ -79,7 +79,7 @@ export default function IncentiveApplicationIndex() {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(storeRoute(), {
+        post(storeRoute.url(), {
             preserveScroll: true,
             onError: (errors) => {
                 const errorMessages = Object.values(errors).flat();
@@ -110,7 +110,6 @@ export default function IncentiveApplicationIndex() {
                             </div>
                             <div>
                                 <h3 className="font-semibold text-green-900 dark:text-green-100">Successfully Submitted</h3>
-                                <p className="text-sm text-green-800 dark:text-green-200">Your application is under review</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -197,17 +196,6 @@ export default function IncentiveApplicationIndex() {
                             </div>
                         </CardContent>
                     </Card>
-
-                    {/* Edit Button */}
-                    <div className="flex justify-end">
-                        <Button
-                            onClick={() => window.location.reload()}
-                            variant="outline"
-                            className="min-w-[200px] border-slate-200 dark:border-slate-700"
-                        >
-                            Edit Application
-                        </Button>
-                    </div>
                 </div>
             </MainLayout>
         );
