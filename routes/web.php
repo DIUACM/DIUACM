@@ -97,6 +97,12 @@ Route::middleware('auth')->prefix('profile')->name('profile.')->group(function (
     Route::post('/change-password', [ProfileController::class, 'updatePassword'])->name('updatePassword');
 });
 
+// Incentive Application routes
+Route::middleware(['auth', 'verified'])->prefix('incentive-application')->name('incentive-application.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\IncentiveApplicationController::class, 'index'])->name('index');
+    Route::post('/', [\App\Http\Controllers\IncentiveApplicationController::class, 'store'])->name('store');
+});
+
 // Contact routes
 Route::prefix('contact')->name('contact')->group(function () {
     Route::get('/', [ContactController::class, 'contact']);
