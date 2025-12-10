@@ -98,7 +98,7 @@ Route::middleware('auth')->prefix('profile')->name('profile.')->group(function (
 });
 
 // Incentive Application routes
-Route::middleware(['auth', 'verified'])->prefix('incentive-application')->name('incentive-application.')->group(function () {
+Route::middleware(['auth'])->prefix('incentive-application')->name('incentive-application.')->group(function () {
     Route::get('/', [\App\Http\Controllers\IncentiveApplicationController::class, 'index'])->name('index');
     Route::post('/', [\App\Http\Controllers\IncentiveApplicationController::class, 'store'])->name('store');
 });
