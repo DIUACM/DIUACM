@@ -279,6 +279,7 @@ class RankListScoreService
         $position = 1;
         $previousScore = null;
         $sameScoreCount = 0;
+        $updates = [];
 
         foreach ($users as $index => $user) {
             // If score is the same as previous, maintain same position
@@ -294,12 +295,34 @@ class RankListScoreService
                 }
             }
 
-            DB::table('rank_list_user')
-                ->where('rank_list_id', $rankListId)
-                ->where('user_id', $user->user_id)
-                ->update(['position' => $position]);
+            $updates[] = [
+                'user_id' => $user->user_id,
+                'position' => $position,
+            ];
 
             $previousScore = $user->score;
+        }
+
+        // Batch update all positions using a case statement for efficiency
+        if (! empty($updates)) {
+            $cases = [];
+            $userIds = [];
+
+            foreach ($updates as $update) {
+                $userIds[] = $update['user_id'];
+                $cases[] = "WHEN {$update['user_id']} THEN {$update['position']}";
+            }
+
+            $casesString = implode(' ', $cases);
+            $userIdsString = implode(',', $userIds);
+
+            DB::statement("
+                UPDATE rank_list_user 
+                SET position = CASE user_id 
+                    {$casesString}
+                END
+                WHERE rank_list_id = ? AND user_id IN ({$userIdsString})
+            ", [$rankListId]);
         }
     }
 

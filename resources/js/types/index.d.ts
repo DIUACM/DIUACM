@@ -325,3 +325,26 @@ export interface InternalContestMyRegistration {
     }>;
     registered_at: string;
 }
+
+// ********* Incentive Application Interface Added *********
+export interface CourseInfo {
+    teacher_name: string;
+    teacher_initial: string;
+    section: string;
+    teacher_email: string;
+    teacher_phone: string;
+    course_name: string;
+    course_code: string;
+}
+
+export interface IncentiveApplication {
+    id: number;
+    full_name: string;
+    student_id: string;
+    batch: string;
+    email: string;
+    current_semester: string;
+    phone_number: string;
+    courses: CourseInfo[];
+    registered_at: string;
+}
