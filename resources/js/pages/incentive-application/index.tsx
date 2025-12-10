@@ -1,13 +1,13 @@
 import { store as storeRoute } from '@/actions/App/Http/Controllers/IncentiveApplicationController';
 import PageHeader from '@/components/page-header';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import MainLayout from '@/layouts/main-layout';
 import type { CourseInfo, IncentiveApplication, SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { AlertCircle, BookOpen, Check, Loader2, Plus, Save, Trash2, User } from 'lucide-react';
+import { AlertCircle, Check, Loader2, Plus, Save, Trash2 } from 'lucide-react';
 import type { FormEventHandler } from 'react';
 import { toast } from 'sonner';
 
@@ -21,7 +21,15 @@ type FormData = {
     batch: string;
     current_semester: string;
     phone_number: string;
-    courses: CourseInfo[];
+    courses: Array<{
+        teacher_name: string;
+        teacher_initial: string;
+        section: string;
+        teacher_email: string;
+        teacher_phone: string;
+        course_name: string;
+        course_code: string;
+    }>;
 };
 
 export default function IncentiveApplicationIndex() {
