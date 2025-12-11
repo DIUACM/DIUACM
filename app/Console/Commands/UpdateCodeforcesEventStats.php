@@ -78,37 +78,49 @@ class UpdateCodeforcesEventStats extends Command
                 continue;
             }
 
-            // Fetch standings for all handles
-            $handles = $users->pluck('codeforces_handle')->implode(';');
-            $url = 'https://codeforces.com/api/contest.standings?contestId='.urlencode((string) $contestId).'&showUnofficial=true&handles='.urlencode($handles);
-            // $this->line($url);
+            // Fetch standings in batches to avoid URL length limits (HTTP 400)
+            // Codeforces API has URL length restrictions, so we batch handles
+            $handleChunks = $users->pluck('codeforces_handle')->chunk(100);
+            $rows = collect();
 
-            $cacheKey = "codeforces_standings_{$contestId}_".md5($handles);
+            foreach ($handleChunks as $chunkIndex => $chunk) {
+                $handles = $chunk->implode(';');
+                $url = 'https://codeforces.com/api/contest.standings?contestId='.urlencode((string) $contestId).'&showUnofficial=true&handles='.urlencode($handles);
 
-            $payload = Cache::remember($cacheKey, now()->addHours(2), function () use ($url, $contestId) {
-                $response = Http::timeout(30)
-                    ->acceptJson()
-                    ->get($url);
+                $cacheKey = "codeforces_standings_{$contestId}_chunk_{$chunkIndex}_".md5($handles);
 
-                if (! $response->successful()) {
-                    throw new \Exception("Failed to fetch standings from Codeforces API for contest {$contestId} (HTTP {$response->status()})");
+                try {
+                    $payload = Cache::remember($cacheKey, now()->addHours(2), function () use ($url, $contestId) {
+                        $response = Http::timeout(30)
+                            ->acceptJson()
+                            ->get($url);
+
+                        if (! $response->successful()) {
+                            throw new \Exception("Failed to fetch standings from Codeforces API for contest {$contestId} (HTTP {$response->status()})");
+                        }
+
+                        $responseData = $response->json();
+                        if (($responseData['status'] ?? null) !== 'OK') {
+                            throw new \Exception("Codeforces API returned error for contest {$contestId}: ".($responseData['comment'] ?? 'unknown error'));
+                        }
+
+                        return $responseData;
+                    });
+
+                    if (is_array($payload)) {
+                        $rows = $rows->merge($payload['result']['rows'] ?? []);
+                    }
+                } catch (\Exception $e) {
+                    $this->error("  [batch {$chunkIndex}] {$e->getMessage()}");
+
+                    continue;
                 }
 
-                $responseData = $response->json();
-                if (($responseData['status'] ?? null) !== 'OK') {
-                    throw new \Exception("Codeforces API returned error for contest {$contestId}: ".($responseData['comment'] ?? 'unknown error'));
+                // Add a small delay between API calls to respect rate limits
+                if ($chunkIndex < $handleChunks->count() - 1) {
+                    usleep(500000); // 500ms delay
                 }
-
-                return $responseData;
-            });
-
-            if (is_string($payload)) {
-                $this->error("  [skip] {$payload}");
-
-                continue;
             }
-
-            $rows = collect($payload['result']['rows'] ?? []);
 
             foreach ($users as $user) {
                 // Find the contest row (participation) and practice row (upsolve)
