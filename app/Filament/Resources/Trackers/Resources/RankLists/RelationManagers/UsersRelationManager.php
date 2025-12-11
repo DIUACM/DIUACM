@@ -33,10 +33,6 @@ class UsersRelationManager extends RelationManager
                 ? ($record->name.' (@'.$record->username.')')
                 : $record->name)
             ->inverseRelationship('rankLists')
-            ->modifyQueryUsing(function ($query) {
-                // Eager load pivot data to prevent N+1 queries
-                return $query->withPivot(['score', 'position']);
-            })
             ->columns([
                 TextColumn::make('pivot.position')
                     ->label('Position')
