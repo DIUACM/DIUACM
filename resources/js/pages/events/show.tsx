@@ -504,7 +504,7 @@ export default function EventDetailsPage({ event, auth }: Props) {
                                                                     </Badge>
                                                                 </TableCell>
                                                                 <TableCell className="text-center font-medium text-slate-900 dark:text-white">
-                                                                    {user.solve_count + user.upsolve_count}
+                                                                    {Number(user.solve_count) + Number(user.upsolve_count)}
                                                                 </TableCell>
                                                             </TableRow>
                                                         ))}
@@ -623,7 +623,7 @@ export default function EventDetailsPage({ event, auth }: Props) {
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell className="text-center font-medium text-slate-900 dark:text-white">
-                                                        {user.solve_count + user.upsolve_count}
+                                                        {Number(user.solve_count) + Number(user.upsolve_count)}
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
