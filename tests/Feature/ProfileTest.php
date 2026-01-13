@@ -93,13 +93,10 @@ it('can display the change password page', function () {
 });
 
 it('can change password', function () {
-    $user = User::factory()->create([
-        'password' => Hash::make('oldpassword'),
-    ]);
+    $user = User::factory()->create([]);
 
     $this->actingAs($user)
         ->post('/profile/change-password', [
-            'current_password' => 'oldpassword',
             'password' => 'newpassword',
             'password_confirmation' => 'newpassword',
         ])
@@ -110,29 +107,11 @@ it('can change password', function () {
     expect(Hash::check('newpassword', $user->password))->toBeTrue();
 });
 
-it('validates current password when changing password', function () {
-    $user = User::factory()->create([
-        'password' => Hash::make('correctpassword'),
-    ]);
-
-    $this->actingAs($user)
-        ->post('/profile/change-password', [
-            'current_password' => 'wrongpassword',
-            'password' => 'newpassword',
-            'password_confirmation' => 'newpassword',
-        ])
-        ->assertStatus(302)
-        ->assertSessionHasErrors(['current_password']);
-});
-
 it('validates password confirmation', function () {
-    $user = User::factory()->create([
-        'password' => Hash::make('oldpassword'),
-    ]);
+    $user = User::factory()->create([]);
 
     $this->actingAs($user)
         ->post('/profile/change-password', [
-            'current_password' => 'oldpassword',
             'password' => 'newpassword',
             'password_confirmation' => 'differentpassword',
         ])

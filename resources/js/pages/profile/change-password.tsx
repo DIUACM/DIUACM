@@ -29,7 +29,6 @@ export default function ChangePassword() {
     const user = auth.user;
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        current_password: '',
         password: '',
         password_confirmation: '',
     });
@@ -115,29 +114,11 @@ export default function ChangePassword() {
                                         <div>
                                             <h3 className="mb-1 text-lg font-semibold text-slate-900 dark:text-white">Change Password</h3>
                                             <p className="text-sm text-slate-600 dark:text-slate-400">
-                                                Enter your current password and choose a new secure password
+                                                Choose a new secure password for your account
                                             </p>
                                         </div>
 
                                         <div className="space-y-6">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="current_password" className="text-sm font-medium">
-                                                    Current Password <span className="text-red-500">*</span>
-                                                </Label>
-                                                <Input
-                                                    id="current_password"
-                                                    type="password"
-                                                    value={data.current_password}
-                                                    onChange={(e) => setData('current_password', e.target.value)}
-                                                    placeholder="Enter your current password"
-                                                    disabled={processing}
-                                                    className={errors.current_password ? 'border-red-500' : ''}
-                                                    autoComplete="current-password"
-                                                    required
-                                                />
-                                                {errors.current_password && <p className="text-sm text-red-500">{errors.current_password}</p>}
-                                            </div>
-
                                             <div className="space-y-2">
                                                 <Label htmlFor="password" className="text-sm font-medium">
                                                     New Password <span className="text-red-500">*</span>
