@@ -5,7 +5,5 @@
     "editors": [
         "vscode"
     ],
-    "guidelines": [
-        "filament/filament"
-    ]
+    "guidelines": true
 }

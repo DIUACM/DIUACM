@@ -8,12 +8,12 @@
     "require": {
         "php": "^8.2",
         "bezhansalleh/filament-shield": "^4.0",
-        "filament/filament": "^4.0",
-        "filament/spatie-laravel-media-library-plugin": "^4.0",
-        "inertiajs/inertia-laravel": "^2.0",
-        "laravel/framework": "^12.0",
+        "filament/filament": "^5.4",
+        "filament/spatie-laravel-media-library-plugin": "^5.4",
+        "inertiajs/inertia-laravel": "^3.0",
+        "laravel/framework": "^13.2",
         "laravel/socialite": "^5.23",
-        "laravel/tinker": "^2.10.1",
+        "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.11",
         "pxlrbt/filament-environment-indicator": "^3.3",
         "sentry/sentry-laravel": "^4.19"
@@ -21,7 +21,7 @@
     "require-dev": {
         "deployer/deployer": "^7.5",
         "fakerphp/faker": "^1.23",
-        "laravel/boost": "^1.8.7",
+        "laravel/boost": "^2.4",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
         "laravel/sail": "^1.41",
