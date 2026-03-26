@@ -2,7 +2,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import MainLayout from '@/layouts/main-layout';
-import { about, contact } from '@/routes';
+import blog from '@/routes/blog';
+import { contact } from '@/routes';
 import { Link } from '@inertiajs/react';
 import Autoplay from 'embla-carousel-autoplay';
 import {
@@ -123,21 +124,14 @@ const programs = [
         description: 'Master programming basics with our curated problem set covering fundamental concepts. Solve 60% to qualify for Blue Sheet.',
         icon: FileCode2,
         color: 'from-green-500 to-emerald-500',
-        link: '/about', // adjusted to existing route
-    },
-    {
-        title: 'Blue Sheet Advanced',
-        description: '1000+ carefully selected problems for advanced programmers. Regular updates based on top solver performance.',
-        icon: Award,
-        color: 'from-blue-500 to-indigo-500',
-        link: '/about', // adjusted to existing route
+        link: blog.index.url({ query: { search: 'green sheet' } }),
     },
     {
         title: 'ACM Advanced Camp',
         description: 'Intensive training program for TOPC top performers with mentoring from seniors and alumni.',
         icon: Target,
         color: 'from-purple-500 to-pink-500',
-        link: '/about', // adjusted to existing route
+        link: blog.index.url({ query: { search: 'advanced camp' } }),
     },
 ] as const;
 
@@ -274,7 +268,7 @@ function HeroSection() {
                                     size="lg"
                                     className="min-w-[200px] rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-8 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
                                 >
-                                    <Link href={about.url()}>
+                                    <Link href={blog.index.url({ query: { search: 'contest' } })}>
                                         <Trophy className="mr-2 h-4 w-4" />
                                         Join Contests
                                     </Link>
@@ -286,7 +280,7 @@ function HeroSection() {
                                     variant="outline"
                                     className="min-w-[200px] rounded-full border border-slate-200 bg-white/80 px-8 font-medium text-blue-600 shadow-md backdrop-blur-sm transition-all hover:border-blue-200 hover:bg-white hover:text-blue-700 hover:shadow-xl dark:border-slate-700 dark:bg-slate-800/80 dark:text-blue-400 dark:hover:border-slate-600 dark:hover:bg-slate-800 dark:hover:text-blue-300"
                                 >
-                                    <Link href={about.url()}>
+                                    <Link href={blog.index.url({ query: { search: 'diu acm' } })}>
                                         <ArrowRight className="mr-2 h-4 w-4" />
                                         Learn More
                                     </Link>
