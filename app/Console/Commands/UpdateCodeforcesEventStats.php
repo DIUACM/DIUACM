@@ -123,7 +123,8 @@ class UpdateCodeforcesEventStats extends Command
             }
 
             foreach ($users as $user) {
-                // Find the contest row (participation) and practice row (upsolve)
+                // Find the contest row (participation) and non-contest row (upsolve).
+                // Codeforces marks virtual participation separately and it should not count as contest solves.
                 $contestRow = $rows->first(function ($row) use ($user) {
                     $handle = strtolower($row['party']['members'][0]['handle'] ?? '');
                     $type = $row['party']['participantType'] ?? '';
@@ -136,7 +137,7 @@ class UpdateCodeforcesEventStats extends Command
                     $type = $row['party']['participantType'] ?? '';
 
                     return $handle === strtolower((string) $user->codeforces_handle)
-                        && $type === 'PRACTICE';
+                        && in_array($type, ['PRACTICE', 'VIRTUAL'], true);
                 });
 
                 // Skip users with no data from the API
