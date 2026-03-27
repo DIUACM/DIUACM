@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Enums\PaymentStatus;
+use Database\Factories\PaymentFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Payment extends Model
 {
-    /** @use HasFactory<\Database\Factories\PaymentFactory> */
+    /** @use HasFactory<PaymentFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -28,6 +29,7 @@ class Payment extends Model
     protected function casts(): array
     {
         return [
+            'payable_id' => 'integer',
             'amount' => 'decimal:2',
             'gateway_response' => 'array',
             'paid_at' => 'datetime',

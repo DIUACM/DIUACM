@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Database\Factories\TeamFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Team extends Model
 {
-    /** @use HasFactory<\Database\Factories\TeamFactory> */
+    /** @use HasFactory<TeamFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -20,6 +21,7 @@ class Team extends Model
     protected function casts(): array
     {
         return [
+            'contest_id' => 'integer',
             'rank' => 'integer',
             'solve_count' => 'integer',
         ];

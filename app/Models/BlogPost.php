@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\VisibilityStatus;
+use Database\Factories\BlogPostFactory;
 use Filament\Forms\Components\RichEditor\FileAttachmentProviders\SpatieMediaLibraryFileAttachmentProvider;
 use Filament\Forms\Components\RichEditor\Models\Concerns\InteractsWithRichContent;
 use Filament\Forms\Components\RichEditor\Models\Contracts\HasRichContent;
@@ -15,7 +16,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class BlogPost extends Model implements HasMedia, HasRichContent
 {
-    /** @use HasFactory<\Database\Factories\BlogPostFactory> */
+    /** @use HasFactory<BlogPostFactory> */
     use HasFactory;
 
     use InteractsWithMedia;
@@ -34,6 +35,7 @@ class BlogPost extends Model implements HasMedia, HasRichContent
     protected function casts(): array
     {
         return [
+            'user_id' => 'integer',
             'published_at' => 'datetime',
             'is_featured' => 'boolean',
             'status' => VisibilityStatus::class,

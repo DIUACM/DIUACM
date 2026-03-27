@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Database\Factories\EventUserStatFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class EventUserStat extends Model
 {
-    /** @use HasFactory<\Database\Factories\EventUserStatFactory> */
+    /** @use HasFactory<EventUserStatFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -21,6 +22,8 @@ class EventUserStat extends Model
     protected function casts(): array
     {
         return [
+            'event_id' => 'integer',
+            'user_id' => 'integer',
             'solve_count' => 'integer',
             'upsolve_count' => 'integer',
             'participation' => 'boolean',

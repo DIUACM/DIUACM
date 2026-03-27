@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use Database\Factories\IncentiveApplicationFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class IncentiveApplication extends Model
 {
-    /** @use HasFactory<\Database\Factories\IncentiveApplicationFactory> */
+    /** @use HasFactory<IncentiveApplicationFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -24,6 +25,7 @@ class IncentiveApplication extends Model
     protected function casts(): array
     {
         return [
+            'user_id' => 'integer',
             'courses' => 'array',
         ];
     }

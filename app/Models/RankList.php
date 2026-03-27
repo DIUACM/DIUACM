@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use App\Enums\VisibilityStatus;
+use Database\Factories\RankListFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RankList extends Model
 {
-    /** @use HasFactory<\Database\Factories\RankListFactory> */
+    /** @use HasFactory<RankListFactory> */
     use HasFactory;
 
     protected $fillable = [
@@ -26,6 +27,7 @@ class RankList extends Model
     protected function casts(): array
     {
         return [
+            'tracker_id' => 'integer',
             'weight_of_upsolve' => 'float',
             'status' => VisibilityStatus::class,
             'is_active' => 'boolean',

@@ -5,12 +5,13 @@ namespace App\Models;
 use App\Contracts\Payable;
 use App\Enums\Gender;
 use App\Traits\HasPayments;
+use Database\Factories\InternalContestRegistrationFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class InternalContestRegistration extends Model implements Payable
 {
-    /** @use HasFactory<\Database\Factories\InternalContestRegistrationFactory> */
+    /** @use HasFactory<InternalContestRegistrationFactory> */
     use HasFactory;
 
     use HasPayments;
@@ -34,6 +35,8 @@ class InternalContestRegistration extends Model implements Payable
     protected function casts(): array
     {
         return [
+            'internal_contest_id' => 'integer',
+            'user_id' => 'integer',
             'transport_service_required' => 'boolean',
             'gender' => Gender::class,
         ];

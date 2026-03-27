@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Database\Factories\JobExperienceFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
@@ -10,7 +11,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class JobExperience extends Model implements HasMedia
 {
-    /** @use HasFactory<\Database\Factories\JobExperienceFactory> */
+    /** @use HasFactory<JobExperienceFactory> */
     use HasFactory;
 
     use InteractsWithMedia;
@@ -30,6 +31,7 @@ class JobExperience extends Model implements HasMedia
     protected function casts(): array
     {
         return [
+            'user_id' => 'integer',
             'start_date' => 'date',
             'end_date' => 'date',
             'is_current' => 'boolean',
