@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PaymentStatus;
 use App\Enums\VisibilityStatus;
 use App\Http\Requests\StoreInternalContestRegistrationRequest;
 use App\Http\Resources\InternalContestDetailsResource;
@@ -68,12 +69,12 @@ class InternalContestController extends Controller
         }
 
         if (! $internalContest->isRegistrationOpen()) {
-            return Inertia::render('internal-contests/show', [
-                'contest' => InternalContestDetailsResource::make($internalContest)->resolve(),
-                'flash' => [
-                    'error' => 'Registration is closed for this contest.',
-                ],
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'Registration is closed for this contest.',
             ]);
+
+            return redirect()->route('internal-contests.show', $internalContest);
         }
 
         return Inertia::render('internal-contests/register', [
@@ -113,16 +114,20 @@ class InternalContestController extends Controller
             'gender' => $validated['gender'],
             'transport_service_required' => $validated['transport_service_required'] ?? false,
             'pickup_point' => $validated['pickup_point'] ?? null,
-            'status' => \App\Enums\PaymentStatus::PENDING,
+            'status' => PaymentStatus::PENDING,
         ]);
 
         // If fee is 0, mark as paid
         if ($internalContest->registration_fee <= 0) {
-            $registration->update(['status' => \App\Enums\PaymentStatus::PAID]);
+            $registration->update(['status' => PaymentStatus::PAID]);
         }
 
-        return redirect()->route('internal-contests.my-registration', $internalContest)
-            ->with('success', 'Registration successful!');
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Registration successful!',
+        ]);
+
+        return redirect()->route('internal-contests.my-registration', $internalContest);
     }
 
     /**
@@ -191,8 +196,12 @@ class InternalContestController extends Controller
             ->first();
 
         if (! $registration) {
-            return redirect()->route('internal-contests.registration', $internalContest)
-                ->with('error', 'You have not registered for this contest yet.');
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'You have not registered for this contest yet.',
+            ]);
+
+            return redirect()->route('internal-contests.registration', $internalContest);
         }
 
         return Inertia::render('internal-contests/my-registration', [

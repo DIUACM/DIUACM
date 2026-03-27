@@ -2,17 +2,27 @@ export interface Auth {
     user: User;
 }
 
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
+
+export interface Toast {
+    type: ToastType;
+    message: string;
+    description?: string;
+}
+
+export interface FlashData {
+    toast?: Toast;
+}
+
 export interface SharedData {
     name: string;
     auth: Auth;
-    flash: {
-        success?: string;
-        error?: string;
-        info?: string;
-        warning?: string;
-    };
     onlineUsersCount: number;
     [key: string]: unknown;
+}
+
+declare module '@inertiajs/react' {
+    interface FlashDataType extends FlashData {}
 }
 
 export interface User {

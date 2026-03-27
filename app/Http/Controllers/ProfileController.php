@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ChangePasswordRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -44,15 +46,20 @@ class ProfileController extends Controller
         // Update user data
         $user->update($validated);
 
-        return back()->with('success', 'Profile updated successfully.');
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Profile updated successfully.',
+        ]);
+
+        return back();
     }
 
     /**
      * Update the user's avatar only.
      */
-    public function updateAvatar(\Illuminate\Http\Request $request): \Illuminate\Http\RedirectResponse
+    public function updateAvatar(Request $request): RedirectResponse
     {
-        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+        $validator = Validator::make($request->all(), [
             'avatar' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
         ]);
 
@@ -81,14 +88,12 @@ class ProfileController extends Controller
             // Clear avatar cache
             cache()->forget("user.{$user->id}.avatar");
 
-            $avatarUrl = $user->avatar_url;
-
-            return back()->with([
-                'success' => 'Profile picture updated successfully.',
-                'user' => array_merge($user->fresh()->toArray(), [
-                    'avatar' => $avatarUrl,
-                ]),
+            Inertia::flash('toast', [
+                'type' => 'success',
+                'message' => 'Profile picture updated successfully.',
             ]);
+
+            return back();
         }
 
         return back()->withErrors(['avatar' => 'No avatar provided.']);
@@ -115,6 +120,11 @@ class ProfileController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        return back()->with('success', 'Password updated successfully.');
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Password updated successfully.',
+        ]);
+
+        return back();
     }
 }

@@ -8,6 +8,7 @@ use App\Http\Requests\StoreEventAttendanceRequest;
 use App\Http\Resources\EventDetailsResource;
 use App\Http\Resources\EventResource;
 use App\Models\Event;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -97,13 +98,16 @@ class EventController extends Controller
     /**
      * Submit attendance for an event.
      */
-    public function storeAttendance(StoreEventAttendanceRequest $request, Event $event): \Illuminate\Http\RedirectResponse
+    public function storeAttendance(StoreEventAttendanceRequest $request, Event $event): RedirectResponse
     {
         // Add the user to the attendance list
         $event->attendees()->attach($request->user()->id);
 
-        return redirect()
-            ->route('events.show', $event)
-            ->with('success', 'Attendance confirmed successfully!');
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Attendance confirmed successfully!',
+        ]);
+
+        return redirect()->route('events.show', $event);
     }
 }

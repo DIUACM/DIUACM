@@ -25,9 +25,12 @@ class InternalContestRegistrationPaymentController extends Controller
         $paymentCheck = $registration->canInitiateNewPayment();
 
         if (! $paymentCheck['can_pay']) {
-            return redirect()
-                ->route('internal-contests.my-registration', $registration->internalContest)
-                ->with('error', $paymentCheck['message']);
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => $paymentCheck['message'],
+            ]);
+
+            return redirect()->route('internal-contests.my-registration', $registration->internalContest);
         }
 
         $contest = $registration->internalContest;
@@ -66,7 +69,12 @@ class InternalContestRegistrationPaymentController extends Controller
                     ->first();
 
                 if (! $registration) {
-                    return redirect()->back()->with('error', 'Registration not found');
+                    Inertia::flash('toast', [
+                        'type' => 'error',
+                        'message' => 'Registration not found',
+                    ]);
+
+                    return redirect()->back();
                 }
 
                 // Check if can initiate new payment
@@ -75,7 +83,12 @@ class InternalContestRegistrationPaymentController extends Controller
                 if (! $paymentCheck['can_pay']) {
                     $flashType = $paymentCheck['reason'] === 'under_review' ? 'info' : 'error';
 
-                    return redirect()->back()->with($flashType, $paymentCheck['message']);
+                    Inertia::flash('toast', [
+                        'type' => $flashType,
+                        'message' => $paymentCheck['message'],
+                    ]);
+
+                    return redirect()->back();
                 }
 
                 $registrationAmount = $registration->internalContest->registration_fee;
@@ -107,7 +120,12 @@ class InternalContestRegistrationPaymentController extends Controller
                     return Inertia::location($result['payment_url']);
                 }
 
-                return redirect()->back()->with('error', $result['message'] ?? 'Payment initiation failed');
+                Inertia::flash('toast', [
+                    'type' => 'error',
+                    'message' => $result['message'] ?? 'Payment initiation failed',
+                ]);
+
+                return redirect()->back();
             });
         } catch (\Exception $e) {
             Log::error('Payment initiation error: '.$e->getMessage(), [
@@ -116,7 +134,12 @@ class InternalContestRegistrationPaymentController extends Controller
                 'exception' => $e,
             ]);
 
-            return redirect()->back()->with('error', 'An error occurred while initiating payment. Please try again.');
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'An error occurred while initiating payment. Please try again.',
+            ]);
+
+            return redirect()->back();
         }
     }
 

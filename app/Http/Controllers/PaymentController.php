@@ -9,6 +9,7 @@ use App\Services\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class PaymentController extends Controller
 {
@@ -48,8 +49,12 @@ class PaymentController extends Controller
      */
     protected function handleSuccessfulCallback(Payment $payment)
     {
-        return redirect($this->getRedirectUrl($payment))
-            ->with('success', 'Payment completed successfully!');
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Payment completed successfully!',
+        ]);
+
+        return redirect($this->getRedirectUrl($payment));
     }
 
     /**
@@ -57,8 +62,12 @@ class PaymentController extends Controller
      */
     protected function handleFailedCallback(string $message, ?Payment $payment = null)
     {
-        return redirect($this->getRedirectUrl($payment))
-            ->with('error', $message);
+        Inertia::flash('toast', [
+            'type' => 'error',
+            'message' => $message,
+        ]);
+
+        return redirect($this->getRedirectUrl($payment));
     }
 
     /**
@@ -66,8 +75,12 @@ class PaymentController extends Controller
      */
     protected function handleCancelledCallback(string $message, ?Payment $payment = null)
     {
-        return redirect($this->getRedirectUrl($payment))
-            ->with('info', $message);
+        Inertia::flash('toast', [
+            'type' => 'info',
+            'message' => $message,
+        ]);
+
+        return redirect($this->getRedirectUrl($payment));
     }
 
     /**
@@ -75,8 +88,12 @@ class PaymentController extends Controller
      */
     protected function handleManualReviewCallback(Payment $payment)
     {
-        return redirect($this->getRedirectUrl($payment))
-            ->with('info', 'Your payment is currently under manual review by our team. Please wait for verification.');
+        Inertia::flash('toast', [
+            'type' => 'info',
+            'message' => 'Your payment is currently under manual review by our team. Please wait for verification.',
+        ]);
+
+        return redirect($this->getRedirectUrl($payment));
     }
 
     /**

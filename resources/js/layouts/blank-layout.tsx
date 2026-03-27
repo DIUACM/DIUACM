@@ -1,29 +1,40 @@
-import type { SharedData } from '@/types';
-import { usePage } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { useEffect, type ReactNode } from 'react';
 import { toast, Toaster } from 'sonner';
+
+import type { FlashData, ToastType } from '@/types';
 
 interface BlankLayoutProps {
     children: ReactNode;
 }
 
-export default function BlankLayout({ children }: BlankLayoutProps) {
-    const { flash } = usePage<SharedData>().props;
+function showToast(data: NonNullable<FlashData['toast']>) {
+    const toastFn: Record<ToastType, typeof toast.success> = {
+        success: toast.success,
+        error: toast.error,
+        warning: toast.warning,
+        info: toast.info,
+    };
 
+    toastFn[data.type](data.message, {
+        description: data.description,
+    });
+}
+
+function useFlashToast() {
     useEffect(() => {
-        if (flash?.success) {
-            toast.success(flash.success);
-        }
-        if (flash?.error) {
-            toast.error(flash.error);
-        }
-        if (flash?.info) {
-            toast.info(flash.info);
-        }
-        if (flash?.warning) {
-            toast.warning(flash.warning);
-        }
-    }, [flash]);
+        return router.on('flash', (event) => {
+            const flash = event.detail.flash as FlashData;
+
+            if (flash.toast) {
+                showToast(flash.toast);
+            }
+        });
+    }, []);
+}
+
+export default function BlankLayout({ children }: BlankLayoutProps) {
+    useFlashToast();
 
     return (
         <>

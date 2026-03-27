@@ -60,7 +60,11 @@ class IncentiveApplicationController extends Controller
             ]);
         }
 
-        return redirect()->route('incentive-application.index')
-            ->with('success', 'Application submitted successfully!');
+        Inertia::flash('toast', [
+            'type' => 'success',
+            'message' => 'Application submitted successfully!',
+        ]);
+
+        return redirect()->route('incentive-application.index');
     }
 }

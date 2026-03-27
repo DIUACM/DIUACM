@@ -26,7 +26,8 @@ it('allows authenticated user to submit attendance with correct password during 
             'password' => 'test-password-123',
         ])
         ->assertRedirect(route('events.show', $event))
-        ->assertSessionHas('success', 'Attendance confirmed successfully!');
+        ->assertSessionHas('inertia.flash_data.toast.type', 'success')
+        ->assertSessionHas('inertia.flash_data.toast.message', 'Attendance confirmed successfully!');
 
     assertDatabaseHas('event_attendance', [
         'event_id' => $event->id,
@@ -194,7 +195,8 @@ it('allows attendance exactly 15 minutes before event starts', function () {
             'password' => 'test-password-123',
         ])
         ->assertRedirect(route('events.show', $event))
-        ->assertSessionHas('success');
+        ->assertSessionHas('inertia.flash_data.toast.type', 'success')
+        ->assertSessionHas('inertia.flash_data.toast.message', 'Attendance confirmed successfully!');
 
     assertDatabaseHas('event_attendance', [
         'event_id' => $event->id,
@@ -216,7 +218,8 @@ it('allows attendance exactly 20 minutes after event ends', function () {
             'password' => 'test-password-123',
         ])
         ->assertRedirect(route('events.show', $event))
-        ->assertSessionHas('success');
+        ->assertSessionHas('inertia.flash_data.toast.type', 'success')
+        ->assertSessionHas('inertia.flash_data.toast.message', 'Attendance confirmed successfully!');
 
     assertDatabaseHas('event_attendance', [
         'event_id' => $event->id,

@@ -43,9 +43,12 @@ return Application::configure(basePath: dirname(__DIR__))
                     ->toResponse($request)
                     ->setStatusCode($response->getStatusCode());
             } elseif ($response->getStatusCode() === 419) {
-                return back()->with([
+                Inertia::flash('toast', [
+                    'type' => 'error',
                     'message' => 'The page expired, please try again.',
                 ]);
+
+                return back();
             }
 
             return $response;
