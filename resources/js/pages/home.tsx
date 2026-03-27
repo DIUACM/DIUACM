@@ -3,6 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import MainLayout from '@/layouts/main-layout';
 import blog from '@/routes/blog';
+import contests from '@/routes/contests';
+import events from '@/routes/events';
+import internalContests from '@/routes/internal-contests';
 import { contact } from '@/routes';
 import { Link } from '@inertiajs/react';
 import Autoplay from 'embla-carousel-autoplay';
@@ -10,6 +13,7 @@ import {
     ArrowRight,
     Award,
     BookOpen,
+    Calendar,
     CheckCircle2,
     Code2,
     FileCode2,
@@ -268,9 +272,20 @@ function HeroSection() {
                                     size="lg"
                                     className="min-w-[200px] rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-8 font-medium text-white shadow-md transition-all hover:from-blue-700 hover:to-cyan-700 hover:shadow-xl dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
                                 >
-                                    <Link href={blog.index.url({ query: { search: 'contest' } })}>
+                                    <Link href={events.index.url()}>
+                                        <Calendar className="mr-2 h-4 w-4" />
+                                        Regular Activity
+                                    </Link>
+                                </Button>
+
+                                <Button
+                                    asChild
+                                    size="lg"
+                                    className="min-w-[200px] rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-8 font-medium text-white shadow-md transition-all hover:from-emerald-700 hover:to-teal-700 hover:shadow-xl dark:from-emerald-500 dark:to-teal-500 dark:hover:from-emerald-600 dark:hover:to-teal-600"
+                                >
+                                    <Link href={internalContests.index.url()}>
                                         <Trophy className="mr-2 h-4 w-4" />
-                                        Join Contests
+                                        Internal Contest Registration
                                     </Link>
                                 </Button>
 
@@ -280,9 +295,9 @@ function HeroSection() {
                                     variant="outline"
                                     className="min-w-[200px] rounded-full border border-slate-200 bg-white/80 px-8 font-medium text-blue-600 shadow-md backdrop-blur-sm transition-all hover:border-blue-200 hover:bg-white hover:text-blue-700 hover:shadow-xl dark:border-slate-700 dark:bg-slate-800/80 dark:text-blue-400 dark:hover:border-slate-600 dark:hover:bg-slate-800 dark:hover:text-blue-300"
                                 >
-                                    <Link href={blog.index.url({ query: { search: 'diu acm' } })}>
+                                    <Link href={contests.index.url()}>
                                         <ArrowRight className="mr-2 h-4 w-4" />
-                                        Learn More
+                                        External Contests Info
                                     </Link>
                                 </Button>
                             </div>
