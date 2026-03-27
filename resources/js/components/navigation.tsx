@@ -11,7 +11,6 @@ import {
 import { cn } from '@/lib/utils';
 import { about, contact, home, login, logout } from '@/routes';
 import blog from '@/routes/blog';
-import contests from '@/routes/contests';
 import events from '@/routes/events';
 import galleries from '@/routes/galleries';
 import profile from '@/routes/profile';
@@ -20,7 +19,6 @@ import trackers from '@/routes/trackers';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import {
-    Archive,
     BarChart3,
     Calendar,
     ChevronDown,
@@ -33,7 +31,6 @@ import {
     LogOut,
     Mail,
     Menu,
-    Trophy,
     User,
     Users,
     X,
@@ -41,39 +38,24 @@ import {
 import { useEffect, useState } from 'react';
 import AppearanceToggleDropdown from './appearance-dropdown';
 
-// Navigation structure with categories
-const navigationCategories = {
-    main: [{ name: 'Home', href: home.url(), icon: Home }],
-    activities: {
-        label: 'Activities',
-        items: [
-            { name: 'Regular Events', href: events.index.url(), icon: Calendar },
-            { name: 'Archive', href: contests.index.url(), icon: Archive },
-        ],
-    },
-    community: {
-        label: 'Community',
-        items: [
-            { name: 'Programmers', href: programmers.index.url(), icon: Users },
-            { name: 'Trackers', href: trackers.index.url(), icon: BarChart3 },
-            { name: 'Gallery', href: galleries.index.url(), icon: Image },
-            { name: 'Blog', href: blog.index.url(), icon: FileText },
-        ],
-    },
-    info: {
-        label: 'Info',
-        items: [
-            { name: 'About', href: about.url(), icon: Info },
-            { name: 'Contact', href: contact.url(), icon: Mail },
-        ],
-    },
-};
+const desktopNavigationItems = [
+    { name: 'Home', href: home.url(), icon: Home },
+    { name: 'Regular Events', href: events.index.url(), icon: Calendar },
+    { name: 'Programmers', href: programmers.index.url(), icon: Users },
+    { name: 'Trackers', href: trackers.index.url(), icon: BarChart3 },
+    { name: 'Gallery', href: galleries.index.url(), icon: Image },
+    { name: 'Blog', href: blog.index.url(), icon: FileText },
+];
+
+const moreNavigationItems = [
+    { name: 'About', href: about.url(), icon: Info },
+    { name: 'Contact', href: contact.url(), icon: Mail },
+];
 
 // Flat menu items for mobile
 const menuItems = [
     { name: 'Home', href: home.url(), icon: Home },
     { name: 'Regular Events', href: events.index.url(), icon: Calendar },
-    { name: 'Archive', href: contests.index.url(), icon: Archive },
     { name: 'Gallery', href: galleries.index.url(), icon: Image },
     { name: 'Blog', href: blog.index.url(), icon: FileText },
     { name: 'Trackers', href: trackers.index.url(), icon: BarChart3 },
@@ -83,12 +65,13 @@ const menuItems = [
 ];
 
 export default function Navigation() {
-    const pageProps = usePage<SharedData>().props;
+    const page = usePage<SharedData>();
+    const pageProps = page.props;
     const auth = pageProps?.auth || { user: null };
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
 
-    const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+    const currentPath = page.url.split('?')[0] || '';
 
     // Handle scroll effect
     useEffect(() => {
@@ -110,8 +93,7 @@ export default function Navigation() {
         return href === home.url() ? currentPath === home.url() : currentPath.startsWith(href);
     };
 
-    // Check if dropdown category has any active items
-    const isCategoryActive = (items: typeof navigationCategories.activities.items) => {
+    const isCategoryActive = (items: typeof moreNavigationItems) => {
         return items.some((item) => isActive(item.href));
     };
 
@@ -150,8 +132,7 @@ export default function Navigation() {
                         <div className="flex items-center space-x-2">
                             {/* Desktop Navigation */}
                             <nav className="hidden items-center space-x-1 md:flex">
-                                {/* Home Link */}
-                                {navigationCategories.main.map((item) => {
+                                {desktopNavigationItems.map((item) => {
                                     const Icon = item.icon;
                                     const active = isActive(item.href);
 
@@ -167,94 +148,29 @@ export default function Navigation() {
                                             )}
                                         >
                                             <Icon className="h-3.5 w-3.5" />
-                                            <span className="hidden lg:inline">{item.name}</span>
+                                            <span className="hidden xl:inline">{item.name}</span>
                                         </Link>
                                     );
                                 })}
 
-                                {/* Activities Dropdown */}
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button
                                             variant="ghost"
                                             className={cn(
                                                 'h-auto rounded-md px-2 py-1.5 text-sm font-medium',
-                                                isCategoryActive(navigationCategories.activities.items)
+                                                isCategoryActive(moreNavigationItems)
                                                     ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300'
                                                     : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-400',
                                             )}
                                         >
-                                            <span className="hidden lg:inline">{navigationCategories.activities.label}</span>
-                                            <Trophy className="h-3.5 w-3.5 lg:hidden" />
+                                            <span className="hidden xl:inline">More</span>
+                                            <Menu className="h-3.5 w-3.5 xl:hidden" />
                                             <ChevronDown className="ml-1 h-3 w-3" />
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="start" className="w-48">
-                                        {navigationCategories.activities.items.map((item) => {
-                                            const Icon = item.icon;
-                                            return (
-                                                <DropdownMenuItem key={item.name} asChild>
-                                                    <Link href={item.href} className="flex items-center">
-                                                        <Icon className="mr-2 h-4 w-4" />
-                                                        {item.name}
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                            );
-                                        })}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-
-                                {/* Community Dropdown */}
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            className={cn(
-                                                'h-auto rounded-md px-2 py-1.5 text-sm font-medium',
-                                                isCategoryActive(navigationCategories.community.items)
-                                                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300'
-                                                    : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-400',
-                                            )}
-                                        >
-                                            <span className="hidden lg:inline">{navigationCategories.community.label}</span>
-                                            <Users className="h-3.5 w-3.5 lg:hidden" />
-                                            <ChevronDown className="ml-1 h-3 w-3" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start" className="w-48">
-                                        {navigationCategories.community.items.map((item) => {
-                                            const Icon = item.icon;
-                                            return (
-                                                <DropdownMenuItem key={item.name} asChild>
-                                                    <Link href={item.href} className="flex items-center">
-                                                        <Icon className="mr-2 h-4 w-4" />
-                                                        {item.name}
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                            );
-                                        })}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-
-                                {/* Info Dropdown */}
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button
-                                            variant="ghost"
-                                            className={cn(
-                                                'h-auto rounded-md px-2 py-1.5 text-sm font-medium',
-                                                isCategoryActive(navigationCategories.info.items)
-                                                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300'
-                                                    : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-blue-400',
-                                            )}
-                                        >
-                                            <span className="hidden lg:inline">{navigationCategories.info.label}</span>
-                                            <Info className="h-3.5 w-3.5 lg:hidden" />
-                                            <ChevronDown className="ml-1 h-3 w-3" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start" className="w-48">
-                                        {navigationCategories.info.items.map((item) => {
+                                        {moreNavigationItems.map((item) => {
                                             const Icon = item.icon;
                                             return (
                                                 <DropdownMenuItem key={item.name} asChild>
