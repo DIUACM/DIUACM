@@ -261,6 +261,7 @@ export interface InternalContest {
     registration_limit: number | null;
     banner_image: string | null;
     is_registration_open: boolean;
+    registration_status: 'open' | 'upcoming' | 'closed';
 }
 
 export interface InternalContestDetails extends InternalContest {

@@ -24,6 +24,7 @@ class InternalContestResource extends JsonResource
             'registration_limit' => $this->registration_limit,
             'banner_image' => $this->getFirstMediaUrl('banner_image'),
             'is_registration_open' => $this->isRegistrationOpen(),
+            'registration_status' => $this->registrationStatus(),
         ];
     }
 }

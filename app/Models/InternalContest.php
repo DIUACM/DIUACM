@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\VisibilityStatus;
+use Database\Factories\InternalContestFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Image\Enums\Fit;
@@ -12,7 +13,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class InternalContest extends Model implements HasMedia
 {
-    /** @use HasFactory<\Database\Factories\InternalContestFactory> */
+    /** @use HasFactory<InternalContestFactory> */
     use HasFactory;
 
     use InteractsWithMedia;
@@ -98,10 +99,35 @@ class InternalContest extends Model implements HasMedia
 
     public function isRegistrationOpen(): bool
     {
-        $now = now();
+        return $this->registrationStatus() === 'open';
+    }
 
-        return $this->status === VisibilityStatus::PUBLISHED
-            && $this->registration_start_time <= $now
-            && $this->registration_deadline >= $now;
+    public function registrationStatus(): string
+    {
+        if ($this->status !== VisibilityStatus::PUBLISHED) {
+            return 'closed';
+        }
+
+        if (! $this->registration_start_time || ! $this->registration_deadline) {
+            return 'closed';
+        }
+
+        if ($this->registration_start_time->isFuture()) {
+            return 'upcoming';
+        }
+
+        if ($this->registration_deadline->isPast()) {
+            return 'closed';
+        }
+
+        return 'open';
+    }
+
+    public function registrationUnavailableMessage(): string
+    {
+        return match ($this->registrationStatus()) {
+            'upcoming' => 'Registration has not opened for this contest yet.',
+            default => 'Registration is closed for this contest.',
+        };
     }
 }

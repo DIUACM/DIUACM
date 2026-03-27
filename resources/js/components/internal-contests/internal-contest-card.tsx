@@ -19,6 +19,17 @@ function formatDate(dateString: string | null) {
     }).format(date);
 }
 
+function getRegistrationBadge(contest: InternalContest) {
+    switch (contest.registration_status) {
+        case 'open':
+            return <Badge className="bg-green-500 hover:bg-green-600">Registration Open</Badge>;
+        case 'upcoming':
+            return <Badge className="bg-blue-500 hover:bg-blue-600">Registration Opens Soon</Badge>;
+        default:
+            return <Badge variant="secondary">Registration Closed</Badge>;
+    }
+}
+
 export function InternalContestCard({ contest }: Props) {
     return (
         <Link href={`/internal-contests/${contest.slug}`} className="block">
@@ -39,11 +50,7 @@ export function InternalContestCard({ contest }: Props) {
                             {contest.title}
                         </h3>
                         <div className="flex flex-wrap gap-2">
-                            {contest.is_registration_open ? (
-                                <Badge className="bg-green-500 hover:bg-green-600">Registration Open</Badge>
-                            ) : (
-                                <Badge variant="secondary">Registration Closed</Badge>
-                            )}
+                            {getRegistrationBadge(contest)}
                             {contest.registration_fee > 0 ? (
                                 <Badge variant="outline">Fee: ৳{contest.registration_fee}</Badge>
                             ) : (

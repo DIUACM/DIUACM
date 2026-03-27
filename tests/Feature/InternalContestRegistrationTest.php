@@ -4,6 +4,39 @@ use App\Enums\VisibilityStatus;
 use App\Models\InternalContest;
 use App\Models\User;
 
+it('marks a contest as upcoming before registration opens', function () {
+    $contest = InternalContest::factory()->create([
+        'status' => VisibilityStatus::PUBLISHED,
+        'registration_start_time' => now()->addDay(),
+        'registration_deadline' => now()->addWeek(),
+    ]);
+
+    $response = $this->get(route('internal-contests.show', $contest));
+
+    $response->assertSuccessful();
+    $response->assertInertia(fn ($page) => $page
+        ->component('internal-contests/show')
+        ->where('contest.is_registration_open', false)
+        ->where('contest.registration_status', 'upcoming')
+    );
+});
+
+it('shows an upcoming message when registration has not opened yet', function () {
+    $user = User::factory()->create();
+
+    $contest = InternalContest::factory()->create([
+        'status' => VisibilityStatus::PUBLISHED,
+        'registration_start_time' => now()->addDay(),
+        'registration_deadline' => now()->addWeek(),
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('internal-contests.registration', $contest))
+        ->assertRedirect(route('internal-contests.show', $contest))
+        ->assertSessionHas('inertia.flash_data.toast.type', 'error')
+        ->assertSessionHas('inertia.flash_data.toast.message', 'Registration has not opened for this contest yet.');
+});
+
 it('uses authenticated user email when registering for internal contest', function () {
     $user = User::factory()->create([
         'email' => 'authenticateduser@example.com',

@@ -71,7 +71,7 @@ class InternalContestController extends Controller
         if (! $internalContest->isRegistrationOpen()) {
             Inertia::flash('toast', [
                 'type' => 'error',
-                'message' => 'Registration is closed for this contest.',
+                'message' => $internalContest->registrationUnavailableMessage(),
             ]);
 
             return redirect()->route('internal-contests.show', $internalContest);
@@ -87,8 +87,12 @@ class InternalContestController extends Controller
      */
     public function storeRegistration(StoreInternalContestRegistrationRequest $request, InternalContest $internalContest)
     {
-        if ($internalContest->status !== VisibilityStatus::PUBLISHED || ! $internalContest->isRegistrationOpen()) {
+        if ($internalContest->status !== VisibilityStatus::PUBLISHED) {
             abort(403, 'Registration is closed.');
+        }
+
+        if (! $internalContest->isRegistrationOpen()) {
+            abort(403, $internalContest->registrationUnavailableMessage());
         }
 
         if ($internalContest->registrations()->where('user_id', $request->user()->id)->exists()) {

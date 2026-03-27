@@ -22,6 +22,48 @@ function formatDate(dateString: string | null) {
     }).format(date);
 }
 
+function getRegistrationStateCopy(contest: InternalContestDetails) {
+    switch (contest.registration_status) {
+        case 'upcoming':
+            return {
+                label: 'Registration Opens Soon',
+                description: `Registration opens on ${formatDate(contest.registration_start_time)}.`,
+            };
+        case 'closed':
+            return {
+                label: 'Registration Closed',
+                description: `Registration closed on ${formatDate(contest.registration_deadline)}.`,
+            };
+        default:
+            return null;
+    }
+}
+
+function RegistrationAction({ contest }: Props) {
+    const stateCopy = getRegistrationStateCopy(contest);
+
+    if (contest.is_registration_open) {
+        return (
+            <Button
+                className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 font-medium text-white transition-all hover:from-blue-700 hover:to-cyan-700 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
+                size="lg"
+                asChild
+            >
+                <Link href={registration.url(contest.slug)}>Register Now</Link>
+            </Button>
+        );
+    }
+
+    return (
+        <div className="space-y-2">
+            <Button className="w-full" size="lg" disabled>
+                {stateCopy?.label ?? 'Registration Closed'}
+            </Button>
+            {stateCopy && <p className="text-sm text-slate-600 dark:text-slate-400">{stateCopy.description}</p>}
+        </div>
+    );
+}
+
 export default function InternalContestDetailsPage({ contest }: Props) {
     return (
         <MainLayout>
@@ -130,19 +172,7 @@ export default function InternalContestDetailsPage({ contest }: Props) {
                             </div>
 
                             <div className="mt-6 hidden lg:block">
-                                {contest.is_registration_open ? (
-                                    <Button
-                                        className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 font-medium text-white transition-all hover:from-blue-700 hover:to-cyan-700 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
-                                        size="lg"
-                                        asChild
-                                    >
-                                        <Link href={registration.url(contest.slug)}>Register Now</Link>
-                                    </Button>
-                                ) : (
-                                    <Button className="w-full" size="lg" disabled>
-                                        Registration Closed
-                                    </Button>
-                                )}
+                                <RegistrationAction contest={contest} />
                             </div>
                         </div>
                     </div>
@@ -151,19 +181,7 @@ export default function InternalContestDetailsPage({ contest }: Props) {
                 {/* Mobile Fixed Bottom Button */}
                 <div className="fixed right-0 bottom-0 left-0 z-50 border-t border-slate-200 bg-white p-4 shadow-lg lg:hidden dark:border-slate-700 dark:bg-slate-900">
                     <div className="container mx-auto">
-                        {contest.is_registration_open ? (
-                            <Button
-                                className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 font-medium text-white transition-all hover:from-blue-700 hover:to-cyan-700 dark:from-blue-500 dark:to-cyan-500 dark:hover:from-blue-600 dark:hover:to-cyan-600"
-                                size="lg"
-                                asChild
-                            >
-                                <Link href={registration.url(contest.slug)}>Register Now</Link>
-                            </Button>
-                        ) : (
-                            <Button className="w-full" size="lg" disabled>
-                                Registration Closed
-                            </Button>
-                        )}
+                        <RegistrationAction contest={contest} />
                     </div>
                 </div>
             </section>
