@@ -103,7 +103,7 @@ export default function InternalContestDetailsPage({ contest }: Props) {
                                 <div className="flex items-start gap-3">
                                     <Clock className="mt-0.5 h-5 w-5 text-blue-500" />
                                     <div>
-                                        <p className="text-sm font-medium text-slate-900 dark:text-white">Contest Starts</p>
+                                        <p className="text-sm font-medium text-slate-900 dark:text-white">Registration Starts</p>
                                         <p className="text-sm text-slate-600 dark:text-slate-400">{formatDate(contest.registration_start_time)}</p>
                                     </div>
                                 </div>
