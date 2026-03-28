@@ -7,6 +7,8 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
+    private const MINIMUM_LIVEWIRE_NESTING_DEPTH = 20;
+
     /**
      * Register any application services.
      */
@@ -22,8 +24,8 @@ class AppServiceProvider extends ServiceProvider
     {
         $maxNestingDepth = config('livewire.payload.max_nesting_depth');
 
-        if ($maxNestingDepth !== null && $maxNestingDepth < 20) {
-            config()->set('livewire.payload.max_nesting_depth', 20);
+        if ($maxNestingDepth !== null && $maxNestingDepth < self::MINIMUM_LIVEWIRE_NESTING_DEPTH) {
+            config()->set('livewire.payload.max_nesting_depth', self::MINIMUM_LIVEWIRE_NESTING_DEPTH);
         }
 
         Forms\Components\TextInput::configureUsing(function (Forms\Components\TextInput $textInput): void {
