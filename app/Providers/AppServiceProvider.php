@@ -20,6 +20,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $maxNestingDepth = config('livewire.payload.max_nesting_depth');
+
+        if ($maxNestingDepth !== null && $maxNestingDepth < 20) {
+            config()->set('livewire.payload.max_nesting_depth', 20);
+        }
+
         Forms\Components\TextInput::configureUsing(function (Forms\Components\TextInput $textInput): void {
             $textInput->dehydrateStateUsing(function (?string $state): ?string {
                 return is_string($state) ? trim($state) : $state;
