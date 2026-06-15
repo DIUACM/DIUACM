@@ -17,12 +17,21 @@ class UpdateCodeforcesEventStats extends Command
     protected $signature = 'app:update-cf-contests
                             {--id= : Process a specific event by ID}
                             {--limit= : Limit the number of events to process}
-                            {--fresh : Clear existing stats for matched events before updating}';
+                            {--fresh : Clear existing stats for matched events before updating}
+                            {--delay=300 : Delay between Codeforces user.status API calls in milliseconds}';
 
     /**
      * The console command description.
      */
     protected $description = 'Update EventUserStat for Codeforces contests (solve, upsolve, and presence)';
+
+    private const CODEFORCES_STANDINGS_URL = 'https://codeforces.com/api/contest.standings';
+
+    private const CODEFORCES_USER_STATUS_URL = 'https://codeforces.com/api/user.status';
+
+    private const USER_STATUS_PAGE_SIZE = 100;
+
+    private const USER_STATUS_MAX_PAGES = 100;
 
     public function handle(): int
     {
@@ -36,7 +45,7 @@ class UpdateCodeforcesEventStats extends Command
             $eventsQuery->whereKey($this->option('id'));
         }
 
-        $events = $eventsQuery->get(['id', 'title', 'event_link']);
+        $events = $eventsQuery->get(['id', 'title', 'event_link', 'starting_at', 'ending_at']);
 
         if ($limit = $this->option('limit')) {
             if (is_numeric($limit)) {
@@ -78,93 +87,96 @@ class UpdateCodeforcesEventStats extends Command
                 continue;
             }
 
-            // Fetch standings in batches to avoid URL length limits (HTTP 400)
-            // Codeforces API has URL length restrictions, so we batch handles
-            $handleChunks = $users->pluck('codeforces_handle')->chunk(100);
-            $rows = collect();
+            $url = self::CODEFORCES_STANDINGS_URL;
+            $query = ['contestId' => $contestId];
+            $cacheKey = "codeforces_standings_{$contestId}_public_v2";
 
-            foreach ($handleChunks as $chunkIndex => $chunk) {
-                $handles = $chunk->implode(';');
-                $url = 'https://codeforces.com/api/contest.standings?contestId='.urlencode((string) $contestId).'&showUnofficial=true&handles='.urlencode($handles);
+            try {
+                $payload = Cache::remember($cacheKey, now()->addHours(2), function () use ($query, $url, $contestId) {
+                    $response = Http::timeout(30)
+                        ->acceptJson()
+                        ->get($url, $query);
 
-                $cacheKey = "codeforces_standings_{$contestId}_chunk_{$chunkIndex}_".md5($handles);
-
-                try {
-                    $payload = Cache::remember($cacheKey, now()->addHours(2), function () use ($url, $contestId) {
-                        $response = Http::timeout(30)
-                            ->acceptJson()
-                            ->get($url);
-
-                        if (! $response->successful()) {
-                            throw new \Exception("Failed to fetch standings from Codeforces API for contest {$contestId} (HTTP {$response->status()})");
-                        }
-
-                        $responseData = $response->json();
-                        if (($responseData['status'] ?? null) !== 'OK') {
-                            throw new \Exception("Codeforces API returned error for contest {$contestId}: ".($responseData['comment'] ?? 'unknown error'));
-                        }
-
-                        return $responseData;
-                    });
-
-                    if (is_array($payload)) {
-                        $rows = $rows->merge($payload['result']['rows'] ?? []);
+                    if (! $response->successful()) {
+                        throw new \Exception("Failed to fetch standings from Codeforces API for contest {$contestId} (HTTP {$response->status()})");
                     }
-                } catch (\Exception $e) {
-                    $this->error("  [batch {$chunkIndex}] {$e->getMessage()}");
 
-                    continue;
-                }
+                    $responseData = $response->json();
+                    if (($responseData['status'] ?? null) !== 'OK') {
+                        throw new \Exception("Codeforces API returned error for contest {$contestId}: ".($responseData['comment'] ?? 'unknown error'));
+                    }
 
-                // Add a small delay between API calls to respect rate limits
-                if ($chunkIndex < $handleChunks->count() - 1) {
-                    usleep(500000); // 500ms delay
-                }
+                    return $responseData;
+                });
+
+                $result = is_array($payload['result'] ?? null) ? $payload['result'] : [];
+            } catch (\Exception $e) {
+                $this->error("  {$e->getMessage()}");
+
+                continue;
             }
 
+            $rows = is_array($result['rows'] ?? null) ? $result['rows'] : [];
+            $problemIndexes = $this->problemIndexes($result['problems'] ?? []);
+            $contestRowsByHandle = $this->contestRowsByHandle(
+                $rows,
+                $users
+                    ->map(fn (User $user): string => $this->normalizeHandle((string) $user->codeforces_handle))
+                    ->filter()
+                    ->values()
+                    ->all()
+            );
+            [, $contestEndSeconds] = $this->contestWindow($result['contest'] ?? [], $event);
+
+            unset($payload, $result, $rows);
+
             foreach ($users as $user) {
-                // Find the contest row (participation) and non-contest row (upsolve).
-                // Codeforces marks virtual participation separately and it should not count as contest solves.
-                $contestRow = $rows->first(function ($row) use ($user) {
-                    $handle = strtolower($row['party']['members'][0]['handle'] ?? '');
-                    $type = $row['party']['participantType'] ?? '';
+                $handle = trim((string) $user->codeforces_handle);
+                $contestRow = $contestRowsByHandle[$this->normalizeHandle($handle)] ?? null;
+                $solvedProblemIndexes = $this->solvedProblemIndexes(
+                    is_array($contestRow) ? $contestRow : null,
+                    $problemIndexes
+                );
+                $upsolvedProblemIndexes = ! empty($problemIndexes) && count($solvedProblemIndexes) >= count($problemIndexes)
+                    ? []
+                    : $this->upsolvedProblemIndexes(
+                        $handle,
+                        $contestId,
+                        $contestEndSeconds,
+                        $solvedProblemIndexes
+                    );
+                $upsolvesAvailable = $upsolvedProblemIndexes !== false;
 
-                    return $handle === strtolower((string) $user->codeforces_handle) && in_array($type, ['CONTESTANT', 'OUT_OF_COMPETITION'], true);
-                });
+                if (! $upsolvesAvailable) {
+                    $this->warn("  [skip upsolves] Failed to fetch submissions for {$handle}");
+                    $upsolvedProblemIndexes = [];
+                }
 
-                $practiceRow = $rows->first(function ($row) use ($user) {
-                    $handle = strtolower($row['party']['members'][0]['handle'] ?? '');
-                    $type = $row['party']['participantType'] ?? '';
-
-                    return $handle === strtolower((string) $user->codeforces_handle)
-                        && in_array($type, ['PRACTICE', 'VIRTUAL'], true);
-                });
-
-                // Skip users with no data from the API
-                if (! is_array($contestRow) && ! is_array($practiceRow)) {
+                if (! is_array($contestRow) && (! $upsolvesAvailable || empty($upsolvedProblemIndexes))) {
                     continue;
                 }
 
-                // Calculate stats similar to the TS reference: points > 0 counts as solved; upsolve exclude problems solved in contest
-                [$solve, $upsolve] = $this->calculateUserStats(
-                    is_array($contestRow) ? $contestRow : null,
-                    is_array($practiceRow) ? $practiceRow : null,
-                );
+                $solve = count($solvedProblemIndexes);
+                $upsolve = count($upsolvedProblemIndexes);
+                $stats = [
+                    'solve_count' => $solve,
+                    'participation' => is_array($contestRow),
+                ];
+
+                if ($upsolvesAvailable) {
+                    $stats['upsolve_count'] = $upsolve;
+                }
 
                 EventUserStat::updateOrCreate([
                     'event_id' => $event->id,
                     'user_id' => $user->id,
-                ], [
-                    'solve_count' => $solve,
-                    'upsolve_count' => $upsolve,
-                    'participation' => is_array($contestRow),
-                ]);
+                ], $stats);
 
                 $this->line(sprintf(
-                    '  · %s — solved: %d, upsolved: %d, present: %s',
+                    '  · %s — solved: %d, upsolved: %s, present: %s',
                     $user->name,
                     $solve,
-                    $upsolve,
+                    $upsolvesAvailable ? (string) $upsolve : 'unknown',
                     is_array($contestRow) ? 'yes' : 'no'
                 ));
             }
@@ -189,40 +201,201 @@ class UpdateCodeforcesEventStats extends Command
     }
 
     /**
-     * Calculate contest solve and upsolve from Codeforces rows.
-     * Mirrors the TS calculateUserStats implementation:
-     * - A problem counts as solved if points > 0.
-     * - Upsolve are PRACTICE solve excluding problems solved during the contest.
-     *
-     * @param  array<string,mixed>|null  $contestRow
-     * @param  array<string,mixed>|null  $practiceRow
+     * @param  array<int, array<string, mixed>>|mixed  $problems
+     * @return array<int, string>
+     */
+    private function problemIndexes(mixed $problems): array
+    {
+        if (! is_array($problems)) {
+            return [];
+        }
+
+        $indexes = [];
+        foreach ($problems as $position => $problem) {
+            if (! is_array($problem)) {
+                continue;
+            }
+
+            $indexes[(int) $position] = (string) ($problem['index'] ?? $position);
+        }
+
+        return $indexes;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $rows
+     * @param  array<int, string>  $localHandles
+     * @return array<string, array<string, mixed>>
+     */
+    private function contestRowsByHandle(array $rows, array $localHandles): array
+    {
+        $localHandleLookup = array_fill_keys($localHandles, true);
+        $contestRows = [];
+
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $type = $row['party']['participantType'] ?? '';
+            if (! in_array($type, ['CONTESTANT', 'OUT_OF_COMPETITION'], true)) {
+                continue;
+            }
+
+            $members = $row['party']['members'] ?? [];
+            if (! is_array($members)) {
+                continue;
+            }
+
+            foreach ($members as $member) {
+                if (! is_array($member)) {
+                    continue;
+                }
+
+                $handle = $this->normalizeHandle((string) ($member['handle'] ?? ''));
+                if ($handle === '' || ! isset($localHandleLookup[$handle]) || isset($contestRows[$handle])) {
+                    continue;
+                }
+
+                $contestRows[$handle] = $row;
+            }
+        }
+
+        return $contestRows;
+    }
+
+    /**
+     * @param  array<string, mixed>  $contest
      * @return array{0:int,1:int}
      */
-    private function calculateUserStats(?array $contestRow, ?array $practiceRow): array
+    private function contestWindow(array $contest, Event $event): array
     {
-        $solveCount = 0;
-        $contestSolvedIdx = [];
+        $startSeconds = (int) ($contest['startTimeSeconds'] ?? $event->starting_at->timestamp);
+        $durationSeconds = (int) ($contest['durationSeconds'] ?? max(0, $event->ending_at->timestamp - $startSeconds));
 
-        if (is_array($contestRow)) {
-            foreach (($contestRow['problemResults'] ?? []) as $idx => $pr) {
-                $points = is_array($pr) && array_key_exists('points', $pr) ? (float) $pr['points'] : 0.0;
-                if ($points > 0) {
-                    $solveCount++;
-                    $contestSolvedIdx[] = (int) $idx;
-                }
-            }
+        return [$startSeconds, $startSeconds + $durationSeconds];
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $contestRow
+     * @param  array<int, string>  $problemIndexes
+     * @return array<string, true>
+     */
+    private function solvedProblemIndexes(?array $contestRow, array $problemIndexes): array
+    {
+        if (! is_array($contestRow)) {
+            return [];
         }
 
-        $upsolveCount = 0;
-        if (is_array($practiceRow)) {
-            foreach (($practiceRow['problemResults'] ?? []) as $idx => $pr) {
-                $points = is_array($pr) && array_key_exists('points', $pr) ? (float) $pr['points'] : 0.0;
-                if ($points > 0 && ! in_array((int) $idx, $contestSolvedIdx, true)) {
-                    $upsolveCount++;
-                }
+        $solved = [];
+        foreach (($contestRow['problemResults'] ?? []) as $position => $problemResult) {
+            $points = is_array($problemResult) && array_key_exists('points', $problemResult)
+                ? (float) $problemResult['points']
+                : 0.0;
+
+            if ($points <= 0) {
+                continue;
             }
+
+            $problemIndex = $problemIndexes[(int) $position] ?? (string) $position;
+            $solved[$problemIndex] = true;
         }
 
-        return [$solveCount, $upsolveCount];
+        return $solved;
+    }
+
+    /**
+     * @param  array<string, true>  $solvedProblemIndexes
+     * @return array<string, true>|false
+     */
+    private function upsolvedProblemIndexes(string $handle, string $contestId, int $contestEndSeconds, array $solvedProblemIndexes): array|false
+    {
+        if ($handle === '') {
+            return [];
+        }
+
+        $cacheKey = 'codeforces_user_status_'.md5($this->normalizeHandle($handle).'_'.$contestId.'_'.$contestEndSeconds);
+
+        try {
+            $upsolvedProblemIndexes = Cache::remember($cacheKey, now()->addHours(2), function () use ($handle, $contestId, $contestEndSeconds, $solvedProblemIndexes): array {
+                $upsolved = [];
+                $from = 1;
+
+                for ($page = 0; $page < self::USER_STATUS_MAX_PAGES; $page++) {
+                    $response = Http::timeout(30)
+                        ->acceptJson()
+                        ->get(self::CODEFORCES_USER_STATUS_URL, [
+                            'handle' => $handle,
+                            'from' => $from,
+                            'count' => self::USER_STATUS_PAGE_SIZE,
+                        ]);
+
+                    $this->pauseAfterCodeforcesRequest();
+
+                    if (! $response->successful()) {
+                        throw new \Exception("Failed to fetch submissions for {$handle} (HTTP {$response->status()})");
+                    }
+
+                    $responseData = $response->json();
+                    if (($responseData['status'] ?? null) !== 'OK') {
+                        throw new \Exception("Codeforces API returned error for {$handle}: ".($responseData['comment'] ?? 'unknown error'));
+                    }
+
+                    $submissions = is_array($responseData['result'] ?? null) ? $responseData['result'] : [];
+                    if (empty($submissions)) {
+                        break;
+                    }
+
+                    $oldestSubmissionTime = null;
+                    foreach ($submissions as $submission) {
+                        if (! is_array($submission)) {
+                            continue;
+                        }
+
+                        $createdAt = (int) ($submission['creationTimeSeconds'] ?? 0);
+                        $oldestSubmissionTime = $createdAt;
+
+                        if ($createdAt <= $contestEndSeconds || ($submission['verdict'] ?? '') !== 'OK') {
+                            continue;
+                        }
+
+                        $problemContestId = (string) ($submission['problem']['contestId'] ?? $submission['contestId'] ?? '');
+                        $problemIndex = (string) ($submission['problem']['index'] ?? '');
+
+                        if ($problemContestId !== $contestId || $problemIndex === '' || isset($solvedProblemIndexes[$problemIndex])) {
+                            continue;
+                        }
+
+                        $upsolved[$problemIndex] = true;
+                    }
+
+                    if (count($submissions) < self::USER_STATUS_PAGE_SIZE || ($oldestSubmissionTime !== null && $oldestSubmissionTime <= $contestEndSeconds)) {
+                        break;
+                    }
+
+                    $from += self::USER_STATUS_PAGE_SIZE;
+                }
+
+                return $upsolved;
+            });
+
+            return is_array($upsolvedProblemIndexes) ? $upsolvedProblemIndexes : false;
+        } catch (\Exception) {
+            return false;
+        }
+    }
+
+    private function pauseAfterCodeforcesRequest(): void
+    {
+        $delay = (int) $this->option('delay');
+
+        if ($delay > 0) {
+            usleep($delay * 1000);
+        }
+    }
+
+    private function normalizeHandle(string $handle): string
+    {
+        return strtolower(trim($handle));
     }
 }

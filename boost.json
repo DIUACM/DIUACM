@@ -1,9 +1,7 @@
 {
     "agents": [
-        "copilot"
-    ],
-    "editors": [
-        "vscode"
+        "copilot",
+        "codex"
     ],
     "guidelines": true
 }
