@@ -17,6 +17,7 @@ class ProgrammerController extends Controller
     public function index(Request $request): Response
     {
         $programmers = User::query()
+            ->where('is_banned', false)
             ->hasProgrammingHandle()
             ->search($request->get('search'))
             ->when($request->get('department'), function ($query, $department) {

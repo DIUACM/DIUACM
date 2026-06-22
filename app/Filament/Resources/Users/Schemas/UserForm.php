@@ -7,6 +7,7 @@ use App\Models\User;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -43,6 +44,9 @@ class UserForm
                                     ->options(Gender::class),
                                 TextInput::make('phone')
                                     ->tel(),
+                                Toggle::make('is_banned')
+                                    ->label('Banned')
+                                    ->helperText('Banned users cannot sign in and are moved to the bottom of public rankings.'),
                             ]),
 
                         Grid::make()

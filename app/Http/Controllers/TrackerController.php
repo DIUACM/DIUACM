@@ -35,7 +35,8 @@ class TrackerController extends Controller
         $keyword = $request->get('keyword', '');
 
         // Create cache key based on slug and keyword
-        $cacheKey = "tracker_show_{$slug}_{$keyword}";
+        $cacheVersion = Cache::get('tracker.show.version', 1);
+        $cacheKey = "tracker_show_{$cacheVersion}_{$slug}_{$keyword}";
 
         $cachedData = Cache::remember($cacheKey, now()->addMinutes(30), function () use ($slug, $keyword) {
             // Find tracker by slug
@@ -79,7 +80,7 @@ class TrackerController extends Controller
                         ->select($columns);
                 },
                 'users' => function ($query) {
-                    $query->select('users.id', 'users.name', 'users.username', 'users.department', 'users.student_id');
+                    $query->select('users.id', 'users.name', 'users.username', 'users.department', 'users.student_id', 'users.is_banned');
                 },
                 'users.media',
             ]);
@@ -91,7 +92,9 @@ class TrackerController extends Controller
                 $this->processEventStats($selectedRankList, $userIds, $eventIds);
             }
 
-            $selectedRankList->setRelation('users', $selectedRankList->users->sortBy(fn ($u) => (int) ($u->pivot->position ?? 0))->values());
+            $selectedRankList->setRelation('users', $selectedRankList->users
+                ->sortBy(fn ($user) => [$user->is_banned ? 1 : 0, (int) ($user->pivot->position ?? 0)])
+                ->values());
 
             $tracker->selectedRankList = $selectedRankList;
             $tracker->availableRankLists = $tracker->rankLists;
@@ -144,7 +147,7 @@ class TrackerController extends Controller
                     ->select($columns);
             },
             'users' => function ($query) {
-                $query->select('users.id', 'users.name', 'users.username', 'users.department', 'users.student_id');
+                $query->select('users.id', 'users.name', 'users.username', 'users.department', 'users.student_id', 'users.is_banned');
             },
         ]);
 
@@ -155,7 +158,9 @@ class TrackerController extends Controller
             $this->processEventStats($selectedRankList, $userIds, $eventIds);
         }
 
-        $selectedRankList->setRelation('users', $selectedRankList->users->sortBy(fn ($u) => (int) ($u->pivot->position ?? 0))->values());
+        $selectedRankList->setRelation('users', $selectedRankList->users
+            ->sortBy(fn ($user) => [$user->is_banned ? 1 : 0, (int) ($user->pivot->position ?? 0)])
+            ->values());
 
         $exportData = [
             'tracker' => [
@@ -171,6 +176,7 @@ class TrackerController extends Controller
                     'student_id' => $user->student_id,
                     'department' => $user->department,
                     'score' => $user->pivot->score ?? 0,
+                    'is_banned' => $user->is_banned,
                 ];
 
                 $eventStats = (array) $user->getAttribute('event_stats');
@@ -203,7 +209,7 @@ class TrackerController extends Controller
                 $file = fopen('php://output', 'w');
 
                 // CSV Headers
-                $headerRow = ['Rank', 'Name', 'Username', 'Student ID', 'Department', 'Score'];
+                $headerRow = ['Rank', 'Name', 'Username', 'Student ID', 'Department', 'Score', 'Banned'];
                 foreach ($selectedRankList->events as $event) {
                     $headerRow[] = "{$event->title} - Solves";
                     $headerRow[] = "{$event->title} - Upsolves";

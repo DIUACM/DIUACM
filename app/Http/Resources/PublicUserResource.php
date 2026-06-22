@@ -20,6 +20,7 @@ class PublicUserResource extends JsonResource
             'avatar' => $this->avatar_url,
             'student_id' => $this->student_id,
             'department' => $this->department,
+            'is_banned' => (bool) $this->is_banned,
         ];
     }
 }

@@ -112,6 +112,12 @@ class AuthController extends Controller
             // Mark email as verified since it's coming from Google OAuth
             $user->markEmailAsVerified();
         } else {
+            if ($user->is_banned) {
+                return redirect()->route('login')->withErrors([
+                    'login' => 'Your account has been banned.',
+                ]);
+            }
+
             // For existing users, mark email as verified if not already verified
             if (! $user->hasVerifiedEmail()) {
                 $user->markEmailAsVerified();

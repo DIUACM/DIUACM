@@ -43,6 +43,7 @@ export interface PublicUser {
     avatar: string;
     student_id: string;
     department: string;
+    is_banned: boolean;
 }
 
 export interface PaginationLink {

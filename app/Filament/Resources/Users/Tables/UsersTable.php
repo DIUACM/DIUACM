@@ -7,6 +7,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Support\Colors\Color;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -48,6 +49,11 @@ class UsersTable
                     ->copyable()
                     ->copyMessage('Email copied')
                     ->searchable(),
+
+                IconColumn::make('is_banned')
+                    ->label('Banned')
+                    ->boolean()
+                    ->sortable(),
 
                 TextColumn::make('gender')
                     ->badge()
@@ -106,6 +112,9 @@ class UsersTable
                 TernaryFilter::make('email_verified_at')
                     ->label('Email Verified')
                     ->nullable(),
+
+                TernaryFilter::make('is_banned')
+                    ->label('Banned'),
             ])
             ->recordActions([
                 EditAction::make(),

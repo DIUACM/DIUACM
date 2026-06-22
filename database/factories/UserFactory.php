@@ -3,12 +3,13 @@
 namespace Database\Factories;
 
 use App\Enums\Gender;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
+ * @extends Factory<User>
  */
 class UserFactory extends Factory
 {
@@ -45,6 +46,7 @@ class UserFactory extends Factory
             'department' => strtoupper(fake()->randomElement(['CSE', 'EEE', 'SWE', 'BBA', 'CE'])),
             'student_id' => 'DIU-'.fake()->numberBetween(10000000, 99999999),
             'max_cf_rating' => fake()->numberBetween(800, 3500),
+            'is_banned' => false,
         ];
     }
 
@@ -55,6 +57,16 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is banned.
+     */
+    public function banned(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_banned' => true,
         ]);
     }
 

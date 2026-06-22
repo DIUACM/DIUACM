@@ -299,8 +299,15 @@ export default function TrackersShowPage({ title, slug, selected_rank_list, avai
                                                                             {user.name.charAt(0).toUpperCase()}
                                                                         </AvatarFallback>
                                                                     </Avatar>
-                                                                    <span className="truncate text-sm font-medium text-slate-900 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
-                                                                        {user.name.length > 20 ? `${user.name.substring(0, 20)}...` : user.name}
+                                                                    <span className="flex min-w-0 items-center gap-2">
+                                                                        <span className="truncate text-sm font-medium text-slate-900 transition-colors group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                                                                            {user.name.length > 20 ? `${user.name.substring(0, 20)}...` : user.name}
+                                                                        </span>
+                                                                        {user.is_banned && (
+                                                                            <Badge variant="destructive" className="shrink-0 text-[10px] uppercase">
+                                                                                Banned
+                                                                            </Badge>
+                                                                        )}
                                                                     </span>
                                                                 </Link>
                                                             </td>

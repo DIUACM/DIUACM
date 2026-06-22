@@ -18,7 +18,7 @@ class EventController extends Controller
     /**
      * Public user columns to select for attendees and performance data.
      */
-    private const USER_PUBLIC_COLUMNS = ['id', 'name', 'username', 'student_id', 'department'];
+    private const USER_PUBLIC_COLUMNS = ['id', 'name', 'username', 'student_id', 'department', 'is_banned'];
 
     /**
      * Display a paginated list of published events.
@@ -76,6 +76,7 @@ class EventController extends Controller
                 ->load([
                     'attendees' => fn ($attendeesQuery) => $attendeesQuery
                         ->select($userColumns)
+                        ->orderBy('users.is_banned')
                         ->orderBy('event_attendance.created_at', 'desc'),
                 ]);
         }
@@ -85,6 +86,7 @@ class EventController extends Controller
             $event->load([
                 'usersWithStats' => fn ($statsQuery) => $statsQuery
                     ->select($userColumns)
+                    ->orderBy('users.is_banned')
                     ->orderByDesc('event_user_stats.solve_count')
                     ->orderByDesc('event_user_stats.upsolve_count'),
             ]);

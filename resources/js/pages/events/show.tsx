@@ -19,6 +19,14 @@ type Props = {
     auth?: Auth;
 };
 
+function BannedBadge() {
+    return (
+        <Badge variant="destructive" className="text-[10px] uppercase">
+            Banned
+        </Badge>
+    );
+}
+
 export default function EventDetailsPage({ event, auth }: Props) {
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -412,8 +420,9 @@ export default function EventDetailsPage({ event, auth }: Props) {
                                                                             </AvatarFallback>
                                                                         </Avatar>
                                                                         <div>
-                                                                            <div className="font-medium text-slate-900 dark:text-white">
-                                                                                {attendee.name}
+                                                                            <div className="flex items-center gap-2 font-medium text-slate-900 dark:text-white">
+                                                                                <span>{attendee.name}</span>
+                                                                                {attendee.is_banned && <BannedBadge />}
                                                                             </div>
                                                                             <div className="text-sm text-slate-500 dark:text-slate-400">
                                                                                 @{attendee.username}
@@ -481,8 +490,9 @@ export default function EventDetailsPage({ event, auth }: Props) {
                                                                             </AvatarFallback>
                                                                         </Avatar>
                                                                         <div>
-                                                                            <div className="font-medium text-slate-900 dark:text-white">
-                                                                                {user.name}
+                                                                            <div className="flex items-center gap-2 font-medium text-slate-900 dark:text-white">
+                                                                                <span>{user.name}</span>
+                                                                                {user.is_banned && <BannedBadge />}
                                                                             </div>
                                                                             <div className="text-sm text-slate-500 dark:text-slate-400">
                                                                                 @{user.username}
@@ -547,7 +557,10 @@ export default function EventDetailsPage({ event, auth }: Props) {
                                                                 </AvatarFallback>
                                                             </Avatar>
                                                             <div>
-                                                                <div className="font-medium text-slate-900 dark:text-white">{attendee.name}</div>
+                                                                <div className="flex items-center gap-2 font-medium text-slate-900 dark:text-white">
+                                                                    <span>{attendee.name}</span>
+                                                                    {attendee.is_banned && <BannedBadge />}
+                                                                </div>
                                                                 <div className="text-sm text-slate-500 dark:text-slate-400">@{attendee.username}</div>
                                                             </div>
                                                         </div>
@@ -604,7 +617,10 @@ export default function EventDetailsPage({ event, auth }: Props) {
                                                                 </AvatarFallback>
                                                             </Avatar>
                                                             <div>
-                                                                <div className="font-medium text-slate-900 dark:text-white">{user.name}</div>
+                                                                <div className="flex items-center gap-2 font-medium text-slate-900 dark:text-white">
+                                                                    <span>{user.name}</span>
+                                                                    {user.is_banned && <BannedBadge />}
+                                                                </div>
                                                                 <div className="text-sm text-slate-500 dark:text-slate-400">@{user.username}</div>
                                                             </div>
                                                         </div>

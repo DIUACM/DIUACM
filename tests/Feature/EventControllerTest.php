@@ -138,6 +138,7 @@ it('loads attendees only when attendance is open', function () {
             ->has('avatar')
             ->has('student_id')
             ->has('department')
+            ->has('is_banned')
             ->has('attended_at')
         )
     );
@@ -190,6 +191,7 @@ it('loads performance data for contest events', function () {
             ->has('avatar')
             ->has('student_id')
             ->has('department')
+            ->has('is_banned')
             ->has('solve_count')
             ->has('upsolve_count')
         )
@@ -224,12 +226,12 @@ it('does not trigger N+1 queries when loading attendees', function () {
     $this->get(route('events.show', $event));
 
     // Count queries on second request
-    \DB::enableQueryLog();
+    DB::enableQueryLog();
 
     $this->get(route('events.show', $event));
 
-    $queries = \DB::getQueryLog();
-    \DB::disableQueryLog();
+    $queries = DB::getQueryLog();
+    DB::disableQueryLog();
 
     // Should be around 2-3 queries total:
     // 1. Load event

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\ConvertInertiaFilamentRedirectsToBrowserRedirects;
+use App\Http\Middleware\EnsureUserIsNotBanned;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
@@ -28,7 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             HandleAppearance::class,
-
+            EnsureUserIsNotBanned::class,
             ConvertInertiaFilamentRedirectsToBrowserRedirects::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,

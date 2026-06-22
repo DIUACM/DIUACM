@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use App\Enums\Gender;
+use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -17,7 +20,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser, HasMedia, MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory,Notifiable;
 
     use HasRoles;
@@ -25,7 +28,7 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->hasVerifiedEmail() && $this->roles()->count() > 0;
+        return ! $this->is_banned && $this->hasVerifiedEmail() && $this->roles()->count() > 0;
     }
 
     /**
@@ -46,6 +49,7 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
         'department',
         'student_id',
         'max_cf_rating',
+        'is_banned',
     ];
 
     /**
@@ -70,6 +74,7 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
             'password' => 'hashed',
             'max_cf_rating' => 'integer',
             'gender' => Gender::class,
+            'is_banned' => 'boolean',
         ];
     }
 
@@ -180,6 +185,16 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
     {
         static::updated(function (User $user) {
             cache()->forget("user.{$user->id}.avatar");
+
+            if ($user->wasChanged('is_banned')) {
+                Cache::add('tracker.show.version', 1, now()->addYear());
+                Cache::increment('tracker.show.version');
+            }
+
+            if ($user->wasChanged('is_banned') && $user->is_banned) {
+                DB::table('sessions')->where('user_id', $user->id)->delete();
+                DB::table('users')->where('id', $user->id)->update(['remember_token' => null]);
+            }
         });
 
         static::deleted(function (User $user) {
