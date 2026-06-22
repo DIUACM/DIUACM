@@ -215,9 +215,16 @@ export default function ContestDetailsPage({ contest }: Props) {
                                                             <AvatarFallback>{getInitials(member.name)}</AvatarFallback>
                                                         </Avatar>
                                                         <div className="min-w-0 flex-1">
-                                                            <p className="truncate text-sm font-medium text-slate-900 dark:text-white">
-                                                                {member.name}
-                                                            </p>
+                                                            <div className="flex min-w-0 items-center gap-2">
+                                                                <p className="truncate text-sm font-medium text-slate-900 dark:text-white">
+                                                                    {member.name}
+                                                                </p>
+                                                                {member.is_banned && (
+                                                                    <Badge variant="destructive" className="shrink-0 text-[10px] uppercase">
+                                                                        Banned
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
                                                             {member.student_id && (
                                                                 <p className="truncate text-xs text-slate-500 dark:text-slate-400">
                                                                     {member.student_id}

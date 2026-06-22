@@ -49,7 +49,11 @@ class ContestController extends Controller
         $contest->load([
             'gallery.media',
             'teams' => fn ($query) => $query
-                ->with(['members:id,name,username,student_id'])
+                ->with(['members' => fn ($membersQuery) => $membersQuery
+                    ->select('users.id', 'users.name', 'users.username', 'users.student_id', 'users.is_banned')
+                    ->orderBy('users.is_banned')
+                    ->orderBy('users.name'),
+                ])
                 ->orderBy('rank')
                 ->orderByDesc('solve_count'),
         ]);

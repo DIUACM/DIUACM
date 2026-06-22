@@ -53,7 +53,14 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                         </div>
 
                         <div className="flex-1 text-center sm:text-left">
-                            <h1 className="mb-1 text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">{programmer.name}</h1>
+                            <div className="mb-1 flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                                <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl dark:text-white">{programmer.name}</h1>
+                                {programmer.is_banned && (
+                                    <Badge variant="destructive" className="text-xs uppercase">
+                                        Banned
+                                    </Badge>
+                                )}
+                            </div>
                             <p className="mb-3 text-lg text-slate-600 dark:text-slate-300">@{programmer.username}</p>
 
                             {typeof programmer.max_cf_rating === 'number' && programmer.max_cf_rating > 0 && (
@@ -267,7 +274,7 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                                 </div>
 
                                                 {job.description && (
-                                                    <div className="prose prose-sm max-w-none text-slate-700 dark:prose-invert dark:text-slate-300">
+                                                    <div className="prose prose-sm max-w-none text-slate-700 dark:text-slate-300 dark:prose-invert">
                                                         <div dangerouslySetInnerHTML={{ __html: job.description }} />
                                                     </div>
                                                 )}
@@ -365,9 +372,16 @@ export default function ProgrammerDetailsPage({ programmer }: ProgrammerDetailsP
                                                             )}
                                                         </div>
                                                         <div className="min-w-0 flex-1">
-                                                            <p className="truncate text-sm font-medium hover:text-blue-600 dark:hover:text-blue-400">
-                                                                {member.name}
-                                                            </p>
+                                                            <div className="flex min-w-0 items-center gap-2">
+                                                                <p className="truncate text-sm font-medium hover:text-blue-600 dark:hover:text-blue-400">
+                                                                    {member.name}
+                                                                </p>
+                                                                {member.is_banned && (
+                                                                    <Badge variant="destructive" className="shrink-0 text-[10px] uppercase">
+                                                                        Banned
+                                                                    </Badge>
+                                                                )}
+                                                            </div>
                                                             {member.student_id && (
                                                                 <p className="text-xs text-slate-500 dark:text-slate-400">{member.student_id}</p>
                                                             )}

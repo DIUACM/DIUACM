@@ -54,7 +54,10 @@ class ProgrammerController extends Controller
             'teams' => function ($query) {
                 $query->with([
                     'contest:id,name,contest_type,location,date,standings_url',
-                    'members:id,name,username,student_id,department',
+                    'members' => fn ($membersQuery) => $membersQuery
+                        ->select('users.id', 'users.name', 'users.username', 'users.student_id', 'users.department', 'users.is_banned')
+                        ->orderBy('users.is_banned')
+                        ->orderBy('users.name'),
                 ])
                     ->orderBy('created_at', 'desc');
             },

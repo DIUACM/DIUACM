@@ -4,6 +4,7 @@ use App\Enums\EventType;
 use App\Enums\VisibilityStatus;
 use App\Models\Event;
 use App\Models\RankList;
+use App\Models\Team;
 use App\Models\Tracker;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
@@ -115,5 +116,36 @@ it('places banned users last in tracker ranklists', function () {
             ->where('selected_rank_list.users.0.name', 'Active User')
             ->where('selected_rank_list.users.1.name', 'Banned User')
             ->where('selected_rank_list.users.1.is_banned', true)
+        );
+});
+
+it('marks banned programmer profiles and places banned contest team members last', function () {
+    $activeUser = User::factory()->create(['name' => 'Active Member']);
+    $bannedUser = User::factory()->banned()->create(['name' => 'Banned Member']);
+    $team = Team::factory()->create();
+
+    $team->members()->attach([$bannedUser->id, $activeUser->id]);
+
+    $this->get(route('programmers.show', $bannedUser))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->where('programmer.name', 'Banned Member')
+            ->where('programmer.is_banned', true)
+        );
+
+    $this->get(route('contests.show', $team->contest))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->where('contest.teams.0.members.0.name', 'Active Member')
+            ->where('contest.teams.0.members.1.name', 'Banned Member')
+            ->where('contest.teams.0.members.1.is_banned', true)
+        );
+
+    $this->get(route('programmers.show', $activeUser))
+        ->assertSuccessful()
+        ->assertInertia(fn ($page) => $page
+            ->where('programmer.contests.0.team.members.0.name', 'Active Member')
+            ->where('programmer.contests.0.team.members.1.name', 'Banned Member')
+            ->where('programmer.contests.0.team.members.1.is_banned', true)
         );
 });
