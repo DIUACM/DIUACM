@@ -39,6 +39,8 @@ class RankListScoreService
      */
     public function recalculateScoresForRankList(RankList $rankList): array
     {
+        $this->enforceBannedUserValues($rankList->id);
+
         // Get all events associated with this ranklist with eager loading
         $events = $rankList->events()->with('attendees')->get();
 
@@ -120,6 +122,8 @@ class RankListScoreService
      */
     public function recalculateScoreForUser(RankList $rankList, User $user): array
     {
+        $this->enforceBannedUserValues($rankList->id);
+
         // Check if user is in this ranklist
         if (! $rankList->users()->where('user_id', $user->id)->exists()) {
             return [
@@ -208,6 +212,10 @@ class RankListScoreService
         bool $considerStrictAttendance,
         array $attendanceMap
     ): float {
+        if ($user->is_banned) {
+            return User::BANNED_RANKLIST_SCORE;
+        }
+
         $totalScore = 0;
 
         foreach ($events as $event) {
@@ -269,9 +277,16 @@ class RankListScoreService
      */
     private function updatePositions(int $rankListId): void
     {
+        $this->enforceBannedUserValues($rankListId);
+
+        $bannedUserIds = User::query()
+            ->where('is_banned', true)
+            ->pluck('id');
+
         // Get all users with their scores, ordered by score descending
         $users = DB::table('rank_list_user')
             ->where('rank_list_id', $rankListId)
+            ->whereNotIn('user_id', $bannedUserIds)
             ->orderBy('score', 'desc')
             ->orderBy('user_id', 'asc') // Secondary sort for consistent ordering when scores are equal
             ->get(['user_id', 'score']);
@@ -332,5 +347,16 @@ class RankListScoreService
     public function getUserById(int $userId): ?User
     {
         return User::find($userId);
+    }
+
+    private function enforceBannedUserValues(int $rankListId): void
+    {
+        DB::table('rank_list_user')
+            ->where('rank_list_id', $rankListId)
+            ->whereIn('user_id', User::query()->where('is_banned', true)->select('id'))
+            ->update([
+                'score' => User::BANNED_RANKLIST_SCORE,
+                'position' => User::BANNED_RANKLIST_POSITION,
+            ]);
     }
 }

@@ -20,6 +20,10 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser, HasMedia, MustVerifyEmail
 {
+    public const BANNED_RANKLIST_POSITION = 99999;
+
+    public const BANNED_RANKLIST_SCORE = -1;
+
     /** @use HasFactory<UserFactory> */
     use HasFactory,Notifiable;
 
@@ -96,6 +100,7 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
     public function rankLists()
     {
         return $this->belongsToMany(RankList::class, 'rank_list_user')
+            ->using(RankListUser::class)
             ->withPivot('score', 'position');
     }
 
@@ -186,14 +191,18 @@ class User extends Authenticatable implements FilamentUser, HasMedia, MustVerify
         static::updated(function (User $user) {
             cache()->forget("user.{$user->id}.avatar");
 
-            if ($user->wasChanged('is_banned')) {
-                Cache::add('tracker.show.version', 1, now()->addYear());
-                Cache::increment('tracker.show.version');
-            }
-
             if ($user->wasChanged('is_banned') && $user->is_banned) {
                 DB::table('sessions')->where('user_id', $user->id)->delete();
                 DB::table('users')->where('id', $user->id)->update(['remember_token' => null]);
+                DB::table('rank_list_user')->where('user_id', $user->id)->update([
+                    'score' => self::BANNED_RANKLIST_SCORE,
+                    'position' => self::BANNED_RANKLIST_POSITION,
+                ]);
+            }
+
+            if ($user->wasChanged('is_banned')) {
+                Cache::add('tracker.show.version', 1, now()->addYear());
+                Cache::increment('tracker.show.version');
             }
         });
 

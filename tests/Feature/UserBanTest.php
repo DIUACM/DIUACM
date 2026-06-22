@@ -7,6 +7,7 @@ use App\Models\RankList;
 use App\Models\Team;
 use App\Models\Tracker;
 use App\Models\User;
+use App\Services\RankListScoreService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -56,6 +57,26 @@ it('revokes database sessions when a user is banned', function () {
 
     $this->assertDatabaseMissing('sessions', ['user_id' => $user->id]);
     expect($user->fresh()->remember_token)->toBeNull();
+});
+
+it('sets every existing ranklist score and position to banned sentinel values', function () {
+    $user = User::factory()->create();
+    $rankLists = RankList::factory()->count(2)->create();
+
+    foreach ($rankLists as $rankList) {
+        $rankList->users()->attach($user, ['score' => 500, 'position' => 1]);
+    }
+
+    $user->update(['is_banned' => true]);
+
+    foreach ($rankLists as $rankList) {
+        $this->assertDatabaseHas('rank_list_user', [
+            'rank_list_id' => $rankList->id,
+            'user_id' => $user->id,
+            'score' => User::BANNED_RANKLIST_SCORE,
+            'position' => User::BANNED_RANKLIST_POSITION,
+        ]);
+    }
 });
 
 it('excludes banned users from programmer search', function () {
@@ -110,6 +131,13 @@ it('places banned users last in tracker ranklists', function () {
     $rankList->users()->attach($bannedUser, ['position' => 1, 'score' => 100]);
     $rankList->users()->attach($activeUser, ['position' => 2, 'score' => 50]);
 
+    $this->assertDatabaseHas('rank_list_user', [
+        'rank_list_id' => $rankList->id,
+        'user_id' => $bannedUser->id,
+        'score' => User::BANNED_RANKLIST_SCORE,
+        'position' => User::BANNED_RANKLIST_POSITION,
+    ]);
+
     $this->get(route('trackers.show', ['slug' => $tracker->slug, 'keyword' => $rankList->keyword]))
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
@@ -117,6 +145,39 @@ it('places banned users last in tracker ranklists', function () {
             ->where('selected_rank_list.users.1.name', 'Banned User')
             ->where('selected_rank_list.users.1.is_banned', true)
         );
+});
+
+it('keeps banned sentinel values during ranklist recalculation', function () {
+    $rankList = RankList::factory()->create(['consider_strict_attendance' => false]);
+    $event = Event::factory()->create();
+    $activeUser = User::factory()->create();
+    $bannedUser = User::factory()->banned()->create();
+
+    $rankList->events()->attach($event, ['weight' => 1]);
+    $rankList->users()->attach($activeUser, ['score' => 0, 'position' => 2]);
+    $rankList->users()->attach($bannedUser);
+    $event->usersWithStats()->attach($activeUser, ['solve_count' => 2, 'upsolve_count' => 0, 'participation' => true]);
+    $event->usersWithStats()->attach($bannedUser, ['solve_count' => 100, 'upsolve_count' => 100, 'participation' => true]);
+
+    DB::table('rank_list_user')
+        ->where('rank_list_id', $rankList->id)
+        ->where('user_id', $bannedUser->id)
+        ->update(['score' => 1000, 'position' => 1]);
+
+    app(RankListScoreService::class)->recalculateScoresForRankList($rankList);
+
+    $this->assertDatabaseHas('rank_list_user', [
+        'rank_list_id' => $rankList->id,
+        'user_id' => $activeUser->id,
+        'score' => 2,
+        'position' => 1,
+    ]);
+    $this->assertDatabaseHas('rank_list_user', [
+        'rank_list_id' => $rankList->id,
+        'user_id' => $bannedUser->id,
+        'score' => User::BANNED_RANKLIST_SCORE,
+        'position' => User::BANNED_RANKLIST_POSITION,
+    ]);
 });
 
 it('marks banned programmer profiles and places banned contest team members last', function () {

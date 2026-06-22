@@ -49,6 +49,7 @@ class RankList extends Model
     public function users()
     {
         return $this->belongsToMany(User::class, 'rank_list_user')
+            ->using(RankListUser::class)
             ->withPivot('score', 'position');
     }
 }
