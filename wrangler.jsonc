@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "diuacm",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "diuacm-db",
+      // Placeholder — fine for local dev/migrations. Replace with the id from
+      // `wrangler d1 create diuacm-db` before deploying to remote.
+      "database_id": "PLACEHOLDER_REPLACE_BEFORE_REMOTE_DEPLOY",
+      "migrations_dir": "drizzle"
+    }
+  ]
+}

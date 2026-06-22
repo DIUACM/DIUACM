@@ -1,0 +1,6 @@
+# Copy this file to `.dev.vars` for local development (`.dev.vars` is gitignored).
+# `wrangler dev` loads these as bindings on `c.env`.
+#
+# In production set the secret instead with:
+#   wrangler secret put JWT_SECRET
+JWT_SECRET=replace-with-a-long-random-string
