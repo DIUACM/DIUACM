@@ -1,7 +1,10 @@
 {
     "agents": [
-        "copilot",
-        "codex"
+        "codex",
+        "claude_code"
     ],
-    "guidelines": true
+    "guidelines": true,
+    "packages": [
+        "filament/filament"
+    ]
 }
