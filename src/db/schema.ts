@@ -10,7 +10,10 @@ export const users = sqliteTable("users", {
   // Optional. SQLite allows multiple NULLs in a UNIQUE column, so this can be
   // both nullable and unique.
   studentId: text("student_id").unique(),
-  passwordHash: text("password_hash").notNull(),
+  // Nullable: users who sign in with Google have no password of their own.
+  passwordHash: text("password_hash"),
+  // R2 object key for the profile image (null if none). Served via GET /files/:key.
+  imageKey: text("image_key"),
   // Unix epoch seconds (UTC). `updatedAt` is bumped by the profile-update handler.
   createdAt: integer("created_at")
     .notNull()

@@ -8,6 +8,13 @@
       "when": 1782149459138,
       "tag": "0000_illegal_vivisector",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1782152938475,
+      "tag": "0001_hard_black_knight",
+      "breakpoints": true
     }
   ]
 }

@@ -5,6 +5,7 @@ import { logger } from "hono/logger";
 
 import { openApiDoc } from "./openapi";
 import auth from "./routes/auth";
+import files from "./routes/files";
 import type { AppEnv } from "./types";
 
 const app = new Hono<AppEnv>();
@@ -39,6 +40,7 @@ app.get("/docs", (c) =>
 );
 
 app.route("/auth", auth);
+app.route("/files", files);
 
 // ---------------------------------------------------------------------------
 // Error handling: HTTPException passthrough, then map common D1 constraint

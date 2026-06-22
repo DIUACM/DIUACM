@@ -17,9 +17,14 @@ export const registerSchema = z.object({
   studentId: z.string().trim().min(1).max(20).optional(),
 });
 
+// Accept either the email or the username in a single `identifier` field.
 export const loginSchema = z.object({
-  email: z.email(),
+  identifier: z.string().trim().min(1),
   password: z.string().min(1),
+});
+
+export const googleSignInSchema = z.object({
+  idToken: z.string().min(1).max(4096),
 });
 
 export const profileUpdateSchema = z.object({
@@ -37,4 +42,5 @@ export const profileUpdateSchema = z.object({
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type GoogleSignInInput = z.infer<typeof googleSignInSchema>;
 export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;

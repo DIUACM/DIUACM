@@ -16,5 +16,17 @@
       "database_id": "PLACEHOLDER_REPLACE_BEFORE_REMOTE_DEPLOY",
       "migrations_dir": "drizzle"
     }
-  ]
+  ],
+  "r2_buckets": [
+    {
+      "binding": "BUCKET",
+      "bucket_name": "diuacm-files"
+    }
+  ],
+  "vars": {
+    // Google OAuth client id (public value — fine to commit). The ID token's
+    // `aud` claim must match this. Replace with your own from the Google Cloud
+    // console (OAuth 2.0 Client IDs).
+    "GOOGLE_CLIENT_ID": "REPLACE_WITH_YOUR_GOOGLE_OAUTH_CLIENT_ID"
+  }
 }
