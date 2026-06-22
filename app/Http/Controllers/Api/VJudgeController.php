@@ -41,6 +41,12 @@ class VJudgeController extends Controller
             ], 400);
         }
 
+        if (! is_numeric($payload['length'] ?? null) || ! is_array($payload['participants'] ?? null)) {
+            return response()->json([
+                'message' => 'Invalid VJudge contest payload',
+            ], 422);
+        }
+
         // Get event
         $event = Event::findOrFail($eventId);
 
@@ -58,6 +64,12 @@ class VJudgeController extends Controller
 
         // Process the VJudge data
         $processedData = $this->processVjudgeData($payload, $event->consider_partial_accept);
+
+        if ($processedData === []) {
+            return response()->json([
+                'message' => 'No valid VJudge participants found in payload',
+            ], 422);
+        }
 
         // Delete existing solve stats for this event
         EventUserStat::where('event_id', $eventId)->delete();
@@ -93,12 +105,16 @@ class VJudgeController extends Controller
 
         // Initialize user stats
         foreach ($data['participants'] as $participantId => $participant) {
-            $username = $participant[0];
+            $username = $this->participantUsername($participant);
+            if ($username === null) {
+                continue;
+            }
+
             $processed[$username] = [
                 'solveCount' => 0,
                 'upSolveCount' => 0,
                 'absent' => true,
-                'solved' => array_fill(0, 50, 0),
+                'solved' => [],
             ];
         }
 
@@ -106,7 +122,18 @@ class VJudgeController extends Controller
         if (isset($data['submissions']) && is_array($data['submissions'])) {
             // First pass: Process in-time submissions
             foreach ($data['submissions'] as $submission) {
+                if (! is_array($submission) || count($submission) < 4) {
+                    continue;
+                }
+
                 [$participantId, $problemIndex, $isAccepted, $timestamp] = $submission;
+
+                if (! is_numeric($problemIndex) || ! is_numeric($timestamp)) {
+                    continue;
+                }
+
+                $problemIndex = (int) $problemIndex;
+                $timestamp = (float) $timestamp;
 
                 // Handle partial acceptance when consider_partial_accept is false
                 $actuallyAccepted = $isAccepted === 1;
@@ -122,7 +149,7 @@ class VJudgeController extends Controller
                     continue;
                 }
 
-                $username = $participant[0];
+                $username = $this->participantUsername($participant);
                 if (! isset($processed[$username])) {
                     continue;
                 }
@@ -133,7 +160,7 @@ class VJudgeController extends Controller
 
                 $processed[$username]['absent'] = false;
 
-                if ($actuallyAccepted && ! $processed[$username]['solved'][$problemIndex]) {
+                if ($actuallyAccepted && ! ($processed[$username]['solved'][$problemIndex] ?? false)) {
                     $processed[$username]['solveCount']++;
                     $processed[$username]['solved'][$problemIndex] = 1;
                 }
@@ -141,7 +168,18 @@ class VJudgeController extends Controller
 
             // Second pass: Process upsolve submissions
             foreach ($data['submissions'] as $submission) {
+                if (! is_array($submission) || count($submission) < 4) {
+                    continue;
+                }
+
                 [$participantId, $problemIndex, $isAccepted, $timestamp] = $submission;
+
+                if (! is_numeric($problemIndex) || ! is_numeric($timestamp)) {
+                    continue;
+                }
+
+                $problemIndex = (int) $problemIndex;
+                $timestamp = (float) $timestamp;
 
                 // Handle partial acceptance when consider_partial_accept is false
                 $actuallyAccepted = $isAccepted === 1;
@@ -157,12 +195,12 @@ class VJudgeController extends Controller
                     continue;
                 }
 
-                $username = $participant[0];
+                $username = $this->participantUsername($participant);
                 if (! isset($processed[$username])) {
                     continue;
                 }
 
-                if ($actuallyAccepted && $timestamp > $timeLimit && ! $processed[$username]['solved'][$problemIndex]) {
+                if ($actuallyAccepted && $timestamp > $timeLimit && ! ($processed[$username]['solved'][$problemIndex] ?? false)) {
                     $processed[$username]['upSolveCount']++;
                     $processed[$username]['solved'][$problemIndex] = 1;
                 }
@@ -170,5 +208,18 @@ class VJudgeController extends Controller
         }
 
         return $processed;
+    }
+
+    private function participantUsername(mixed $participant): ?string
+    {
+        if (! is_array($participant)) {
+            return null;
+        }
+
+        $username = $participant['name'] ?? $participant[0] ?? null;
+
+        return is_string($username) && trim($username) !== ''
+            ? trim($username)
+            : null;
     }
 }
