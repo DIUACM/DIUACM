@@ -7,6 +7,7 @@ import { openApiDoc } from "./openapi";
 import auth from "./routes/auth";
 import events from "./routes/events";
 import files from "./routes/files";
+import programmers from "./routes/programmers";
 import trackers from "./routes/trackers";
 import type { AppEnv } from "./types";
 
@@ -44,6 +45,7 @@ app.get("/docs", (c) =>
 app.route("/auth", auth);
 app.route("/events", events);
 app.route("/files", files);
+app.route("/programmers", programmers);
 app.route("/trackers", trackers);
 
 // ---------------------------------------------------------------------------

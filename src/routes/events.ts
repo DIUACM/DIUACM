@@ -209,8 +209,8 @@ eventRoutes.get("/:id/attendance", validate("query", attendanceListQuery), async
   });
 });
 
-// Paginated performance leaderboard for an event. Sorted by rank ascending;
-// rows without a rank (NULL) sort last.
+// Paginated performance leaderboard for an event. Sorted by position ascending;
+// rows without a position (NULL) sort last.
 eventRoutes.get("/:id/performance", validate("query", performanceListQuery), async (c) => {
   const id = parseId(c.req.param("id"));
   if (id === null) throw new HTTPException(404, { message: "Event not found" });
@@ -231,7 +231,7 @@ eventRoutes.get("/:id/performance", validate("query", performanceListQuery), asy
   const [rows, [{ value: total }]] = await Promise.all([
     db
       .select({
-        rank: eventPerformance.rank,
+        position: eventPerformance.position,
         solveCount: eventPerformance.solveCount,
         upsolveCount: eventPerformance.upsolveCount,
         participation: eventPerformance.participation,
@@ -243,8 +243,8 @@ eventRoutes.get("/:id/performance", validate("query", performanceListQuery), asy
       .from(eventPerformance)
       .innerJoin(users, eq(eventPerformance.userId, users.id))
       .where(eq(eventPerformance.eventId, id))
-      // `rank is null` is 0 for ranked rows, 1 for unranked → unranked sort last.
-      .orderBy(sql`${eventPerformance.rank} is null`, asc(eventPerformance.rank))
+      // `position is null` is 0 for ranked rows, 1 for unranked → unranked sort last.
+      .orderBy(sql`${eventPerformance.position} is null`, asc(eventPerformance.position))
       .limit(perPage)
       .offset((page - 1) * perPage),
     db.select({ value: count() }).from(eventPerformance).where(eq(eventPerformance.eventId, id)),
@@ -252,7 +252,7 @@ eventRoutes.get("/:id/performance", validate("query", performanceListQuery), asy
 
   return c.json({
     data: rows.map((r) => ({
-      rank: r.rank,
+      position: r.position,
       solveCount: r.solveCount,
       upsolveCount: r.upsolveCount,
       participation: r.participation,

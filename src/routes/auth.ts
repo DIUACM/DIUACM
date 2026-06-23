@@ -1,14 +1,14 @@
-import { eq, or } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import { getDb } from "../db/client";
-import { users } from "../db/schema";
+import { userHandles, users } from "../db/schema";
 import { GoogleAuthError, verifyGoogleIdToken } from "../lib/google-oauth";
 import { parseImageUpload } from "../lib/image-upload";
 import { signAuthToken } from "../lib/jwt";
 import { hashPassword, verifyPassword } from "../lib/password";
-import { toAuthUser } from "../lib/user-shape";
+import { toAuthUser, toHandlesMap } from "../lib/user-shape";
 import { validate } from "../lib/validator";
 import { requireAuth } from "../middleware/auth";
 import {
@@ -17,6 +17,7 @@ import {
   profileUpdateSchema,
   registerSchema,
 } from "../schemas/auth";
+import { handleSetSchema, handleTypeParam } from "../schemas/handles";
 import type { AppEnv } from "../types";
 
 // Columns safe to expose — never includes passwordHash. Shaped via toAuthUser.
@@ -27,6 +28,7 @@ const authUserColumns = {
   username: users.username,
   studentId: users.studentId,
   imageKey: users.imageKey,
+  maxCfRating: users.maxCfRating,
   createdAt: users.createdAt,
   updatedAt: users.updatedAt,
 };
@@ -255,5 +257,65 @@ auth.put("/me/image", requireAuth, async (c) => {
   const origin = new URL(c.req.url).origin;
   return c.json({ user: toAuthUser(updated, origin) });
 });
+
+// ---------------------------------------------------------------------------
+// Handles — the current user's Codeforces / VJudge / AtCoder handles. At most one
+// per platform; a handle value is unique within its platform (DB-enforced).
+// ---------------------------------------------------------------------------
+
+const loadHandles = async (db: ReturnType<typeof getDb>, userId: number) => {
+  const rows = await db
+    .select({ type: userHandles.type, handle: userHandles.handle })
+    .from(userHandles)
+    .where(eq(userHandles.userId, userId));
+  return toHandlesMap(rows);
+};
+
+auth.get("/me/handles", requireAuth, async (c) => {
+  const db = getDb(c.env.DB);
+  return c.json({ handles: await loadHandles(db, c.get("user").sub) });
+});
+
+auth.put(
+  "/me/handles/:type",
+  requireAuth,
+  validate("param", handleTypeParam),
+  validate("json", handleSetSchema),
+  async (c) => {
+    const { type } = c.req.valid("param");
+    const { handle } = c.req.valid("json");
+    const userId = c.get("user").sub;
+    const db = getDb(c.env.DB);
+
+    // A handle already claimed by another user for this platform hits the
+    // unique(type, handle) index → 409 via the global onError handler.
+    await db
+      .insert(userHandles)
+      .values({ userId, type, handle })
+      .onConflictDoUpdate({
+        target: [userHandles.userId, userHandles.type],
+        set: { handle, updatedAt: Math.floor(Date.now() / 1000) },
+      });
+
+    return c.json({ handles: await loadHandles(db, userId) });
+  },
+);
+
+auth.delete(
+  "/me/handles/:type",
+  requireAuth,
+  validate("param", handleTypeParam),
+  async (c) => {
+    const { type } = c.req.valid("param");
+    const userId = c.get("user").sub;
+    const db = getDb(c.env.DB);
+
+    await db
+      .delete(userHandles)
+      .where(and(eq(userHandles.userId, userId), eq(userHandles.type, type)));
+
+    return c.json({ handles: await loadHandles(db, userId) });
+  },
+);
 
 export default auth;

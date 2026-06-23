@@ -1,7 +1,8 @@
 import { z } from "zod";
 
-import { attendanceGiveSchema } from "./schemas/events";
 import { googleSignInSchema, loginSchema, profileUpdateSchema, registerSchema } from "./schemas/auth";
+import { attendanceGiveSchema } from "./schemas/events";
+import { handleSetSchema } from "./schemas/handles";
 
 // Request bodies are derived from the same Zod schemas the routes validate
 // against (via `z.toJSONSchema`) so the docs can't drift from validation.
@@ -35,6 +36,10 @@ const userSchema = {
       format: "uri",
       description: "Absolute URL to the profile image, or null if none is set.",
     },
+    maxCfRating: {
+      type: ["integer", "null"],
+      description: "Highest Codeforces rating reached, or null if not set.",
+    },
     createdAt: epoch("Unix epoch seconds (UTC)."),
     updatedAt: epoch("Unix epoch seconds (UTC)."),
   },
@@ -45,6 +50,7 @@ const userSchema = {
     "username",
     "studentId",
     "image",
+    "maxCfRating",
     "createdAt",
     "updatedAt",
   ],
@@ -215,13 +221,16 @@ const attendanceResultSchema = {
 const performanceSchema = {
   type: "object",
   properties: {
-    rank: { type: ["integer", "null"], description: "Null when unranked; unranked rows sort last." },
+    position: {
+      type: ["integer", "null"],
+      description: "Standing in the event; null when unranked (those rows sort last).",
+    },
     solveCount: { type: "integer" },
     upsolveCount: { type: "integer" },
     participation: { type: "boolean" },
     user: ref("UserSummary"),
   },
-  required: ["rank", "solveCount", "upsolveCount", "participation", "user"],
+  required: ["position", "solveCount", "upsolveCount", "participation", "user"],
 };
 
 const performanceListSchema = {
@@ -292,12 +301,12 @@ const ranklistUserPerformanceSchema = {
   type: "object",
   properties: {
     eventId: { type: "integer" },
-    rank: { type: ["integer", "null"] },
+    position: { type: ["integer", "null"], description: "Standing in this event; null when unranked." },
     solveCount: { type: "integer" },
     upsolveCount: { type: "integer" },
     participation: { type: "boolean" },
   },
-  required: ["eventId", "rank", "solveCount", "upsolveCount", "participation"],
+  required: ["eventId", "position", "solveCount", "upsolveCount", "participation"],
 };
 
 const ranklistStandingSchema = {
@@ -305,10 +314,10 @@ const ranklistStandingSchema = {
   properties: {
     user: ref("UserSummary"),
     score: { type: "number" },
-    position: { type: "integer" },
+    rank: { type: "integer", description: "Competition rank within the ranklist (1 = top)." },
     performance: { type: "array", items: ref("RanklistUserPerformance") },
   },
-  required: ["user", "score", "position", "performance"],
+  required: ["user", "score", "rank", "performance"],
 };
 
 const ranklistStandingsSchema = {
@@ -319,6 +328,84 @@ const ranklistStandingsSchema = {
     users: { type: "array", items: ref("RanklistStanding") },
   },
   required: ["keyword", "events", "users"],
+};
+
+const handlesMapSchema = {
+  type: "object",
+  description: "A user's handles keyed by platform; each value is the handle or null.",
+  properties: {
+    codeforces: { type: ["string", "null"] },
+    vjudge: { type: ["string", "null"] },
+    atcoder: { type: ["string", "null"] },
+  },
+  required: ["codeforces", "vjudge", "atcoder"],
+};
+
+const handlesResponseSchema = {
+  type: "object",
+  properties: { handles: ref("HandlesMap") },
+  required: ["handles"],
+};
+
+const programmerListItemSchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    name: { type: "string" },
+    username: { type: "string" },
+    image: { type: ["string", "null"], format: "uri" },
+    maxCfRating: { type: ["integer", "null"] },
+    handles: ref("HandlesMap"),
+  },
+  required: ["id", "name", "username", "image", "maxCfRating", "handles"],
+};
+
+const programmerListSchema = {
+  type: "object",
+  properties: {
+    data: { type: "array", items: ref("ProgrammerListItem") },
+    meta: ref("PaginationMeta"),
+  },
+  required: ["data", "meta"],
+};
+
+const trackerPerformanceRanklistSchema = {
+  type: "object",
+  properties: {
+    keyword: { type: "string" },
+    userCount: { type: "integer", description: "Total users in the ranklist." },
+    eventCount: { type: "integer", description: "Number of events in the ranklist." },
+    score: { type: "number", description: "This user's score in the ranklist." },
+    rank: { type: "integer", description: "This user's rank in the ranklist (1 = top)." },
+  },
+  required: ["keyword", "userCount", "eventCount", "score", "rank"],
+};
+
+const trackerPerformanceEntrySchema = {
+  type: "object",
+  properties: {
+    tracker: {
+      type: "object",
+      properties: { title: { type: "string" }, slug: { type: "string" } },
+      required: ["title", "slug"],
+    },
+    ranklists: { type: "array", items: ref("TrackerPerformanceRanklist") },
+  },
+  required: ["tracker", "ranklists"],
+};
+
+const programmerDetailSchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    name: { type: "string" },
+    username: { type: "string" },
+    image: { type: ["string", "null"], format: "uri" },
+    maxCfRating: { type: ["integer", "null"] },
+    handles: ref("HandlesMap"),
+    trackerPerformance: { type: "array", items: ref("TrackerPerformanceEntry") },
+  },
+  required: ["id", "name", "username", "image", "maxCfRating", "handles", "trackerPerformance"],
 };
 
 const pageParams = [
@@ -346,6 +433,7 @@ export const openApiDoc = {
     { name: "auth", description: "Registration, login, Google sign-in, and the current user" },
     { name: "events", description: "Events, media, and attendance" },
     { name: "trackers", description: "Trackers and their ranklists" },
+    { name: "programmers", description: "Programmer directory, handles, and tracker performance" },
     { name: "files", description: "Stored object serving" },
   ],
   components: {
@@ -378,11 +466,19 @@ export const openApiDoc = {
       RanklistUserPerformance: ranklistUserPerformanceSchema,
       RanklistStanding: ranklistStandingSchema,
       RanklistStandings: ranklistStandingsSchema,
+      HandlesMap: handlesMapSchema,
+      HandlesResponse: handlesResponseSchema,
+      ProgrammerListItem: programmerListItemSchema,
+      ProgrammerList: programmerListSchema,
+      TrackerPerformanceRanklist: trackerPerformanceRanklistSchema,
+      TrackerPerformanceEntry: trackerPerformanceEntrySchema,
+      ProgrammerDetail: programmerDetailSchema,
       RegisterRequest: toSchema(registerSchema),
       LoginRequest: toSchema(loginSchema),
       GoogleSignInRequest: toSchema(googleSignInSchema),
       ProfileUpdateRequest: toSchema(profileUpdateSchema),
       AttendanceRequest: toSchema(attendanceGiveSchema),
+      HandleSetRequest: toSchema(handleSetSchema),
     },
   },
   paths: {
@@ -524,6 +620,59 @@ export const openApiDoc = {
         },
       },
     },
+    "/auth/me/handles": {
+      get: {
+        tags: ["programmers"],
+        summary: "Get the current user's handles",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": { description: "The handles map", content: jsonBody(ref("HandlesResponse")) },
+          "401": { description: "Missing or invalid token", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/auth/me/handles/{type}": {
+      put: {
+        tags: ["programmers"],
+        summary: "Set (create or replace) the current user's handle for a platform",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "type",
+            in: "path",
+            required: true,
+            schema: { type: "string", enum: ["codeforces", "vjudge", "atcoder"] },
+          },
+        ],
+        requestBody: { required: true, content: jsonBody(ref("HandleSetRequest")) },
+        responses: {
+          "200": { description: "The updated handles map", content: jsonBody(ref("HandlesResponse")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          "401": { description: "Missing or invalid token", content: jsonBody(ref("Error")) },
+          "409": {
+            description: "Handle already taken by another user for this platform",
+            content: jsonBody(ref("Error")),
+          },
+        },
+      },
+      delete: {
+        tags: ["programmers"],
+        summary: "Remove the current user's handle for a platform",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "type",
+            in: "path",
+            required: true,
+            schema: { type: "string", enum: ["codeforces", "vjudge", "atcoder"] },
+          },
+        ],
+        responses: {
+          "200": { description: "The updated handles map", content: jsonBody(ref("HandlesResponse")) },
+          "401": { description: "Missing or invalid token", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
     "/events": {
       get: {
         tags: ["events"],
@@ -655,6 +804,40 @@ export const openApiDoc = {
             description: "The ranklist standings",
             content: jsonBody(ref("RanklistStandings")),
           },
+          "404": { description: "Not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/programmers": {
+      get: {
+        tags: ["programmers"],
+        summary: "List programmers (users with at least one handle)",
+        description:
+          "Ordered by max Codeforces rating (unrated users last), then name. " +
+          "Searchable on name and username via `q`.",
+        parameters: [
+          ...pageParams,
+          {
+            name: "q",
+            in: "query",
+            description: "Search on name or username.",
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": { description: "A page of programmers", content: jsonBody(ref("ProgrammerList")) },
+        },
+      },
+    },
+    "/programmers/{username}": {
+      get: {
+        tags: ["programmers"],
+        summary: "Get a programmer by username, with handles and tracker performance",
+        parameters: [
+          { name: "username", in: "path", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": { description: "The programmer", content: jsonBody(ref("ProgrammerDetail")) },
           "404": { description: "Not found", content: jsonBody(ref("Error")) },
         },
       },

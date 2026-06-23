@@ -23,6 +23,8 @@ export const users = sqliteTable("users", {
   passwordHash: text("password_hash"),
   // R2 object key for the profile image (null if none). Served via GET /files/:key.
   imageKey: text("image_key"),
+  // Highest Codeforces rating reached. Null until populated (by a future CF sync).
+  maxCfRating: integer("max_cf_rating"),
   // Unix epoch seconds (UTC). `updatedAt` is bumped by the profile-update handler.
   createdAt: integer("created_at")
     .notNull()
@@ -127,8 +129,9 @@ export const eventPerformance = sqliteTable(
     userId: integer("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    // Nullable — a performance row may exist without a rank; these sort last.
-    rank: integer("rank"),
+    // Nullable — a performance row may exist without a position; these sort last.
+    // This is the user's standing within the single event (contest).
+    position: integer("position"),
     solveCount: integer("solve_count").notNull().default(0),
     upsolveCount: integer("upsolve_count").notNull().default(0),
     // No default — participation must be set explicitly when a row is written.
@@ -233,11 +236,11 @@ export const ranklistUsers = sqliteTable(
     userId: integer("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    // Maintained by SQLite triggers (see 0008_ranklist_score_triggers) — never write
+    // Maintained by SQLite triggers (see the score-triggers migration) — never write
     // these directly from application code. `score` is the weighted solve/upsolve sum;
-    // `position` is the competition rank (1 = highest score).
+    // `rank` is the competition rank within the ranklist (1 = highest score).
     score: real("score").notNull().default(0),
-    position: integer("position").notNull().default(0),
+    rank: integer("rank").notNull().default(0),
   },
   (t) => [
     primaryKey({ columns: [t.ranklistId, t.userId] }),
@@ -245,10 +248,36 @@ export const ranklistUsers = sqliteTable(
   ],
 );
 
+export const userHandles = sqliteTable(
+  "user_handles",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type", { enum: ["codeforces", "vjudge", "atcoder"] }).notNull(),
+    handle: text("handle").notNull(),
+    createdAt: integer("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer("updated_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [
+    // A user can have at most one handle per platform.
+    uniqueIndex("user_handles_user_type_unique").on(t.userId, t.type),
+    // A handle value is unique within its platform (no two users share it).
+    uniqueIndex("user_handles_type_handle_unique").on(t.type, t.handle),
+    index("user_handles_user_id_idx").on(t.userId),
+  ],
+);
+
 export const usersRelations = relations(users, ({ many }) => ({
   attendance: many(eventAttendance),
   performance: many(eventPerformance),
   ranklists: many(ranklistUsers),
+  handles: many(userHandles),
 }));
 
 export const eventsRelations = relations(events, ({ many }) => ({
@@ -292,6 +321,10 @@ export const ranklistUsersRelations = relations(ranklistUsers, ({ one }) => ({
   user: one(users, { fields: [ranklistUsers.userId], references: [users.id] }),
 }));
 
+export const userHandlesRelations = relations(userHandles, ({ one }) => ({
+  user: one(users, { fields: [userHandles.userId], references: [users.id] }),
+}));
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Event = typeof events.$inferSelect;
@@ -305,3 +338,5 @@ export type Ranklist = typeof ranklists.$inferSelect;
 export type NewRanklist = typeof ranklists.$inferInsert;
 export type RanklistEvent = typeof ranklistEvents.$inferSelect;
 export type RanklistUser = typeof ranklistUsers.$inferSelect;
+export type UserHandle = typeof userHandles.$inferSelect;
+export type NewUserHandle = typeof userHandles.$inferInsert;

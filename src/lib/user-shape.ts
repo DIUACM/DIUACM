@@ -1,8 +1,17 @@
 import type { User } from "../db/schema";
+import { HANDLE_TYPES, type HandleType } from "../schemas/handles";
 
 type UserRow = Pick<
   User,
-  "id" | "name" | "email" | "username" | "studentId" | "imageKey" | "createdAt" | "updatedAt"
+  | "id"
+  | "name"
+  | "email"
+  | "username"
+  | "studentId"
+  | "imageKey"
+  | "maxCfRating"
+  | "createdAt"
+  | "updatedAt"
 >;
 
 /** Build the absolute, worker-served URL for a stored object key (served by `GET /files/:key`). */
@@ -26,6 +35,7 @@ export const toAuthUser = (row: UserRow, origin: string) => ({
   username: row.username,
   studentId: row.studentId,
   image: imageUrlFor(origin, row.imageKey),
+  maxCfRating: row.maxCfRating,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
 });
@@ -44,3 +54,36 @@ export const toUserSummary = (
 });
 
 export type UserSummary = ReturnType<typeof toUserSummary>;
+
+/**
+ * Collapse a user's handle rows into a predictable map keyed by platform. Every
+ * platform key is always present; the value is the handle string or null when unset.
+ */
+export const toHandlesMap = (
+  rows: { type: HandleType; handle: string }[],
+): Record<HandleType, string | null> => {
+  const map = Object.fromEntries(HANDLE_TYPES.map((t) => [t, null])) as Record<
+    HandleType,
+    string | null
+  >;
+  for (const row of rows) map[row.type] = row.handle;
+  return map;
+};
+
+export type HandlesMap = ReturnType<typeof toHandlesMap>;
+
+/** Public programmer-directory item: a user summary plus rating and handles. */
+export const toProgrammerListItem = (
+  row: Pick<User, "id" | "name" | "username" | "imageKey" | "maxCfRating">,
+  handleRows: { type: HandleType; handle: string }[],
+  origin: string,
+) => ({
+  id: row.id,
+  name: row.name,
+  username: row.username,
+  image: imageUrlFor(origin, row.imageKey),
+  maxCfRating: row.maxCfRating,
+  handles: toHandlesMap(handleRows),
+});
+
+export type ProgrammerListItem = ReturnType<typeof toProgrammerListItem>;

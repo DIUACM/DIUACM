@@ -81,7 +81,7 @@ trackerRoutes.get("/:slug", async (c) => {
 });
 
 // Full standings for one ranklist: its events (with per-ranklist weight) and its
-// users (score, position) with each user's per-event performance. Published
+// users (score, rank) with each user's per-event performance. Published
 // tracker + ranklist only. No pagination by design (cached later).
 trackerRoutes.get("/:slug/:keyword", async (c) => {
   const slug = c.req.param("slug");
@@ -128,19 +128,19 @@ trackerRoutes.get("/:slug/:keyword", async (c) => {
       username: users.username,
       imageKey: users.imageKey,
       score: ranklistUsers.score,
-      position: ranklistUsers.position,
+      rank: ranklistUsers.rank,
     })
     .from(ranklistUsers)
     .innerJoin(users, eq(ranklistUsers.userId, users.id))
     .where(eq(ranklistUsers.ranklistId, ranklist.id))
-    .orderBy(asc(ranklistUsers.position), desc(ranklistUsers.score));
+    .orderBy(asc(ranklistUsers.rank), desc(ranklistUsers.score));
 
   const eventIds = eventRows.map((e) => e.id);
   const userIds = userRows.map((u) => u.userId);
 
   type PerfEntry = {
     eventId: number;
-    rank: number | null;
+    position: number | null;
     solveCount: number;
     upsolveCount: number;
     participation: boolean;
@@ -151,7 +151,7 @@ trackerRoutes.get("/:slug/:keyword", async (c) => {
       .select({
         eventId: eventPerformance.eventId,
         userId: eventPerformance.userId,
-        rank: eventPerformance.rank,
+        position: eventPerformance.position,
         solveCount: eventPerformance.solveCount,
         upsolveCount: eventPerformance.upsolveCount,
         participation: eventPerformance.participation,
@@ -167,7 +167,7 @@ trackerRoutes.get("/:slug/:keyword", async (c) => {
       const list = perfByUser.get(p.userId) ?? [];
       list.push({
         eventId: p.eventId,
-        rank: p.rank,
+        position: p.position,
         solveCount: p.solveCount,
         upsolveCount: p.upsolveCount,
         participation: p.participation,
@@ -185,7 +185,7 @@ trackerRoutes.get("/:slug/:keyword", async (c) => {
         origin,
       ),
       score: u.score,
-      position: u.position,
+      rank: u.rank,
       performance: perfByUser.get(u.userId) ?? [],
     })),
   });
