@@ -36,6 +36,13 @@
       "when": 1782193391412,
       "tag": "0004_puzzling_vermin",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1782199880278,
+      "tag": "0005_new_wallop",
+      "breakpoints": true
     }
   ]
 }

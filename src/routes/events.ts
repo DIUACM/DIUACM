@@ -1,9 +1,9 @@
-import { and, asc, count, desc, eq, like, or, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, like, or, sql, type SQL } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import { getDb } from "../db/client";
-import { eventAttendance, eventPerformance, events } from "../db/schema";
+import { eventAttendance, eventPerformance, events, users } from "../db/schema";
 import { buildMeta } from "../lib/pagination";
 import { parseId } from "../lib/parse-id";
 import { fileUrlFor, toUserSummary } from "../lib/user-shape";
@@ -209,7 +209,8 @@ eventRoutes.get("/:id/attendance", validate("query", attendanceListQuery), async
   });
 });
 
-// Paginated performance leaderboard for an event, ordered by rank (ascending).
+// Paginated performance leaderboard for an event. Sorted by rank ascending;
+// rows without a rank (NULL) sort last.
 eventRoutes.get("/:id/performance", validate("query", performanceListQuery), async (c) => {
   const id = parseId(c.req.param("id"));
   if (id === null) throw new HTTPException(404, { message: "Event not found" });
@@ -228,16 +229,24 @@ eventRoutes.get("/:id/performance", validate("query", performanceListQuery), asy
   }
 
   const [rows, [{ value: total }]] = await Promise.all([
-    db.query.eventPerformance.findMany({
-      where: eq(eventPerformance.eventId, id),
-      columns: { rank: true, solveCount: true, upsolveCount: true },
-      with: {
-        user: { columns: { id: true, name: true, username: true, imageKey: true } },
-      },
-      orderBy: asc(eventPerformance.rank),
-      limit: perPage,
-      offset: (page - 1) * perPage,
-    }),
+    db
+      .select({
+        rank: eventPerformance.rank,
+        solveCount: eventPerformance.solveCount,
+        upsolveCount: eventPerformance.upsolveCount,
+        participation: eventPerformance.participation,
+        userId: users.id,
+        userName: users.name,
+        userUsername: users.username,
+        userImageKey: users.imageKey,
+      })
+      .from(eventPerformance)
+      .innerJoin(users, eq(eventPerformance.userId, users.id))
+      .where(eq(eventPerformance.eventId, id))
+      // `rank is null` is 0 for ranked rows, 1 for unranked → unranked sort last.
+      .orderBy(sql`${eventPerformance.rank} is null`, asc(eventPerformance.rank))
+      .limit(perPage)
+      .offset((page - 1) * perPage),
     db.select({ value: count() }).from(eventPerformance).where(eq(eventPerformance.eventId, id)),
   ]);
 
@@ -246,7 +255,11 @@ eventRoutes.get("/:id/performance", validate("query", performanceListQuery), asy
       rank: r.rank,
       solveCount: r.solveCount,
       upsolveCount: r.upsolveCount,
-      user: r.user ? toUserSummary(r.user, origin) : null,
+      participation: r.participation,
+      user: toUserSummary(
+        { id: r.userId, name: r.userName, username: r.userUsername, imageKey: r.userImageKey },
+        origin,
+      ),
     })),
     meta: buildMeta(page, perPage, total),
   });

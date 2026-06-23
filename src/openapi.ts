@@ -215,12 +215,13 @@ const attendanceResultSchema = {
 const performanceSchema = {
   type: "object",
   properties: {
-    rank: { type: "integer" },
+    rank: { type: ["integer", "null"], description: "Null when unranked; unranked rows sort last." },
     solveCount: { type: "integer" },
     upsolveCount: { type: "integer" },
-    user: { oneOf: [ref("UserSummary"), { type: "null" }] },
+    participation: { type: "boolean" },
+    user: ref("UserSummary"),
   },
-  required: ["rank", "solveCount", "upsolveCount", "user"],
+  required: ["rank", "solveCount", "upsolveCount", "participation", "user"],
 };
 
 const performanceListSchema = {

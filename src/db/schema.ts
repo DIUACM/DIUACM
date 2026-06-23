@@ -127,10 +127,12 @@ export const eventPerformance = sqliteTable(
     userId: integer("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    rank: integer("rank").notNull(),
+    // Nullable — a performance row may exist without a rank; these sort last.
+    rank: integer("rank"),
     solveCount: integer("solve_count").notNull().default(0),
     upsolveCount: integer("upsolve_count").notNull().default(0),
-    participation: integer("participation", { mode: "boolean" }).notNull().default(false),
+    // No default — participation must be set explicitly when a row is written.
+    participation: integer("participation", { mode: "boolean" }).notNull(),
     createdAt: integer("created_at")
       .notNull()
       .default(sql`(unixepoch())`),
