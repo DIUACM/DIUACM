@@ -1,10 +1,19 @@
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import { getDb } from "../db/client";
-import { trackers } from "../db/schema";
+import {
+  eventPerformance,
+  events,
+  ranklistEvents,
+  ranklists,
+  ranklistUsers,
+  trackers,
+  users,
+} from "../db/schema";
 import { buildMeta } from "../lib/pagination";
+import { toUserSummary } from "../lib/user-shape";
 import { validate } from "../lib/validator";
 import { trackersListQuery } from "../schemas/trackers";
 import type { AppEnv } from "../types";
@@ -68,6 +77,117 @@ trackerRoutes.get("/:slug", async (c) => {
   }
 
   return c.json(tracker);
+});
+
+// Full standings for one ranklist: its events (with per-ranklist weight) and its
+// users (score, position) with each user's per-event performance. Published
+// tracker + ranklist only. No pagination by design (cached later).
+trackerRoutes.get("/:slug/:keyword", async (c) => {
+  const slug = c.req.param("slug");
+  const keyword = c.req.param("keyword");
+  const db = getDb(c.env.DB);
+  const origin = new URL(c.req.url).origin;
+
+  const [tracker] = await db
+    .select({ id: trackers.id })
+    .from(trackers)
+    .where(and(eq(trackers.slug, slug), eq(trackers.status, "published")))
+    .limit(1);
+  if (!tracker) throw new HTTPException(404, { message: "Ranklist not found" });
+
+  const [ranklist] = await db
+    .select({ id: ranklists.id, keyword: ranklists.keyword })
+    .from(ranklists)
+    .where(
+      and(
+        eq(ranklists.trackerId, tracker.id),
+        eq(ranklists.keyword, keyword),
+        eq(ranklists.status, "published"),
+      ),
+    )
+    .limit(1);
+  if (!ranklist) throw new HTTPException(404, { message: "Ranklist not found" });
+
+  const eventRows = await db
+    .select({
+      id: events.id,
+      title: events.title,
+      startingAt: events.startingAt,
+      weight: ranklistEvents.weight,
+    })
+    .from(ranklistEvents)
+    .innerJoin(events, eq(ranklistEvents.eventId, events.id))
+    .where(eq(ranklistEvents.ranklistId, ranklist.id))
+    .orderBy(asc(events.startingAt));
+
+  const userRows = await db
+    .select({
+      userId: users.id,
+      name: users.name,
+      username: users.username,
+      imageKey: users.imageKey,
+      score: ranklistUsers.score,
+      position: ranklistUsers.position,
+    })
+    .from(ranklistUsers)
+    .innerJoin(users, eq(ranklistUsers.userId, users.id))
+    .where(eq(ranklistUsers.ranklistId, ranklist.id))
+    .orderBy(asc(ranklistUsers.position), desc(ranklistUsers.score));
+
+  const eventIds = eventRows.map((e) => e.id);
+  const userIds = userRows.map((u) => u.userId);
+
+  type PerfEntry = {
+    eventId: number;
+    rank: number | null;
+    solveCount: number;
+    upsolveCount: number;
+    participation: boolean;
+  };
+  const perfByUser = new Map<number, PerfEntry[]>();
+  if (eventIds.length > 0 && userIds.length > 0) {
+    const perfRows = await db
+      .select({
+        eventId: eventPerformance.eventId,
+        userId: eventPerformance.userId,
+        rank: eventPerformance.rank,
+        solveCount: eventPerformance.solveCount,
+        upsolveCount: eventPerformance.upsolveCount,
+        participation: eventPerformance.participation,
+      })
+      .from(eventPerformance)
+      .where(
+        and(
+          inArray(eventPerformance.eventId, eventIds),
+          inArray(eventPerformance.userId, userIds),
+        ),
+      );
+    for (const p of perfRows) {
+      const list = perfByUser.get(p.userId) ?? [];
+      list.push({
+        eventId: p.eventId,
+        rank: p.rank,
+        solveCount: p.solveCount,
+        upsolveCount: p.upsolveCount,
+        participation: p.participation,
+      });
+      perfByUser.set(p.userId, list);
+    }
+  }
+
+  return c.json({
+    keyword: ranklist.keyword,
+    events: eventRows,
+    users: userRows.map((u) => ({
+      user: toUserSummary(
+        { id: u.userId, name: u.name, username: u.username, imageKey: u.imageKey },
+        origin,
+      ),
+      score: u.score,
+      position: u.position,
+      performance: perfByUser.get(u.userId) ?? [],
+    })),
+  });
 });
 
 export default trackerRoutes;

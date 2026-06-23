@@ -35,6 +35,7 @@ A [Hono](https://hono.dev) API for diuacm, running on **Cloudflare Workers** wit
 | GET    | `/events/:id/performance` | —      | Event performance leaderboard (rank, solve/upsolve counts) |
 | GET    | `/trackers`      | —      | List published trackers (title, description, slug) |
 | GET    | `/trackers/:slug` | —      | Tracker details + its published ranklists (keyword, user/event counts) |
+| GET    | `/trackers/:slug/:keyword` | —      | Ranklist standings: events (with weight) + users (score, position, per-event performance) |
 | GET    | `/files/:key`    | —      | Stream a stored object (e.g. a profile image) from R2 |
 
 Authenticated requests send the JWT from register/login/google as `Authorization: Bearer <token>`.

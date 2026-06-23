@@ -277,6 +277,50 @@ const trackerDetailSchema = {
   required: ["title", "description", "slug", "ranklists"],
 };
 
+const ranklistEventEntrySchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    title: { type: "string" },
+    startingAt: epoch("Unix epoch seconds (UTC)."),
+    weight: { type: "number", description: "This event's weight in the ranklist (0.00–1.00)." },
+  },
+  required: ["id", "title", "startingAt", "weight"],
+};
+
+const ranklistUserPerformanceSchema = {
+  type: "object",
+  properties: {
+    eventId: { type: "integer" },
+    rank: { type: ["integer", "null"] },
+    solveCount: { type: "integer" },
+    upsolveCount: { type: "integer" },
+    participation: { type: "boolean" },
+  },
+  required: ["eventId", "rank", "solveCount", "upsolveCount", "participation"],
+};
+
+const ranklistStandingSchema = {
+  type: "object",
+  properties: {
+    user: ref("UserSummary"),
+    score: { type: "number" },
+    position: { type: "integer" },
+    performance: { type: "array", items: ref("RanklistUserPerformance") },
+  },
+  required: ["user", "score", "position", "performance"],
+};
+
+const ranklistStandingsSchema = {
+  type: "object",
+  properties: {
+    keyword: { type: "string" },
+    events: { type: "array", items: ref("RanklistEventEntry") },
+    users: { type: "array", items: ref("RanklistStanding") },
+  },
+  required: ["keyword", "events", "users"],
+};
+
 const pageParams = [
   { name: "page", in: "query", schema: { type: "integer", minimum: 1, default: 1 } },
   {
@@ -330,6 +374,10 @@ export const openApiDoc = {
       TrackerList: trackerListSchema,
       RanklistSummary: ranklistSummarySchema,
       TrackerDetail: trackerDetailSchema,
+      RanklistEventEntry: ranklistEventEntrySchema,
+      RanklistUserPerformance: ranklistUserPerformanceSchema,
+      RanklistStanding: ranklistStandingSchema,
+      RanklistStandings: ranklistStandingsSchema,
       RegisterRequest: toSchema(registerSchema),
       LoginRequest: toSchema(loginSchema),
       GoogleSignInRequest: toSchema(googleSignInSchema),
@@ -590,6 +638,23 @@ export const openApiDoc = {
         parameters: [{ name: "slug", in: "path", required: true, schema: { type: "string" } }],
         responses: {
           "200": { description: "The tracker", content: jsonBody(ref("TrackerDetail")) },
+          "404": { description: "Not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/trackers/{slug}/{keyword}": {
+      get: {
+        tags: ["trackers"],
+        summary: "Ranklist standings — events (with weight) and users with per-event performance",
+        parameters: [
+          { name: "slug", in: "path", required: true, schema: { type: "string" } },
+          { name: "keyword", in: "path", required: true, schema: { type: "string" } },
+        ],
+        responses: {
+          "200": {
+            description: "The ranklist standings",
+            content: jsonBody(ref("RanklistStandings")),
+          },
           "404": { description: "Not found", content: jsonBody(ref("Error")) },
         },
       },
