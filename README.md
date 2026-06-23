@@ -32,6 +32,7 @@ A [Hono](https://hono.dev) API for diuacm, running on **Cloudflare Workers** wit
 | GET    | `/events/:id`    | —      | Event details + media |
 | POST   | `/events/:id/attendance` | Bearer | Mark attendance (body `{ password }`; within the attendance window) |
 | GET    | `/events/:id/attendance` | —      | List attendees (paginated) |
+| GET    | `/events/:id/performance` | —      | Event performance leaderboard (rank, solve/upsolve counts) |
 | GET    | `/files/:key`    | —      | Stream a stored object (e.g. a profile image) from R2 |
 
 Authenticated requests send the JWT from register/login/google as `Authorization: Bearer <token>`.
@@ -53,8 +54,8 @@ The user object includes an absolute `image` URL (or `null`) served by `/files/:
   record per user per event; the timestamp is stored.
 - `participation_scope` and `strict_attendance` are stored/filterable metadata and are **not
   enforced** yet (enforcing scope needs user gender/rank/selected-person data).
-- There is no create/update or media-upload API yet — events and their media are seeded directly in
-  D1 (`wrangler d1 execute`) until an admin API exists.
+- There is no create/update, media-upload, or performance-write API yet — events, their media, and
+  performance rows are seeded directly in D1 (`wrangler d1 execute`) until an admin API exists.
 
 ## Local development
 

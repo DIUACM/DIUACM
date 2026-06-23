@@ -108,13 +108,42 @@ export const eventAttendance = sqliteTable(
   ],
 );
 
+export const eventPerformance = sqliteTable(
+  "event_performance",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    eventId: integer("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    rank: integer("rank").notNull(),
+    solveCount: integer("solve_count").notNull().default(0),
+    upsolveCount: integer("upsolve_count").notNull().default(0),
+    createdAt: integer("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer("updated_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [
+    uniqueIndex("event_performance_event_user_unique").on(t.eventId, t.userId),
+    index("event_performance_event_id_idx").on(t.eventId),
+    index("event_performance_user_id_idx").on(t.userId),
+  ],
+);
+
 export const usersRelations = relations(users, ({ many }) => ({
   attendance: many(eventAttendance),
+  performance: many(eventPerformance),
 }));
 
 export const eventsRelations = relations(events, ({ many }) => ({
   media: many(eventMedia),
   attendance: many(eventAttendance),
+  performance: many(eventPerformance),
 }));
 
 export const eventMediaRelations = relations(eventMedia, ({ one }) => ({
@@ -126,9 +155,15 @@ export const eventAttendanceRelations = relations(eventAttendance, ({ one }) => 
   user: one(users, { fields: [eventAttendance.userId], references: [users.id] }),
 }));
 
+export const eventPerformanceRelations = relations(eventPerformance, ({ one }) => ({
+  event: one(events, { fields: [eventPerformance.eventId], references: [events.id] }),
+  user: one(users, { fields: [eventPerformance.userId], references: [users.id] }),
+}));
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
 export type EventMedia = typeof eventMedia.$inferSelect;
 export type EventAttendance = typeof eventAttendance.$inferSelect;
+export type EventPerformance = typeof eventPerformance.$inferSelect;

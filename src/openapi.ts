@@ -212,6 +212,23 @@ const attendanceResultSchema = {
   required: ["ok", "attendedAt"],
 };
 
+const performanceSchema = {
+  type: "object",
+  properties: {
+    rank: { type: "integer" },
+    solveCount: { type: "integer" },
+    upsolveCount: { type: "integer" },
+    user: { oneOf: [ref("UserSummary"), { type: "null" }] },
+  },
+  required: ["rank", "solveCount", "upsolveCount", "user"],
+};
+
+const performanceListSchema = {
+  type: "object",
+  properties: { data: { type: "array", items: ref("Performance") }, meta: ref("PaginationMeta") },
+  required: ["data", "meta"],
+};
+
 const pageParams = [
   { name: "page", in: "query", schema: { type: "integer", minimum: 1, default: 1 } },
   {
@@ -258,6 +275,8 @@ export const openApiDoc = {
       Attendance: attendanceSchema,
       AttendanceList: attendanceListSchema,
       AttendanceResult: attendanceResultSchema,
+      Performance: performanceSchema,
+      PerformanceList: performanceListSchema,
       RegisterRequest: toSchema(registerSchema),
       LoginRequest: toSchema(loginSchema),
       GoogleSignInRequest: toSchema(googleSignInSchema),
@@ -480,6 +499,23 @@ export const openApiDoc = {
         ],
         responses: {
           "200": { description: "A page of attendees", content: jsonBody(ref("AttendanceList")) },
+          "404": { description: "Event not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/events/{id}/performance": {
+      get: {
+        tags: ["events"],
+        summary: "Event performance leaderboard (ordered by rank)",
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "integer" } },
+          ...pageParams,
+        ],
+        responses: {
+          "200": {
+            description: "A page of performance rows",
+            content: jsonBody(ref("PerformanceList")),
+          },
           "404": { description: "Event not found", content: jsonBody(ref("Error")) },
         },
       },
