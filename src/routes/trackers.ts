@@ -19,6 +19,7 @@ import { trackersListQuery } from "../schemas/trackers";
 import type { AppEnv } from "../types";
 
 const trackerListColumns = {
+  id: trackers.id,
   title: trackers.title,
   description: trackers.description,
   slug: trackers.slug,
@@ -26,7 +27,7 @@ const trackerListColumns = {
 
 const trackerRoutes = new Hono<AppEnv>();
 
-// List published trackers (title / description / slug only), newest first.
+// List published trackers (id / title / description / slug), newest first.
 trackerRoutes.get("/", validate("query", trackersListQuery), async (c) => {
   const { page, perPage } = c.req.valid("query");
   const db = getDb(c.env.DB);
@@ -55,7 +56,7 @@ trackerRoutes.get("/:slug", async (c) => {
 
   const tracker = await db.query.trackers.findFirst({
     where: and(eq(trackers.slug, slug), eq(trackers.status, "published")),
-    columns: { title: true, description: true, slug: true },
+    columns: { id: true, title: true, description: true, slug: true },
     with: {
       ranklists: {
         where: (r, { eq: eqOp }) => eqOp(r.status, "published"),
