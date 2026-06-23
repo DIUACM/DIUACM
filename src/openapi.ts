@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { attendanceGiveSchema } from "./schemas/events";
 import { googleSignInSchema, loginSchema, profileUpdateSchema, registerSchema } from "./schemas/auth";
 
 // Request bodies are derived from the same Zod schemas the routes validate
@@ -15,6 +16,8 @@ const binaryBody = (...contentTypes: string[]) =>
   Object.fromEntries(
     contentTypes.map((ct) => [ct, { schema: { type: "string", format: "binary" } }]),
   );
+
+const epoch = (description: string) => ({ type: "integer", description });
 
 const userSchema = {
   type: "object",
@@ -32,8 +35,8 @@ const userSchema = {
       format: "uri",
       description: "Absolute URL to the profile image, or null if none is set.",
     },
-    createdAt: { type: "integer", description: "Unix epoch seconds (UTC)." },
-    updatedAt: { type: "integer", description: "Unix epoch seconds (UTC)." },
+    createdAt: epoch("Unix epoch seconds (UTC)."),
+    updatedAt: epoch("Unix epoch seconds (UTC)."),
   },
   required: [
     "id",
@@ -45,6 +48,17 @@ const userSchema = {
     "createdAt",
     "updatedAt",
   ],
+};
+
+const userSummarySchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    name: { type: "string" },
+    username: { type: "string" },
+    image: { type: ["string", "null"], format: "uri" },
+  },
+  required: ["id", "name", "username", "image"],
 };
 
 const authResponseSchema = {
@@ -97,7 +111,7 @@ const healthSchema = {
   type: "object",
   properties: {
     status: { type: "string", examples: ["ok"] },
-    timestamp: { type: "integer", description: "Unix epoch seconds (UTC)." },
+    timestamp: epoch("Unix epoch seconds (UTC)."),
   },
   required: ["status", "timestamp"],
 };
@@ -114,6 +128,99 @@ const imageUploadSchema = {
   required: ["image"],
 };
 
+const paginationMetaSchema = {
+  type: "object",
+  properties: {
+    page: { type: "integer" },
+    perPage: { type: "integer" },
+    total: { type: "integer" },
+    totalPages: { type: "integer" },
+  },
+  required: ["page", "perPage", "total", "totalPages"],
+};
+
+// Public event fields (no `eventPassword`). EventDetail extends this with media.
+const eventCoreProps = {
+  id: { type: "integer" },
+  title: { type: "string" },
+  description: { type: "string" },
+  type: { type: "string", enum: ["contest", "class", "other"] },
+  status: { type: "string", enum: ["published", "draft"] },
+  startingAt: epoch("Unix epoch seconds (UTC)."),
+  endingAt: epoch("Unix epoch seconds (UTC)."),
+  eventLink: { type: ["string", "null"] },
+  participationScope: {
+    type: "string",
+    enum: ["open_for_all", "only_girls", "junior_programmers", "selected_persons"],
+  },
+  openForAttendance: { type: "boolean" },
+  strictAttendance: { type: "boolean" },
+  createdAt: epoch("Unix epoch seconds (UTC)."),
+  updatedAt: epoch("Unix epoch seconds (UTC)."),
+};
+const eventCoreRequired = Object.keys(eventCoreProps);
+
+const eventListItemSchema = {
+  type: "object",
+  properties: eventCoreProps,
+  required: eventCoreRequired,
+};
+
+const eventMediaSchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    type: { type: "string", enum: ["image", "video"] },
+    url: { type: ["string", "null"], format: "uri", description: "Absolute URL to the object." },
+  },
+  required: ["id", "type", "url"],
+};
+
+const eventDetailSchema = {
+  type: "object",
+  properties: { ...eventCoreProps, media: { type: "array", items: ref("EventMedia") } },
+  required: [...eventCoreRequired, "media"],
+};
+
+const eventListSchema = {
+  type: "object",
+  properties: { data: { type: "array", items: ref("EventListItem") }, meta: ref("PaginationMeta") },
+  required: ["data", "meta"],
+};
+
+const attendanceSchema = {
+  type: "object",
+  properties: {
+    attendedAt: epoch("Unix epoch seconds (UTC)."),
+    user: { oneOf: [ref("UserSummary"), { type: "null" }] },
+  },
+  required: ["attendedAt", "user"],
+};
+
+const attendanceListSchema = {
+  type: "object",
+  properties: { data: { type: "array", items: ref("Attendance") }, meta: ref("PaginationMeta") },
+  required: ["data", "meta"],
+};
+
+const attendanceResultSchema = {
+  type: "object",
+  properties: {
+    ok: { type: "boolean" },
+    attendedAt: epoch("When the attendance was recorded (Unix epoch seconds, UTC)."),
+  },
+  required: ["ok", "attendedAt"],
+};
+
+const pageParams = [
+  { name: "page", in: "query", schema: { type: "integer", minimum: 1, default: 1 } },
+  {
+    name: "perPage",
+    in: "query",
+    schema: { type: "integer", minimum: 1, maximum: 100, default: 20 },
+  },
+];
+
 export const openApiDoc = {
   openapi: "3.1.0",
   info: {
@@ -128,6 +235,7 @@ export const openApiDoc = {
   tags: [
     { name: "meta", description: "Service metadata" },
     { name: "auth", description: "Registration, login, Google sign-in, and the current user" },
+    { name: "events", description: "Events, media, and attendance" },
     { name: "files", description: "Stored object serving" },
   ],
   components: {
@@ -136,15 +244,25 @@ export const openApiDoc = {
     },
     schemas: {
       User: userSchema,
+      UserSummary: userSummarySchema,
       AuthResponse: authResponseSchema,
       UserResponse: userResponseSchema,
       AuthConfig: authConfigSchema,
       Error: errorSchema,
       Health: healthSchema,
+      PaginationMeta: paginationMetaSchema,
+      EventListItem: eventListItemSchema,
+      EventList: eventListSchema,
+      EventMedia: eventMediaSchema,
+      EventDetail: eventDetailSchema,
+      Attendance: attendanceSchema,
+      AttendanceList: attendanceListSchema,
+      AttendanceResult: attendanceResultSchema,
       RegisterRequest: toSchema(registerSchema),
       LoginRequest: toSchema(loginSchema),
       GoogleSignInRequest: toSchema(googleSignInSchema),
       ProfileUpdateRequest: toSchema(profileUpdateSchema),
+      AttendanceRequest: toSchema(attendanceGiveSchema),
     },
   },
   paths: {
@@ -283,6 +401,86 @@ export const openApiDoc = {
             description: "Image exceeds the 5 MB limit",
             content: jsonBody(ref("Error")),
           },
+        },
+      },
+    },
+    "/events": {
+      get: {
+        tags: ["events"],
+        summary: "List published events",
+        parameters: [
+          ...pageParams,
+          {
+            name: "type",
+            in: "query",
+            schema: { type: "string", enum: ["contest", "class", "other"] },
+          },
+          {
+            name: "scope",
+            in: "query",
+            schema: {
+              type: "string",
+              enum: ["open_for_all", "only_girls", "junior_programmers", "selected_persons"],
+            },
+          },
+          {
+            name: "q",
+            in: "query",
+            description: "Search on title, description, or event link.",
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": { description: "A page of events", content: jsonBody(ref("EventList")) },
+        },
+      },
+    },
+    "/events/{id}": {
+      get: {
+        tags: ["events"],
+        summary: "Get a published event with its media",
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+        responses: {
+          "200": { description: "The event", content: jsonBody(ref("EventDetail")) },
+          "404": { description: "Not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/events/{id}/attendance": {
+      post: {
+        tags: ["events"],
+        summary: "Mark attendance for the current user (event password required)",
+        description:
+          "Requires the correct event password and that the current time is within the " +
+          "attendance window (15 minutes before start to 15 minutes after end).",
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
+        requestBody: { required: true, content: jsonBody(ref("AttendanceRequest")) },
+        responses: {
+          "201": { description: "Attendance recorded", content: jsonBody(ref("AttendanceResult")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          "401": {
+            description: "Missing token or incorrect event password",
+            content: jsonBody(ref("Error")),
+          },
+          "403": {
+            description: "Attendance not open, or outside the attendance window",
+            content: jsonBody(ref("Error")),
+          },
+          "404": { description: "Event not found", content: jsonBody(ref("Error")) },
+          "409": { description: "Attendance already recorded", content: jsonBody(ref("Error")) },
+        },
+      },
+      get: {
+        tags: ["events"],
+        summary: "List attendees of an event",
+        parameters: [
+          { name: "id", in: "path", required: true, schema: { type: "integer" } },
+          ...pageParams,
+        ],
+        responses: {
+          "200": { description: "A page of attendees", content: jsonBody(ref("AttendanceList")) },
+          "404": { description: "Event not found", content: jsonBody(ref("Error")) },
         },
       },
     },

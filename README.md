@@ -28,6 +28,10 @@ A [Hono](https://hono.dev) API for diuacm, running on **Cloudflare Workers** wit
 | GET    | `/auth/me`       | Bearer | Current user |
 | PATCH  | `/auth/me`       | Bearer | Update profile `{ name?, username?, studentId? }` |
 | PUT    | `/auth/me/image` | Bearer | Upload profile image (multipart field `image`; PNG/JPEG/GIF/WebP ≤ 5 MB) |
+| GET    | `/events`        | —      | List published events; filter by `type`/`scope`, search `q` (title/description/link) |
+| GET    | `/events/:id`    | —      | Event details + media |
+| POST   | `/events/:id/attendance` | Bearer | Mark attendance (body `{ password }`; within the attendance window) |
+| GET    | `/events/:id/attendance` | —      | List attendees (paginated) |
 | GET    | `/files/:key`    | —      | Stream a stored object (e.g. a profile image) from R2 |
 
 Authenticated requests send the JWT from register/login/google as `Authorization: Bearer <token>`.
@@ -39,6 +43,18 @@ The user object includes an absolute `image` URL (or `null`) served by `/files/:
 - **Google** sign-in is restricted to **@diu.edu.bd** addresses and creates an account with an
   opaque username (changeable later via `PATCH /auth/me`). Google accounts have no password.
 - Set your Google OAuth client id in `wrangler.jsonc` → `vars.GOOGLE_CLIENT_ID`.
+
+### Events
+
+- `event_password` is **never returned** by the index or details endpoints — it only gates
+  `POST /events/:id/attendance`.
+- Marking attendance requires a logged-in user (Bearer) **and** the correct event password, and is
+  only accepted within the window **15 min before `starting_at` → 15 min after `ending_at`**. One
+  record per user per event; the timestamp is stored.
+- `participation_scope` and `strict_attendance` are stored/filterable metadata and are **not
+  enforced** yet (enforcing scope needs user gender/rank/selected-person data).
+- There is no create/update or media-upload API yet — events and their media are seeded directly in
+  D1 (`wrangler d1 execute`) until an admin API exists.
 
 ## Local development
 

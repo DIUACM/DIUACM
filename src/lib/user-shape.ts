@@ -31,3 +31,16 @@ export const toAuthUser = (row: UserRow, origin: string) => ({
 });
 
 export type AuthUser = ReturnType<typeof toAuthUser>;
+
+/** Minimal public user reference embedded in lists (e.g. event attendance). */
+export const toUserSummary = (
+  row: Pick<User, "id" | "name" | "username" | "imageKey">,
+  origin: string,
+) => ({
+  id: row.id,
+  name: row.name,
+  username: row.username,
+  image: imageUrlFor(origin, row.imageKey),
+});
+
+export type UserSummary = ReturnType<typeof toUserSummary>;

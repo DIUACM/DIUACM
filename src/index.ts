@@ -5,6 +5,7 @@ import { logger } from "hono/logger";
 
 import { openApiDoc } from "./openapi";
 import auth from "./routes/auth";
+import events from "./routes/events";
 import files from "./routes/files";
 import type { AppEnv } from "./types";
 
@@ -40,6 +41,7 @@ app.get("/docs", (c) =>
 );
 
 app.route("/auth", auth);
+app.route("/events", events);
 app.route("/files", files);
 
 // ---------------------------------------------------------------------------
