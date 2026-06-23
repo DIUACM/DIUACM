@@ -57,6 +57,13 @@
       "when": 1782228458535,
       "tag": "0007_ranklist_count_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1782237493876,
+      "tag": "0008_ranklist_score_triggers",
+      "breakpoints": true
     }
   ]
 }

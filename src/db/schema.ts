@@ -233,6 +233,9 @@ export const ranklistUsers = sqliteTable(
     userId: integer("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    // Maintained by SQLite triggers (see 0008_ranklist_score_triggers) — never write
+    // these directly from application code. `score` is the weighted solve/upsolve sum;
+    // `position` is the competition rank (1 = highest score).
     score: real("score").notNull().default(0),
     position: integer("position").notNull().default(0),
   },
