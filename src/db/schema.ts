@@ -1,5 +1,14 @@
 import { relations, sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import {
+  check,
+  index,
+  integer,
+  primaryKey,
+  real,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -121,6 +130,7 @@ export const eventPerformance = sqliteTable(
     rank: integer("rank").notNull(),
     solveCount: integer("solve_count").notNull().default(0),
     upsolveCount: integer("upsolve_count").notNull().default(0),
+    participation: integer("participation", { mode: "boolean" }).notNull().default(false),
     createdAt: integer("created_at")
       .notNull()
       .default(sql`(unixepoch())`),
@@ -135,15 +145,108 @@ export const eventPerformance = sqliteTable(
   ],
 );
 
+export const trackers = sqliteTable(
+  "trackers",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    slug: text("slug").notNull().unique(),
+    status: text("status", { enum: ["published", "draft"] })
+      .notNull()
+      .default("draft"),
+    createdAt: integer("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer("updated_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [index("trackers_status_idx").on(t.status)],
+);
+
+export const ranklists = sqliteTable(
+  "ranklists",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    trackerId: integer("tracker_id")
+      .notNull()
+      .references(() => trackers.id, { onDelete: "cascade" }),
+    keyword: text("keyword").notNull(),
+    description: text("description").notNull().default(""),
+    status: text("status", { enum: ["published", "draft"] })
+      .notNull()
+      .default("draft"),
+    upsolveWeight: real("upsolve_weight").notNull().default(0),
+    isLocked: integer("is_locked", { mode: "boolean" }).notNull().default(false),
+    considerStrictAttendance: integer("consider_strict_attendance", { mode: "boolean" })
+      .notNull()
+      .default(false),
+    createdAt: integer("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer("updated_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [
+    uniqueIndex("ranklists_tracker_keyword_unique").on(t.trackerId, t.keyword),
+    index("ranklists_tracker_id_idx").on(t.trackerId),
+    index("ranklists_status_idx").on(t.status),
+    check(
+      "ranklists_upsolve_weight_range",
+      sql`${t.upsolveWeight} >= 0 AND ${t.upsolveWeight} <= 1`,
+    ),
+  ],
+);
+
+export const ranklistEvents = sqliteTable(
+  "ranklist_event",
+  {
+    ranklistId: integer("ranklist_id")
+      .notNull()
+      .references(() => ranklists.id, { onDelete: "cascade" }),
+    eventId: integer("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    weight: real("weight").notNull().default(0),
+  },
+  (t) => [
+    primaryKey({ columns: [t.ranklistId, t.eventId] }),
+    index("ranklist_event_event_id_idx").on(t.eventId),
+    check("ranklist_event_weight_range", sql`${t.weight} >= 0 AND ${t.weight} <= 1`),
+  ],
+);
+
+export const ranklistUsers = sqliteTable(
+  "ranklist_user",
+  {
+    ranklistId: integer("ranklist_id")
+      .notNull()
+      .references(() => ranklists.id, { onDelete: "cascade" }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    score: real("score").notNull().default(0),
+    position: integer("position").notNull().default(0),
+  },
+  (t) => [
+    primaryKey({ columns: [t.ranklistId, t.userId] }),
+    index("ranklist_user_user_id_idx").on(t.userId),
+  ],
+);
+
 export const usersRelations = relations(users, ({ many }) => ({
   attendance: many(eventAttendance),
   performance: many(eventPerformance),
+  ranklists: many(ranklistUsers),
 }));
 
 export const eventsRelations = relations(events, ({ many }) => ({
   media: many(eventMedia),
   attendance: many(eventAttendance),
   performance: many(eventPerformance),
+  ranklists: many(ranklistEvents),
 }));
 
 export const eventMediaRelations = relations(eventMedia, ({ one }) => ({
@@ -160,6 +263,26 @@ export const eventPerformanceRelations = relations(eventPerformance, ({ one }) =
   user: one(users, { fields: [eventPerformance.userId], references: [users.id] }),
 }));
 
+export const trackersRelations = relations(trackers, ({ many }) => ({
+  ranklists: many(ranklists),
+}));
+
+export const ranklistsRelations = relations(ranklists, ({ one, many }) => ({
+  tracker: one(trackers, { fields: [ranklists.trackerId], references: [trackers.id] }),
+  events: many(ranklistEvents),
+  users: many(ranklistUsers),
+}));
+
+export const ranklistEventsRelations = relations(ranklistEvents, ({ one }) => ({
+  ranklist: one(ranklists, { fields: [ranklistEvents.ranklistId], references: [ranklists.id] }),
+  event: one(events, { fields: [ranklistEvents.eventId], references: [events.id] }),
+}));
+
+export const ranklistUsersRelations = relations(ranklistUsers, ({ one }) => ({
+  ranklist: one(ranklists, { fields: [ranklistUsers.ranklistId], references: [ranklists.id] }),
+  user: one(users, { fields: [ranklistUsers.userId], references: [users.id] }),
+}));
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Event = typeof events.$inferSelect;
@@ -167,3 +290,9 @@ export type NewEvent = typeof events.$inferInsert;
 export type EventMedia = typeof eventMedia.$inferSelect;
 export type EventAttendance = typeof eventAttendance.$inferSelect;
 export type EventPerformance = typeof eventPerformance.$inferSelect;
+export type Tracker = typeof trackers.$inferSelect;
+export type NewTracker = typeof trackers.$inferInsert;
+export type Ranklist = typeof ranklists.$inferSelect;
+export type NewRanklist = typeof ranklists.$inferInsert;
+export type RanklistEvent = typeof ranklistEvents.$inferSelect;
+export type RanklistUser = typeof ranklistUsers.$inferSelect;
