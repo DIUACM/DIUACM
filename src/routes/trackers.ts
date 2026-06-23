@@ -50,7 +50,14 @@ trackerRoutes.get("/:slug", async (c) => {
     with: {
       ranklists: {
         where: (r, { eq: eqOp }) => eqOp(r.status, "published"),
-        columns: { keyword: true, userCount: true, eventCount: true },
+        columns: {
+          keyword: true,
+          userCount: true,
+          eventCount: true,
+          upsolveWeight: true,
+          isLocked: true,
+          considerStrictAttendance: true,
+        },
         orderBy: (r, { asc }) => [asc(r.keyword)],
       },
     },

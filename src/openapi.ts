@@ -252,8 +252,18 @@ const ranklistSummarySchema = {
     keyword: { type: "string" },
     userCount: { type: "integer" },
     eventCount: { type: "integer" },
+    upsolveWeight: { type: "number", description: "0.00–1.00." },
+    isLocked: { type: "boolean" },
+    considerStrictAttendance: { type: "boolean" },
   },
-  required: ["keyword", "userCount", "eventCount"],
+  required: [
+    "keyword",
+    "userCount",
+    "eventCount",
+    "upsolveWeight",
+    "isLocked",
+    "considerStrictAttendance",
+  ],
 };
 
 const trackerDetailSchema = {
