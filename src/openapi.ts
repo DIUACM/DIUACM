@@ -230,6 +230,43 @@ const performanceListSchema = {
   required: ["data", "meta"],
 };
 
+const trackerSchema = {
+  type: "object",
+  properties: {
+    title: { type: "string" },
+    description: { type: "string" },
+    slug: { type: "string" },
+  },
+  required: ["title", "description", "slug"],
+};
+
+const trackerListSchema = {
+  type: "object",
+  properties: { data: { type: "array", items: ref("Tracker") }, meta: ref("PaginationMeta") },
+  required: ["data", "meta"],
+};
+
+const ranklistSummarySchema = {
+  type: "object",
+  properties: {
+    keyword: { type: "string" },
+    userCount: { type: "integer" },
+    eventCount: { type: "integer" },
+  },
+  required: ["keyword", "userCount", "eventCount"],
+};
+
+const trackerDetailSchema = {
+  type: "object",
+  properties: {
+    title: { type: "string" },
+    description: { type: "string" },
+    slug: { type: "string" },
+    ranklists: { type: "array", items: ref("RanklistSummary") },
+  },
+  required: ["title", "description", "slug", "ranklists"],
+};
+
 const pageParams = [
   { name: "page", in: "query", schema: { type: "integer", minimum: 1, default: 1 } },
   {
@@ -254,6 +291,7 @@ export const openApiDoc = {
     { name: "meta", description: "Service metadata" },
     { name: "auth", description: "Registration, login, Google sign-in, and the current user" },
     { name: "events", description: "Events, media, and attendance" },
+    { name: "trackers", description: "Trackers and their ranklists" },
     { name: "files", description: "Stored object serving" },
   ],
   components: {
@@ -278,6 +316,10 @@ export const openApiDoc = {
       AttendanceResult: attendanceResultSchema,
       Performance: performanceSchema,
       PerformanceList: performanceListSchema,
+      Tracker: trackerSchema,
+      TrackerList: trackerListSchema,
+      RanklistSummary: ranklistSummarySchema,
+      TrackerDetail: trackerDetailSchema,
       RegisterRequest: toSchema(registerSchema),
       LoginRequest: toSchema(loginSchema),
       GoogleSignInRequest: toSchema(googleSignInSchema),
@@ -518,6 +560,27 @@ export const openApiDoc = {
             content: jsonBody(ref("PerformanceList")),
           },
           "404": { description: "Event not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/trackers": {
+      get: {
+        tags: ["trackers"],
+        summary: "List published trackers",
+        parameters: [...pageParams],
+        responses: {
+          "200": { description: "A page of trackers", content: jsonBody(ref("TrackerList")) },
+        },
+      },
+    },
+    "/trackers/{slug}": {
+      get: {
+        tags: ["trackers"],
+        summary: "Get a published tracker with its published ranklists",
+        parameters: [{ name: "slug", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          "200": { description: "The tracker", content: jsonBody(ref("TrackerDetail")) },
+          "404": { description: "Not found", content: jsonBody(ref("Error")) },
         },
       },
     },

@@ -33,6 +33,8 @@ A [Hono](https://hono.dev) API for diuacm, running on **Cloudflare Workers** wit
 | POST   | `/events/:id/attendance` | Bearer | Mark attendance (body `{ password }`; within the attendance window) |
 | GET    | `/events/:id/attendance` | —      | List attendees (paginated) |
 | GET    | `/events/:id/performance` | —      | Event performance leaderboard (rank, solve/upsolve counts) |
+| GET    | `/trackers`      | —      | List published trackers (title, description, slug) |
+| GET    | `/trackers/:slug` | —      | Tracker details + its published ranklists (keyword, user/event counts) |
 | GET    | `/files/:key`    | —      | Stream a stored object (e.g. a profile image) from R2 |
 
 Authenticated requests send the JWT from register/login/google as `Authorization: Bearer <token>`.
@@ -56,6 +58,9 @@ The user object includes an absolute `image` URL (or `null`) served by `/files/:
   enforced** yet (enforcing scope needs user gender/rank/selected-person data).
 - There is no create/update, media-upload, or performance-write API yet — events, their media, and
   performance rows are seeded directly in D1 (`wrangler d1 execute`) until an admin API exists.
+- `ranklists.user_count` / `event_count` are maintained by SQLite triggers on the `ranklist_user` /
+  `ranklist_event` pivots (see `drizzle/0007_ranklist_count_triggers.sql`) — never write them from app
+  code. Trackers/ranklists are likewise seeded in D1 for now.
 
 ## Local development
 

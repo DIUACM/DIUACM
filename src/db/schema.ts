@@ -184,6 +184,10 @@ export const ranklists = sqliteTable(
     considerStrictAttendance: integer("consider_strict_attendance", { mode: "boolean" })
       .notNull()
       .default(false),
+    // Maintained by SQLite triggers on ranklist_user / ranklist_event — never
+    // write these directly from application code.
+    userCount: integer("user_count").notNull().default(0),
+    eventCount: integer("event_count").notNull().default(0),
     createdAt: integer("created_at")
       .notNull()
       .default(sql`(unixepoch())`),

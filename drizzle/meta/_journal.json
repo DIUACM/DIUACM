@@ -43,6 +43,20 @@
       "when": 1782199880278,
       "tag": "0005_new_wallop",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1782228455113,
+      "tag": "0006_cheerful_speedball",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1782228458535,
+      "tag": "0007_ranklist_count_triggers",
+      "breakpoints": true
     }
   ]
 }
