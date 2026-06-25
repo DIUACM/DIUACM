@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\MigrationExportController;
 use App\Http\Controllers\Api\VJudgeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BlogController;
@@ -7,19 +8,23 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\ContestController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\GalleryController;
+use App\Http\Controllers\IncentiveApplicationController;
 use App\Http\Controllers\InternalContestController;
 use App\Http\Controllers\InternalContestRegistrationPaymentController;
+use App\Http\Controllers\PagesController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgrammerController;
+use App\Http\Controllers\TrackerController;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [\App\Http\Controllers\PagesController::class, 'home'])->name('home');
-Route::get('/contact', [\App\Http\Controllers\PagesController::class, 'contact'])->name('contact');
-Route::get('/about', [\App\Http\Controllers\PagesController::class, 'about'])->name('about');
+Route::get('/', [PagesController::class, 'home'])->name('home');
+Route::get('/contact', [PagesController::class, 'contact'])->name('contact');
+Route::get('/about', [PagesController::class, 'about'])->name('about');
 
-Route::get('/privacy-policy', [\App\Http\Controllers\PagesController::class, 'privacy'])->name('privacy-policy');
-Route::get('/terms-and-conditions', [\App\Http\Controllers\PagesController::class, 'terms'])->name('terms-and-conditions');
+Route::get('/privacy-policy', [PagesController::class, 'privacy'])->name('privacy-policy');
+Route::get('/terms-and-conditions', [PagesController::class, 'terms'])->name('terms-and-conditions');
 
 // Auth routes
 Route::middleware('guest')->group(function () {
@@ -83,9 +88,9 @@ Route::prefix('galleries')->name('galleries.')->group(function () {
 
 // Tracker routes
 Route::prefix('trackers')->name('trackers.')->group(function () {
-    Route::get('/', [\App\Http\Controllers\TrackerController::class, 'index'])->name('index');
-    Route::get('/{slug}', [\App\Http\Controllers\TrackerController::class, 'show'])->name('show');
-    Route::get('/{slug}/export', [\App\Http\Controllers\TrackerController::class, 'export'])->name('export');
+    Route::get('/', [TrackerController::class, 'index'])->name('index');
+    Route::get('/{slug}', [TrackerController::class, 'show'])->name('show');
+    Route::get('/{slug}/export', [TrackerController::class, 'export'])->name('export');
 });
 
 // Profile routes
@@ -99,8 +104,8 @@ Route::middleware('auth')->prefix('profile')->name('profile.')->group(function (
 
 // Incentive Application routes
 Route::middleware(['auth'])->prefix('incentive-application')->name('incentive-application.')->group(function () {
-    Route::get('/', [\App\Http\Controllers\IncentiveApplicationController::class, 'index'])->name('index');
-    Route::post('/', [\App\Http\Controllers\IncentiveApplicationController::class, 'store'])->name('store');
+    Route::get('/', [IncentiveApplicationController::class, 'index'])->name('index');
+    Route::post('/', [IncentiveApplicationController::class, 'store'])->name('store');
 });
 
 // Contact routes
@@ -136,3 +141,8 @@ Route::get('/api/events/vjudge', [VJudgeController::class, 'getActiveContests'])
 Route::post('/api/events/{eventId}/vjudge-update', [VJudgeController::class, 'processContestData'])
     ->middleware('auth')
     ->where('eventId', '[0-9]+');
+
+// Migration API routes
+Route::get('/api/migration/export', MigrationExportController::class)
+    ->middleware(['auth', 'can:viewAny,'.User::class])
+    ->name('api.migration.export');
