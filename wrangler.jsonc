@@ -11,9 +11,7 @@
     {
       "binding": "DB",
       "database_name": "diuacm-db",
-      // Placeholder — fine for local dev/migrations. Replace with the id from
-      // `wrangler d1 create diuacm-db` before deploying to remote.
-      "database_id": "PLACEHOLDER_REPLACE_BEFORE_REMOTE_DEPLOY",
+      "database_id": "a009e535-3fd3-498e-8475-cabf950e6810",
       "migrations_dir": "drizzle"
     }
   ],
