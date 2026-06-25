@@ -17,7 +17,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgrammerController;
 use App\Http\Controllers\TrackerController;
-use App\Models\User;
+use App\Http\Middleware\EnsureMigrationExportApiKey;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PagesController::class, 'home'])->name('home');
@@ -144,9 +144,9 @@ Route::post('/api/events/{eventId}/vjudge-update', [VJudgeController::class, 'pr
     ->where('eventId', '[0-9]+');
 
 // Migration API routes
-Route::get('/api/migration/export', MigrationExportController::class)
-    ->middleware(['auth', 'can:viewAny,'.User::class])
-    ->name('api.migration.export');
-Route::get('/api/migration/export/structure', MigrationExportStructureController::class)
-    ->middleware(['auth', 'can:viewAny,'.User::class])
-    ->name('api.migration.export.structure');
+Route::middleware(EnsureMigrationExportApiKey::class)->group(function () {
+    Route::get('/api/migration/export', MigrationExportController::class)
+        ->name('api.migration.export');
+    Route::get('/api/migration/export/structure', MigrationExportStructureController::class)
+        ->name('api.migration.export.structure');
+});

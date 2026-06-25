@@ -5,9 +5,20 @@ use App\Models\EventUserStat;
 use App\Models\RankList;
 use App\Models\Tracker;
 use App\Models\User;
-use Spatie\Permission\Models\Permission;
 
-it('requires authentication', function () {
+it('fails closed when the migration export api key is not configured', function () {
+    config(['services.migration_export.api_key' => null]);
+
+    $this->getJson(route('api.migration.export'))
+        ->assertServiceUnavailable()
+        ->assertJson([
+            'message' => 'Migration export API key is not configured.',
+        ]);
+});
+
+it('requires the migration export api key', function () {
+    config(['services.migration_export.api_key' => 'test-export-key']);
+
     $this->getJson(route('api.migration.export'))
         ->assertUnauthorized();
 
@@ -15,23 +26,20 @@ it('requires authentication', function () {
         ->assertUnauthorized();
 });
 
-it('requires permission to export migration data', function () {
-    $user = User::factory()->create();
+it('rejects an invalid migration export api key', function () {
+    config(['services.migration_export.api_key' => 'test-export-key']);
 
-    $this->actingAs($user)
-        ->getJson(route('api.migration.export'))
+    $this->getJson(route('api.migration.export'), [
+        'X-Migration-Export-Key' => 'wrong-key',
+    ])
         ->assertForbidden();
 
-    $this->actingAs($user)
-        ->getJson(route('api.migration.export.structure'))
+    $this->getJson(route('api.migration.export.structure', ['api_key' => 'wrong-key']))
         ->assertForbidden();
 });
 
 it('exports users events trackers rank lists and relationship tables without pagination', function () {
-    Permission::create(['name' => 'ViewAny:User']);
-
-    $admin = User::factory()->create();
-    $admin->givePermissionTo('ViewAny:User');
+    config(['services.migration_export.api_key' => 'test-export-key']);
 
     $trackedUser = User::factory()->create([
         'email' => 'tracked@example.com',
@@ -58,8 +66,10 @@ it('exports users events trackers rank lists and relationship tables without pag
         'participation' => true,
     ]);
 
-    $response = $this->actingAs($admin)
-        ->getJson(route('api.migration.export'))
+    $response = $this
+        ->getJson(route('api.migration.export'), [
+            'X-Migration-Export-Key' => 'test-export-key',
+        ])
         ->assertOk()
         ->assertJsonStructure([
             'data' => [
@@ -96,16 +106,17 @@ it('exports users events trackers rank lists and relationship tables without pag
 });
 
 it('returns the export api structure and generated examples', function () {
-    Permission::create(['name' => 'ViewAny:User']);
+    config(['services.migration_export.api_key' => 'test-export-key']);
 
-    $admin = User::factory()->create();
-    $admin->givePermissionTo('ViewAny:User');
-
-    $response = $this->actingAs($admin)
-        ->getJson(route('api.migration.export.structure'))
+    $response = $this
+        ->getJson(route('api.migration.export.structure', ['api_key' => 'test-export-key']))
         ->assertOk()
         ->assertJsonPath('data.endpoint.method', 'GET')
         ->assertJsonPath('data.endpoint.path', '/api/migration/export')
+        ->assertJsonPath('data.endpoint.authentication', 'API key required')
+        ->assertJsonPath('data.endpoint.api_key.env', 'MIGRATION_EXPORT_API_KEY')
+        ->assertJsonPath('data.endpoint.api_key.header', 'X-Migration-Export-Key')
+        ->assertJsonPath('data.endpoint.api_key.query_parameter', 'api_key')
         ->assertJsonPath('data.response.pagination', false)
         ->assertJsonPath('data.response.root_key', 'data')
         ->assertJsonStructure([
@@ -115,7 +126,11 @@ it('returns the export api structure and generated examples', function () {
                     'path',
                     'route_name',
                     'authentication',
-                    'authorization',
+                    'api_key' => [
+                        'env',
+                        'header',
+                        'query_parameter',
+                    ],
                 ],
                 'response' => [
                     'content_type',

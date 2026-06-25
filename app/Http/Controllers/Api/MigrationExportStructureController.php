@@ -30,8 +30,12 @@ class MigrationExportStructureController extends Controller
                     'method' => 'GET',
                     'path' => route('api.migration.export', [], false),
                     'route_name' => 'api.migration.export',
-                    'authentication' => 'Required',
-                    'authorization' => 'Requires ViewAny:User permission',
+                    'authentication' => 'API key required',
+                    'api_key' => [
+                        'env' => 'MIGRATION_EXPORT_API_KEY',
+                        'header' => 'X-Migration-Export-Key',
+                        'query_parameter' => 'api_key',
+                    ],
                 ],
                 'response' => [
                     'content_type' => 'application/json',

@@ -41,4 +41,8 @@ return [
         'redirect' => config('app.url').'/auth/google/callback',
     ],
 
+    'migration_export' => [
+        'api_key' => env('MIGRATION_EXPORT_API_KEY'),
+    ],
+
 ];
