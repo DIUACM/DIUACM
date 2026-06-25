@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\MigrationExportController;
+use App\Http\Controllers\Api\MigrationExportStructureController;
 use App\Http\Controllers\Api\VJudgeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BlogController;
@@ -146,3 +147,6 @@ Route::post('/api/events/{eventId}/vjudge-update', [VJudgeController::class, 'pr
 Route::get('/api/migration/export', MigrationExportController::class)
     ->middleware(['auth', 'can:viewAny,'.User::class])
     ->name('api.migration.export');
+Route::get('/api/migration/export/structure', MigrationExportStructureController::class)
+    ->middleware(['auth', 'can:viewAny,'.User::class])
+    ->name('api.migration.export.structure');

@@ -10,6 +10,9 @@ use Spatie\Permission\Models\Permission;
 it('requires authentication', function () {
     $this->getJson(route('api.migration.export'))
         ->assertUnauthorized();
+
+    $this->getJson(route('api.migration.export.structure'))
+        ->assertUnauthorized();
 });
 
 it('requires permission to export migration data', function () {
@@ -17,6 +20,10 @@ it('requires permission to export migration data', function () {
 
     $this->actingAs($user)
         ->getJson(route('api.migration.export'))
+        ->assertForbidden();
+
+    $this->actingAs($user)
+        ->getJson(route('api.migration.export.structure'))
         ->assertForbidden();
 });
 
@@ -86,4 +93,82 @@ it('exports users events trackers rank lists and relationship tables without pag
             'position' => 1,
         ])
         ->and(collect($payload['event_user_stats'])->pluck('solve_count'))->toContain(4);
+});
+
+it('returns the export api structure and generated examples', function () {
+    Permission::create(['name' => 'ViewAny:User']);
+
+    $admin = User::factory()->create();
+    $admin->givePermissionTo('ViewAny:User');
+
+    $response = $this->actingAs($admin)
+        ->getJson(route('api.migration.export.structure'))
+        ->assertOk()
+        ->assertJsonPath('data.endpoint.method', 'GET')
+        ->assertJsonPath('data.endpoint.path', '/api/migration/export')
+        ->assertJsonPath('data.response.pagination', false)
+        ->assertJsonPath('data.response.root_key', 'data')
+        ->assertJsonStructure([
+            'data' => [
+                'endpoint' => [
+                    'method',
+                    'path',
+                    'route_name',
+                    'authentication',
+                    'authorization',
+                ],
+                'response' => [
+                    'content_type',
+                    'pagination',
+                    'root_key',
+                    'tables',
+                    'structure' => [
+                        'users' => [
+                            '*' => [
+                                'name',
+                                'type',
+                                'nullable',
+                                'default',
+                            ],
+                        ],
+                        'events',
+                        'trackers',
+                        'rank_lists',
+                        'event_attendance',
+                        'event_rank_list',
+                        'event_user_stats',
+                        'rank_list_user',
+                    ],
+                ],
+                'example' => [
+                    'data' => [
+                        'users',
+                        'events',
+                        'trackers',
+                        'rank_lists',
+                        'event_attendance',
+                        'event_rank_list',
+                        'event_user_stats',
+                        'rank_list_user',
+                    ],
+                ],
+            ],
+        ]);
+
+    $payload = $response->json('data');
+    $userColumns = collect($payload['response']['structure']['users'])->pluck('name');
+
+    expect($payload['response']['tables'])->toBe([
+        'users',
+        'events',
+        'trackers',
+        'rank_lists',
+        'event_attendance',
+        'event_rank_list',
+        'event_user_stats',
+        'rank_list_user',
+    ])
+        ->and($userColumns)->toContain('id', 'email', 'username')
+        ->and($payload['example']['data']['users'][0])->toHaveKeys(['id', 'email', 'username'])
+        ->and($payload['example']['data']['event_rank_list'][0])->toHaveKeys(['event_id', 'rank_list_id', 'weight']);
 });
