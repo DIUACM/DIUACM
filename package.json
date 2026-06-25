@@ -10,6 +10,7 @@
     "db:migrate:local": "wrangler d1 migrations apply diuacm-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply diuacm-db --remote",
     "cf-typegen": "wrangler types",
+    "import:structure": "node scripts/import-structure.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
