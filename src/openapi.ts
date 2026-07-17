@@ -13,6 +13,7 @@ import {
   adminTrackerUpdateSchema,
   adminUserCreateSchema,
   adminUserUpdateSchema,
+  permissionToggleSchema,
 } from "./schemas/admin";
 import { googleSignInSchema, loginSchema, profileUpdateSchema, registerSchema } from "./schemas/auth";
 import { attendanceGiveSchema } from "./schemas/events";
@@ -710,9 +711,9 @@ Admin access is **permission-based**, not role-based. A user may hold any subset
 | \`manage_trackers\` | Trackers and ranklists under \`/admin/trackers\` and \`/admin/ranklists\` |
 
 The **super admin** — the account whose email matches \`SUPER_ADMIN_EMAIL\` — implicitly
-holds every permission and is the only one who can grant or revoke permissions
-(\`PUT\`/\`DELETE /admin/users/{id}/permissions/{permission}\`). Each operation's badge
-shows the access it requires.
+holds every permission and is the only one who can turn permissions on or off
+(\`PUT /admin/users/{id}/permissions/{permission}\` with \`{ "enabled": true | false }\`).
+Each operation's badge shows the access it requires.
 
 ## Conventions
 
@@ -830,6 +831,7 @@ export const openApiDoc = {
       RanklistUserSetResult: ranklistUserSetResultSchema,
       AdminUserCreateRequest: toSchema(adminUserCreateSchema),
       AdminUserUpdateRequest: toSchema(adminUserUpdateSchema),
+      PermissionToggleRequest: toSchema(permissionToggleSchema),
       AdminEventCreateRequest: toSchema(adminEventCreateSchema),
       AdminEventUpdateRequest: toSchema(adminEventUpdateSchema),
       AdminAttendanceAddRequest: toSchema(adminAttendanceAddSchema),
@@ -1327,43 +1329,29 @@ export const openApiDoc = {
     "/admin/users/{id}/permissions/{permission}": {
       put: {
         tags: ["admin-users"],
-        summary: "Grant a permission to a user (idempotent)",
-        ...access("super-admin"),
+        summary: "Turn a permission on or off for a user",
+        ...access(
+          "super-admin",
+          "Designed for a toggle switch in the admin UI: `enabled: true` grants the " +
+            "permission, `false` revokes it. Idempotent in both directions.",
+        ),
         parameters: [idParam("id"), permissionPathParam],
+        requestBody: { required: true, content: jsonBody(ref("PermissionToggleRequest")) },
         responses: {
           "200": {
             description: "The user with their updated permissions",
             content: jsonBody(ref("UserResponse")),
           },
-          "400": { description: "Unknown permission", content: jsonBody(ref("Error")) },
+          "400": {
+            description: "Unknown permission or invalid body",
+            content: jsonBody(ref("Error")),
+          },
           "401": { description: "Missing or invalid token", content: jsonBody(ref("Error")) },
           "403": {
             description: "Caller is not the super admin",
             content: jsonBody(ref("Error")),
           },
           "404": { description: "User not found", content: jsonBody(ref("Error")) },
-        },
-      },
-      delete: {
-        tags: ["admin-users"],
-        summary: "Revoke a permission from a user",
-        ...access("super-admin"),
-        parameters: [idParam("id"), permissionPathParam],
-        responses: {
-          "200": {
-            description: "The user with their updated permissions",
-            content: jsonBody(ref("UserResponse")),
-          },
-          "400": { description: "Unknown permission", content: jsonBody(ref("Error")) },
-          "401": { description: "Missing or invalid token", content: jsonBody(ref("Error")) },
-          "403": {
-            description: "Caller is not the super admin",
-            content: jsonBody(ref("Error")),
-          },
-          "404": {
-            description: "User not found, or permission not granted to them",
-            content: jsonBody(ref("Error")),
-          },
         },
       },
     },

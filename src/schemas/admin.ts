@@ -50,9 +50,14 @@ export const adminUserUpdateSchema = z.object({
   maxCfRating: z.number().int().nullable().optional(),
 });
 
-// Path param for the grant/revoke endpoints (PUT/DELETE /admin/users/:id/permissions/:permission).
+// Path param for the toggle endpoint (PUT /admin/users/:id/permissions/:permission).
 export const permissionParam = z.object({
   permission: z.enum(PERMISSIONS),
+});
+
+// `enabled: true` grants the permission, `false` revokes it. Idempotent both ways.
+export const permissionToggleSchema = z.object({
+  enabled: z.boolean(),
 });
 
 // ---------------------------------------------------------------------------

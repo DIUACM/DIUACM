@@ -20,6 +20,7 @@ import {
   adminUsersListQuery,
   adminUserUpdateSchema,
   permissionParam,
+  permissionToggleSchema,
 } from "../../schemas/admin";
 import type { AppEnv } from "../../types";
 
@@ -204,54 +205,33 @@ adminUserRoutes.delete("/:id", manageUsers, async (c) => {
 });
 
 // ---------------------------------------------------------------------------
-// Permissions — only the super admin can grant or revoke. Responses return the
-// user's effective permissions (the super admin always reports all of them).
+// Permissions — a single toggle endpoint, designed for a switch in the admin
+// UI's user management: `enabled: true` grants, `false` revokes, and both
+// directions are idempotent. Only the super admin can call it. The response
+// returns the user with their effective permissions.
 // ---------------------------------------------------------------------------
-
-const loadTargetUser = async (c: Context<AppEnv>, id: number): Promise<UserRow> => {
-  const db = getDb(c.env.DB);
-  const [user] = await db.select(userColumns).from(users).where(eq(users.id, id)).limit(1);
-  if (!user) throw new HTTPException(404, { message: "User not found" });
-  return user;
-};
 
 adminUserRoutes.put(
   "/:id/permissions/:permission",
   requireSuperAdmin,
   validate("param", permissionParam),
+  validate("json", permissionToggleSchema),
   async (c) => {
     const id = parseId(c.req.param("id"));
     if (id === null) throw new HTTPException(404, { message: "User not found" });
     const { permission } = c.req.valid("param");
+    const { enabled } = c.req.valid("json");
 
-    const user = await loadTargetUser(c, id);
     const db = getDb(c.env.DB);
+    const [user] = await db.select(userColumns).from(users).where(eq(users.id, id)).limit(1);
+    if (!user) throw new HTTPException(404, { message: "User not found" });
 
-    // Idempotent: granting an already-held permission is a no-op.
-    await db.insert(userPermissions).values({ userId: id, permission }).onConflictDoNothing();
-
-    return c.json({ user: await shapeUser(c, user) });
-  },
-);
-
-adminUserRoutes.delete(
-  "/:id/permissions/:permission",
-  requireSuperAdmin,
-  validate("param", permissionParam),
-  async (c) => {
-    const id = parseId(c.req.param("id"));
-    if (id === null) throw new HTTPException(404, { message: "User not found" });
-    const { permission } = c.req.valid("param");
-
-    const user = await loadTargetUser(c, id);
-    const db = getDb(c.env.DB);
-
-    const [deleted] = await db
-      .delete(userPermissions)
-      .where(and(eq(userPermissions.userId, id), eq(userPermissions.permission, permission)))
-      .returning({ userId: userPermissions.userId });
-    if (!deleted) {
-      throw new HTTPException(404, { message: "Permission not granted to this user" });
+    if (enabled) {
+      await db.insert(userPermissions).values({ userId: id, permission }).onConflictDoNothing();
+    } else {
+      await db
+        .delete(userPermissions)
+        .where(and(eq(userPermissions.userId, id), eq(userPermissions.permission, permission)));
     }
 
     return c.json({ user: await shapeUser(c, user) });
