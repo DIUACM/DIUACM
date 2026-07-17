@@ -29,6 +29,7 @@ const authUserColumns = {
   studentId: users.studentId,
   imageKey: users.imageKey,
   maxCfRating: users.maxCfRating,
+  role: users.role,
   createdAt: users.createdAt,
   updatedAt: users.updatedAt,
 };

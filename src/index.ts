@@ -4,6 +4,7 @@ import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
 
 import { openApiDoc } from "./openapi";
+import admin from "./routes/admin";
 import auth from "./routes/auth";
 import events from "./routes/events";
 import files from "./routes/files";
@@ -42,6 +43,7 @@ app.get("/docs", (c) =>
 </html>`),
 );
 
+app.route("/admin", admin);
 app.route("/auth", auth);
 app.route("/events", events);
 app.route("/files", files);

@@ -1,5 +1,18 @@
 import { z } from "zod";
 
+import {
+  adminAttendanceAddSchema,
+  adminEventCreateSchema,
+  adminEventUpdateSchema,
+  adminPerformanceSetSchema,
+  adminRanklistCreateSchema,
+  adminRanklistEventSetSchema,
+  adminRanklistUpdateSchema,
+  adminTrackerCreateSchema,
+  adminTrackerUpdateSchema,
+  adminUserCreateSchema,
+  adminUserUpdateSchema,
+} from "./schemas/admin";
 import { googleSignInSchema, loginSchema, profileUpdateSchema, registerSchema } from "./schemas/auth";
 import { attendanceGiveSchema } from "./schemas/events";
 import { handleSetSchema } from "./schemas/handles";
@@ -40,6 +53,7 @@ const userSchema = {
       type: ["integer", "null"],
       description: "Highest Codeforces rating reached, or null if not set.",
     },
+    role: { type: "string", enum: ["user", "admin"] },
     createdAt: epoch("Unix epoch seconds (UTC)."),
     updatedAt: epoch("Unix epoch seconds (UTC)."),
   },
@@ -51,6 +65,7 @@ const userSchema = {
     "studentId",
     "image",
     "maxCfRating",
+    "role",
     "createdAt",
     "updatedAt",
   ],
@@ -406,6 +421,166 @@ const programmerDetailSchema = {
   required: ["id", "name", "username", "image", "maxCfRating", "handles", "trackerPerformance"],
 };
 
+// ---------------------------------------------------------------------------
+// Admin shapes — like the public ones, but nothing is hidden: drafts are
+// visible, events include eventPassword, trackers/ranklists expose ids,
+// statuses, and timestamps.
+// ---------------------------------------------------------------------------
+
+const okSchema = {
+  type: "object",
+  properties: { ok: { type: "boolean" } },
+  required: ["ok"],
+};
+
+const userListSchema = {
+  type: "object",
+  properties: { data: { type: "array", items: ref("User") }, meta: ref("PaginationMeta") },
+  required: ["data", "meta"],
+};
+
+const adminUserDetailSchema = {
+  type: "object",
+  properties: { user: ref("User"), handles: ref("HandlesMap") },
+  required: ["user", "handles"],
+};
+
+const adminEventProps = {
+  ...eventCoreProps,
+  eventPassword: {
+    type: ["string", "null"],
+    description: "The attendance password (visible to admins only).",
+  },
+};
+const adminEventRequired = Object.keys(adminEventProps);
+
+const adminEventSchema = {
+  type: "object",
+  properties: adminEventProps,
+  required: adminEventRequired,
+};
+
+const adminEventDetailSchema = {
+  type: "object",
+  properties: { ...adminEventProps, media: { type: "array", items: ref("EventMedia") } },
+  required: [...adminEventRequired, "media"],
+};
+
+const adminEventListSchema = {
+  type: "object",
+  properties: { data: { type: "array", items: ref("AdminEvent") }, meta: ref("PaginationMeta") },
+  required: ["data", "meta"],
+};
+
+const adminTrackerProps = {
+  id: { type: "integer" },
+  title: { type: "string" },
+  description: { type: "string" },
+  slug: { type: "string" },
+  status: { type: "string", enum: ["published", "draft"] },
+  createdAt: epoch("Unix epoch seconds (UTC)."),
+  updatedAt: epoch("Unix epoch seconds (UTC)."),
+};
+const adminTrackerRequired = Object.keys(adminTrackerProps);
+
+const adminTrackerSchema = {
+  type: "object",
+  properties: adminTrackerProps,
+  required: adminTrackerRequired,
+};
+
+const adminTrackerListSchema = {
+  type: "object",
+  properties: { data: { type: "array", items: ref("AdminTracker") }, meta: ref("PaginationMeta") },
+  required: ["data", "meta"],
+};
+
+const adminRanklistSchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    trackerId: { type: "integer" },
+    keyword: { type: "string" },
+    description: { type: "string" },
+    status: { type: "string", enum: ["published", "draft"] },
+    upsolveWeight: { type: "number", description: "0.00–1.00." },
+    isLocked: { type: "boolean" },
+    considerStrictAttendance: { type: "boolean" },
+    userCount: { type: "integer" },
+    eventCount: { type: "integer" },
+    createdAt: epoch("Unix epoch seconds (UTC)."),
+    updatedAt: epoch("Unix epoch seconds (UTC)."),
+  },
+  required: [
+    "id",
+    "trackerId",
+    "keyword",
+    "description",
+    "status",
+    "upsolveWeight",
+    "isLocked",
+    "considerStrictAttendance",
+    "userCount",
+    "eventCount",
+    "createdAt",
+    "updatedAt",
+  ],
+};
+
+const adminTrackerDetailSchema = {
+  type: "object",
+  properties: { ...adminTrackerProps, ranklists: { type: "array", items: ref("AdminRanklist") } },
+  required: [...adminTrackerRequired, "ranklists"],
+};
+
+const adminRanklistEventEntrySchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    title: { type: "string" },
+    status: { type: "string", enum: ["published", "draft"] },
+    startingAt: epoch("Unix epoch seconds (UTC)."),
+    weight: { type: "number", description: "This event's weight in the ranklist (0.00–1.00)." },
+  },
+  required: ["id", "title", "status", "startingAt", "weight"],
+};
+
+const adminRanklistStandingSchema = {
+  type: "object",
+  properties: {
+    user: ref("UserSummary"),
+    score: { type: "number" },
+    rank: { type: "integer" },
+  },
+  required: ["user", "score", "rank"],
+};
+
+const adminRanklistDetailSchema = {
+  type: "object",
+  properties: {
+    ...adminRanklistSchema.properties,
+    events: { type: "array", items: ref("AdminRanklistEventEntry") },
+    users: { type: "array", items: ref("AdminRanklistStanding") },
+  },
+  required: [...adminRanklistSchema.required, "events", "users"],
+};
+
+const ranklistEventSetResultSchema = {
+  type: "object",
+  properties: { eventId: { type: "integer" }, weight: { type: "number" } },
+  required: ["eventId", "weight"],
+};
+
+const ranklistUserSetResultSchema = {
+  type: "object",
+  properties: {
+    userId: { type: "integer" },
+    score: { type: "number" },
+    rank: { type: "integer" },
+  },
+  required: ["userId", "score", "rank"],
+};
+
 const pageParams = [
   { name: "page", in: "query", schema: { type: "integer", minimum: 1, default: 1 } },
   {
@@ -414,6 +589,19 @@ const pageParams = [
     schema: { type: "integer", minimum: 1, maximum: 100, default: 20 },
   },
 ];
+
+const idParam = (name: string) => ({
+  name,
+  in: "path",
+  required: true,
+  schema: { type: "integer" },
+});
+
+// Every admin endpoint returns these when the caller isn't an admin.
+const adminAuthResponses = {
+  "401": { description: "Missing or invalid token", content: jsonBody(ref("Error")) },
+  "403": { description: "Caller is not an admin", content: jsonBody(ref("Error")) },
+};
 
 export const openApiDoc = {
   openapi: "3.1.0",
@@ -433,6 +621,12 @@ export const openApiDoc = {
     { name: "trackers", description: "Trackers and their ranklists" },
     { name: "programmers", description: "Programmer directory, handles, and tracker performance" },
     { name: "files", description: "Stored object serving" },
+    {
+      name: "admin",
+      description:
+        "Management APIs — require a bearer token for a user whose role is `admin`. " +
+        "Drafts are visible and events include their password.",
+    },
   ],
   components: {
     securitySchemes: {
@@ -477,6 +671,32 @@ export const openApiDoc = {
       ProfileUpdateRequest: toSchema(profileUpdateSchema),
       AttendanceRequest: toSchema(attendanceGiveSchema),
       HandleSetRequest: toSchema(handleSetSchema),
+      Ok: okSchema,
+      UserList: userListSchema,
+      AdminUserDetail: adminUserDetailSchema,
+      AdminEvent: adminEventSchema,
+      AdminEventDetail: adminEventDetailSchema,
+      AdminEventList: adminEventListSchema,
+      AdminTracker: adminTrackerSchema,
+      AdminTrackerList: adminTrackerListSchema,
+      AdminTrackerDetail: adminTrackerDetailSchema,
+      AdminRanklist: adminRanklistSchema,
+      AdminRanklistEventEntry: adminRanklistEventEntrySchema,
+      AdminRanklistStanding: adminRanklistStandingSchema,
+      AdminRanklistDetail: adminRanklistDetailSchema,
+      RanklistEventSetResult: ranklistEventSetResultSchema,
+      RanklistUserSetResult: ranklistUserSetResultSchema,
+      AdminUserCreateRequest: toSchema(adminUserCreateSchema),
+      AdminUserUpdateRequest: toSchema(adminUserUpdateSchema),
+      AdminEventCreateRequest: toSchema(adminEventCreateSchema),
+      AdminEventUpdateRequest: toSchema(adminEventUpdateSchema),
+      AdminAttendanceAddRequest: toSchema(adminAttendanceAddSchema),
+      AdminPerformanceSetRequest: toSchema(adminPerformanceSetSchema),
+      AdminTrackerCreateRequest: toSchema(adminTrackerCreateSchema),
+      AdminTrackerUpdateRequest: toSchema(adminTrackerUpdateSchema),
+      AdminRanklistCreateRequest: toSchema(adminRanklistCreateSchema),
+      AdminRanklistUpdateRequest: toSchema(adminRanklistUpdateSchema),
+      AdminRanklistEventSetRequest: toSchema(adminRanklistEventSetSchema),
     },
   },
   paths: {
@@ -853,6 +1073,460 @@ export const openApiDoc = {
             content: binaryBody("image/png", "image/jpeg", "image/gif", "image/webp"),
           },
           "404": { description: "Not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/users": {
+      get: {
+        tags: ["admin"],
+        summary: "List all users",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          ...pageParams,
+          {
+            name: "q",
+            in: "query",
+            description: "Search on name, username, email, or student id.",
+            schema: { type: "string" },
+          },
+          { name: "role", in: "query", schema: { type: "string", enum: ["user", "admin"] } },
+        ],
+        responses: {
+          "200": { description: "A page of users", content: jsonBody(ref("UserList")) },
+          ...adminAuthResponses,
+        },
+      },
+      post: {
+        tags: ["admin"],
+        summary: "Create a user",
+        security: [{ bearerAuth: [] }],
+        requestBody: { required: true, content: jsonBody(ref("AdminUserCreateRequest")) },
+        responses: {
+          "201": { description: "User created", content: jsonBody(ref("UserResponse")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "409": {
+            description: "Email, username, or student id already exists",
+            content: jsonBody(ref("Error")),
+          },
+        },
+      },
+    },
+    "/admin/users/{id}": {
+      get: {
+        tags: ["admin"],
+        summary: "Get a user with their handles",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id")],
+        responses: {
+          "200": { description: "The user", content: jsonBody(ref("AdminUserDetail")) },
+          ...adminAuthResponses,
+          "404": { description: "User not found", content: jsonBody(ref("Error")) },
+        },
+      },
+      patch: {
+        tags: ["admin"],
+        summary: "Update a user (including role and password)",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id")],
+        requestBody: { required: true, content: jsonBody(ref("AdminUserUpdateRequest")) },
+        responses: {
+          "200": { description: "The updated user", content: jsonBody(ref("UserResponse")) },
+          "400": {
+            description: "Validation failed, empty body, or self-demotion",
+            content: jsonBody(ref("Error")),
+          },
+          ...adminAuthResponses,
+          "404": { description: "User not found", content: jsonBody(ref("Error")) },
+          "409": {
+            description: "Email, username, or student id already exists",
+            content: jsonBody(ref("Error")),
+          },
+        },
+      },
+      delete: {
+        tags: ["admin"],
+        summary: "Delete a user (cascades handles, attendance, performance, memberships)",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id")],
+        responses: {
+          "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
+          "400": { description: "You cannot delete yourself", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "User not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/events": {
+      get: {
+        tags: ["admin"],
+        summary: "List all events (including drafts)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          ...pageParams,
+          {
+            name: "type",
+            in: "query",
+            schema: { type: "string", enum: ["contest", "class", "other"] },
+          },
+          {
+            name: "scope",
+            in: "query",
+            schema: {
+              type: "string",
+              enum: ["open_for_all", "only_girls", "junior_programmers", "selected_persons"],
+            },
+          },
+          {
+            name: "status",
+            in: "query",
+            schema: { type: "string", enum: ["published", "draft"] },
+          },
+          {
+            name: "q",
+            in: "query",
+            description: "Search on title, description, or event link.",
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": { description: "A page of events", content: jsonBody(ref("AdminEventList")) },
+          ...adminAuthResponses,
+        },
+      },
+      post: {
+        tags: ["admin"],
+        summary: "Create an event",
+        security: [{ bearerAuth: [] }],
+        requestBody: { required: true, content: jsonBody(ref("AdminEventCreateRequest")) },
+        responses: {
+          "201": { description: "Event created", content: jsonBody(ref("AdminEvent")) },
+          "400": {
+            description: "Validation failed or endingAt not after startingAt",
+            content: jsonBody(ref("Error")),
+          },
+          ...adminAuthResponses,
+        },
+      },
+    },
+    "/admin/events/{id}": {
+      get: {
+        tags: ["admin"],
+        summary: "Get an event with its media (any status; includes eventPassword)",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id")],
+        responses: {
+          "200": { description: "The event", content: jsonBody(ref("AdminEventDetail")) },
+          ...adminAuthResponses,
+          "404": { description: "Event not found", content: jsonBody(ref("Error")) },
+        },
+      },
+      patch: {
+        tags: ["admin"],
+        summary: "Update an event",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id")],
+        requestBody: { required: true, content: jsonBody(ref("AdminEventUpdateRequest")) },
+        responses: {
+          "200": { description: "The updated event", content: jsonBody(ref("AdminEvent")) },
+          "400": {
+            description: "Validation failed, empty body, or endingAt not after startingAt",
+            content: jsonBody(ref("Error")),
+          },
+          ...adminAuthResponses,
+          "404": { description: "Event not found", content: jsonBody(ref("Error")) },
+        },
+      },
+      delete: {
+        tags: ["admin"],
+        summary: "Delete an event (cascades media, attendance, performance, ranklist links)",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id")],
+        responses: {
+          "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
+          ...adminAuthResponses,
+          "404": { description: "Event not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/events/{id}/media": {
+      post: {
+        tags: ["admin"],
+        summary: "Add an image to an event's media (appended last)",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id")],
+        requestBody: {
+          required: true,
+          content: { "multipart/form-data": { schema: imageUploadSchema } },
+        },
+        responses: {
+          "201": { description: "Media added", content: jsonBody(ref("EventMedia")) },
+          "400": { description: "Missing or invalid image", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Event not found", content: jsonBody(ref("Error")) },
+          "413": { description: "Image exceeds the 5 MB limit", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/events/{id}/media/{mediaId}": {
+      delete: {
+        tags: ["admin"],
+        summary: "Remove a media item from an event",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id"), idParam("mediaId")],
+        responses: {
+          "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
+          ...adminAuthResponses,
+          "404": { description: "Media not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/events/{id}/attendance": {
+      post: {
+        tags: ["admin"],
+        summary: "Record attendance for any user (no password or window checks)",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id")],
+        requestBody: { required: true, content: jsonBody(ref("AdminAttendanceAddRequest")) },
+        responses: {
+          "201": { description: "Attendance recorded", content: jsonBody(ref("AttendanceResult")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Event or user not found", content: jsonBody(ref("Error")) },
+          "409": { description: "Attendance already recorded", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/events/{id}/attendance/{userId}": {
+      delete: {
+        tags: ["admin"],
+        summary: "Remove a user's attendance from an event",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id"), idParam("userId")],
+        responses: {
+          "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
+          ...adminAuthResponses,
+          "404": { description: "Attendance not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/events/{id}/performance/{userId}": {
+      put: {
+        tags: ["admin"],
+        summary: "Create or replace a user's performance row for an event",
+        description:
+          "Full-replace semantics: omitted fields fall back to their defaults " +
+          "(position null, counts 0). Ranklist scores and ranks recalculate automatically.",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id"), idParam("userId")],
+        requestBody: { required: true, content: jsonBody(ref("AdminPerformanceSetRequest")) },
+        responses: {
+          "200": { description: "The performance row", content: jsonBody(ref("Performance")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Event or user not found", content: jsonBody(ref("Error")) },
+        },
+      },
+      delete: {
+        tags: ["admin"],
+        summary: "Delete a user's performance row for an event",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id"), idParam("userId")],
+        responses: {
+          "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
+          ...adminAuthResponses,
+          "404": { description: "Performance not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/trackers": {
+      get: {
+        tags: ["admin"],
+        summary: "List all trackers (including drafts)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          ...pageParams,
+          {
+            name: "status",
+            in: "query",
+            schema: { type: "string", enum: ["published", "draft"] },
+          },
+          {
+            name: "q",
+            in: "query",
+            description: "Search on title or slug.",
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": { description: "A page of trackers", content: jsonBody(ref("AdminTrackerList")) },
+          ...adminAuthResponses,
+        },
+      },
+      post: {
+        tags: ["admin"],
+        summary: "Create a tracker",
+        security: [{ bearerAuth: [] }],
+        requestBody: { required: true, content: jsonBody(ref("AdminTrackerCreateRequest")) },
+        responses: {
+          "201": { description: "Tracker created", content: jsonBody(ref("AdminTracker")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "409": { description: "Slug already exists", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/trackers/{id}": {
+      get: {
+        tags: ["admin"],
+        summary: "Get a tracker with all of its ranklists",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id")],
+        responses: {
+          "200": { description: "The tracker", content: jsonBody(ref("AdminTrackerDetail")) },
+          ...adminAuthResponses,
+          "404": { description: "Tracker not found", content: jsonBody(ref("Error")) },
+        },
+      },
+      patch: {
+        tags: ["admin"],
+        summary: "Update a tracker",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id")],
+        requestBody: { required: true, content: jsonBody(ref("AdminTrackerUpdateRequest")) },
+        responses: {
+          "200": { description: "The updated tracker", content: jsonBody(ref("AdminTracker")) },
+          "400": { description: "Validation failed or empty body", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Tracker not found", content: jsonBody(ref("Error")) },
+          "409": { description: "Slug already exists", content: jsonBody(ref("Error")) },
+        },
+      },
+      delete: {
+        tags: ["admin"],
+        summary: "Delete a tracker (cascades its ranklists)",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id")],
+        responses: {
+          "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
+          ...adminAuthResponses,
+          "404": { description: "Tracker not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/trackers/{id}/ranklists": {
+      post: {
+        tags: ["admin"],
+        summary: "Create a ranklist under a tracker",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id")],
+        requestBody: { required: true, content: jsonBody(ref("AdminRanklistCreateRequest")) },
+        responses: {
+          "201": { description: "Ranklist created", content: jsonBody(ref("AdminRanklist")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Tracker not found", content: jsonBody(ref("Error")) },
+          "409": {
+            description: "Keyword already exists in this tracker",
+            content: jsonBody(ref("Error")),
+          },
+        },
+      },
+    },
+    "/admin/ranklists/{id}": {
+      get: {
+        tags: ["admin"],
+        summary: "Get a ranklist with its events (weights) and users (scores, ranks)",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id")],
+        responses: {
+          "200": { description: "The ranklist", content: jsonBody(ref("AdminRanklistDetail")) },
+          ...adminAuthResponses,
+          "404": { description: "Ranklist not found", content: jsonBody(ref("Error")) },
+        },
+      },
+      patch: {
+        tags: ["admin"],
+        summary: "Update a ranklist (weight changes recalculate scores)",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id")],
+        requestBody: { required: true, content: jsonBody(ref("AdminRanklistUpdateRequest")) },
+        responses: {
+          "200": { description: "The updated ranklist", content: jsonBody(ref("AdminRanklist")) },
+          "400": { description: "Validation failed or empty body", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Ranklist not found", content: jsonBody(ref("Error")) },
+          "409": {
+            description: "Keyword already exists in this tracker",
+            content: jsonBody(ref("Error")),
+          },
+        },
+      },
+      delete: {
+        tags: ["admin"],
+        summary: "Delete a ranklist",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id")],
+        responses: {
+          "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
+          ...adminAuthResponses,
+          "404": { description: "Ranklist not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/ranklists/{id}/events/{eventId}": {
+      put: {
+        tags: ["admin"],
+        summary: "Attach an event to a ranklist, or update its weight",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id"), idParam("eventId")],
+        requestBody: { required: true, content: jsonBody(ref("AdminRanklistEventSetRequest")) },
+        responses: {
+          "200": { description: "Attached/updated", content: jsonBody(ref("RanklistEventSetResult")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Ranklist or event not found", content: jsonBody(ref("Error")) },
+        },
+      },
+      delete: {
+        tags: ["admin"],
+        summary: "Detach an event from a ranklist",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id"), idParam("eventId")],
+        responses: {
+          "200": { description: "Detached", content: jsonBody(ref("Ok")) },
+          ...adminAuthResponses,
+          "404": {
+            description: "Ranklist not found or event not in it",
+            content: jsonBody(ref("Error")),
+          },
+        },
+      },
+    },
+    "/admin/ranklists/{id}/users/{userId}": {
+      put: {
+        tags: ["admin"],
+        summary: "Add a user to a ranklist (idempotent)",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id"), idParam("userId")],
+        responses: {
+          "200": { description: "Membership ensured", content: jsonBody(ref("RanklistUserSetResult")) },
+          ...adminAuthResponses,
+          "404": { description: "Ranklist or user not found", content: jsonBody(ref("Error")) },
+        },
+      },
+      delete: {
+        tags: ["admin"],
+        summary: "Remove a user from a ranklist",
+        security: [{ bearerAuth: [] }],
+        parameters: [idParam("id"), idParam("userId")],
+        responses: {
+          "200": { description: "Removed", content: jsonBody(ref("Ok")) },
+          ...adminAuthResponses,
+          "404": {
+            description: "Ranklist not found or user not in it",
+            content: jsonBody(ref("Error")),
+          },
         },
       },
     },

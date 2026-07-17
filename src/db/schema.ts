@@ -21,6 +21,10 @@ export const users = sqliteTable("users", {
   studentId: text("student_id").unique(),
   // Nullable: users who sign in with Google have no password of their own.
   passwordHash: text("password_hash"),
+  // Admins can manage everything under /admin. Promote via the admin API or SQL.
+  role: text("role", { enum: ["user", "admin"] })
+    .notNull()
+    .default("user"),
   // R2 object key for the profile image (null if none). Served via GET /files/:key.
   imageKey: text("image_key"),
   // Highest Codeforces rating reached. Null until populated (by a future CF sync).

@@ -1,0 +1,208 @@
+import { and, asc, desc, eq } from "drizzle-orm";
+import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
+
+import { getDb } from "../../db/client";
+import { events, ranklistEvents, ranklists, ranklistUsers, users } from "../../db/schema";
+import { parseId } from "../../lib/parse-id";
+import { toUserSummary } from "../../lib/user-shape";
+import { validate } from "../../lib/validator";
+import {
+  adminRanklistEventSetSchema,
+  adminRanklistUpdateSchema,
+} from "../../schemas/admin";
+import { ranklistColumns } from "./trackers";
+import type { AppEnv } from "../../types";
+
+const adminRanklistRoutes = new Hono<AppEnv>();
+
+const requireRanklistId = (c: { req: { param: (k: "id") => string } }): number => {
+  const id = parseId(c.req.param("id"));
+  if (id === null) throw new HTTPException(404, { message: "Ranklist not found" });
+  return id;
+};
+
+const loadRanklist = async (db: ReturnType<typeof getDb>, id: number) => {
+  const [row] = await db.select(ranklistColumns).from(ranklists).where(eq(ranklists.id, id)).limit(1);
+  if (!row) throw new HTTPException(404, { message: "Ranklist not found" });
+  return row;
+};
+
+// Full ranklist detail: its fields, attached events (with weight), and member
+// users (with trigger-maintained score/rank).
+adminRanklistRoutes.get("/:id", async (c) => {
+  const id = requireRanklistId(c);
+  const db = getDb(c.env.DB);
+  const origin = new URL(c.req.url).origin;
+
+  const ranklist = await loadRanklist(db, id);
+
+  const [eventRows, userRows] = await Promise.all([
+    db
+      .select({
+        id: events.id,
+        title: events.title,
+        status: events.status,
+        startingAt: events.startingAt,
+        weight: ranklistEvents.weight,
+      })
+      .from(ranklistEvents)
+      .innerJoin(events, eq(ranklistEvents.eventId, events.id))
+      .where(eq(ranklistEvents.ranklistId, id))
+      .orderBy(asc(events.startingAt)),
+    db
+      .select({
+        userId: users.id,
+        name: users.name,
+        username: users.username,
+        imageKey: users.imageKey,
+        score: ranklistUsers.score,
+        rank: ranklistUsers.rank,
+      })
+      .from(ranklistUsers)
+      .innerJoin(users, eq(ranklistUsers.userId, users.id))
+      .where(eq(ranklistUsers.ranklistId, id))
+      .orderBy(asc(ranklistUsers.rank), desc(ranklistUsers.score)),
+  ]);
+
+  return c.json({
+    ...ranklist,
+    events: eventRows,
+    users: userRows.map((u) => ({
+      user: toUserSummary(
+        { id: u.userId, name: u.name, username: u.username, imageKey: u.imageKey },
+        origin,
+      ),
+      score: u.score,
+      rank: u.rank,
+    })),
+  });
+});
+
+adminRanklistRoutes.patch("/:id", validate("json", adminRanklistUpdateSchema), async (c) => {
+  const id = requireRanklistId(c);
+  const input = c.req.valid("json");
+  if (Object.keys(input).length === 0) {
+    throw new HTTPException(400, { message: "No fields to update" });
+  }
+
+  const db = getDb(c.env.DB);
+  // Duplicate keyword within the tracker → UNIQUE failure → 409 via onError.
+  // Changing upsolveWeight / considerStrictAttendance recalculates scores via triggers.
+  const [updated] = await db
+    .update(ranklists)
+    .set({ ...input, updatedAt: Math.floor(Date.now() / 1000) })
+    .where(eq(ranklists.id, id))
+    .returning(ranklistColumns);
+  if (!updated) throw new HTTPException(404, { message: "Ranklist not found" });
+
+  return c.json(updated);
+});
+
+adminRanklistRoutes.delete("/:id", async (c) => {
+  const id = requireRanklistId(c);
+  const db = getDb(c.env.DB);
+
+  const [deleted] = await db
+    .delete(ranklists)
+    .where(eq(ranklists.id, id))
+    .returning({ id: ranklists.id });
+  if (!deleted) throw new HTTPException(404, { message: "Ranklist not found" });
+
+  return c.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
+// Events in a ranklist — PUT attaches or updates the weight; scores/ranks and
+// eventCount recalculate via the DB triggers.
+// ---------------------------------------------------------------------------
+
+adminRanklistRoutes.put(
+  "/:id/events/:eventId",
+  validate("json", adminRanklistEventSetSchema),
+  async (c) => {
+    const id = requireRanklistId(c);
+    const eventId = parseId(c.req.param("eventId"));
+    if (eventId === null) throw new HTTPException(404, { message: "Event not found" });
+
+    const { weight } = c.req.valid("json");
+    const db = getDb(c.env.DB);
+    await loadRanklist(db, id);
+
+    const [ev] = await db
+      .select({ id: events.id })
+      .from(events)
+      .where(eq(events.id, eventId))
+      .limit(1);
+    if (!ev) throw new HTTPException(404, { message: "Event not found" });
+
+    await db
+      .insert(ranklistEvents)
+      .values({ ranklistId: id, eventId, weight })
+      .onConflictDoUpdate({
+        target: [ranklistEvents.ranklistId, ranklistEvents.eventId],
+        set: { weight },
+      });
+
+    return c.json({ eventId, weight });
+  },
+);
+
+adminRanklistRoutes.delete("/:id/events/:eventId", async (c) => {
+  const id = requireRanklistId(c);
+  const eventId = parseId(c.req.param("eventId"));
+  if (eventId === null) throw new HTTPException(404, { message: "Event not found" });
+
+  const db = getDb(c.env.DB);
+  const [deleted] = await db
+    .delete(ranklistEvents)
+    .where(and(eq(ranklistEvents.ranklistId, id), eq(ranklistEvents.eventId, eventId)))
+    .returning({ eventId: ranklistEvents.eventId });
+  if (!deleted) throw new HTTPException(404, { message: "Event is not in this ranklist" });
+
+  return c.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
+// Users in a ranklist — PUT is idempotent; score/rank and userCount are
+// trigger-maintained from the moment the row exists.
+// ---------------------------------------------------------------------------
+
+adminRanklistRoutes.put("/:id/users/:userId", async (c) => {
+  const id = requireRanklistId(c);
+  const userId = parseId(c.req.param("userId"));
+  if (userId === null) throw new HTTPException(404, { message: "User not found" });
+
+  const db = getDb(c.env.DB);
+  await loadRanklist(db, id);
+
+  const [user] = await db.select({ id: users.id }).from(users).where(eq(users.id, userId)).limit(1);
+  if (!user) throw new HTTPException(404, { message: "User not found" });
+
+  await db.insert(ranklistUsers).values({ ranklistId: id, userId }).onConflictDoNothing();
+
+  const [row] = await db
+    .select({ score: ranklistUsers.score, rank: ranklistUsers.rank })
+    .from(ranklistUsers)
+    .where(and(eq(ranklistUsers.ranklistId, id), eq(ranklistUsers.userId, userId)))
+    .limit(1);
+
+  return c.json({ userId, score: row.score, rank: row.rank });
+});
+
+adminRanklistRoutes.delete("/:id/users/:userId", async (c) => {
+  const id = requireRanklistId(c);
+  const userId = parseId(c.req.param("userId"));
+  if (userId === null) throw new HTTPException(404, { message: "User not found" });
+
+  const db = getDb(c.env.DB);
+  const [deleted] = await db
+    .delete(ranklistUsers)
+    .where(and(eq(ranklistUsers.ranklistId, id), eq(ranklistUsers.userId, userId)))
+    .returning({ userId: ranklistUsers.userId });
+  if (!deleted) throw new HTTPException(404, { message: "User is not in this ranklist" });
+
+  return c.json({ ok: true });
+});
+
+export default adminRanklistRoutes;

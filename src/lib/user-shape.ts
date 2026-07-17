@@ -10,6 +10,7 @@ type UserRow = Pick<
   | "studentId"
   | "imageKey"
   | "maxCfRating"
+  | "role"
   | "createdAt"
   | "updatedAt"
 >;
@@ -36,6 +37,7 @@ export const toAuthUser = (row: UserRow, origin: string) => ({
   studentId: row.studentId,
   image: imageUrlFor(origin, row.imageKey),
   maxCfRating: row.maxCfRating,
+  role: row.role,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
 });
