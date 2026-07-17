@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { PERMISSIONS, type Permission } from "./db/schema";
 import {
   adminAttendanceAddSchema,
   adminEventCreateSchema,
@@ -33,6 +34,53 @@ const binaryBody = (...contentTypes: string[]) =>
 
 const epoch = (description: string) => ({ type: "integer", description });
 
+// ---------------------------------------------------------------------------
+// Access markers — every operation declares who may call it. Produces the
+// Scalar-rendered `x-badges` chip next to the summary, the `security` field,
+// and an "**Access:**" line opening the description. Levels:
+//   "public"       — no authentication
+//   "user"         — any signed-in user
+//   a permission   — signed-in user granted that permission (super admin passes)
+//   "super-admin"  — only the super admin (SUPER_ADMIN_EMAIL)
+// ---------------------------------------------------------------------------
+
+type AccessLevel = "public" | "user" | "super-admin" | Permission;
+
+const access = (level: AccessLevel, description?: string) => {
+  const badge = (name: string, color: string) => [{ name, color, position: "after" }];
+  let fields: { security?: unknown; "x-badges": unknown; note: string };
+  if (level === "public") {
+    fields = {
+      "x-badges": badge("Public", "#16a34a"),
+      note: "**Access:** `Public` — No authentication required.",
+    };
+  } else if (level === "user") {
+    fields = {
+      security: [{ bearerAuth: [] }],
+      "x-badges": badge("User", "#2563eb"),
+      note: "**Access:** `User` — Requires a bearer token (`Authorization: Bearer <token>`).",
+    };
+  } else if (level === "super-admin") {
+    fields = {
+      security: [{ bearerAuth: [] }],
+      "x-badges": badge("super admin", "#7c3aed"),
+      note:
+        "**Access:** `Super admin` — Requires a bearer token for the super admin " +
+        "(the account whose email matches `SUPER_ADMIN_EMAIL`).",
+    };
+  } else {
+    fields = {
+      security: [{ bearerAuth: [] }],
+      "x-badges": badge(level, "#dc2626"),
+      note:
+        `**Access:** \`${level}\` — Requires a bearer token for a user granted the ` +
+        `\`${level}\` permission. The super admin always passes.`,
+    };
+  }
+  const { note, ...rest } = fields;
+  return { ...rest, description: description ? `${note}\n\n${description}` : note };
+};
+
 const userSchema = {
   type: "object",
   properties: {
@@ -53,7 +101,16 @@ const userSchema = {
       type: ["integer", "null"],
       description: "Highest Codeforces rating reached, or null if not set.",
     },
-    role: { type: "string", enum: ["user", "admin"] },
+    permissions: {
+      type: "array",
+      items: ref("Permission"),
+      description:
+        "Effective admin-panel permissions. The super admin always reports all of them.",
+    },
+    isSuperAdmin: {
+      type: "boolean",
+      description: "True when this user's email matches the configured `SUPER_ADMIN_EMAIL`.",
+    },
     createdAt: epoch("Unix epoch seconds (UTC)."),
     updatedAt: epoch("Unix epoch seconds (UTC)."),
   },
@@ -65,10 +122,17 @@ const userSchema = {
     "studentId",
     "image",
     "maxCfRating",
-    "role",
+    "permissions",
+    "isSuperAdmin",
     "createdAt",
     "updatedAt",
   ],
+};
+
+const permissionSchema = {
+  type: "string",
+  enum: [...PERMISSIONS],
+  description: "An admin-panel permission.",
 };
 
 const userSummarySchema = {
@@ -582,10 +646,16 @@ const ranklistUserSetResultSchema = {
 };
 
 const pageParams = [
-  { name: "page", in: "query", schema: { type: "integer", minimum: 1, default: 1 } },
+  {
+    name: "page",
+    in: "query",
+    description: "1-based page number.",
+    schema: { type: "integer", minimum: 1, default: 1 },
+  },
   {
     name: "perPage",
     in: "query",
+    description: "Items per page (max 100).",
     schema: { type: "integer", minimum: 1, maximum: 100, default: 20 },
   },
 ];
@@ -597,21 +667,66 @@ const idParam = (name: string) => ({
   schema: { type: "integer" },
 });
 
-// Every admin endpoint returns these when the caller isn't an admin.
+const permissionPathParam = {
+  name: "permission",
+  in: "path",
+  required: true,
+  schema: ref("Permission"),
+};
+
+// Every admin endpoint returns these when the caller lacks access.
 const adminAuthResponses = {
   "401": { description: "Missing or invalid token", content: jsonBody(ref("Error")) },
-  "403": { description: "Caller is not an admin", content: jsonBody(ref("Error")) },
+  "403": {
+    description: "Caller lacks the required permission",
+    content: jsonBody(ref("Error")),
+  },
 };
+
+const infoDescription = `Backend API for **diuacm**, running on Cloudflare Workers.
+
+## Authentication
+
+Create an account with \`POST /auth/register\`, or sign in with \`POST /auth/login\`
+(email or username + password) or \`POST /auth/google\` (Google ID token, verified
+\`@diu.edu.bd\` accounts only — the super admin's email is exempt from the domain
+restriction).
+
+Every successful auth response includes a JWT — pass it on authenticated requests:
+
+\`\`\`
+Authorization: Bearer <token>
+\`\`\`
+
+## Permissions
+
+Admin access is **permission-based**, not role-based. A user may hold any subset of:
+
+| Permission | Grants |
+| --- | --- |
+| \`manage_users\` | Users under \`/admin/users\` |
+| \`manage_events\` | Events, media, and performance under \`/admin/events\` |
+| \`manage_attendance\` | Attendance under \`/admin/events/{id}/attendance\` |
+| \`manage_trackers\` | Trackers and ranklists under \`/admin/trackers\` and \`/admin/ranklists\` |
+
+The **super admin** — the account whose email matches \`SUPER_ADMIN_EMAIL\` — implicitly
+holds every permission and is the only one who can grant or revoke permissions
+(\`PUT\`/\`DELETE /admin/users/{id}/permissions/{permission}\`). Each operation's badge
+shows the access it requires.
+
+## Conventions
+
+- All timestamps are **Unix epoch seconds** (UTC integers), not ISO 8601 strings.
+- Errors return \`{ "error": "<message>" }\`. Validation failures additionally include an
+  \`issues\` array with field-level details.
+- List endpoints are paginated via \`page\` / \`perPage\` and return a \`meta\` block.`;
 
 export const openApiDoc = {
   openapi: "3.1.0",
   info: {
     title: "diuacm API",
     version: "0.1.0",
-    description:
-      "Backend API for diuacm. Authenticate via `/auth/register`, `/auth/login` " +
-      "(email or username), or `/auth/google` (Google sign-in, @diu.edu.bd only), " +
-      "then send the returned JWT as `Authorization: Bearer <token>`.",
+    description: infoDescription,
   },
   servers: [{ url: "/", description: "Current origin" }],
   tags: [
@@ -622,18 +737,45 @@ export const openApiDoc = {
     { name: "programmers", description: "Programmer directory, handles, and tracker performance" },
     { name: "files", description: "Stored object serving" },
     {
-      name: "admin",
+      name: "admin-users",
       description:
-        "Management APIs — require a bearer token for a user whose role is `admin`. " +
-        "Drafts are visible and events include their password.",
+        "Admin: manage users (`manage_users`) and their permissions (super admin only).",
+    },
+    {
+      name: "admin-events",
+      description:
+        "Admin: manage events, media, and performance (`manage_events`); " +
+        "attendance requires `manage_attendance`.",
+    },
+    { name: "admin-trackers", description: "Admin: manage trackers (`manage_trackers`)." },
+    {
+      name: "admin-ranklists",
+      description:
+        "Admin: manage ranklists, their events, and their users (`manage_trackers`).",
+    },
+  ],
+  "x-tagGroups": [
+    {
+      name: "Non-admin",
+      tags: ["meta", "auth", "events", "trackers", "programmers", "files"],
+    },
+    {
+      name: "Admin",
+      tags: ["admin-users", "admin-events", "admin-trackers", "admin-ranklists"],
     },
   ],
   components: {
     securitySchemes: {
-      bearerAuth: { type: "http", scheme: "bearer", bearerFormat: "JWT" },
+      bearerAuth: {
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT",
+        description: "JWT obtained from `/auth/register`, `/auth/login`, or `/auth/google`.",
+      },
     },
     schemas: {
       User: userSchema,
+      Permission: permissionSchema,
       UserSummary: userSummarySchema,
       AuthResponse: authResponseSchema,
       UserResponse: userResponseSchema,
@@ -704,6 +846,7 @@ export const openApiDoc = {
       get: {
         tags: ["meta"],
         summary: "Health check",
+        ...access("public"),
         responses: {
           "200": { description: "Service is up", content: jsonBody(ref("Health")) },
         },
@@ -713,6 +856,7 @@ export const openApiDoc = {
       get: {
         tags: ["auth"],
         summary: "Public auth configuration",
+        ...access("public"),
         responses: {
           "200": { description: "Auth config", content: jsonBody(ref("AuthConfig")) },
         },
@@ -722,6 +866,7 @@ export const openApiDoc = {
       post: {
         tags: ["auth"],
         summary: "Register a new user",
+        ...access("public"),
         requestBody: { required: true, content: jsonBody(ref("RegisterRequest")) },
         responses: {
           "201": { description: "User created", content: jsonBody(ref("AuthResponse")) },
@@ -737,6 +882,7 @@ export const openApiDoc = {
       post: {
         tags: ["auth"],
         summary: "Log in with email or username and password",
+        ...access("public"),
         requestBody: { required: true, content: jsonBody(ref("LoginRequest")) },
         responses: {
           "200": { description: "Authenticated", content: jsonBody(ref("AuthResponse")) },
@@ -749,6 +895,7 @@ export const openApiDoc = {
       post: {
         tags: ["auth"],
         summary: "Sign in with a Google ID token (@diu.edu.bd only)",
+        ...access("public"),
         requestBody: { required: true, content: jsonBody(ref("GoogleSignInRequest")) },
         responses: {
           "200": {
@@ -762,7 +909,7 @@ export const openApiDoc = {
           "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
           "401": { description: "Invalid Google token", content: jsonBody(ref("Error")) },
           "403": {
-            description: "Email domain not allowed",
+            description: "Email domain not allowed (the super admin's email is exempt)",
             content: jsonBody(ref("Error")),
           },
         },
@@ -772,7 +919,7 @@ export const openApiDoc = {
       get: {
         tags: ["auth"],
         summary: "Get the current user",
-        security: [{ bearerAuth: [] }],
+        ...access("user"),
         responses: {
           "200": {
             description: "The authenticated user",
@@ -787,7 +934,7 @@ export const openApiDoc = {
       patch: {
         tags: ["auth"],
         summary: "Update the current user's profile",
-        security: [{ bearerAuth: [] }],
+        ...access("user"),
         requestBody: { required: true, content: jsonBody(ref("ProfileUpdateRequest")) },
         responses: {
           "200": {
@@ -813,7 +960,7 @@ export const openApiDoc = {
       put: {
         tags: ["auth"],
         summary: "Upload or replace the current user's profile image",
-        security: [{ bearerAuth: [] }],
+        ...access("user"),
         requestBody: {
           required: true,
           content: { "multipart/form-data": { schema: imageUploadSchema } },
@@ -842,7 +989,7 @@ export const openApiDoc = {
       get: {
         tags: ["programmers"],
         summary: "Get the current user's handles",
-        security: [{ bearerAuth: [] }],
+        ...access("user"),
         responses: {
           "200": { description: "The handles map", content: jsonBody(ref("HandlesResponse")) },
           "401": { description: "Missing or invalid token", content: jsonBody(ref("Error")) },
@@ -853,7 +1000,7 @@ export const openApiDoc = {
       put: {
         tags: ["programmers"],
         summary: "Set (create or replace) the current user's handle for a platform",
-        security: [{ bearerAuth: [] }],
+        ...access("user"),
         parameters: [
           {
             name: "type",
@@ -876,7 +1023,7 @@ export const openApiDoc = {
       delete: {
         tags: ["programmers"],
         summary: "Remove the current user's handle for a platform",
-        security: [{ bearerAuth: [] }],
+        ...access("user"),
         parameters: [
           {
             name: "type",
@@ -895,6 +1042,7 @@ export const openApiDoc = {
       get: {
         tags: ["events"],
         summary: "List published events",
+        ...access("public"),
         parameters: [
           ...pageParams,
           {
@@ -926,6 +1074,7 @@ export const openApiDoc = {
       get: {
         tags: ["events"],
         summary: "Get a published event with its media",
+        ...access("public"),
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
         responses: {
           "200": { description: "The event", content: jsonBody(ref("EventDetail")) },
@@ -937,10 +1086,11 @@ export const openApiDoc = {
       post: {
         tags: ["events"],
         summary: "Mark attendance for the current user (event password required)",
-        description:
+        ...access(
+          "user",
           "Requires the correct event password and that the current time is within the " +
-          "attendance window (15 minutes before start to 15 minutes after end).",
-        security: [{ bearerAuth: [] }],
+            "attendance window (15 minutes before start to 15 minutes after end).",
+        ),
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
         requestBody: { required: true, content: jsonBody(ref("AttendanceRequest")) },
         responses: {
@@ -961,6 +1111,7 @@ export const openApiDoc = {
       get: {
         tags: ["events"],
         summary: "List attendees of an event",
+        ...access("public"),
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
         responses: {
           "200": { description: "All attendees", content: jsonBody(ref("AttendanceList")) },
@@ -972,6 +1123,7 @@ export const openApiDoc = {
       get: {
         tags: ["events"],
         summary: "Event performance leaderboard (ordered by rank)",
+        ...access("public"),
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
         responses: {
           "200": {
@@ -986,6 +1138,7 @@ export const openApiDoc = {
       get: {
         tags: ["trackers"],
         summary: "List published trackers",
+        ...access("public"),
         parameters: [...pageParams],
         responses: {
           "200": { description: "A page of trackers", content: jsonBody(ref("TrackerList")) },
@@ -996,6 +1149,7 @@ export const openApiDoc = {
       get: {
         tags: ["trackers"],
         summary: "Get a published tracker with its published ranklists",
+        ...access("public"),
         parameters: [{ name: "slug", in: "path", required: true, schema: { type: "string" } }],
         responses: {
           "200": { description: "The tracker", content: jsonBody(ref("TrackerDetail")) },
@@ -1007,6 +1161,7 @@ export const openApiDoc = {
       get: {
         tags: ["trackers"],
         summary: "Ranklist standings — events (with weight) and users with per-event performance",
+        ...access("public"),
         parameters: [
           { name: "slug", in: "path", required: true, schema: { type: "string" } },
           { name: "keyword", in: "path", required: true, schema: { type: "string" } },
@@ -1024,9 +1179,11 @@ export const openApiDoc = {
       get: {
         tags: ["programmers"],
         summary: "List programmers (users with at least one handle)",
-        description:
+        ...access(
+          "public",
           "Ordered by max Codeforces rating (unrated users last), then name. " +
-          "Searchable on name and username via `q`.",
+            "Searchable on name and username via `q`.",
+        ),
         parameters: [
           ...pageParams,
           {
@@ -1045,6 +1202,7 @@ export const openApiDoc = {
       get: {
         tags: ["programmers"],
         summary: "Get a programmer by username, with handles and tracker performance",
+        ...access("public"),
         parameters: [
           { name: "username", in: "path", required: true, schema: { type: "string" } },
         ],
@@ -1058,6 +1216,7 @@ export const openApiDoc = {
       get: {
         tags: ["files"],
         summary: "Stream a stored object (e.g. a profile image)",
+        ...access("public"),
         parameters: [
           {
             name: "key",
@@ -1078,9 +1237,9 @@ export const openApiDoc = {
     },
     "/admin/users": {
       get: {
-        tags: ["admin"],
+        tags: ["admin-users"],
         summary: "List all users",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_users"),
         parameters: [
           ...pageParams,
           {
@@ -1089,7 +1248,12 @@ export const openApiDoc = {
             description: "Search on name, username, email, or student id.",
             schema: { type: "string" },
           },
-          { name: "role", in: "query", schema: { type: "string", enum: ["user", "admin"] } },
+          {
+            name: "permission",
+            in: "query",
+            description: "Only users granted this permission.",
+            schema: ref("Permission"),
+          },
         ],
         responses: {
           "200": { description: "A page of users", content: jsonBody(ref("UserList")) },
@@ -1097,9 +1261,9 @@ export const openApiDoc = {
         },
       },
       post: {
-        tags: ["admin"],
+        tags: ["admin-users"],
         summary: "Create a user",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_users"),
         requestBody: { required: true, content: jsonBody(ref("AdminUserCreateRequest")) },
         responses: {
           "201": { description: "User created", content: jsonBody(ref("UserResponse")) },
@@ -1114,9 +1278,9 @@ export const openApiDoc = {
     },
     "/admin/users/{id}": {
       get: {
-        tags: ["admin"],
+        tags: ["admin-users"],
         summary: "Get a user with their handles",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_users"),
         parameters: [idParam("id")],
         responses: {
           "200": { description: "The user", content: jsonBody(ref("AdminUserDetail")) },
@@ -1125,15 +1289,15 @@ export const openApiDoc = {
         },
       },
       patch: {
-        tags: ["admin"],
-        summary: "Update a user (including role and password)",
-        security: [{ bearerAuth: [] }],
+        tags: ["admin-users"],
+        summary: "Update a user (including password)",
+        ...access("manage_users"),
         parameters: [idParam("id")],
         requestBody: { required: true, content: jsonBody(ref("AdminUserUpdateRequest")) },
         responses: {
           "200": { description: "The updated user", content: jsonBody(ref("UserResponse")) },
           "400": {
-            description: "Validation failed, empty body, or self-demotion",
+            description: "Validation failed or empty body",
             content: jsonBody(ref("Error")),
           },
           ...adminAuthResponses,
@@ -1145,23 +1309,69 @@ export const openApiDoc = {
         },
       },
       delete: {
-        tags: ["admin"],
-        summary: "Delete a user (cascades handles, attendance, performance, memberships)",
-        security: [{ bearerAuth: [] }],
+        tags: ["admin-users"],
+        summary: "Delete a user (cascades handles, permissions, attendance, performance, memberships)",
+        ...access("manage_users"),
         parameters: [idParam("id")],
         responses: {
           "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
-          "400": { description: "You cannot delete yourself", content: jsonBody(ref("Error")) },
+          "400": {
+            description: "You cannot delete yourself or the super admin",
+            content: jsonBody(ref("Error")),
+          },
           ...adminAuthResponses,
           "404": { description: "User not found", content: jsonBody(ref("Error")) },
         },
       },
     },
+    "/admin/users/{id}/permissions/{permission}": {
+      put: {
+        tags: ["admin-users"],
+        summary: "Grant a permission to a user (idempotent)",
+        ...access("super-admin"),
+        parameters: [idParam("id"), permissionPathParam],
+        responses: {
+          "200": {
+            description: "The user with their updated permissions",
+            content: jsonBody(ref("UserResponse")),
+          },
+          "400": { description: "Unknown permission", content: jsonBody(ref("Error")) },
+          "401": { description: "Missing or invalid token", content: jsonBody(ref("Error")) },
+          "403": {
+            description: "Caller is not the super admin",
+            content: jsonBody(ref("Error")),
+          },
+          "404": { description: "User not found", content: jsonBody(ref("Error")) },
+        },
+      },
+      delete: {
+        tags: ["admin-users"],
+        summary: "Revoke a permission from a user",
+        ...access("super-admin"),
+        parameters: [idParam("id"), permissionPathParam],
+        responses: {
+          "200": {
+            description: "The user with their updated permissions",
+            content: jsonBody(ref("UserResponse")),
+          },
+          "400": { description: "Unknown permission", content: jsonBody(ref("Error")) },
+          "401": { description: "Missing or invalid token", content: jsonBody(ref("Error")) },
+          "403": {
+            description: "Caller is not the super admin",
+            content: jsonBody(ref("Error")),
+          },
+          "404": {
+            description: "User not found, or permission not granted to them",
+            content: jsonBody(ref("Error")),
+          },
+        },
+      },
+    },
     "/admin/events": {
       get: {
-        tags: ["admin"],
+        tags: ["admin-events"],
         summary: "List all events (including drafts)",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_events"),
         parameters: [
           ...pageParams,
           {
@@ -1195,9 +1405,9 @@ export const openApiDoc = {
         },
       },
       post: {
-        tags: ["admin"],
+        tags: ["admin-events"],
         summary: "Create an event",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_events"),
         requestBody: { required: true, content: jsonBody(ref("AdminEventCreateRequest")) },
         responses: {
           "201": { description: "Event created", content: jsonBody(ref("AdminEvent")) },
@@ -1211,9 +1421,9 @@ export const openApiDoc = {
     },
     "/admin/events/{id}": {
       get: {
-        tags: ["admin"],
+        tags: ["admin-events"],
         summary: "Get an event with its media (any status; includes eventPassword)",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_events"),
         parameters: [idParam("id")],
         responses: {
           "200": { description: "The event", content: jsonBody(ref("AdminEventDetail")) },
@@ -1222,9 +1432,9 @@ export const openApiDoc = {
         },
       },
       patch: {
-        tags: ["admin"],
+        tags: ["admin-events"],
         summary: "Update an event",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_events"),
         parameters: [idParam("id")],
         requestBody: { required: true, content: jsonBody(ref("AdminEventUpdateRequest")) },
         responses: {
@@ -1238,9 +1448,9 @@ export const openApiDoc = {
         },
       },
       delete: {
-        tags: ["admin"],
+        tags: ["admin-events"],
         summary: "Delete an event (cascades media, attendance, performance, ranklist links)",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_events"),
         parameters: [idParam("id")],
         responses: {
           "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
@@ -1251,9 +1461,9 @@ export const openApiDoc = {
     },
     "/admin/events/{id}/media": {
       post: {
-        tags: ["admin"],
+        tags: ["admin-events"],
         summary: "Add an image to an event's media (appended last)",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_events"),
         parameters: [idParam("id")],
         requestBody: {
           required: true,
@@ -1270,9 +1480,9 @@ export const openApiDoc = {
     },
     "/admin/events/{id}/media/{mediaId}": {
       delete: {
-        tags: ["admin"],
+        tags: ["admin-events"],
         summary: "Remove a media item from an event",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_events"),
         parameters: [idParam("id"), idParam("mediaId")],
         responses: {
           "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
@@ -1283,9 +1493,9 @@ export const openApiDoc = {
     },
     "/admin/events/{id}/attendance": {
       post: {
-        tags: ["admin"],
+        tags: ["admin-events"],
         summary: "Record attendance for any user (no password or window checks)",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_attendance"),
         parameters: [idParam("id")],
         requestBody: { required: true, content: jsonBody(ref("AdminAttendanceAddRequest")) },
         responses: {
@@ -1299,9 +1509,9 @@ export const openApiDoc = {
     },
     "/admin/events/{id}/attendance/{userId}": {
       delete: {
-        tags: ["admin"],
+        tags: ["admin-events"],
         summary: "Remove a user's attendance from an event",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_attendance"),
         parameters: [idParam("id"), idParam("userId")],
         responses: {
           "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
@@ -1312,12 +1522,13 @@ export const openApiDoc = {
     },
     "/admin/events/{id}/performance/{userId}": {
       put: {
-        tags: ["admin"],
+        tags: ["admin-events"],
         summary: "Create or replace a user's performance row for an event",
-        description:
+        ...access(
+          "manage_events",
           "Full-replace semantics: omitted fields fall back to their defaults " +
-          "(position null, counts 0). Ranklist scores and ranks recalculate automatically.",
-        security: [{ bearerAuth: [] }],
+            "(position null, counts 0). Ranklist scores and ranks recalculate automatically.",
+        ),
         parameters: [idParam("id"), idParam("userId")],
         requestBody: { required: true, content: jsonBody(ref("AdminPerformanceSetRequest")) },
         responses: {
@@ -1328,9 +1539,9 @@ export const openApiDoc = {
         },
       },
       delete: {
-        tags: ["admin"],
+        tags: ["admin-events"],
         summary: "Delete a user's performance row for an event",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_events"),
         parameters: [idParam("id"), idParam("userId")],
         responses: {
           "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
@@ -1341,9 +1552,9 @@ export const openApiDoc = {
     },
     "/admin/trackers": {
       get: {
-        tags: ["admin"],
+        tags: ["admin-trackers"],
         summary: "List all trackers (including drafts)",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_trackers"),
         parameters: [
           ...pageParams,
           {
@@ -1364,9 +1575,9 @@ export const openApiDoc = {
         },
       },
       post: {
-        tags: ["admin"],
+        tags: ["admin-trackers"],
         summary: "Create a tracker",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_trackers"),
         requestBody: { required: true, content: jsonBody(ref("AdminTrackerCreateRequest")) },
         responses: {
           "201": { description: "Tracker created", content: jsonBody(ref("AdminTracker")) },
@@ -1378,9 +1589,9 @@ export const openApiDoc = {
     },
     "/admin/trackers/{id}": {
       get: {
-        tags: ["admin"],
+        tags: ["admin-trackers"],
         summary: "Get a tracker with all of its ranklists",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_trackers"),
         parameters: [idParam("id")],
         responses: {
           "200": { description: "The tracker", content: jsonBody(ref("AdminTrackerDetail")) },
@@ -1389,9 +1600,9 @@ export const openApiDoc = {
         },
       },
       patch: {
-        tags: ["admin"],
+        tags: ["admin-trackers"],
         summary: "Update a tracker",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_trackers"),
         parameters: [idParam("id")],
         requestBody: { required: true, content: jsonBody(ref("AdminTrackerUpdateRequest")) },
         responses: {
@@ -1403,9 +1614,9 @@ export const openApiDoc = {
         },
       },
       delete: {
-        tags: ["admin"],
+        tags: ["admin-trackers"],
         summary: "Delete a tracker (cascades its ranklists)",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_trackers"),
         parameters: [idParam("id")],
         responses: {
           "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
@@ -1416,9 +1627,9 @@ export const openApiDoc = {
     },
     "/admin/trackers/{id}/ranklists": {
       post: {
-        tags: ["admin"],
+        tags: ["admin-ranklists"],
         summary: "Create a ranklist under a tracker",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_trackers"),
         parameters: [idParam("id")],
         requestBody: { required: true, content: jsonBody(ref("AdminRanklistCreateRequest")) },
         responses: {
@@ -1435,9 +1646,9 @@ export const openApiDoc = {
     },
     "/admin/ranklists/{id}": {
       get: {
-        tags: ["admin"],
+        tags: ["admin-ranklists"],
         summary: "Get a ranklist with its events (weights) and users (scores, ranks)",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_trackers"),
         parameters: [idParam("id")],
         responses: {
           "200": { description: "The ranklist", content: jsonBody(ref("AdminRanklistDetail")) },
@@ -1446,9 +1657,9 @@ export const openApiDoc = {
         },
       },
       patch: {
-        tags: ["admin"],
+        tags: ["admin-ranklists"],
         summary: "Update a ranklist (weight changes recalculate scores)",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_trackers"),
         parameters: [idParam("id")],
         requestBody: { required: true, content: jsonBody(ref("AdminRanklistUpdateRequest")) },
         responses: {
@@ -1463,9 +1674,9 @@ export const openApiDoc = {
         },
       },
       delete: {
-        tags: ["admin"],
+        tags: ["admin-ranklists"],
         summary: "Delete a ranklist",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_trackers"),
         parameters: [idParam("id")],
         responses: {
           "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
@@ -1476,9 +1687,9 @@ export const openApiDoc = {
     },
     "/admin/ranklists/{id}/events/{eventId}": {
       put: {
-        tags: ["admin"],
+        tags: ["admin-ranklists"],
         summary: "Attach an event to a ranklist, or update its weight",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_trackers"),
         parameters: [idParam("id"), idParam("eventId")],
         requestBody: { required: true, content: jsonBody(ref("AdminRanklistEventSetRequest")) },
         responses: {
@@ -1489,9 +1700,9 @@ export const openApiDoc = {
         },
       },
       delete: {
-        tags: ["admin"],
+        tags: ["admin-ranklists"],
         summary: "Detach an event from a ranklist",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_trackers"),
         parameters: [idParam("id"), idParam("eventId")],
         responses: {
           "200": { description: "Detached", content: jsonBody(ref("Ok")) },
@@ -1505,9 +1716,9 @@ export const openApiDoc = {
     },
     "/admin/ranklists/{id}/users/{userId}": {
       put: {
-        tags: ["admin"],
+        tags: ["admin-ranklists"],
         summary: "Add a user to a ranklist (idempotent)",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_trackers"),
         parameters: [idParam("id"), idParam("userId")],
         responses: {
           "200": { description: "Membership ensured", content: jsonBody(ref("RanklistUserSetResult")) },
@@ -1516,9 +1727,9 @@ export const openApiDoc = {
         },
       },
       delete: {
-        tags: ["admin"],
+        tags: ["admin-ranklists"],
         summary: "Remove a user from a ranklist",
-        security: [{ bearerAuth: [] }],
+        ...access("manage_trackers"),
         parameters: [idParam("id"), idParam("userId")],
         responses: {
           "200": { description: "Removed", content: jsonBody(ref("Ok")) },

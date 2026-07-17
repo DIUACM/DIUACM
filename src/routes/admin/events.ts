@@ -9,6 +9,7 @@ import { buildMeta } from "../../lib/pagination";
 import { parseId } from "../../lib/parse-id";
 import { fileUrlFor, toUserSummary } from "../../lib/user-shape";
 import { validate } from "../../lib/validator";
+import { requirePermission } from "../../middleware/auth";
 import {
   adminAttendanceAddSchema,
   adminEventCreateSchema,
@@ -36,6 +37,11 @@ const eventColumns = {
   updatedAt: events.updatedAt,
 };
 
+// Events, media, and performance need manage_events; the attendance routes
+// below need manage_attendance instead.
+const manageEvents = requirePermission("manage_events");
+const manageAttendance = requirePermission("manage_attendance");
+
 const adminEventRoutes = new Hono<AppEnv>();
 
 const loadEvent = async (db: ReturnType<typeof getDb>, id: number) => {
@@ -51,7 +57,7 @@ const requireEventId = (c: { req: { param: (k: "id") => string } }): number => {
 };
 
 // All events regardless of status, newest first.
-adminEventRoutes.get("/", validate("query", adminEventsListQuery), async (c) => {
+adminEventRoutes.get("/", manageEvents, validate("query", adminEventsListQuery), async (c) => {
   const { page, perPage, type, scope, status, q } = c.req.valid("query");
   const db = getDb(c.env.DB);
 
@@ -84,7 +90,7 @@ adminEventRoutes.get("/", validate("query", adminEventsListQuery), async (c) => 
   return c.json({ data: rows, meta: buildMeta(page, perPage, total) });
 });
 
-adminEventRoutes.post("/", validate("json", adminEventCreateSchema), async (c) => {
+adminEventRoutes.post("/", manageEvents, validate("json", adminEventCreateSchema), async (c) => {
   const input = c.req.valid("json");
   if (input.endingAt <= input.startingAt) {
     throw new HTTPException(400, { message: "endingAt must be after startingAt" });
@@ -95,7 +101,7 @@ adminEventRoutes.post("/", validate("json", adminEventCreateSchema), async (c) =
   return c.json(ev, 201);
 });
 
-adminEventRoutes.get("/:id", async (c) => {
+adminEventRoutes.get("/:id", manageEvents, async (c) => {
   const id = requireEventId(c);
   const db = getDb(c.env.DB);
   const origin = new URL(c.req.url).origin;
@@ -113,7 +119,7 @@ adminEventRoutes.get("/:id", async (c) => {
   });
 });
 
-adminEventRoutes.patch("/:id", validate("json", adminEventUpdateSchema), async (c) => {
+adminEventRoutes.patch("/:id", manageEvents, validate("json", adminEventUpdateSchema), async (c) => {
   const id = requireEventId(c);
   const input = c.req.valid("json");
   if (Object.keys(input).length === 0) {
@@ -139,7 +145,7 @@ adminEventRoutes.patch("/:id", validate("json", adminEventUpdateSchema), async (
 
 // Deleting an event cascades its media rows, attendance, performance, and
 // ranklist links (FKs + triggers); stored media objects are removed best-effort.
-adminEventRoutes.delete("/:id", async (c) => {
+adminEventRoutes.delete("/:id", manageEvents, async (c) => {
   const id = requireEventId(c);
   const db = getDb(c.env.DB);
   await loadEvent(db, id);
@@ -166,7 +172,7 @@ adminEventRoutes.delete("/:id", async (c) => {
 // Media — image uploads only (multipart field "image"); appended last.
 // ---------------------------------------------------------------------------
 
-adminEventRoutes.post("/:id/media", async (c) => {
+adminEventRoutes.post("/:id/media", manageEvents, async (c) => {
   const id = requireEventId(c);
   const db = getDb(c.env.DB);
   await loadEvent(db, id);
@@ -199,7 +205,7 @@ adminEventRoutes.post("/:id/media", async (c) => {
   return c.json({ id: row.id, type: row.type, url: fileUrlFor(origin, key) }, 201);
 });
 
-adminEventRoutes.delete("/:id/media/:mediaId", async (c) => {
+adminEventRoutes.delete("/:id/media/:mediaId", manageEvents, async (c) => {
   const id = requireEventId(c);
   const mediaId = parseId(c.req.param("mediaId"));
   if (mediaId === null) throw new HTTPException(404, { message: "Media not found" });
@@ -224,7 +230,7 @@ adminEventRoutes.delete("/:id/media/:mediaId", async (c) => {
 // Attendance — admins can add/remove anyone, ignoring password and window.
 // ---------------------------------------------------------------------------
 
-adminEventRoutes.post("/:id/attendance", validate("json", adminAttendanceAddSchema), async (c) => {
+adminEventRoutes.post("/:id/attendance", manageAttendance, validate("json", adminAttendanceAddSchema), async (c) => {
   const id = requireEventId(c);
   const { userId } = c.req.valid("json");
   const db = getDb(c.env.DB);
@@ -243,7 +249,7 @@ adminEventRoutes.post("/:id/attendance", validate("json", adminAttendanceAddSche
   return c.json({ ok: true, attendedAt: row.attendedAt }, 201);
 });
 
-adminEventRoutes.delete("/:id/attendance/:userId", async (c) => {
+adminEventRoutes.delete("/:id/attendance/:userId", manageAttendance, async (c) => {
   const id = requireEventId(c);
   const userId = parseId(c.req.param("userId"));
   if (userId === null) throw new HTTPException(404, { message: "Attendance not found" });
@@ -265,6 +271,7 @@ adminEventRoutes.delete("/:id/attendance/:userId", async (c) => {
 
 adminEventRoutes.put(
   "/:id/performance/:userId",
+  manageEvents,
   validate("json", adminPerformanceSetSchema),
   async (c) => {
     const id = requireEventId(c);
@@ -295,7 +302,7 @@ adminEventRoutes.put(
   },
 );
 
-adminEventRoutes.delete("/:id/performance/:userId", async (c) => {
+adminEventRoutes.delete("/:id/performance/:userId", manageEvents, async (c) => {
   const id = requireEventId(c);
   const userId = parseId(c.req.param("userId"));
   if (userId === null) throw new HTTPException(404, { message: "Performance not found" });

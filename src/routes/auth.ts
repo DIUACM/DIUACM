@@ -1,5 +1,5 @@
 import { and, eq, or } from "drizzle-orm";
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import { getDb } from "../db/client";
@@ -8,6 +8,7 @@ import { GoogleAuthError, verifyGoogleIdToken } from "../lib/google-oauth";
 import { parseImageUpload } from "../lib/image-upload";
 import { signAuthToken } from "../lib/jwt";
 import { hashPassword, verifyPassword } from "../lib/password";
+import { isSuperAdminEmail, loadPermissions } from "../lib/permissions";
 import { toAuthUser, toHandlesMap } from "../lib/user-shape";
 import { validate } from "../lib/validator";
 import { requireAuth } from "../middleware/auth";
@@ -29,9 +30,21 @@ const authUserColumns = {
   studentId: users.studentId,
   imageKey: users.imageKey,
   maxCfRating: users.maxCfRating,
-  role: users.role,
   createdAt: users.createdAt,
   updatedAt: users.updatedAt,
+};
+
+type AuthUserRow = {
+  [K in keyof typeof authUserColumns]: (typeof users.$inferSelect)[K];
+};
+
+// Shape a user row for a response, attaching permissions and the super-admin flag.
+const shapeAuthUser = async (c: Context<AppEnv>, row: AuthUserRow) => {
+  const isSuperAdmin = isSuperAdminEmail(row.email, c.env.SUPER_ADMIN_EMAIL);
+  // The super admin's permissions are implicit — no need to query granted rows.
+  const permissions = isSuperAdmin ? [] : await loadPermissions(getDb(c.env.DB), row.id);
+  const origin = new URL(c.req.url).origin;
+  return toAuthUser(row, origin, { permissions, isSuperAdmin });
 };
 
 const ALLOWED_EMAIL_DOMAIN = "diu.edu.bd";
@@ -67,8 +80,7 @@ auth.post("/register", validate("json", registerSchema), async (c) => {
     { id: user.id, username: user.username },
     c.env.JWT_SECRET,
   );
-  const origin = new URL(c.req.url).origin;
-  return c.json({ token, user: toAuthUser(user, origin) }, 201);
+  return c.json({ token, user: await shapeAuthUser(c, user) }, 201);
 });
 
 auth.post("/login", validate("json", loginSchema), async (c) => {
@@ -94,8 +106,7 @@ auth.post("/login", validate("json", loginSchema), async (c) => {
     { id: row.id, username: row.username },
     c.env.JWT_SECRET,
   );
-  const origin = new URL(c.req.url).origin;
-  return c.json({ token, user: toAuthUser(row, origin) });
+  return c.json({ token, user: await shapeAuthUser(c, row) });
 });
 
 auth.post("/google", validate("json", googleSignInSchema), async (c) => {
@@ -113,7 +124,11 @@ auth.post("/google", validate("json", googleSignInSchema), async (c) => {
   }
 
   const email = claims.email.trim().toLowerCase();
-  if (!email.endsWith(`@${ALLOWED_EMAIL_DOMAIN}`)) {
+  // The super admin may sign in from any domain; everyone else must use DIU email.
+  if (
+    !isSuperAdminEmail(email, c.env.SUPER_ADMIN_EMAIL) &&
+    !email.endsWith(`@${ALLOWED_EMAIL_DOMAIN}`)
+  ) {
     throw new HTTPException(403, {
       message: `Only @${ALLOWED_EMAIL_DOMAIN} email addresses can sign in with Google`,
     });
@@ -167,8 +182,7 @@ auth.post("/google", validate("json", googleSignInSchema), async (c) => {
     { id: user.id, username: user.username },
     c.env.JWT_SECRET,
   );
-  const origin = new URL(c.req.url).origin;
-  return c.json({ token, user: toAuthUser(user, origin) }, createdNow ? 201 : 200);
+  return c.json({ token, user: await shapeAuthUser(c, user) }, createdNow ? 201 : 200);
 });
 
 auth.get("/me", requireAuth, async (c) => {
@@ -184,8 +198,7 @@ auth.get("/me", requireAuth, async (c) => {
   if (!me) {
     throw new HTTPException(404, { message: "User not found" });
   }
-  const origin = new URL(c.req.url).origin;
-  return c.json({ user: toAuthUser(me, origin) });
+  return c.json({ user: await shapeAuthUser(c, me) });
 });
 
 auth.patch("/me", requireAuth, validate("json", profileUpdateSchema), async (c) => {
@@ -208,8 +221,7 @@ auth.patch("/me", requireAuth, validate("json", profileUpdateSchema), async (c) 
   if (!updated) {
     throw new HTTPException(404, { message: "User not found" });
   }
-  const origin = new URL(c.req.url).origin;
-  return c.json({ user: toAuthUser(updated, origin) });
+  return c.json({ user: await shapeAuthUser(c, updated) });
 });
 
 auth.put("/me/image", requireAuth, async (c) => {
@@ -255,8 +267,7 @@ auth.put("/me/image", requireAuth, async (c) => {
     }
   }
 
-  const origin = new URL(c.req.url).origin;
-  return c.json({ user: toAuthUser(updated, origin) });
+  return c.json({ user: await shapeAuthUser(c, updated) });
 });
 
 // ---------------------------------------------------------------------------

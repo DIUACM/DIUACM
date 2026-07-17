@@ -21,10 +21,6 @@ export const users = sqliteTable("users", {
   studentId: text("student_id").unique(),
   // Nullable: users who sign in with Google have no password of their own.
   passwordHash: text("password_hash"),
-  // Admins can manage everything under /admin. Promote via the admin API or SQL.
-  role: text("role", { enum: ["user", "admin"] })
-    .notNull()
-    .default("user"),
   // R2 object key for the profile image (null if none). Served via GET /files/:key.
   imageKey: text("image_key"),
   // Highest Codeforces rating reached. Null until populated (by a future CF sync).
@@ -37,6 +33,34 @@ export const users = sqliteTable("users", {
     .notNull()
     .default(sql`(unixepoch())`),
 });
+
+// Admin-panel permissions. Access control is permission-based: a user may hold
+// any subset of these. The super admin (email matches SUPER_ADMIN_EMAIL in
+// wrangler.jsonc) implicitly holds all of them.
+export const PERMISSIONS = [
+  "manage_users",
+  "manage_events",
+  "manage_attendance",
+  "manage_trackers",
+] as const;
+export type Permission = (typeof PERMISSIONS)[number];
+
+export const userPermissions = sqliteTable(
+  "user_permissions",
+  {
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    permission: text("permission", { enum: PERMISSIONS }).notNull(),
+    createdAt: integer("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [
+    primaryKey({ columns: [t.userId, t.permission] }),
+    index("user_permissions_user_id_idx").on(t.userId),
+  ],
+);
 
 export const events = sqliteTable(
   "events",
@@ -280,6 +304,11 @@ export const usersRelations = relations(users, ({ many }) => ({
   performance: many(eventPerformance),
   ranklists: many(ranklistUsers),
   handles: many(userHandles),
+  permissions: many(userPermissions),
+}));
+
+export const userPermissionsRelations = relations(userPermissions, ({ one }) => ({
+  user: one(users, { fields: [userPermissions.userId], references: [users.id] }),
 }));
 
 export const eventsRelations = relations(events, ({ many }) => ({
@@ -342,3 +371,4 @@ export type RanklistEvent = typeof ranklistEvents.$inferSelect;
 export type RanklistUser = typeof ranklistUsers.$inferSelect;
 export type UserHandle = typeof userHandles.$inferSelect;
 export type NewUserHandle = typeof userHandles.$inferInsert;
+export type UserPermission = typeof userPermissions.$inferSelect;

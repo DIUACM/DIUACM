@@ -1,9 +1,9 @@
 import { z } from "zod";
 
+import { PERMISSIONS } from "../db/schema";
 import { pageFields } from "../lib/pagination";
 import { EVENT_SCOPES, EVENT_TYPES } from "./events";
 
-export const USER_ROLES = ["user", "admin"] as const;
 export const PUBLISH_STATUSES = ["published", "draft"] as const;
 
 // Shared field fragments, kept identical to the public auth schemas.
@@ -26,7 +26,8 @@ export const adminUsersListQuery = z.object({
   ...pageFields,
   // Searches name / username / email / student id.
   q: z.string().trim().min(1).max(100).optional(),
-  role: z.enum(USER_ROLES).optional(),
+  // Only users granted this permission.
+  permission: z.enum(PERMISSIONS).optional(),
 });
 
 export const adminUserCreateSchema = z.object({
@@ -36,7 +37,6 @@ export const adminUserCreateSchema = z.object({
   // Omitted → the account has no password (Google sign-in only).
   password: passwordField.optional(),
   studentId: studentIdField.optional(),
-  role: z.enum(USER_ROLES).optional(),
   maxCfRating: z.number().int().nullable().optional(),
 });
 
@@ -47,8 +47,12 @@ export const adminUserUpdateSchema = z.object({
   // `null` removes the password (making the account Google sign-in only).
   password: passwordField.nullable().optional(),
   studentId: studentIdField.nullable().optional(),
-  role: z.enum(USER_ROLES).optional(),
   maxCfRating: z.number().int().nullable().optional(),
+});
+
+// Path param for the grant/revoke endpoints (PUT/DELETE /admin/users/:id/permissions/:permission).
+export const permissionParam = z.object({
+  permission: z.enum(PERMISSIONS),
 });
 
 // ---------------------------------------------------------------------------

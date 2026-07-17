@@ -36,6 +36,13 @@
       "when": 1784301374490,
       "tag": "0004_moaning_timeslip",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1784302656236,
+      "tag": "0005_last_anthem",
+      "breakpoints": true
     }
   ]
 }

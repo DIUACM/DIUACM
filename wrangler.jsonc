@@ -25,6 +25,9 @@
     // Google OAuth client id (public value — fine to commit). The ID token's
     // `aud` claim must match this. Replace with your own from the Google Cloud
     // console (OAuth 2.0 Client IDs).
-    "GOOGLE_CLIENT_ID": "REPLACE_WITH_YOUR_GOOGLE_OAUTH_CLIENT_ID"
+    "GOOGLE_CLIENT_ID": "REPLACE_WITH_YOUR_GOOGLE_OAUTH_CLIENT_ID",
+    // The super admin: implicitly holds every admin permission and is exempt
+    // from the Google sign-in email-domain restriction. Compared case-insensitively.
+    "SUPER_ADMIN_EMAIL": "sourovcodes@gmail.com"
   }
 }

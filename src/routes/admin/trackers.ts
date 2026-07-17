@@ -7,6 +7,7 @@ import { ranklists, trackers } from "../../db/schema";
 import { buildMeta } from "../../lib/pagination";
 import { parseId } from "../../lib/parse-id";
 import { validate } from "../../lib/validator";
+import { requirePermission } from "../../middleware/auth";
 import {
   adminRanklistCreateSchema,
   adminTrackerCreateSchema,
@@ -40,10 +41,12 @@ export const ranklistColumns = {
   updatedAt: ranklists.updatedAt,
 };
 
+const manageTrackers = requirePermission("manage_trackers");
+
 const adminTrackerRoutes = new Hono<AppEnv>();
 
 // All trackers regardless of status, newest first.
-adminTrackerRoutes.get("/", validate("query", adminTrackersListQuery), async (c) => {
+adminTrackerRoutes.get("/", manageTrackers, validate("query", adminTrackersListQuery), async (c) => {
   const { page, perPage, status, q } = c.req.valid("query");
   const db = getDb(c.env.DB);
 
@@ -70,7 +73,7 @@ adminTrackerRoutes.get("/", validate("query", adminTrackersListQuery), async (c)
   return c.json({ data: rows, meta: buildMeta(page, perPage, total) });
 });
 
-adminTrackerRoutes.post("/", validate("json", adminTrackerCreateSchema), async (c) => {
+adminTrackerRoutes.post("/", manageTrackers, validate("json", adminTrackerCreateSchema), async (c) => {
   const input = c.req.valid("json");
   const db = getDb(c.env.DB);
 
@@ -79,7 +82,7 @@ adminTrackerRoutes.post("/", validate("json", adminTrackerCreateSchema), async (
   return c.json(tracker, 201);
 });
 
-adminTrackerRoutes.get("/:id", async (c) => {
+adminTrackerRoutes.get("/:id", manageTrackers, async (c) => {
   const id = parseId(c.req.param("id"));
   if (id === null) throw new HTTPException(404, { message: "Tracker not found" });
   const db = getDb(c.env.DB);
@@ -100,7 +103,7 @@ adminTrackerRoutes.get("/:id", async (c) => {
   return c.json({ ...tracker, ranklists: ranklistRows });
 });
 
-adminTrackerRoutes.patch("/:id", validate("json", adminTrackerUpdateSchema), async (c) => {
+adminTrackerRoutes.patch("/:id", manageTrackers, validate("json", adminTrackerUpdateSchema), async (c) => {
   const id = parseId(c.req.param("id"));
   if (id === null) throw new HTTPException(404, { message: "Tracker not found" });
   const input = c.req.valid("json");
@@ -120,7 +123,7 @@ adminTrackerRoutes.patch("/:id", validate("json", adminTrackerUpdateSchema), asy
 });
 
 // Deleting a tracker cascades its ranklists and their pivot rows (FKs).
-adminTrackerRoutes.delete("/:id", async (c) => {
+adminTrackerRoutes.delete("/:id", manageTrackers, async (c) => {
   const id = parseId(c.req.param("id"));
   if (id === null) throw new HTTPException(404, { message: "Tracker not found" });
 
@@ -136,6 +139,7 @@ adminTrackerRoutes.delete("/:id", async (c) => {
 
 adminTrackerRoutes.post(
   "/:id/ranklists",
+  manageTrackers,
   validate("json", adminRanklistCreateSchema),
   async (c) => {
     const id = parseId(c.req.param("id"));

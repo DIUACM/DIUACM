@@ -1,4 +1,5 @@
-import type { User } from "../db/schema";
+import type { Permission, User } from "../db/schema";
+import { effectivePermissions } from "./permissions";
 import { HANDLE_TYPES, type HandleType } from "../schemas/handles";
 
 type UserRow = Pick<
@@ -10,10 +11,15 @@ type UserRow = Pick<
   | "studentId"
   | "imageKey"
   | "maxCfRating"
-  | "role"
   | "createdAt"
   | "updatedAt"
 >;
+
+/** Admin-panel access attached to a user shape: granted permissions + super-admin flag. */
+export type UserAccess = {
+  permissions: Permission[];
+  isSuperAdmin: boolean;
+};
 
 /** Build the absolute, worker-served URL for a stored object key (served by `GET /files/:key`). */
 export const fileUrlFor = (origin: string, key: string | null): string | null =>
@@ -29,7 +35,7 @@ export const imageUrlFor = (origin: string, imageKey: string | null): string | n
  * `origin` is the request origin (e.g. `https://api.example.com`) used to build
  * absolute image URLs.
  */
-export const toAuthUser = (row: UserRow, origin: string) => ({
+export const toAuthUser = (row: UserRow, origin: string, access: UserAccess) => ({
   id: row.id,
   name: row.name,
   email: row.email,
@@ -37,7 +43,9 @@ export const toAuthUser = (row: UserRow, origin: string) => ({
   studentId: row.studentId,
   image: imageUrlFor(origin, row.imageKey),
   maxCfRating: row.maxCfRating,
-  role: row.role,
+  // Effective permissions: the super admin reports all of them.
+  permissions: effectivePermissions(access.permissions, access.isSuperAdmin),
+  isSuperAdmin: access.isSuperAdmin,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
 });

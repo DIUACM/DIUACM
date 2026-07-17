@@ -7,12 +7,15 @@ import { events, ranklistEvents, ranklists, ranklistUsers, users } from "../../d
 import { parseId } from "../../lib/parse-id";
 import { toUserSummary } from "../../lib/user-shape";
 import { validate } from "../../lib/validator";
+import { requirePermission } from "../../middleware/auth";
 import {
   adminRanklistEventSetSchema,
   adminRanklistUpdateSchema,
 } from "../../schemas/admin";
 import { ranklistColumns } from "./trackers";
 import type { AppEnv } from "../../types";
+
+const manageTrackers = requirePermission("manage_trackers");
 
 const adminRanklistRoutes = new Hono<AppEnv>();
 
@@ -30,7 +33,7 @@ const loadRanklist = async (db: ReturnType<typeof getDb>, id: number) => {
 
 // Full ranklist detail: its fields, attached events (with weight), and member
 // users (with trigger-maintained score/rank).
-adminRanklistRoutes.get("/:id", async (c) => {
+adminRanklistRoutes.get("/:id", manageTrackers, async (c) => {
   const id = requireRanklistId(c);
   const db = getDb(c.env.DB);
   const origin = new URL(c.req.url).origin;
@@ -79,7 +82,7 @@ adminRanklistRoutes.get("/:id", async (c) => {
   });
 });
 
-adminRanklistRoutes.patch("/:id", validate("json", adminRanklistUpdateSchema), async (c) => {
+adminRanklistRoutes.patch("/:id", manageTrackers, validate("json", adminRanklistUpdateSchema), async (c) => {
   const id = requireRanklistId(c);
   const input = c.req.valid("json");
   if (Object.keys(input).length === 0) {
@@ -99,7 +102,7 @@ adminRanklistRoutes.patch("/:id", validate("json", adminRanklistUpdateSchema), a
   return c.json(updated);
 });
 
-adminRanklistRoutes.delete("/:id", async (c) => {
+adminRanklistRoutes.delete("/:id", manageTrackers, async (c) => {
   const id = requireRanklistId(c);
   const db = getDb(c.env.DB);
 
@@ -119,6 +122,7 @@ adminRanklistRoutes.delete("/:id", async (c) => {
 
 adminRanklistRoutes.put(
   "/:id/events/:eventId",
+  manageTrackers,
   validate("json", adminRanklistEventSetSchema),
   async (c) => {
     const id = requireRanklistId(c);
@@ -148,7 +152,7 @@ adminRanklistRoutes.put(
   },
 );
 
-adminRanklistRoutes.delete("/:id/events/:eventId", async (c) => {
+adminRanklistRoutes.delete("/:id/events/:eventId", manageTrackers, async (c) => {
   const id = requireRanklistId(c);
   const eventId = parseId(c.req.param("eventId"));
   if (eventId === null) throw new HTTPException(404, { message: "Event not found" });
@@ -168,7 +172,7 @@ adminRanklistRoutes.delete("/:id/events/:eventId", async (c) => {
 // trigger-maintained from the moment the row exists.
 // ---------------------------------------------------------------------------
 
-adminRanklistRoutes.put("/:id/users/:userId", async (c) => {
+adminRanklistRoutes.put("/:id/users/:userId", manageTrackers, async (c) => {
   const id = requireRanklistId(c);
   const userId = parseId(c.req.param("userId"));
   if (userId === null) throw new HTTPException(404, { message: "User not found" });
@@ -190,7 +194,7 @@ adminRanklistRoutes.put("/:id/users/:userId", async (c) => {
   return c.json({ userId, score: row.score, rank: row.rank });
 });
 
-adminRanklistRoutes.delete("/:id/users/:userId", async (c) => {
+adminRanklistRoutes.delete("/:id/users/:userId", manageTrackers, async (c) => {
   const id = requireRanklistId(c);
   const userId = parseId(c.req.param("userId"));
   if (userId === null) throw new HTTPException(404, { message: "User not found" });
