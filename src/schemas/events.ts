@@ -22,9 +22,5 @@ export const attendanceGiveSchema = z.object({
   password: z.string().min(1).max(200),
 });
 
-export const attendanceListQuery = z.object({ ...pageFields });
-
-export const performanceListQuery = z.object({ ...pageFields });
-
 export type EventsListQuery = z.infer<typeof eventsListQuery>;
 export type AttendanceGiveInput = z.infer<typeof attendanceGiveSchema>;

@@ -205,8 +205,8 @@ const attendanceSchema = {
 
 const attendanceListSchema = {
   type: "object",
-  properties: { data: { type: "array", items: ref("Attendance") }, meta: ref("PaginationMeta") },
-  required: ["data", "meta"],
+  properties: { data: { type: "array", items: ref("Attendance") } },
+  required: ["data"],
 };
 
 const attendanceResultSchema = {
@@ -234,8 +234,8 @@ const performanceSchema = {
 
 const performanceListSchema = {
   type: "object",
-  properties: { data: { type: "array", items: ref("Performance") }, meta: ref("PaginationMeta") },
-  required: ["data", "meta"],
+  properties: { data: { type: "array", items: ref("Performance") } },
+  required: ["data"],
 };
 
 const trackerSchema = {
@@ -741,12 +741,9 @@ export const openApiDoc = {
       get: {
         tags: ["events"],
         summary: "List attendees of an event",
-        parameters: [
-          { name: "id", in: "path", required: true, schema: { type: "integer" } },
-          ...pageParams,
-        ],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
         responses: {
-          "200": { description: "A page of attendees", content: jsonBody(ref("AttendanceList")) },
+          "200": { description: "All attendees", content: jsonBody(ref("AttendanceList")) },
           "404": { description: "Event not found", content: jsonBody(ref("Error")) },
         },
       },
@@ -755,13 +752,10 @@ export const openApiDoc = {
       get: {
         tags: ["events"],
         summary: "Event performance leaderboard (ordered by rank)",
-        parameters: [
-          { name: "id", in: "path", required: true, schema: { type: "integer" } },
-          ...pageParams,
-        ],
+        parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
         responses: {
           "200": {
-            description: "A page of performance rows",
+            description: "All performance rows",
             content: jsonBody(ref("PerformanceList")),
           },
           "404": { description: "Event not found", content: jsonBody(ref("Error")) },

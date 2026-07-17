@@ -9,12 +9,7 @@ import { parseId } from "../lib/parse-id";
 import { fileUrlFor, toUserSummary } from "../lib/user-shape";
 import { validate } from "../lib/validator";
 import { requireAuth } from "../middleware/auth";
-import {
-  attendanceGiveSchema,
-  attendanceListQuery,
-  eventsListQuery,
-  performanceListQuery,
-} from "../schemas/events";
+import { attendanceGiveSchema, eventsListQuery } from "../schemas/events";
 import type { AppEnv } from "../types";
 
 // Attendance opens 15 min before the start and closes 15 min after the end.
@@ -168,12 +163,11 @@ eventRoutes.post(
   },
 );
 
-// Paginated list of who attended an event, newest first.
-eventRoutes.get("/:id/attendance", validate("query", attendanceListQuery), async (c) => {
+// Everyone who attended an event, newest first.
+eventRoutes.get("/:id/attendance", async (c) => {
   const id = parseId(c.req.param("id"));
   if (id === null) throw new HTTPException(404, { message: "Event not found" });
 
-  const { page, perPage } = c.req.valid("query");
   const db = getDb(c.env.DB);
   const origin = new URL(c.req.url).origin;
 
@@ -186,36 +180,29 @@ eventRoutes.get("/:id/attendance", validate("query", attendanceListQuery), async
     throw new HTTPException(404, { message: "Event not found" });
   }
 
-  const [rows, [{ value: total }]] = await Promise.all([
-    db.query.eventAttendance.findMany({
-      where: eq(eventAttendance.eventId, id),
-      columns: { createdAt: true },
-      with: {
-        user: { columns: { id: true, name: true, username: true, imageKey: true } },
-      },
-      orderBy: desc(eventAttendance.createdAt),
-      limit: perPage,
-      offset: (page - 1) * perPage,
-    }),
-    db.select({ value: count() }).from(eventAttendance).where(eq(eventAttendance.eventId, id)),
-  ]);
+  const rows = await db.query.eventAttendance.findMany({
+    where: eq(eventAttendance.eventId, id),
+    columns: { createdAt: true },
+    with: {
+      user: { columns: { id: true, name: true, username: true, imageKey: true } },
+    },
+    orderBy: desc(eventAttendance.createdAt),
+  });
 
   return c.json({
     data: rows.map((r) => ({
       attendedAt: r.createdAt,
       user: r.user ? toUserSummary(r.user, origin) : null,
     })),
-    meta: buildMeta(page, perPage, total),
   });
 });
 
-// Paginated performance leaderboard for an event. Sorted by position ascending;
+// Full performance leaderboard for an event. Sorted by position ascending;
 // rows without a position (NULL) sort last.
-eventRoutes.get("/:id/performance", validate("query", performanceListQuery), async (c) => {
+eventRoutes.get("/:id/performance", async (c) => {
   const id = parseId(c.req.param("id"));
   if (id === null) throw new HTTPException(404, { message: "Event not found" });
 
-  const { page, perPage } = c.req.valid("query");
   const db = getDb(c.env.DB);
   const origin = new URL(c.req.url).origin;
 
@@ -228,26 +215,21 @@ eventRoutes.get("/:id/performance", validate("query", performanceListQuery), asy
     throw new HTTPException(404, { message: "Event not found" });
   }
 
-  const [rows, [{ value: total }]] = await Promise.all([
-    db
-      .select({
-        position: eventPerformance.position,
-        solveCount: eventPerformance.solveCount,
-        upsolveCount: eventPerformance.upsolveCount,
-        userId: users.id,
-        userName: users.name,
-        userUsername: users.username,
-        userImageKey: users.imageKey,
-      })
-      .from(eventPerformance)
-      .innerJoin(users, eq(eventPerformance.userId, users.id))
-      .where(eq(eventPerformance.eventId, id))
-      // `position is null` is 0 for ranked rows, 1 for unranked → unranked sort last.
-      .orderBy(sql`${eventPerformance.position} is null`, asc(eventPerformance.position))
-      .limit(perPage)
-      .offset((page - 1) * perPage),
-    db.select({ value: count() }).from(eventPerformance).where(eq(eventPerformance.eventId, id)),
-  ]);
+  const rows = await db
+    .select({
+      position: eventPerformance.position,
+      solveCount: eventPerformance.solveCount,
+      upsolveCount: eventPerformance.upsolveCount,
+      userId: users.id,
+      userName: users.name,
+      userUsername: users.username,
+      userImageKey: users.imageKey,
+    })
+    .from(eventPerformance)
+    .innerJoin(users, eq(eventPerformance.userId, users.id))
+    .where(eq(eventPerformance.eventId, id))
+    // `position is null` is 0 for ranked rows, 1 for unranked → unranked sort last.
+    .orderBy(sql`${eventPerformance.position} is null`, asc(eventPerformance.position));
 
   return c.json({
     data: rows.map((r) => ({
@@ -259,7 +241,6 @@ eventRoutes.get("/:id/performance", validate("query", performanceListQuery), asy
         origin,
       ),
     })),
-    meta: buildMeta(page, perPage, total),
   });
 });
 
