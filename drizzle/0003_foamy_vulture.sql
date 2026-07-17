@@ -1,0 +1,1 @@
+ALTER TABLE `event_performance` DROP COLUMN `participation`;

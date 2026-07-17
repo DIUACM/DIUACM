@@ -143,7 +143,6 @@ trackerRoutes.get("/:slug/:keyword", async (c) => {
     position: number | null;
     solveCount: number;
     upsolveCount: number;
-    participation: boolean;
   };
   const perfByUser = new Map<number, PerfEntry[]>();
   if (eventIds.length > 0 && userIds.length > 0) {
@@ -154,7 +153,6 @@ trackerRoutes.get("/:slug/:keyword", async (c) => {
         position: eventPerformance.position,
         solveCount: eventPerformance.solveCount,
         upsolveCount: eventPerformance.upsolveCount,
-        participation: eventPerformance.participation,
       })
       .from(eventPerformance)
       .where(
@@ -170,7 +168,6 @@ trackerRoutes.get("/:slug/:keyword", async (c) => {
         position: p.position,
         solveCount: p.solveCount,
         upsolveCount: p.upsolveCount,
-        participation: p.participation,
       });
       perfByUser.set(p.userId, list);
     }

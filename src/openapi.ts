@@ -227,10 +227,9 @@ const performanceSchema = {
     },
     solveCount: { type: "integer" },
     upsolveCount: { type: "integer" },
-    participation: { type: "boolean" },
     user: ref("UserSummary"),
   },
-  required: ["position", "solveCount", "upsolveCount", "participation", "user"],
+  required: ["position", "solveCount", "upsolveCount", "user"],
 };
 
 const performanceListSchema = {
@@ -304,9 +303,8 @@ const ranklistUserPerformanceSchema = {
     position: { type: ["integer", "null"], description: "Standing in this event; null when unranked." },
     solveCount: { type: "integer" },
     upsolveCount: { type: "integer" },
-    participation: { type: "boolean" },
   },
-  required: ["eventId", "position", "solveCount", "upsolveCount", "participation"],
+  required: ["eventId", "position", "solveCount", "upsolveCount"],
 };
 
 const ranklistStandingSchema = {

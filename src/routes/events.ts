@@ -234,7 +234,6 @@ eventRoutes.get("/:id/performance", validate("query", performanceListQuery), asy
         position: eventPerformance.position,
         solveCount: eventPerformance.solveCount,
         upsolveCount: eventPerformance.upsolveCount,
-        participation: eventPerformance.participation,
         userId: users.id,
         userName: users.name,
         userUsername: users.username,
@@ -255,7 +254,6 @@ eventRoutes.get("/:id/performance", validate("query", performanceListQuery), asy
       position: r.position,
       solveCount: r.solveCount,
       upsolveCount: r.upsolveCount,
-      participation: r.participation,
       user: toUserSummary(
         { id: r.userId, name: r.userName, username: r.userUsername, imageKey: r.userImageKey },
         origin,

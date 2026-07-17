@@ -134,8 +134,6 @@ export const eventPerformance = sqliteTable(
     position: integer("position"),
     solveCount: integer("solve_count").notNull().default(0),
     upsolveCount: integer("upsolve_count").notNull().default(0),
-    // No default — participation must be set explicitly when a row is written.
-    participation: integer("participation", { mode: "boolean" }).notNull(),
     createdAt: integer("created_at")
       .notNull()
       .default(sql`(unixepoch())`),

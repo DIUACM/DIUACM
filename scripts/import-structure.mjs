@@ -691,7 +691,6 @@ const mapEventPerformance = (statsRows, performanceRows, warnings) => {
 
     const solveCount = toInt(nested(row, ["solve_count", "solveCount", "solves"])) ?? 0;
     const upsolveCount = toInt(nested(row, ["upsolve_count", "upsolveCount", "upsolves"])) ?? 0;
-    const participationValue = nested(row, ["participation", "participated", "is_participated"]);
 
     out.push({
       event_id: eventId,
@@ -699,10 +698,6 @@ const mapEventPerformance = (statsRows, performanceRows, warnings) => {
       position: toInt(nested(row, ["position", "rank", "standing"])),
       solve_count: solveCount,
       upsolve_count: upsolveCount,
-      participation:
-        participationValue === undefined || participationValue === null
-          ? toBoolInt(solveCount > 0 || upsolveCount > 0)
-          : toBoolInt(participationValue),
       created_at: toEpochSeconds(nested(row, ["created_at", "createdAt"])) ?? Math.floor(Date.now() / 1000),
       updated_at: toEpochSeconds(nested(row, ["updated_at", "updatedAt"])) ?? Math.floor(Date.now() / 1000),
     });
@@ -842,7 +837,6 @@ const buildImport = (payload, options) => {
         "position",
         "solve_count",
         "upsolve_count",
-        "participation",
         "created_at",
         "updated_at",
       ]),

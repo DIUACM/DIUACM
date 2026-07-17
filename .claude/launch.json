@@ -4,8 +4,8 @@
     {
       "name": "diuacm-dev",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["wrangler", "dev", "--port", "8790"],
-      "port": 8790
+      "runtimeArgs": ["wrangler", "dev", "--port", "8791"],
+      "port": 8791
     }
   ]
 }
