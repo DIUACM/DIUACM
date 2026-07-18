@@ -1,14 +1,8 @@
-import { ArrowLeft } from 'lucide-react'
-import { Link, useParams } from 'react-router'
-import { useRanklist } from '@/api/queries/trackers'
+import { Link } from 'react-router'
 import { UserAvatar } from '@/components/shared/UserAvatar'
-import { EmptyState, ErrorState } from '@/components/shared/states'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 import { formatDate } from '@/lib/datetime'
 import type { RanklistStanding, RanklistUserPerformance } from '@/api/types'
 import { cn } from '@/lib/utils'
-import { useDocumentTitle } from '@/lib/use-document-title'
 
 function rankStyle(rank: number): string {
   if (rank === 1) return 'text-amber-500 dark:text-amber-400'
@@ -37,7 +31,7 @@ function PerformanceCell({ entry }: { entry: RanklistUserPerformance | undefined
   )
 }
 
-function StandingsTable({
+export function StandingsTable({
   standings,
 }: {
   standings: { events: { id: number; title: string; startingAt: number; weight: number }[]; users: RanklistStanding[] }
@@ -116,57 +110,6 @@ function StandingsTable({
           })}
         </tbody>
       </table>
-    </div>
-  )
-}
-
-export function RanklistPage() {
-  const { slug = '', keyword = '' } = useParams()
-  const ranklistQuery = useRanklist(slug, keyword)
-  useDocumentTitle(keyword ? `${keyword} standings` : undefined)
-
-  if (ranklistQuery.isPending) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-10 w-1/2" />
-        <Skeleton className="h-96 w-full" />
-      </div>
-    )
-  }
-
-  if (ranklistQuery.isError) {
-    return (
-      <ErrorState
-        error={ranklistQuery.error}
-        onRetry={() => void ranklistQuery.refetch()}
-      />
-    )
-  }
-
-  const standings = ranklistQuery.data
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <Button variant="ghost" size="sm" asChild className="-ml-2 mb-3">
-          <Link to={`/trackers/${slug}`}>
-            <ArrowLeft className="size-4" /> Back to tracker
-          </Link>
-        </Button>
-        <h1 className="text-3xl font-bold tracking-tight">
-          {standings.keyword}
-        </h1>
-        <p className="mt-1.5 text-muted-foreground">
-          {standings.users.length} participants · {standings.events.length}{' '}
-          events. Cells show solves, upsolves, and event position.
-        </p>
-      </div>
-
-      {standings.users.length === 0 ? (
-        <EmptyState message="No participants in this ranklist yet." />
-      ) : (
-        <StandingsTable standings={standings} />
-      )}
     </div>
   )
 }

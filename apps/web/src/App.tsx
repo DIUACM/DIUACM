@@ -17,7 +17,6 @@ import { NotFoundPage } from '@/features/home/NotFoundPage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { ProgrammerDetailPage } from '@/features/programmers/ProgrammerDetailPage'
 import { ProgrammersPage } from '@/features/programmers/ProgrammersPage'
-import { RanklistPage } from '@/features/trackers/RanklistPage'
 import { TrackerDetailPage } from '@/features/trackers/TrackerDetailPage'
 import { TrackersPage } from '@/features/trackers/TrackersPage'
 
@@ -30,7 +29,6 @@ const router = createBrowserRouter([
       { path: '/events/:id', element: <EventDetailPage /> },
       { path: '/trackers', element: <TrackersPage /> },
       { path: '/trackers/:slug', element: <TrackerDetailPage /> },
-      { path: '/trackers/:slug/:keyword', element: <RanklistPage /> },
       { path: '/programmers', element: <ProgrammersPage /> },
       { path: '/programmers/:username', element: <ProgrammerDetailPage /> },
       { path: '/login', element: <LoginPage /> },

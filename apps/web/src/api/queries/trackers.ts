@@ -27,5 +27,6 @@ export function useRanklist(slug: string, keyword: string) {
           params: { path: { slug, keyword } },
         }),
       ),
+    enabled: keyword !== '',
   })
 }
