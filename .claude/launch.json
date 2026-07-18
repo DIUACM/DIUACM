@@ -4,8 +4,8 @@
     {
       "name": "api",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--filter", "@diuacm/api", "dev", "--port", "8792"],
-      "port": 8792,
+      "runtimeArgs": ["--filter", "@diuacm/api", "dev", "--port", "8787"],
+      "port": 8787,
       "autoPort": false
     },
     {

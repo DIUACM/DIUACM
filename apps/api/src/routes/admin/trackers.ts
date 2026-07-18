@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, or, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, or, sql, type SQL } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
@@ -11,6 +11,7 @@ import { validate } from "../../lib/validator";
 import { requirePermission } from "../../middleware/auth";
 import {
   adminRanklistCreateSchema,
+  adminReorderSchema,
   adminTrackerCreateSchema,
   adminTrackersListQuery,
   adminTrackerUpdateSchema,
@@ -23,6 +24,7 @@ const trackerColumns = {
   description: trackers.description,
   slug: trackers.slug,
   status: trackers.status,
+  position: trackers.position,
   createdAt: trackers.createdAt,
   updatedAt: trackers.updatedAt,
 };
@@ -37,6 +39,7 @@ export const ranklistColumns = {
   isLocked: ranklists.isLocked,
   considerStrictAttendance: ranklists.considerStrictAttendance,
   autoAddUsers: ranklists.autoAddUsers,
+  position: ranklists.position,
   userCount: ranklists.userCount,
   eventCount: ranklists.eventCount,
   createdAt: ranklists.createdAt,
@@ -47,7 +50,7 @@ const manageTrackers = requirePermission("manage_trackers");
 
 const adminTrackerRoutes = new Hono<AppEnv>();
 
-// All trackers regardless of status, newest first.
+// All trackers regardless of status, in display order.
 adminTrackerRoutes.get("/", manageTrackers, validate("query", adminTrackersListQuery), async (c) => {
   const { page, perPage, status, q } = c.req.valid("query");
   const db = getDb(c.env.DB);
@@ -65,7 +68,7 @@ adminTrackerRoutes.get("/", manageTrackers, validate("query", adminTrackersListQ
       .select(trackerColumns)
       .from(trackers)
       .where(where)
-      .orderBy(desc(trackers.id))
+      .orderBy(asc(trackers.position), desc(trackers.id))
       .limit(perPage)
       .offset((page - 1) * perPage),
     db.select({ value: count() }).from(trackers).where(where),
@@ -78,8 +81,15 @@ adminTrackerRoutes.post("/", manageTrackers, validate("json", adminTrackerCreate
   const input = c.req.valid("json");
   const db = getDb(c.env.DB);
 
-  // Duplicate slug → UNIQUE failure → 409 via onError.
-  const [tracker] = await db.insert(trackers).values(input).returning(trackerColumns);
+  // Duplicate slug → UNIQUE failure → 409 via onError. New trackers go to the
+  // end of the display order.
+  const [tracker] = await db
+    .insert(trackers)
+    .values({
+      ...input,
+      position: sql`(SELECT COALESCE(MAX(position), -1) + 1 FROM trackers)`,
+    })
+    .returning(trackerColumns);
   return c.json(tracker, 201);
 });
 
@@ -99,7 +109,7 @@ adminTrackerRoutes.get("/:id", manageTrackers, async (c) => {
     .select(ranklistColumns)
     .from(ranklists)
     .where(eq(ranklists.trackerId, id))
-    .orderBy(asc(ranklists.keyword));
+    .orderBy(asc(ranklists.position), asc(ranklists.id));
 
   return c.json({ ...tracker, ranklists: ranklistRows });
 });
@@ -156,11 +166,69 @@ adminTrackerRoutes.post(
     if (!tracker) throw new HTTPException(404, { message: "Tracker not found" });
 
     // Duplicate keyword within the tracker → UNIQUE failure → 409 via onError.
+    // New ranklists go to the end of the tracker's display order.
     const [ranklist] = await db
       .insert(ranklists)
-      .values({ ...input, trackerId: id })
+      .values({
+        ...input,
+        trackerId: id,
+        position: sql`(SELECT COALESCE(MAX(position), -1) + 1 FROM ranklists WHERE tracker_id = ${id})`,
+      })
       .returning(ranklistColumns);
     return c.json(ranklist, 201);
+  },
+);
+
+// Set display positions for a batch of trackers (atomic via D1 batch).
+adminTrackerRoutes.post(
+  "/reorder",
+  manageTrackers,
+  validate("json", adminReorderSchema),
+  async (c) => {
+    const { items } = c.req.valid("json");
+    const db = getDb(c.env.DB);
+    const now = Math.floor(Date.now() / 1000);
+
+    const statements = items.map((item) =>
+      db
+        .update(trackers)
+        .set({ position: item.position, updatedAt: now })
+        .where(eq(trackers.id, item.id)),
+    );
+    await db.batch([statements[0], ...statements.slice(1)]);
+
+    return c.json({ ok: true });
+  },
+);
+
+// Set display positions for a batch of ranklists within one tracker.
+adminTrackerRoutes.post(
+  "/:id/ranklists/reorder",
+  manageTrackers,
+  validate("json", adminReorderSchema),
+  async (c) => {
+    const id = parseId(c.req.param("id"));
+    if (id === null) throw new HTTPException(404, { message: "Tracker not found" });
+    const { items } = c.req.valid("json");
+    const db = getDb(c.env.DB);
+    const now = Math.floor(Date.now() / 1000);
+
+    const [tracker] = await db
+      .select({ id: trackers.id })
+      .from(trackers)
+      .where(eq(trackers.id, id))
+      .limit(1);
+    if (!tracker) throw new HTTPException(404, { message: "Tracker not found" });
+
+    const statements = items.map((item) =>
+      db
+        .update(ranklists)
+        .set({ position: item.position, updatedAt: now })
+        .where(and(eq(ranklists.id, item.id), eq(ranklists.trackerId, id))),
+    );
+    await db.batch([statements[0], ...statements.slice(1)]);
+
+    return c.json({ ok: true });
   },
 );
 

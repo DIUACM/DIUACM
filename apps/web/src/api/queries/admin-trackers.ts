@@ -73,6 +73,40 @@ export function useAdminUpdateTracker(id: number) {
   })
 }
 
+export interface ReorderItem {
+  id: number
+  position: number
+}
+
+export function useAdminReorderTrackers() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (items: ReorderItem[]) =>
+      unwrap(api.POST('/admin/trackers/reorder', { body: { items } })),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'trackers'] })
+      void queryClient.invalidateQueries({ queryKey: ['trackers'] })
+    },
+  })
+}
+
+export function useAdminReorderRanklists(trackerId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (items: ReorderItem[]) =>
+      unwrap(
+        api.POST('/admin/trackers/{id}/ranklists/reorder', {
+          params: { path: { id: trackerId } },
+          body: { items },
+        }),
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'trackers', trackerId] })
+      void queryClient.invalidateQueries({ queryKey: ['trackers'] })
+    },
+  })
+}
+
 export function useAdminDeleteTracker() {
   const queryClient = useQueryClient()
   return useMutation({

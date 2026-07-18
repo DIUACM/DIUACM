@@ -2648,6 +2648,157 @@ export interface paths {
         };
         trace?: never;
     };
+    "/admin/trackers/reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set display positions for a batch of trackers
+         * @description **Access:** `manage_trackers` — Requires a bearer token for a user granted the `manage_trackers` permission. The super admin always passes.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AdminReorderRequest"];
+                };
+            };
+            responses: {
+                /** @description Positions updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Ok"];
+                    };
+                };
+                /** @description Validation failed */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Caller lacks the required permission */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/trackers/{id}/ranklists/reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set display positions for a batch of ranklists within a tracker
+         * @description **Access:** `manage_trackers` — Requires a bearer token for a user granted the `manage_trackers` permission. The super admin always passes.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AdminReorderRequest"];
+                };
+            };
+            responses: {
+                /** @description Positions updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Ok"];
+                    };
+                };
+                /** @description Validation failed */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Caller lacks the required permission */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Tracker not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/trackers/{id}/ranklists": {
         parameters: {
             query?: never;
@@ -3534,6 +3685,8 @@ export interface components {
             slug: string;
             /** @enum {string} */
             status: "published" | "draft";
+            /** @description Display order (0 = first). */
+            position: number;
             /** @description Unix epoch seconds (UTC). */
             createdAt: number;
             /** @description Unix epoch seconds (UTC). */
@@ -3550,6 +3703,8 @@ export interface components {
             slug: string;
             /** @enum {string} */
             status: "published" | "draft";
+            /** @description Display order (0 = first). */
+            position: number;
             /** @description Unix epoch seconds (UTC). */
             createdAt: number;
             /** @description Unix epoch seconds (UTC). */
@@ -3569,6 +3724,8 @@ export interface components {
             considerStrictAttendance: boolean;
             /** @description When true, DB triggers keep membership in sync with participation on attached events. */
             autoAddUsers: boolean;
+            /** @description Display order within the tracker (0 = first = latest). */
+            position: number;
             userCount: number;
             eventCount: number;
             /** @description Unix epoch seconds (UTC). */
@@ -3606,6 +3763,8 @@ export interface components {
             considerStrictAttendance: boolean;
             /** @description When true, DB triggers keep membership in sync with participation on attached events. */
             autoAddUsers: boolean;
+            /** @description Display order within the tracker (0 = first = latest). */
+            position: number;
             userCount: number;
             eventCount: number;
             /** @description Unix epoch seconds (UTC). */
@@ -3724,6 +3883,12 @@ export interface components {
         };
         AdminRanklistEventSetRequest: {
             weight: number;
+        };
+        AdminReorderRequest: {
+            items: {
+                id: number;
+                position: number;
+            }[];
         };
     };
     responses: never;

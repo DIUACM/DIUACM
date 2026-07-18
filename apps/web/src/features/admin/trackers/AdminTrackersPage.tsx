@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
 import {
   useAdminCreateTracker,
+  useAdminReorderTrackers,
   useAdminTrackers,
 } from '@/api/queries/admin-trackers'
 import type { PublishStatus } from '@/api/queries/admin-events'
@@ -41,6 +42,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
+import { ReorderButtons } from '@/features/admin/shared/ReorderButtons'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
 import { formatDate } from '@/lib/datetime'
 import { useDocumentTitle } from '@/lib/use-document-title'
@@ -177,6 +179,22 @@ export function AdminTrackersPage() {
   const status = (searchParams.get('status') as PublishStatus | null) ?? undefined
 
   const trackersQuery = useAdminTrackers({ page, q, status })
+  const reorderTrackers = useAdminReorderTrackers()
+  // Reordering a filtered subset would scramble the global order, so only
+  // allow it on the unfiltered list.
+  const canReorder = !q && !status
+
+  const moveTracker = (from: number, to: number) => {
+    if (!trackersQuery.data) return
+    const rows = [...trackersQuery.data.data]
+    const [moved] = rows.splice(from, 1)
+    rows.splice(to, 0, moved)
+    const base = (trackersQuery.data.meta.page - 1) * trackersQuery.data.meta.perPage
+    reorderTrackers.mutate(
+      rows.map((tracker, index) => ({ id: tracker.id, position: base + index })),
+      { onError: (error) => toast.error(errorMessage(error)) },
+    )
+  }
 
   const updateParams = (updates: Record<string, string | undefined>) => {
     setSearchParams((prev) => {
@@ -232,16 +250,25 @@ export function AdminTrackersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="pl-4">Title</TableHead>
+                  <TableHead className="w-16 pl-4">Order</TableHead>
+                  <TableHead>Title</TableHead>
                   <TableHead>Slug</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="pr-4">Updated</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {trackersQuery.data.data.map((tracker) => (
+                {trackersQuery.data.data.map((tracker, index) => (
                   <TableRow key={tracker.id}>
                     <TableCell className="pl-4">
+                      <ReorderButtons
+                        index={index}
+                        count={trackersQuery.data.data.length}
+                        disabled={!canReorder || reorderTrackers.isPending}
+                        onMove={moveTracker}
+                      />
+                    </TableCell>
+                    <TableCell>
                       <Link
                         to={`/admin/trackers/${tracker.id}`}
                         className="font-medium hover:underline"

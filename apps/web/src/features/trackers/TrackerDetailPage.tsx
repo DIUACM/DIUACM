@@ -17,9 +17,8 @@ export function TrackerDetailPage() {
 
   const trackerQuery = useTracker(slug)
   const ranklists = trackerQuery.data?.ranklists ?? []
-  // The API returns ranklists in ascending keyword order, so the latest one
-  // is the last entry.
-  const latestKeyword = ranklists.at(-1)?.keyword
+  // The API returns ranklists in admin-defined display order, latest first.
+  const latestKeyword = ranklists[0]?.keyword
   const activeKeyword = urlKeyword ?? latestKeyword ?? ''
 
   // With ?keyword= in the URL this fetches in parallel with the tracker;

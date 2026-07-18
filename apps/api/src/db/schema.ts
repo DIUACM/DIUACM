@@ -186,6 +186,8 @@ export const trackers = sqliteTable(
     status: text("status", { enum: ["published", "draft"] })
       .notNull()
       .default("draft"),
+    // Display order (0 = first). Admin-controlled via the reorder endpoint.
+    position: integer("position").notNull().default(0),
     createdAt: integer("created_at")
       .notNull()
       .default(sql`(unixepoch())`),
@@ -217,6 +219,9 @@ export const ranklists = sqliteTable(
     // with performance/attendance on an attached event is auto-added (auto_added = 1)
     // and auto-removed when their participation disappears.
     autoAddUsers: integer("auto_add_users", { mode: "boolean" }).notNull().default(false),
+    // Display order within the tracker (0 = first = latest). Admin-controlled
+    // via the reorder endpoint.
+    position: integer("position").notNull().default(0),
     // Maintained by SQLite triggers on ranklist_user / ranklist_event — never
     // write these directly from application code.
     userCount: integer("user_count").notNull().default(0),

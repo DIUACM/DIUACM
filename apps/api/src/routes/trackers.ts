@@ -36,7 +36,8 @@ function chunk<T>(items: T[], size: number): T[][] {
 
 const trackerRoutes = new Hono<AppEnv>();
 
-// List published trackers (id / title / description / slug), newest first.
+// List published trackers (id / title / description / slug) in admin-defined
+// display order.
 trackerRoutes.get("/", validate("query", trackersListQuery), async (c) => {
   const { page, perPage } = c.req.valid("query");
   const db = getDb(c.env.DB);
@@ -48,7 +49,7 @@ trackerRoutes.get("/", validate("query", trackersListQuery), async (c) => {
       .select(trackerListColumns)
       .from(trackers)
       .where(where)
-      .orderBy(desc(trackers.id))
+      .orderBy(asc(trackers.position), desc(trackers.id))
       .limit(perPage)
       .offset((page - 1) * perPage),
     db.select({ value: count() }).from(trackers).where(where),
@@ -78,7 +79,7 @@ trackerRoutes.get("/:slug", async (c) => {
           considerStrictAttendance: true,
           autoAddUsers: true,
         },
-        orderBy: (r, { asc }) => [asc(r.keyword)],
+        orderBy: (r, { asc: ascOp }) => [ascOp(r.position), ascOp(r.id)],
       },
     },
   });

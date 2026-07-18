@@ -57,6 +57,13 @@
       "when": 1784366827674,
       "tag": "0007_auto_add_triggers",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1784385360709,
+      "tag": "0008_last_firestar",
+      "breakpoints": true
     }
   ]
 }

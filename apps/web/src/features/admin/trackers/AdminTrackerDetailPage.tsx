@@ -6,11 +6,13 @@ import { errorMessage } from '@/api/client'
 import {
   useAdminCreateRanklist,
   useAdminDeleteTracker,
+  useAdminReorderRanklists,
   useAdminTracker,
   useAdminUpdateTracker,
 } from '@/api/queries/admin-trackers'
 import type { PublishStatus } from '@/api/queries/admin-events'
 import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
+import { ReorderButtons } from '@/features/admin/shared/ReorderButtons'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
 import { ErrorState } from '@/components/shared/states'
 import { Badge } from '@/components/ui/badge'
@@ -259,6 +261,18 @@ export function AdminTrackerDetailPage() {
   const navigate = useNavigate()
   const trackerQuery = useAdminTracker(id)
   const deleteTracker = useAdminDeleteTracker()
+  const reorderRanklists = useAdminReorderRanklists(id)
+
+  const moveRanklist = (from: number, to: number) => {
+    if (!trackerQuery.data) return
+    const rows = [...trackerQuery.data.ranklists]
+    const [moved] = rows.splice(from, 1)
+    rows.splice(to, 0, moved)
+    reorderRanklists.mutate(
+      rows.map((ranklist, index) => ({ id: ranklist.id, position: index })),
+      { onError: (error) => toast.error(errorMessage(error)) },
+    )
+  }
   useDocumentTitle(
     trackerQuery.data ? `Admin · ${trackerQuery.data.title}` : 'Admin · Tracker',
   )
@@ -352,7 +366,8 @@ export function AdminTrackerDetailPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="pl-4">Keyword</TableHead>
+                    <TableHead className="w-16 pl-4">Order</TableHead>
+                    <TableHead>Keyword</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-center">Users</TableHead>
                     <TableHead className="text-center">Events</TableHead>
@@ -360,9 +375,17 @@ export function AdminTrackerDetailPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tracker.ranklists.map((ranklist) => (
+                  {tracker.ranklists.map((ranklist, index) => (
                     <TableRow key={ranklist.id}>
                       <TableCell className="pl-4">
+                        <ReorderButtons
+                          index={index}
+                          count={tracker.ranklists.length}
+                          disabled={reorderRanklists.isPending}
+                          onMove={moveRanklist}
+                        />
+                      </TableCell>
+                      <TableCell>
                         <Link
                           to={`/admin/ranklists/${ranklist.id}`}
                           className="flex items-center gap-2 font-medium hover:underline"
