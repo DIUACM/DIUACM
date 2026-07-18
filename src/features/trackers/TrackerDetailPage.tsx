@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDocumentTitle } from '@/lib/use-document-title'
+import { stripHtml } from '@/lib/utils'
 
 export function TrackerDetailPage() {
   const { slug = '' } = useParams()
@@ -45,7 +46,7 @@ export function TrackerDetailPage() {
         <h1 className="text-3xl font-bold tracking-tight">{tracker.title}</h1>
         {tracker.description && (
           <p className="mt-1.5 max-w-2xl text-muted-foreground">
-            {tracker.description}
+            {stripHtml(tracker.description)}
           </p>
         )}
       </div>

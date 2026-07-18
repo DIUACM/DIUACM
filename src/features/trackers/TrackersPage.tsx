@@ -7,6 +7,7 @@ import { EmptyState, ErrorState } from '@/components/shared/states'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDocumentTitle } from '@/lib/use-document-title'
+import { stripHtml } from '@/lib/utils'
 
 export function TrackersPage() {
   useDocumentTitle('Trackers')
@@ -53,7 +54,7 @@ export function TrackersPage() {
                     </h3>
                     {tracker.description && (
                       <p className="line-clamp-2 text-sm text-muted-foreground">
-                        {tracker.description}
+                        {stripHtml(tracker.description)}
                       </p>
                     )}
                   </CardContent>

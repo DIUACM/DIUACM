@@ -28,6 +28,7 @@ import type { EventDetail } from '@/api/types'
 import { AttendanceDialog } from './AttendanceDialog'
 import { EventTimingBadge, EventTypeBadge, ScopeBadge } from './EventBadges'
 import { useDocumentTitle } from '@/lib/use-document-title'
+import { stripHtml } from '@/lib/utils'
 
 function AttendanceTab({ eventId }: { eventId: number }) {
   const attendanceQuery = useEventAttendance(eventId)
@@ -188,7 +189,7 @@ function EventDetailContent({ event }: { event: EventDetail }) {
 
       {event.description && (
         <p className="max-w-3xl whitespace-pre-line text-muted-foreground">
-          {event.description}
+          {stripHtml(event.description)}
         </p>
       )}
 

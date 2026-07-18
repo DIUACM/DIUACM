@@ -19,6 +19,7 @@ import { formatDateTime, formatDuration } from '@/lib/datetime'
 import type { EventListItem, EventType, ParticipationScope } from '@/api/types'
 import { EventTimingBadge, EventTypeBadge, ScopeBadge } from './EventBadges'
 import { useDocumentTitle } from '@/lib/use-document-title'
+import { stripHtml } from '@/lib/utils'
 
 const ALL = 'all'
 
@@ -40,7 +41,7 @@ export function EventCard({ event }: { event: EventListItem }) {
           </h3>
           {event.description && (
             <p className="line-clamp-2 text-sm text-muted-foreground">
-              {event.description}
+              {stripHtml(event.description)}
             </p>
           )}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
