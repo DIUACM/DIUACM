@@ -11,7 +11,8 @@
     "db:migrate:remote": "wrangler d1 migrations apply diuacm-db --remote",
     "cf-typegen": "wrangler types",
     "import:structure": "node scripts/import-structure.mjs",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.8.0",
@@ -20,9 +21,12 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20.19.43",
+    "better-sqlite3": "^12.11.1",
     "drizzle-kit": "^0.31.10",
     "typescript": "^5.9.3",
+    "vitest": "^4.1.10",
     "wrangler": "^4.103.0"
   }
 }

@@ -100,11 +100,8 @@ export function Navbar() {
             </DropdownMenu>
           ) : (
             <div className="hidden items-center gap-2 md:flex">
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/login">Log in</Link>
-              </Button>
               <Button size="sm" asChild>
-                <Link to="/register">Register</Link>
+                <Link to="/login">Log in</Link>
               </Button>
             </div>
           )}
@@ -141,22 +138,13 @@ export function Navbar() {
                   </NavLink>
                 ))}
                 {!isAuthenticated && (
-                  <>
-                    <NavLink
-                      to="/login"
-                      onClick={() => setMobileOpen(false)}
-                      className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
-                    >
-                      Log in
-                    </NavLink>
-                    <NavLink
-                      to="/register"
-                      onClick={() => setMobileOpen(false)}
-                      className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
-                    >
-                      Register
-                    </NavLink>
-                  </>
+                  <NavLink
+                    to="/login"
+                    onClick={() => setMobileOpen(false)}
+                    className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
+                  >
+                    Log in
+                  </NavLink>
                 )}
               </nav>
             </SheetContent>

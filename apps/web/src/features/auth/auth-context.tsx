@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { api, getToken, setOnUnauthorized, setToken, unwrap } from '@/api/client'
+import { api, ApiError, getToken, setOnUnauthorized, setToken, unwrap } from '@/api/client'
 import type { AuthResponse, User } from '@/api/types'
 
 interface AuthContextValue {
@@ -25,7 +25,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     queryFn: () => unwrap(api.GET('/auth/me')),
     enabled: token !== null,
     staleTime: 5 * 60 * 1000,
-    retry: false,
+    // A definitive 401 means the token is dead (the client middleware already
+    // logs out on it) — don't retry. Anything else is likely transient
+    // (network, 5xx), and giving up would wrongly render the logged-out UI.
+    retry: (failureCount, error) =>
+      !(error instanceof ApiError && error.status === 401) && failureCount < 2,
   })
 
   const logout = useCallback(() => {

@@ -82,67 +82,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/register": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Register a new user
-         * @description **Access:** `Public` — No authentication required.
-         */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": components["schemas"]["RegisterRequest"];
-                };
-            };
-            responses: {
-                /** @description User created */
-                201: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["AuthResponse"];
-                    };
-                };
-                /** @description Validation failed */
-                400: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-                /** @description Email, username, or student id already exists */
-                409: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["Error"];
-                    };
-                };
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -189,6 +128,15 @@ export interface paths {
                 };
                 /** @description Invalid credentials */
                 401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Too many attempts from this IP */
+                429: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -268,6 +216,15 @@ export interface paths {
                 };
                 /** @description Email domain not allowed (the super admin's email is exempt) */
                 403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Too many attempts from this IP */
+                429: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -3487,14 +3444,6 @@ export interface components {
             maxCfRating: number | null;
             handles: components["schemas"]["HandlesMap"];
             trackerPerformance: components["schemas"]["TrackerPerformanceEntry"][];
-        };
-        RegisterRequest: {
-            name: string;
-            /** Format: email */
-            email: string;
-            username: string;
-            password: string;
-            studentId?: string;
         };
         LoginRequest: {
             identifier: string;

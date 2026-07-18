@@ -50,10 +50,20 @@ export type ParsedImage = {
   ext: Format["ext"];
 };
 
+// Multipart framing (boundary lines, part headers, other fields) sits on top
+// of the file bytes, so allow some slack over the image limit itself.
+const MULTIPART_OVERHEAD_BYTES = 64 * 1024;
+
 export const parseImageUpload = async (c: Context<AppEnv>): Promise<ParsedImage> => {
-  // Cheap pre-check via Content-Length so we 413 before buffering the body.
-  const claimed = Number(c.req.header("content-length") ?? 0);
-  if (claimed > MAX_IMAGE_BYTES) {
+  // Reject before buffering the body: require a Content-Length and 413 when it
+  // exceeds the limit. Browsers and HTTP clients always send it for multipart
+  // uploads; its absence means a chunked request we'd otherwise buffer blindly.
+  const claimedHeader = c.req.header("content-length");
+  if (!claimedHeader) {
+    throw new HTTPException(411, { message: "Content-Length header is required" });
+  }
+  const claimed = Number(claimedHeader);
+  if (!Number.isFinite(claimed) || claimed > MAX_IMAGE_BYTES + MULTIPART_OVERHEAD_BYTES) {
     throw new HTTPException(413, {
       message: `image exceeds limit of ${MAX_IMAGE_BYTES} bytes`,
     });

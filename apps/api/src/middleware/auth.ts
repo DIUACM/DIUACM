@@ -61,7 +61,9 @@ export const requirePermission = (permission: Permission) =>
   createMiddleware<AppEnv>(async (c, next) => {
     const payload = await ensureAuthenticated(c);
     const email = await loadEmail(c, payload.sub);
-    if (!isSuperAdminEmail(email, c.env.SUPER_ADMIN_EMAIL)) {
+    const isSuper = isSuperAdminEmail(email, c.env.SUPER_ADMIN_EMAIL);
+    c.set("callerIsSuperAdmin", isSuper);
+    if (!isSuper) {
       const db = getDb(c.env.DB);
       const [row] = await db
         .select({ permission: userPermissions.permission })
@@ -87,5 +89,6 @@ export const requireSuperAdmin = createMiddleware<AppEnv>(async (c, next) => {
   if (!isSuperAdminEmail(email, c.env.SUPER_ADMIN_EMAIL)) {
     throw new HTTPException(403, { message: "Super admin access required" });
   }
+  c.set("callerIsSuperAdmin", true);
   await next();
 });

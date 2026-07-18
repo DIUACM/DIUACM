@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { api, errorMessage, unwrap } from '@/api/client'
 import { Button } from '@/components/ui/button'
@@ -95,10 +95,8 @@ export function LoginPage() {
           <GoogleSignInButton />
 
           <p className="text-center text-sm text-muted-foreground">
-            Don&apos;t have an account?{' '}
-            <Link to="/register" className="font-medium text-foreground underline">
-              Register
-            </Link>
+            New here? Sign in with your DIU Google account to create your
+            account automatically.
           </p>
         </CardContent>
       </Card>

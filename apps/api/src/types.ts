@@ -9,5 +9,8 @@ export type AppEnv = {
   Variables: {
     // Set by requireAuth on protected routes.
     user: AuthPayload;
+    // Set by requirePermission / requireSuperAdmin: whether the caller's email
+    // matches SUPER_ADMIN_EMAIL. Only read on routes behind those middlewares.
+    callerIsSuperAdmin: boolean;
   };
 };

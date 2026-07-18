@@ -67,7 +67,7 @@ export function HomePage() {
           ) : (
             <>
               <Button size="lg" asChild>
-                <Link to="/register">
+                <Link to="/login">
                   Join the community <ArrowRight className="size-4" />
                 </Link>
               </Button>

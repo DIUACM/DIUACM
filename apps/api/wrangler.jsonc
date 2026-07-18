@@ -21,6 +21,15 @@
       "bucket_name": "diuacm-files"
     }
   ],
+  // Per-IP throttle for the credential endpoints (/auth/login, /auth/google).
+  // `namespace_id` is an arbitrary per-worker-unique integer string.
+  "ratelimits": [
+    {
+      "name": "AUTH_RATE_LIMITER",
+      "namespace_id": "1001",
+      "simple": { "limit": 10, "period": 60 }
+    }
+  ],
   "vars": {
     // Google OAuth client id (public value — fine to commit). The ID token's
     // `aud` claim must match this. Replace with your own from the Google Cloud

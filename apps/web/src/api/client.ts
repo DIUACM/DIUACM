@@ -39,8 +39,9 @@ const authMiddleware: Middleware = {
 export const api = createClient<paths>({ baseUrl: API_BASE_URL })
 api.use(authMiddleware)
 
+/** Matches the API's validation-error shape: `{ error, issues: [{ field, message }] }`. */
 export interface ApiIssue {
-  path?: (string | number)[]
+  field?: string
   message?: string
 }
 
@@ -65,7 +66,11 @@ export class ApiError extends Error {
 
   /** Field-level message from the `issues` array, if the API returned one. */
   issueFor(field: string): string | undefined {
-    return this.issues.find((issue) => issue.path?.includes(field))?.message
+    // Nested paths come back dotted (e.g. "handles.codeforces"), so match the
+    // exact field or its leading segment.
+    return this.issues.find(
+      (issue) => issue.field === field || issue.field?.startsWith(`${field}.`),
+    )?.message
   }
 }
 

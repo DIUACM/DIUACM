@@ -7,16 +7,16 @@ import { userHandles, users } from "../db/schema";
 import { GoogleAuthError, verifyGoogleIdToken } from "../lib/google-oauth";
 import { parseImageUpload } from "../lib/image-upload";
 import { signAuthToken } from "../lib/jwt";
-import { hashPassword, verifyPassword } from "../lib/password";
+import { verifyPassword } from "../lib/password";
 import { isSuperAdminEmail, loadPermissions } from "../lib/permissions";
 import { toAuthUser, toHandlesMap } from "../lib/user-shape";
 import { validate } from "../lib/validator";
 import { requireAuth } from "../middleware/auth";
+import { authRateLimit } from "../middleware/rate-limit";
 import {
   googleSignInSchema,
   loginSchema,
   profileUpdateSchema,
-  registerSchema,
 } from "../schemas/auth";
 import { handleSetSchema, handleTypeParam } from "../schemas/handles";
 import type { AppEnv } from "../types";
@@ -50,6 +50,12 @@ const shapeAuthUser = async (c: Context<AppEnv>, row: AuthUserRow) => {
 const ALLOWED_EMAIL_DOMAIN = "diu.edu.bd";
 const MAX_USERNAME_ATTEMPTS = 5;
 
+// Verified against when the account doesn't exist or has no password, so the
+// login response time doesn't reveal which accounts exist. Random bytes — no
+// password hashes to this.
+const DUMMY_PASSWORD_HASH =
+  "pbkdf2:100000:0ff513e3ffa428aa68c413ef893e989f:92ceb9e253443292d9022b2e012fc4a2f0b8b8a3092667a7ca809fdf1fa33348";
+
 // 24-bit hex; ~16.7M space, collision odds vanishingly small. We still retry on
 // the unique constraint below to be defensive.
 const generateOpaqueUsername = (): string => {
@@ -62,28 +68,10 @@ const auth = new Hono<AppEnv>();
 
 auth.get("/config", (c) => c.json({ googleClientId: c.env.GOOGLE_CLIENT_ID }));
 
-auth.post("/register", validate("json", registerSchema), async (c) => {
-  const { name, username, password, studentId } = c.req.valid("json");
-  const email = c.req.valid("json").email.trim().toLowerCase();
-  const db = getDb(c.env.DB);
-
-  const passwordHash = await hashPassword(password);
-
-  // Duplicate email / username / studentId surface as a UNIQUE constraint
-  // failure, mapped to 409 by the global onError handler.
-  const [user] = await db
-    .insert(users)
-    .values({ name, email, username, studentId, passwordHash })
-    .returning(authUserColumns);
-
-  const token = await signAuthToken(
-    { id: user.id, username: user.username },
-    c.env.JWT_SECRET,
-  );
-  return c.json({ token, user: await shapeAuthUser(c, user) }, 201);
-});
-
-auth.post("/login", validate("json", loginSchema), async (c) => {
+// No public password registration: accounts are created via Google sign-in
+// (verified email) or by an admin. Password login remains for accounts an
+// admin gave a password to.
+auth.post("/login", authRateLimit, validate("json", loginSchema), async (c) => {
   const { identifier, password } = c.req.valid("json");
   const id = identifier.trim();
   const db = getDb(c.env.DB);
@@ -96,9 +84,11 @@ auth.post("/login", validate("json", loginSchema), async (c) => {
     .where(or(eq(users.email, id.toLowerCase()), eq(users.username, id)))
     .limit(1);
 
-  // Same error whether the account is unknown, was created via Google (no
-  // password), or the password is wrong — so we don't leak which accounts exist.
-  if (!row || !row.passwordHash || !(await verifyPassword(password, row.passwordHash))) {
+  // Same error — and the same PBKDF2 work, via the dummy hash — whether the
+  // account is unknown, was created via Google (no password), or the password
+  // is wrong, so neither the response nor its timing leaks which accounts exist.
+  const passwordOk = await verifyPassword(password, row?.passwordHash ?? DUMMY_PASSWORD_HASH);
+  if (!row || !row.passwordHash || !passwordOk) {
     throw new HTTPException(401, { message: "Invalid email/username or password" });
   }
 
@@ -109,7 +99,7 @@ auth.post("/login", validate("json", loginSchema), async (c) => {
   return c.json({ token, user: await shapeAuthUser(c, row) });
 });
 
-auth.post("/google", validate("json", googleSignInSchema), async (c) => {
+auth.post("/google", authRateLimit, validate("json", googleSignInSchema), async (c) => {
   const { idToken } = c.req.valid("json");
   const db = getDb(c.env.DB);
 

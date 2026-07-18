@@ -9,7 +9,6 @@ import { AdminTrackersPage } from '@/features/admin/trackers/AdminTrackersPage'
 import { AdminUserDetailPage } from '@/features/admin/users/AdminUserDetailPage'
 import { AdminUsersPage } from '@/features/admin/users/AdminUsersPage'
 import { LoginPage } from '@/features/auth/LoginPage'
-import { RegisterPage } from '@/features/auth/RegisterPage'
 import { RequireAuth } from '@/features/auth/RequireAuth'
 import { EventDetailPage } from '@/features/events/EventDetailPage'
 import { EventsPage } from '@/features/events/EventsPage'
@@ -35,7 +34,6 @@ const router = createBrowserRouter([
       { path: '/programmers', element: <ProgrammersPage /> },
       { path: '/programmers/:username', element: <ProgrammerDetailPage /> },
       { path: '/login', element: <LoginPage /> },
-      { path: '/register', element: <RegisterPage /> },
       {
         element: <RequireAuth />,
         children: [{ path: '/profile', element: <ProfilePage /> }],

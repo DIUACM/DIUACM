@@ -16,6 +16,10 @@ files.get("/:key{.+}", async (c) => {
   c.header("Content-Type", object.httpMetadata?.contentType ?? "application/octet-stream");
   c.header("Cache-Control", "public, max-age=31536000, immutable");
   c.header("ETag", object.httpEtag);
+  // Defense in depth: never let a stored object run script or be sniffed into
+  // a different type, whatever ends up in the bucket.
+  c.header("X-Content-Type-Options", "nosniff");
+  c.header("Content-Security-Policy", "sandbox");
   return c.body(object.body);
 });
 

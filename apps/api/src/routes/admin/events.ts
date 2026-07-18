@@ -1,10 +1,11 @@
-import { and, asc, count, desc, eq, like, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, or, sql, type SQL } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import { getDb } from "../../db/client";
 import { eventAttendance, eventMedia, eventPerformance, events, users } from "../../db/schema";
 import { parseImageUpload } from "../../lib/image-upload";
+import { likeContains } from "../../lib/like";
 import { buildMeta } from "../../lib/pagination";
 import { parseId } from "../../lib/parse-id";
 import { fileUrlFor, toUserSummary } from "../../lib/user-shape";
@@ -66,11 +67,10 @@ adminEventRoutes.get("/", manageEvents, validate("query", adminEventsListQuery),
   if (scope) filters.push(eq(events.participationScope, scope));
   if (status) filters.push(eq(events.status, status));
   if (q) {
-    const term = `%${q}%`;
     const expr = or(
-      like(events.title, term),
-      like(events.description, term),
-      like(events.eventLink, term),
+      likeContains(events.title, q),
+      likeContains(events.description, q),
+      likeContains(events.eventLink, q),
     );
     if (expr) filters.push(expr);
   }

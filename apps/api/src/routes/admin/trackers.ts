@@ -1,9 +1,10 @@
-import { and, asc, count, desc, eq, like, or, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, or, type SQL } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import { getDb } from "../../db/client";
 import { ranklists, trackers } from "../../db/schema";
+import { likeContains } from "../../lib/like";
 import { buildMeta } from "../../lib/pagination";
 import { parseId } from "../../lib/parse-id";
 import { validate } from "../../lib/validator";
@@ -54,8 +55,7 @@ adminTrackerRoutes.get("/", manageTrackers, validate("query", adminTrackersListQ
   const filters: SQL[] = [];
   if (status) filters.push(eq(trackers.status, status));
   if (q) {
-    const term = `%${q}%`;
-    const expr = or(like(trackers.title, term), like(trackers.slug, term));
+    const expr = or(likeContains(trackers.title, q), likeContains(trackers.slug, q));
     if (expr) filters.push(expr);
   }
   const where = filters.length > 0 ? and(...filters) : undefined;

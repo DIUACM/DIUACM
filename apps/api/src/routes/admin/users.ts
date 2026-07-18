@@ -1,9 +1,10 @@
-import { and, count, desc, eq, inArray, like, or, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, inArray, or, type SQL } from "drizzle-orm";
 import { Hono, type Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import { getDb } from "../../db/client";
 import { userHandles, userPermissions, users } from "../../db/schema";
+import { likeContains } from "../../lib/like";
 import { buildMeta } from "../../lib/pagination";
 import { parseId } from "../../lib/parse-id";
 import { hashPassword } from "../../lib/password";
@@ -71,12 +72,11 @@ adminUserRoutes.get("/", manageUsers, validate("query", adminUsersListQuery), as
     );
   }
   if (q) {
-    const term = `%${q}%`;
     const expr = or(
-      like(users.name, term),
-      like(users.username, term),
-      like(users.email, term),
-      like(users.studentId, term),
+      likeContains(users.name, q),
+      likeContains(users.username, q),
+      likeContains(users.email, q),
+      likeContains(users.studentId, q),
     );
     if (expr) filters.push(expr);
   }
@@ -112,6 +112,11 @@ adminUserRoutes.get("/", manageUsers, validate("query", adminUsersListQuery), as
 adminUserRoutes.post("/", manageUsers, validate("json", adminUserCreateSchema), async (c) => {
   const { password, ...input } = c.req.valid("json");
   const email = input.email.trim().toLowerCase();
+  // The super-admin identity is derived from the email column, so handing this
+  // email to a new account would hand out super-admin access.
+  if (isSuperAdminEmail(email, c.env.SUPER_ADMIN_EMAIL)) {
+    throw new HTTPException(403, { message: "This email is reserved for the super admin" });
+  }
   const db = getDb(c.env.DB);
 
   const passwordHash = password === undefined ? null : await hashPassword(password);
@@ -152,6 +157,29 @@ adminUserRoutes.patch("/:id", manageUsers, validate("json", adminUserUpdateSchem
   }
 
   const db = getDb(c.env.DB);
+
+  // Editing the super admin's row (email, password, …) is editing the
+  // super-admin identity itself — only the super admin may do that. Likewise,
+  // nobody may move the reserved email onto another account.
+  const [target] = await db
+    .select({ email: users.email })
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1);
+  if (!target) throw new HTTPException(404, { message: "User not found" });
+  const targetIsSuperAdmin = isSuperAdminEmail(target.email, c.env.SUPER_ADMIN_EMAIL);
+  if (targetIsSuperAdmin && !c.get("callerIsSuperAdmin")) {
+    throw new HTTPException(403, {
+      message: "Only the super admin can modify the super admin account",
+    });
+  }
+  if (
+    input.email !== undefined &&
+    !targetIsSuperAdmin &&
+    isSuperAdminEmail(input.email, c.env.SUPER_ADMIN_EMAIL)
+  ) {
+    throw new HTTPException(403, { message: "This email is reserved for the super admin" });
+  }
 
   const passwordHash =
     password === undefined ? undefined : password === null ? null : await hashPassword(password);

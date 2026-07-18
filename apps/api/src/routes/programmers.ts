@@ -1,9 +1,10 @@
-import { and, asc, count, desc, eq, inArray, like, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import { getDb } from "../db/client";
 import { ranklists, ranklistUsers, trackers, userHandles, users } from "../db/schema";
+import { likeContains } from "../lib/like";
 import { buildMeta } from "../lib/pagination";
 import { imageUrlFor, toHandlesMap, toProgrammerListItem } from "../lib/user-shape";
 import { validate } from "../lib/validator";
@@ -24,8 +25,7 @@ programmerRoutes.get("/", validate("query", programmersListQuery), async (c) => 
     inArray(users.id, db.select({ id: userHandles.userId }).from(userHandles)),
   ];
   if (q) {
-    const term = `%${q}%`;
-    const expr = or(like(users.name, term), like(users.username, term));
+    const expr = or(likeContains(users.name, q), likeContains(users.username, q));
     if (expr) filters.push(expr);
   }
   const where = and(...filters);

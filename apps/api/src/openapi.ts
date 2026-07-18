@@ -15,7 +15,7 @@ import {
   adminUserUpdateSchema,
   permissionToggleSchema,
 } from "./schemas/admin";
-import { googleSignInSchema, loginSchema, profileUpdateSchema, registerSchema } from "./schemas/auth";
+import { googleSignInSchema, loginSchema, profileUpdateSchema } from "./schemas/auth";
 import { attendanceGiveSchema } from "./schemas/events";
 import { handleSetSchema } from "./schemas/handles";
 
@@ -700,10 +700,10 @@ const infoDescription = `Backend API for **diuacm**, running on Cloudflare Worke
 
 ## Authentication
 
-Create an account with \`POST /auth/register\`, or sign in with \`POST /auth/login\`
-(email or username + password) or \`POST /auth/google\` (Google ID token, verified
-\`@diu.edu.bd\` accounts only — the super admin's email is exempt from the domain
-restriction).
+Sign in with \`POST /auth/google\` (Google ID token, verified \`@diu.edu.bd\`
+accounts only — the super admin's email is exempt from the domain restriction);
+new accounts are created on first Google sign-in. \`POST /auth/login\` (email or
+username + password) works for accounts an admin gave a password to.
 
 Every successful auth response includes a JWT — pass it on authenticated requests:
 
@@ -744,7 +744,7 @@ export const openApiDoc = {
   servers: [{ url: "/", description: "Current origin" }],
   tags: [
     { name: "meta", description: "Service metadata" },
-    { name: "auth", description: "Registration, login, Google sign-in, and the current user" },
+    { name: "auth", description: "Login, Google sign-in, and the current user" },
     { name: "events", description: "Events, media, and attendance" },
     { name: "trackers", description: "Trackers and their ranklists" },
     { name: "programmers", description: "Programmer directory, handles, and tracker performance" },
@@ -783,7 +783,7 @@ export const openApiDoc = {
         type: "http",
         scheme: "bearer",
         bearerFormat: "JWT",
-        description: "JWT obtained from `/auth/register`, `/auth/login`, or `/auth/google`.",
+        description: "JWT obtained from `/auth/login` or `/auth/google`.",
       },
     },
     schemas: {
@@ -820,7 +820,6 @@ export const openApiDoc = {
       TrackerPerformanceRanklist: trackerPerformanceRanklistSchema,
       TrackerPerformanceEntry: trackerPerformanceEntrySchema,
       ProgrammerDetail: programmerDetailSchema,
-      RegisterRequest: toSchema(registerSchema),
       LoginRequest: toSchema(loginSchema),
       GoogleSignInRequest: toSchema(googleSignInSchema),
       ProfileUpdateRequest: toSchema(profileUpdateSchema),
@@ -876,22 +875,6 @@ export const openApiDoc = {
         },
       },
     },
-    "/auth/register": {
-      post: {
-        tags: ["auth"],
-        summary: "Register a new user",
-        ...access("public"),
-        requestBody: { required: true, content: jsonBody(ref("RegisterRequest")) },
-        responses: {
-          "201": { description: "User created", content: jsonBody(ref("AuthResponse")) },
-          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
-          "409": {
-            description: "Email, username, or student id already exists",
-            content: jsonBody(ref("Error")),
-          },
-        },
-      },
-    },
     "/auth/login": {
       post: {
         tags: ["auth"],
@@ -902,6 +885,7 @@ export const openApiDoc = {
           "200": { description: "Authenticated", content: jsonBody(ref("AuthResponse")) },
           "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
           "401": { description: "Invalid credentials", content: jsonBody(ref("Error")) },
+          "429": { description: "Too many attempts from this IP", content: jsonBody(ref("Error")) },
         },
       },
     },
@@ -926,6 +910,7 @@ export const openApiDoc = {
             description: "Email domain not allowed (the super admin's email is exempt)",
             content: jsonBody(ref("Error")),
           },
+          "429": { description: "Too many attempts from this IP", content: jsonBody(ref("Error")) },
         },
       },
     },
