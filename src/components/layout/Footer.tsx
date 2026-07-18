@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 export function Footer() {
   return (
     <footer className="border-t py-8">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 text-sm text-muted-foreground sm:flex-row">
+      <div className="container flex flex-col items-center justify-between gap-4 text-sm text-muted-foreground sm:flex-row">
         <p>
           © {new Date().getFullYear()} DIU ACM — Daffodil International
           University

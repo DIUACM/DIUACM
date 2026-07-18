@@ -5,6 +5,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Tailwind v4 containers aren't centered or padded by default. */
+@utility container {
+    margin-inline: auto;
+    padding-inline: 1rem;
+}
+
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: 'Geist Variable', sans-serif;

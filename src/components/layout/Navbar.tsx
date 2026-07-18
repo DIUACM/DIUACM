@@ -42,7 +42,7 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
+      <div className="container flex h-14 items-center gap-4">
         <Link to="/" className="flex items-center gap-2 font-semibold">
           <span className="flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <Code2 className="size-4" />
