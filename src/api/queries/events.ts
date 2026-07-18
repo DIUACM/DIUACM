@@ -9,8 +9,9 @@ export interface EventFilters {
   q?: string
 }
 
-export function useEvents(filters: EventFilters = {}) {
+export function useEvents(filters: EventFilters = {}, enabled = true) {
   return useQuery({
+    enabled,
     queryKey: ['events', filters],
     queryFn: () =>
       unwrap(
@@ -29,8 +30,9 @@ export function useEvents(filters: EventFilters = {}) {
   })
 }
 
-export function useEvent(id: number) {
+export function useEvent(id: number, enabled = true) {
   return useQuery({
+    enabled,
     queryKey: ['events', id],
     queryFn: () => unwrap(api.GET('/events/{id}', { params: { path: { id } } })),
   })

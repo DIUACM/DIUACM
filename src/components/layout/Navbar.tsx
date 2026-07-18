@@ -1,4 +1,4 @@
-import { Code2, LogOut, Menu, User as UserIcon } from 'lucide-react'
+import { Code2, LogOut, Menu, Shield, User as UserIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { useAuth } from '@/features/auth/auth-context'
+import { isAdmin } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { ThemeToggle } from './ThemeToggle'
 
@@ -87,6 +88,11 @@ export function Navbar() {
                 <DropdownMenuItem onClick={() => navigate('/profile')}>
                   <UserIcon className="size-4" /> Profile
                 </DropdownMenuItem>
+                {isAdmin(user) && (
+                  <DropdownMenuItem onClick={() => navigate('/admin')}>
+                    <Shield className="size-4" /> Admin panel
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={handleLogout} variant="destructive">
                   <LogOut className="size-4" /> Log out
                 </DropdownMenuItem>

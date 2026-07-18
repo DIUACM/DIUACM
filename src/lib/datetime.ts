@@ -28,6 +28,18 @@ export function formatDuration(startSeconds: number, endSeconds: number): string
   return `${hours}h ${minutes}m`
 }
 
+/** Epoch seconds → value for an <input type="datetime-local"> in the local timezone. */
+export function epochToLocalInput(epochSeconds: number): string {
+  const date = new Date(epochSeconds * 1000)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+/** <input type="datetime-local"> value → epoch seconds (interpreted in the local timezone). */
+export function localInputToEpoch(value: string): number {
+  return Math.floor(new Date(value).getTime() / 1000)
+}
+
 export type EventTiming = 'upcoming' | 'ongoing' | 'ended'
 
 export function eventTiming(startSeconds: number, endSeconds: number): EventTiming {

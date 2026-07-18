@@ -1,4 +1,22 @@
-import type { EventType, HandleType, ParticipationScope } from '@/api/types'
+import type { EventType, HandleType, ParticipationScope, Permission, User } from '@/api/types'
+
+export const PERMISSION_LABELS: Record<Permission, string> = {
+  manage_users: 'Manage users',
+  manage_events: 'Manage events',
+  manage_attendance: 'Manage attendance',
+  manage_trackers: 'Manage trackers',
+}
+
+export const PERMISSIONS = Object.keys(PERMISSION_LABELS) as Permission[]
+
+/** The super admin reports every permission, so the array check suffices. */
+export function hasPermission(user: User | null, permission: Permission): boolean {
+  return user?.permissions.includes(permission) ?? false
+}
+
+export function isAdmin(user: User | null): boolean {
+  return (user?.permissions.length ?? 0) > 0 || (user?.isSuperAdmin ?? false)
+}
 
 export const EVENT_TYPE_LABELS: Record<EventType, string> = {
   contest: 'Contest',
