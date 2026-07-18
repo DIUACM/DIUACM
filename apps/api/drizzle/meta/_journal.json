@@ -43,6 +43,20 @@
       "when": 1784302656236,
       "tag": "0005_last_anthem",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1784366827172,
+      "tag": "0006_public_mantis",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1784366827674,
+      "tag": "0007_auto_add_triggers",
+      "breakpoints": true
     }
   ]
 }

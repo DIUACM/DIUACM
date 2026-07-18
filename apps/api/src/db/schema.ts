@@ -213,6 +213,10 @@ export const ranklists = sqliteTable(
     considerStrictAttendance: integer("consider_strict_attendance", { mode: "boolean" })
       .notNull()
       .default(false),
+    // When true, SQLite triggers keep membership in sync with participation: any user
+    // with performance/attendance on an attached event is auto-added (auto_added = 1)
+    // and auto-removed when their participation disappears.
+    autoAddUsers: integer("auto_add_users", { mode: "boolean" }).notNull().default(false),
     // Maintained by SQLite triggers on ranklist_user / ranklist_event — never
     // write these directly from application code.
     userCount: integer("user_count").notNull().default(0),
@@ -267,6 +271,9 @@ export const ranklistUsers = sqliteTable(
     // `rank` is the competition rank within the ranklist (1 = highest score).
     score: real("score").notNull().default(0),
     rank: integer("rank").notNull().default(0),
+    // 1 = added by the auto-add triggers (removable by them); 0 = added manually by an
+    // admin (never auto-removed). An explicit admin add resets it to 0.
+    autoAdded: integer("auto_added", { mode: "boolean" }).notNull().default(false),
   },
   (t) => [
     primaryKey({ columns: [t.ranklistId, t.userId] }),

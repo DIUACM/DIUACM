@@ -61,6 +61,7 @@ adminRanklistRoutes.get("/:id", manageTrackers, async (c) => {
         imageKey: users.imageKey,
         score: ranklistUsers.score,
         rank: ranklistUsers.rank,
+        autoAdded: ranklistUsers.autoAdded,
       })
       .from(ranklistUsers)
       .innerJoin(users, eq(ranklistUsers.userId, users.id))
@@ -78,6 +79,7 @@ adminRanklistRoutes.get("/:id", manageTrackers, async (c) => {
       ),
       score: u.score,
       rank: u.rank,
+      autoAdded: u.autoAdded,
     })),
   });
 });
@@ -183,7 +185,15 @@ adminRanklistRoutes.put("/:id/users/:userId", manageTrackers, async (c) => {
   const [user] = await db.select({ id: users.id }).from(users).where(eq(users.id, userId)).limit(1);
   if (!user) throw new HTTPException(404, { message: "User not found" });
 
-  await db.insert(ranklistUsers).values({ ranklistId: id, userId }).onConflictDoNothing();
+  // An explicit admin add always counts as manual (autoAdded = false), including
+  // promoting a member the auto-add triggers inserted, so auto-removal skips them.
+  await db
+    .insert(ranklistUsers)
+    .values({ ranklistId: id, userId, autoAdded: false })
+    .onConflictDoUpdate({
+      target: [ranklistUsers.ranklistId, ranklistUsers.userId],
+      set: { autoAdded: false },
+    });
 
   const [row] = await db
     .select({ score: ranklistUsers.score, rank: ranklistUsers.rank })

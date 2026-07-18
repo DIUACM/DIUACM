@@ -343,6 +343,7 @@ const ranklistSummarySchema = {
     upsolveWeight: { type: "number", description: "0.00–1.00." },
     isLocked: { type: "boolean" },
     considerStrictAttendance: { type: "boolean" },
+    autoAddUsers: { type: "boolean" },
   },
   required: [
     "keyword",
@@ -351,6 +352,7 @@ const ranklistSummarySchema = {
     "upsolveWeight",
     "isLocked",
     "considerStrictAttendance",
+    "autoAddUsers",
   ],
 };
 
@@ -571,6 +573,11 @@ const adminRanklistSchema = {
     upsolveWeight: { type: "number", description: "0.00–1.00." },
     isLocked: { type: "boolean" },
     considerStrictAttendance: { type: "boolean" },
+    autoAddUsers: {
+      type: "boolean",
+      description:
+        "When true, DB triggers keep membership in sync with participation on attached events.",
+    },
     userCount: { type: "integer" },
     eventCount: { type: "integer" },
     createdAt: epoch("Unix epoch seconds (UTC)."),
@@ -585,6 +592,7 @@ const adminRanklistSchema = {
     "upsolveWeight",
     "isLocked",
     "considerStrictAttendance",
+    "autoAddUsers",
     "userCount",
     "eventCount",
     "createdAt",
@@ -616,8 +624,12 @@ const adminRanklistStandingSchema = {
     user: ref("UserSummary"),
     score: { type: "number" },
     rank: { type: "integer" },
+    autoAdded: {
+      type: "boolean",
+      description: "True when the member was added by the auto-add triggers, not an admin.",
+    },
   },
-  required: ["user", "score", "rank"],
+  required: ["user", "score", "rank", "autoAdded"],
 };
 
 const adminRanklistDetailSchema = {

@@ -76,6 +76,7 @@ trackerRoutes.get("/:slug", async (c) => {
           upsolveWeight: true,
           isLocked: true,
           considerStrictAttendance: true,
+          autoAddUsers: true,
         },
         orderBy: (r, { asc }) => [asc(r.keyword)],
       },

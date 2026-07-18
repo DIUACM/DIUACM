@@ -35,6 +35,7 @@ export const ranklistColumns = {
   upsolveWeight: ranklists.upsolveWeight,
   isLocked: ranklists.isLocked,
   considerStrictAttendance: ranklists.considerStrictAttendance,
+  autoAddUsers: ranklists.autoAddUsers,
   userCount: ranklists.userCount,
   eventCount: ranklists.eventCount,
   createdAt: ranklists.createdAt,

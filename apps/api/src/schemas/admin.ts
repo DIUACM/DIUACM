@@ -161,6 +161,7 @@ export const adminRanklistCreateSchema = z.object({
   upsolveWeight: z.number().min(0).max(1).optional(),
   isLocked: z.boolean().optional(),
   considerStrictAttendance: z.boolean().optional(),
+  autoAddUsers: z.boolean().optional(),
 });
 
 export const adminRanklistUpdateSchema = z.object({
@@ -170,6 +171,7 @@ export const adminRanklistUpdateSchema = z.object({
   upsolveWeight: z.number().min(0).max(1).optional(),
   isLocked: z.boolean().optional(),
   considerStrictAttendance: z.boolean().optional(),
+  autoAddUsers: z.boolean().optional(),
 });
 
 export const adminRanklistEventSetSchema = z.object({
