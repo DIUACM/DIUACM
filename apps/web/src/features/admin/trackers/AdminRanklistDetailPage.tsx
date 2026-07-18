@@ -1,6 +1,6 @@
 import { ArrowLeft, Check, Trash2 } from 'lucide-react'
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
 import {
@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Table,
   TableBody,
@@ -199,6 +200,17 @@ function WeightCell({
   const setEvent = useAdminSetRanklistEvent(ranklistId)
   const dirty = Number(value) !== weight
 
+  const save = () => {
+    if (!dirty || setEvent.isPending) return
+    setEvent.mutate(
+      { eventId, weight: Number(value) || 0 },
+      {
+        onSuccess: () => toast.success('Weight updated. Scores recalculated.'),
+        onError: (error) => toast.error(errorMessage(error)),
+      },
+    )
+  }
+
   return (
     <div className="flex items-center justify-center gap-1.5">
       <Input
@@ -208,6 +220,9 @@ function WeightCell({
         step="0.05"
         value={value}
         onChange={(event) => setValue(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') save()
+        }}
         className="h-8 w-20"
         aria-label="Event weight"
       />
@@ -217,15 +232,7 @@ function WeightCell({
           className="size-8"
           aria-label="Save weight"
           disabled={setEvent.isPending}
-          onClick={() =>
-            setEvent.mutate(
-              { eventId, weight: Number(value) || 0 },
-              {
-                onSuccess: () => toast.success('Weight updated. Scores recalculated.'),
-                onError: (error) => toast.error(errorMessage(error)),
-              },
-            )
-          }
+          onClick={save}
         >
           <Check className="size-4" />
         </Button>
@@ -238,6 +245,8 @@ export function AdminRanklistDetailPage() {
   const params = useParams()
   const id = Number(params.id)
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab = searchParams.get('tab') === 'participants' ? 'participants' : 'events'
   const ranklistQuery = useAdminRanklist(id)
   const deleteRanklist = useAdminDeleteRanklist()
   const setEvent = useAdminSetRanklistEvent(id)
@@ -317,168 +326,188 @@ export function AdminRanklistDetailPage() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Events ({ranklist.events.length})</CardTitle>
-          <CardDescription>
-            Attach events and set their weight in the standings.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <EventPicker
-            placeholder="Attach an event…"
-            onSelect={(event) =>
-              setEvent.mutate(
-                { eventId: event.id, weight: 1 },
-                {
-                  onSuccess: () => toast.success(`“${event.title}” attached.`),
-                  onError: (error) => toast.error(errorMessage(error)),
-                },
-              )
-            }
-          />
-          {ranklist.events.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No events attached.</p>
-          ) : (
-            <div className="overflow-x-auto rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="pl-4">Event</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-center">Weight</TableHead>
-                    <TableHead className="w-12 pr-4" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {ranklist.events.map((event) => (
-                    <TableRow key={event.id}>
-                      <TableCell className="pl-4">
-                        <Link
-                          to={`/admin/events/${event.id}`}
-                          className="font-medium hover:underline"
-                        >
-                          {event.title}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {formatDate(event.startingAt)}
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={event.status} />
-                      </TableCell>
-                      <TableCell>
-                        <WeightCell
-                          key={`${event.id}-${event.weight}`}
-                          ranklistId={id}
-                          eventId={event.id}
-                          weight={event.weight}
-                        />
-                      </TableCell>
-                      <TableCell className="pr-4">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7 text-destructive hover:text-destructive"
-                          aria-label={`Detach ${event.title}`}
-                          onClick={() =>
-                            removeEvent.mutate(event.id, {
-                              onSuccess: () => toast.success('Event detached.'),
-                              onError: (error) => toast.error(errorMessage(error)),
-                            })
-                          }
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        <Tabs
+          value={tab}
+          onValueChange={(value) =>
+            setSearchParams(
+              (prev) => {
+                const next = new URLSearchParams(prev)
+                if (value === 'events') next.delete('tab')
+                else next.set('tab', value)
+                return next
+              },
+              { replace: true },
+            )
+          }
+          className="gap-4"
+        >
+          <CardHeader>
+            <TabsList>
+              <TabsTrigger value="events">
+                Events ({ranklist.events.length})
+              </TabsTrigger>
+              <TabsTrigger value="participants">
+                Participants ({ranklist.users.length})
+              </TabsTrigger>
+            </TabsList>
+          </CardHeader>
+          <CardContent>
+            <TabsContent value="events" className="space-y-4">
+              <CardDescription>
+                Attach events and set their weight in the standings.
+              </CardDescription>
+              <EventPicker
+                placeholder="Attach an event…"
+                onSelect={(event) =>
+                  setEvent.mutate(
+                    { eventId: event.id, weight: 1 },
+                    {
+                      onSuccess: () => toast.success(`“${event.title}” attached.`),
+                      onError: (error) => toast.error(errorMessage(error)),
+                    },
+                  )
+                }
+              />
+              {ranklist.events.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No events attached.</p>
+              ) : (
+                <div className="overflow-x-auto rounded-lg border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="pl-4">Event</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-center">Weight</TableHead>
+                        <TableHead className="w-12 pr-4" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {ranklist.events.map((event) => (
+                        <TableRow key={event.id}>
+                          <TableCell className="pl-4">
+                            <Link
+                              to={`/admin/events/${event.id}`}
+                              className="font-medium hover:underline"
+                            >
+                              {event.title}
+                            </Link>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {formatDate(event.startingAt)}
+                          </TableCell>
+                          <TableCell>
+                            <StatusBadge status={event.status} />
+                          </TableCell>
+                          <TableCell>
+                            <WeightCell
+                              key={`${event.id}-${event.weight}`}
+                              ranklistId={id}
+                              eventId={event.id}
+                              weight={event.weight}
+                            />
+                          </TableCell>
+                          <TableCell className="pr-4">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 text-destructive hover:text-destructive"
+                              aria-label={`Detach ${event.title}`}
+                              onClick={() =>
+                                removeEvent.mutate(event.id, {
+                                  onSuccess: () => toast.success('Event detached.'),
+                                  onError: (error) => toast.error(errorMessage(error)),
+                                })
+                              }
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </TabsContent>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Participants ({ranklist.users.length})</CardTitle>
-          <CardDescription>
-            Users ranked in this ranklist. Adding is idempotent; adding an
-            “auto” member makes them manual, so auto-removal skips them.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <UserPicker
-            placeholder="Add a participant…"
-            onSelect={(user) =>
-              addUser.mutate(user.id, {
-                onSuccess: () => toast.success(`${user.name} added.`),
-                onError: (error) => toast.error(errorMessage(error)),
-              })
-            }
-          />
-          {ranklist.users.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No participants yet.</p>
-          ) : (
-            <div className="overflow-x-auto rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-16 pl-4 text-center">Rank</TableHead>
-                    <TableHead>Participant</TableHead>
-                    <TableHead className="text-right">Score</TableHead>
-                    <TableHead className="w-12 pr-4" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {ranklist.users.map((standing) => (
-                    <TableRow key={standing.user.id}>
-                      <TableCell className="pl-4 text-center font-semibold text-muted-foreground">
-                        {standing.rank}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2.5">
-                          <UserAvatar
-                            name={standing.user.name}
-                            image={standing.user.image}
-                            className="size-7"
-                          />
-                          <span className="font-medium">{standing.user.name}</span>
-                          <span className="text-muted-foreground">
-                            @{standing.user.username}
-                          </span>
-                          {standing.autoAdded && (
-                            <Badge variant="secondary">auto</Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right font-medium tabular-nums">
-                        {standing.score.toFixed(2)}
-                      </TableCell>
-                      <TableCell className="pr-4">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-7 text-destructive hover:text-destructive"
-                          aria-label={`Remove ${standing.user.name}`}
-                          onClick={() =>
-                            removeUser.mutate(standing.user.id, {
-                              onSuccess: () => toast.success('Participant removed.'),
-                              onError: (error) => toast.error(errorMessage(error)),
-                            })
-                          }
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
+            <TabsContent value="participants" className="space-y-4">
+              <CardDescription>
+                Users ranked in this ranklist. Adding is idempotent; adding an
+                “auto” member makes them manual, so auto-removal skips them.
+              </CardDescription>
+              <UserPicker
+                placeholder="Add a participant…"
+                onSelect={(user) =>
+                  addUser.mutate(user.id, {
+                    onSuccess: () => toast.success(`${user.name} added.`),
+                    onError: (error) => toast.error(errorMessage(error)),
+                  })
+                }
+              />
+              {ranklist.users.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No participants yet.</p>
+              ) : (
+                <div className="overflow-x-auto rounded-lg border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-16 pl-4 text-center">Rank</TableHead>
+                        <TableHead>Participant</TableHead>
+                        <TableHead className="text-right">Score</TableHead>
+                        <TableHead className="w-12 pr-4" />
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {ranklist.users.map((standing) => (
+                        <TableRow key={standing.user.id}>
+                          <TableCell className="pl-4 text-center font-semibold text-muted-foreground">
+                            {standing.rank}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2.5">
+                              <UserAvatar
+                                name={standing.user.name}
+                                image={standing.user.image}
+                                className="size-7"
+                              />
+                              <span className="font-medium">{standing.user.name}</span>
+                              <span className="text-muted-foreground">
+                                @{standing.user.username}
+                              </span>
+                              {standing.autoAdded && (
+                                <Badge variant="secondary">auto</Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right font-medium tabular-nums">
+                            {standing.score.toFixed(2)}
+                          </TableCell>
+                          <TableCell className="pr-4">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 text-destructive hover:text-destructive"
+                              aria-label={`Remove ${standing.user.name}`}
+                              onClick={() =>
+                                removeUser.mutate(standing.user.id, {
+                                  onSuccess: () => toast.success('Participant removed.'),
+                                  onError: (error) => toast.error(errorMessage(error)),
+                                })
+                              }
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </TabsContent>
+          </CardContent>
+        </Tabs>
       </Card>
     </div>
   )

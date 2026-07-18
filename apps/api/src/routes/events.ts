@@ -64,6 +64,7 @@ eventRoutes.get("/", validate("query", eventsListQuery), async (c) => {
     db.select({ value: count() }).from(events).where(where),
   ]);
 
+
   return c.json({ data: rows, meta: buildMeta(page, perPage, total) });
 });
 
