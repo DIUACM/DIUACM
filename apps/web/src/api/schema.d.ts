@@ -3403,6 +3403,7 @@ export interface components {
             upsolveWeight: number;
             isLocked: boolean;
             considerStrictAttendance: boolean;
+            autoAddUsers: boolean;
         };
         TrackerDetail: {
             title: string;
@@ -3617,6 +3618,8 @@ export interface components {
             upsolveWeight: number;
             isLocked: boolean;
             considerStrictAttendance: boolean;
+            /** @description When true, DB triggers keep membership in sync with participation on attached events. */
+            autoAddUsers: boolean;
             userCount: number;
             eventCount: number;
             /** @description Unix epoch seconds (UTC). */
@@ -3638,6 +3641,8 @@ export interface components {
             user: components["schemas"]["UserSummary"];
             score: number;
             rank: number;
+            /** @description True when the member was added by the auto-add triggers, not an admin. */
+            autoAdded: boolean;
         };
         AdminRanklistDetail: {
             id: number;
@@ -3650,6 +3655,8 @@ export interface components {
             upsolveWeight: number;
             isLocked: boolean;
             considerStrictAttendance: boolean;
+            /** @description When true, DB triggers keep membership in sync with participation on attached events. */
+            autoAddUsers: boolean;
             userCount: number;
             eventCount: number;
             /** @description Unix epoch seconds (UTC). */
@@ -3754,6 +3761,7 @@ export interface components {
             upsolveWeight?: number;
             isLocked?: boolean;
             considerStrictAttendance?: boolean;
+            autoAddUsers?: boolean;
         };
         AdminRanklistUpdateRequest: {
             keyword?: string;
@@ -3763,6 +3771,7 @@ export interface components {
             upsolveWeight?: number;
             isLocked?: boolean;
             considerStrictAttendance?: boolean;
+            autoAddUsers?: boolean;
         };
         AdminRanklistEventSetRequest: {
             weight: number;

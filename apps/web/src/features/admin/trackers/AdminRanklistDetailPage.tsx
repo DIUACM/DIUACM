@@ -20,6 +20,7 @@ import { StatusBadge } from '@/features/admin/shared/StatusBadge'
 import { UserPicker } from '@/features/admin/shared/UserPicker'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { ErrorState } from '@/components/shared/states'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -60,6 +61,7 @@ function RanklistEditForm({ ranklist }: { ranklist: AdminRanklistDetail }) {
     upsolveWeight: String(ranklist.upsolveWeight),
     isLocked: ranklist.isLocked,
     considerStrictAttendance: ranklist.considerStrictAttendance,
+    autoAddUsers: ranklist.autoAddUsers,
   })
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -72,6 +74,7 @@ function RanklistEditForm({ ranklist }: { ranklist: AdminRanklistDetail }) {
         upsolveWeight: Number(form.upsolveWeight) || 0,
         isLocked: form.isLocked,
         considerStrictAttendance: form.considerStrictAttendance,
+        autoAddUsers: form.autoAddUsers,
       },
       {
         onSuccess: () => toast.success('Ranklist updated. Scores recalculated.'),
@@ -161,6 +164,18 @@ function RanklistEditForm({ ranklist }: { ranklist: AdminRanklistDetail }) {
           />
           <Label htmlFor="rl-strict" className="font-normal">
             Consider strict attendance
+          </Label>
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch
+            id="rl-auto-add"
+            checked={form.autoAddUsers}
+            onCheckedChange={(checked) =>
+              setForm((prev) => ({ ...prev, autoAddUsers: checked }))
+            }
+          />
+          <Label htmlFor="rl-auto-add" className="font-normal">
+            Auto add users
           </Label>
         </div>
       </div>
@@ -389,7 +404,8 @@ export function AdminRanklistDetailPage() {
         <CardHeader>
           <CardTitle>Participants ({ranklist.users.length})</CardTitle>
           <CardDescription>
-            Users ranked in this ranklist. Adding is idempotent.
+            Users ranked in this ranklist. Adding is idempotent; adding an
+            “auto” member makes them manual, so auto-removal skips them.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -432,6 +448,9 @@ export function AdminRanklistDetailPage() {
                           <span className="text-muted-foreground">
                             @{standing.user.username}
                           </span>
+                          {standing.autoAdded && (
+                            <Badge variant="secondary">auto</Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-right font-medium tabular-nums">

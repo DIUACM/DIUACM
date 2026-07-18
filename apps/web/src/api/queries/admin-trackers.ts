@@ -92,6 +92,7 @@ export interface AdminRanklistInput {
   upsolveWeight?: number
   isLocked?: boolean
   considerStrictAttendance?: boolean
+  autoAddUsers?: boolean
 }
 
 export function useAdminCreateRanklist(trackerId: number) {
