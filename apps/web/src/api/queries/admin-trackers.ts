@@ -78,12 +78,44 @@ export interface ReorderItem {
   position: number
 }
 
+interface AdminTrackerList {
+  data: AdminTracker[]
+  meta: components['schemas']['PaginationMeta']
+}
+
+function sortByPosition<T extends { id: number }>(rows: T[], items: ReorderItem[]): T[] {
+  const position = new Map(items.map((item) => [item.id, item.position]))
+  return [...rows].sort(
+    (a, b) => (position.get(a.id) ?? 0) - (position.get(b.id) ?? 0),
+  )
+}
+
 export function useAdminReorderTrackers() {
   const queryClient = useQueryClient()
+  // List queries are keyed ['admin', 'trackers', filters]; the detail query's
+  // third element is a number, so the predicate keeps it out.
+  const listFilter = {
+    queryKey: ['admin', 'trackers'],
+    predicate: (query: { queryKey: readonly unknown[] }) =>
+      typeof query.queryKey[2] === 'object',
+  }
   return useMutation({
     mutationFn: (items: ReorderItem[]) =>
       unwrap(api.POST('/admin/trackers/reorder', { body: { items } })),
-    onSuccess: () => {
+    onMutate: async (items) => {
+      await queryClient.cancelQueries(listFilter)
+      const previous = queryClient.getQueriesData<AdminTrackerList>(listFilter)
+      queryClient.setQueriesData<AdminTrackerList>(listFilter, (old) =>
+        old ? { ...old, data: sortByPosition(old.data, items) } : old,
+      )
+      return { previous }
+    },
+    onError: (_error, _items, context) => {
+      for (const [queryKey, data] of context?.previous ?? []) {
+        queryClient.setQueryData(queryKey, data)
+      }
+    },
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'trackers'] })
       void queryClient.invalidateQueries({ queryKey: ['trackers'] })
     },
@@ -92,6 +124,7 @@ export function useAdminReorderTrackers() {
 
 export function useAdminReorderRanklists(trackerId: number) {
   const queryClient = useQueryClient()
+  const queryKey = ['admin', 'trackers', trackerId]
   return useMutation({
     mutationFn: (items: ReorderItem[]) =>
       unwrap(
@@ -100,8 +133,19 @@ export function useAdminReorderRanklists(trackerId: number) {
           body: { items },
         }),
       ),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['admin', 'trackers', trackerId] })
+    onMutate: async (items) => {
+      await queryClient.cancelQueries({ queryKey })
+      const previous = queryClient.getQueryData<AdminTrackerDetail>(queryKey)
+      queryClient.setQueryData<AdminTrackerDetail>(queryKey, (old) =>
+        old ? { ...old, ranklists: sortByPosition(old.ranklists, items) } : old,
+      )
+      return { previous }
+    },
+    onError: (_error, _items, context) => {
+      queryClient.setQueryData(queryKey, context?.previous)
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey })
       void queryClient.invalidateQueries({ queryKey: ['trackers'] })
     },
   })

@@ -12,7 +12,7 @@ import {
 } from '@/api/queries/admin-trackers'
 import type { PublishStatus } from '@/api/queries/admin-events'
 import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
-import { ReorderButtons } from '@/features/admin/shared/ReorderButtons'
+import { SortableRow, SortableRows } from '@/features/admin/shared/SortableRows'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
 import { ErrorState } from '@/components/shared/states'
 import { Badge } from '@/components/ui/badge'
@@ -45,7 +45,6 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
-  TableBody,
   TableCell,
   TableHead,
   TableHeader,
@@ -366,7 +365,7 @@ export function AdminTrackerDetailPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-16 pl-4">Order</TableHead>
+                    <TableHead className="w-12 pl-4">Order</TableHead>
                     <TableHead>Keyword</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-center">Users</TableHead>
@@ -374,17 +373,13 @@ export function AdminTrackerDetailPage() {
                     <TableHead className="pr-4 text-center">Upsolve wt.</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
-                  {tracker.ranklists.map((ranklist, index) => (
-                    <TableRow key={ranklist.id}>
-                      <TableCell className="pl-4">
-                        <ReorderButtons
-                          index={index}
-                          count={tracker.ranklists.length}
-                          disabled={reorderRanklists.isPending}
-                          onMove={moveRanklist}
-                        />
-                      </TableCell>
+                <SortableRows
+                  ids={tracker.ranklists.map((ranklist) => ranklist.id)}
+                  disabled={reorderRanklists.isPending}
+                  onMove={moveRanklist}
+                >
+                  {tracker.ranklists.map((ranklist) => (
+                    <SortableRow key={ranklist.id} id={ranklist.id}>
                       <TableCell>
                         <Link
                           to={`/admin/ranklists/${ranklist.id}`}
@@ -410,9 +405,9 @@ export function AdminTrackerDetailPage() {
                       <TableCell className="pr-4 text-center">
                         {ranklist.upsolveWeight}
                       </TableCell>
-                    </TableRow>
+                    </SortableRow>
                   ))}
-                </TableBody>
+                </SortableRows>
               </Table>
             </div>
           )}

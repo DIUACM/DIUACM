@@ -35,14 +35,13 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
-  TableBody,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
-import { ReorderButtons } from '@/features/admin/shared/ReorderButtons'
+import { SortableRow, SortableRows } from '@/features/admin/shared/SortableRows'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
 import { formatDate } from '@/lib/datetime'
 import { useDocumentTitle } from '@/lib/use-document-title'
@@ -250,24 +249,20 @@ export function AdminTrackersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-16 pl-4">Order</TableHead>
+                  <TableHead className="w-12 pl-4">Order</TableHead>
                   <TableHead>Title</TableHead>
                   <TableHead>Slug</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="pr-4">Updated</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
-                {trackersQuery.data.data.map((tracker, index) => (
-                  <TableRow key={tracker.id}>
-                    <TableCell className="pl-4">
-                      <ReorderButtons
-                        index={index}
-                        count={trackersQuery.data.data.length}
-                        disabled={!canReorder || reorderTrackers.isPending}
-                        onMove={moveTracker}
-                      />
-                    </TableCell>
+              <SortableRows
+                ids={trackersQuery.data.data.map((tracker) => tracker.id)}
+                disabled={!canReorder || reorderTrackers.isPending}
+                onMove={moveTracker}
+              >
+                {trackersQuery.data.data.map((tracker) => (
+                  <SortableRow key={tracker.id} id={tracker.id}>
                     <TableCell>
                       <Link
                         to={`/admin/trackers/${tracker.id}`}
@@ -285,9 +280,9 @@ export function AdminTrackersPage() {
                     <TableCell className="pr-4 text-muted-foreground">
                       {formatDate(tracker.updatedAt)}
                     </TableCell>
-                  </TableRow>
+                  </SortableRow>
                 ))}
-              </TableBody>
+              </SortableRows>
             </Table>
           </div>
           <Pagination
