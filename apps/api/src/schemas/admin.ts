@@ -178,14 +178,14 @@ export const adminRanklistEventSetSchema = z.object({
   weight: z.number().min(0).max(1),
 });
 
-// Explicit positions per row (not a full ordering), so partial pages can
+// Explicit order values per row (not a full ordering), so partial pages can
 // swap neighbours without knowing the whole collection.
 export const adminReorderSchema = z.object({
   items: z
     .array(
       z.object({
         id: z.number().int().positive(),
-        position: z.number().int().min(0),
+        order: z.number().int().min(0),
       }),
     )
     .min(1)

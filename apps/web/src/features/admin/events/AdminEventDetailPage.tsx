@@ -392,11 +392,6 @@ export function AdminEventDetailPage() {
   const publicQuery = useEvent(id, !canManageEvents)
   const eventQuery = canManageEvents ? adminQuery : publicQuery
 
-  // Fetched here (shared cache with the tab panels) so the tab labels can
-  // show counts.
-  const attendanceQuery = useEventAttendance(id, canManageAttendance)
-  const performanceQuery = useEventPerformance(id, canManageEvents)
-
   const tabs = [
     ...(canManageEvents ? ['media', 'performance'] : []),
     ...(canManageAttendance ? ['attendance'] : []),
@@ -522,14 +517,12 @@ export function AdminEventDetailPage() {
                 )}
                 {canManageAttendance && (
                   <TabsTrigger value="attendance">
-                    Attendance
-                    {attendanceQuery.data ? ` (${attendanceQuery.data.data.length})` : ''}
+                    Attendance ({event.attendanceCount})
                   </TabsTrigger>
                 )}
                 {canManageEvents && (
                   <TabsTrigger value="performance">
-                    Performance
-                    {performanceQuery.data ? ` (${performanceQuery.data.data.length})` : ''}
+                    Performance ({event.performanceCount})
                   </TabsTrigger>
                 )}
               </TabsList>

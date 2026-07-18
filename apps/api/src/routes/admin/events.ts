@@ -34,6 +34,8 @@ const eventColumns = {
   participationScope: events.participationScope,
   openForAttendance: events.openForAttendance,
   strictAttendance: events.strictAttendance,
+  attendanceCount: events.attendanceCount,
+  performanceCount: events.performanceCount,
   createdAt: events.createdAt,
   updatedAt: events.updatedAt,
 };
@@ -111,7 +113,7 @@ adminEventRoutes.get("/:id", manageEvents, async (c) => {
     .select({ id: eventMedia.id, type: eventMedia.type, key: eventMedia.key })
     .from(eventMedia)
     .where(eq(eventMedia.eventId, id))
-    .orderBy(asc(eventMedia.position), asc(eventMedia.id));
+    .orderBy(asc(eventMedia.order), asc(eventMedia.id));
 
   return c.json({
     ...ev,
@@ -183,13 +185,13 @@ adminEventRoutes.post("/:id/media", manageEvents, async (c) => {
 
   let row;
   try {
-    const [{ value: position }] = await db
+    const [{ value: order }] = await db
       .select({ value: count() })
       .from(eventMedia)
       .where(eq(eventMedia.eventId, id));
     [row] = await db
       .insert(eventMedia)
-      .values({ eventId: id, type: "image", key, position })
+      .values({ eventId: id, type: "image", key, order })
       .returning({ id: eventMedia.id, type: eventMedia.type });
   } catch (err) {
     // DB insert failed — don't leave an orphan object in R2.

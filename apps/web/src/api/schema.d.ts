@@ -2658,7 +2658,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Set display positions for a batch of trackers
+         * Set display order for a batch of trackers
          * @description **Access:** `manage_trackers` — Requires a bearer token for a user granted the `manage_trackers` permission. The super admin always passes.
          */
         post: {
@@ -2674,7 +2674,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Positions updated */
+                /** @description Order updated */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2728,7 +2728,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Set display positions for a batch of ranklists within a tracker
+         * Set display order for a batch of ranklists within a tracker
          * @description **Access:** `manage_trackers` — Requires a bearer token for a user granted the `manage_trackers` permission. The super admin always passes.
          */
         post: {
@@ -2746,7 +2746,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Positions updated */
+                /** @description Order updated */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3429,6 +3429,10 @@ export interface components {
             participationScope: "open_for_all" | "only_girls" | "junior_programmers" | "selected_persons";
             openForAttendance: boolean;
             strictAttendance: boolean;
+            /** @description Number of attendance rows, maintained by database triggers. */
+            attendanceCount: number;
+            /** @description Number of performance rows, maintained by database triggers. */
+            performanceCount: number;
             /** @description Unix epoch seconds (UTC). */
             createdAt: number;
             /** @description Unix epoch seconds (UTC). */
@@ -3465,6 +3469,10 @@ export interface components {
             participationScope: "open_for_all" | "only_girls" | "junior_programmers" | "selected_persons";
             openForAttendance: boolean;
             strictAttendance: boolean;
+            /** @description Number of attendance rows, maintained by database triggers. */
+            attendanceCount: number;
+            /** @description Number of performance rows, maintained by database triggers. */
+            performanceCount: number;
             /** @description Unix epoch seconds (UTC). */
             createdAt: number;
             /** @description Unix epoch seconds (UTC). */
@@ -3642,6 +3650,10 @@ export interface components {
             participationScope: "open_for_all" | "only_girls" | "junior_programmers" | "selected_persons";
             openForAttendance: boolean;
             strictAttendance: boolean;
+            /** @description Number of attendance rows, maintained by database triggers. */
+            attendanceCount: number;
+            /** @description Number of performance rows, maintained by database triggers. */
+            performanceCount: number;
             /** @description Unix epoch seconds (UTC). */
             createdAt: number;
             /** @description Unix epoch seconds (UTC). */
@@ -3666,6 +3678,10 @@ export interface components {
             participationScope: "open_for_all" | "only_girls" | "junior_programmers" | "selected_persons";
             openForAttendance: boolean;
             strictAttendance: boolean;
+            /** @description Number of attendance rows, maintained by database triggers. */
+            attendanceCount: number;
+            /** @description Number of performance rows, maintained by database triggers. */
+            performanceCount: number;
             /** @description Unix epoch seconds (UTC). */
             createdAt: number;
             /** @description Unix epoch seconds (UTC). */
@@ -3686,7 +3702,7 @@ export interface components {
             /** @enum {string} */
             status: "published" | "draft";
             /** @description Display order (0 = first). */
-            position: number;
+            order: number;
             /** @description Unix epoch seconds (UTC). */
             createdAt: number;
             /** @description Unix epoch seconds (UTC). */
@@ -3704,7 +3720,7 @@ export interface components {
             /** @enum {string} */
             status: "published" | "draft";
             /** @description Display order (0 = first). */
-            position: number;
+            order: number;
             /** @description Unix epoch seconds (UTC). */
             createdAt: number;
             /** @description Unix epoch seconds (UTC). */
@@ -3725,7 +3741,7 @@ export interface components {
             /** @description When true, DB triggers keep membership in sync with participation on attached events. */
             autoAddUsers: boolean;
             /** @description Display order within the tracker (0 = first = latest). */
-            position: number;
+            order: number;
             userCount: number;
             eventCount: number;
             /** @description Unix epoch seconds (UTC). */
@@ -3764,7 +3780,7 @@ export interface components {
             /** @description When true, DB triggers keep membership in sync with participation on attached events. */
             autoAddUsers: boolean;
             /** @description Display order within the tracker (0 = first = latest). */
-            position: number;
+            order: number;
             userCount: number;
             eventCount: number;
             /** @description Unix epoch seconds (UTC). */
@@ -3887,7 +3903,7 @@ export interface components {
         AdminReorderRequest: {
             items: {
                 id: number;
-                position: number;
+                order: number;
             }[];
         };
     };

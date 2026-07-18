@@ -190,7 +190,7 @@ export function AdminTrackersPage() {
     rows.splice(to, 0, moved)
     const base = (trackersQuery.data.meta.page - 1) * trackersQuery.data.meta.perPage
     reorderTrackers.mutate(
-      rows.map((tracker, index) => ({ id: tracker.id, position: base + index })),
+      rows.map((tracker, index) => ({ id: tracker.id, order: base + index })),
       { onError: (error) => toast.error(errorMessage(error)) },
     )
   }

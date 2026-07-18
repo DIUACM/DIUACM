@@ -24,7 +24,7 @@ const trackerColumns = {
   description: trackers.description,
   slug: trackers.slug,
   status: trackers.status,
-  position: trackers.position,
+  order: trackers.order,
   createdAt: trackers.createdAt,
   updatedAt: trackers.updatedAt,
 };
@@ -39,7 +39,7 @@ export const ranklistColumns = {
   isLocked: ranklists.isLocked,
   considerStrictAttendance: ranklists.considerStrictAttendance,
   autoAddUsers: ranklists.autoAddUsers,
-  position: ranklists.position,
+  order: ranklists.order,
   userCount: ranklists.userCount,
   eventCount: ranklists.eventCount,
   createdAt: ranklists.createdAt,
@@ -68,7 +68,7 @@ adminTrackerRoutes.get("/", manageTrackers, validate("query", adminTrackersListQ
       .select(trackerColumns)
       .from(trackers)
       .where(where)
-      .orderBy(asc(trackers.position), desc(trackers.id))
+      .orderBy(asc(trackers.order), desc(trackers.id))
       .limit(perPage)
       .offset((page - 1) * perPage),
     db.select({ value: count() }).from(trackers).where(where),
@@ -87,7 +87,7 @@ adminTrackerRoutes.post("/", manageTrackers, validate("json", adminTrackerCreate
     .insert(trackers)
     .values({
       ...input,
-      position: sql`(SELECT COALESCE(MAX(position), -1) + 1 FROM trackers)`,
+      order: sql`(SELECT COALESCE(MAX("order"), -1) + 1 FROM trackers)`,
     })
     .returning(trackerColumns);
   return c.json(tracker, 201);
@@ -109,7 +109,7 @@ adminTrackerRoutes.get("/:id", manageTrackers, async (c) => {
     .select(ranklistColumns)
     .from(ranklists)
     .where(eq(ranklists.trackerId, id))
-    .orderBy(asc(ranklists.position), asc(ranklists.id));
+    .orderBy(asc(ranklists.order), asc(ranklists.id));
 
   return c.json({ ...tracker, ranklists: ranklistRows });
 });
@@ -172,14 +172,14 @@ adminTrackerRoutes.post(
       .values({
         ...input,
         trackerId: id,
-        position: sql`(SELECT COALESCE(MAX(position), -1) + 1 FROM ranklists WHERE tracker_id = ${id})`,
+        order: sql`(SELECT COALESCE(MAX("order"), -1) + 1 FROM ranklists WHERE tracker_id = ${id})`,
       })
       .returning(ranklistColumns);
     return c.json(ranklist, 201);
   },
 );
 
-// Set display positions for a batch of trackers (atomic via D1 batch).
+// Set display order for a batch of trackers (atomic via D1 batch).
 adminTrackerRoutes.post(
   "/reorder",
   manageTrackers,
@@ -192,7 +192,7 @@ adminTrackerRoutes.post(
     const statements = items.map((item) =>
       db
         .update(trackers)
-        .set({ position: item.position, updatedAt: now })
+        .set({ order: item.order, updatedAt: now })
         .where(eq(trackers.id, item.id)),
     );
     await db.batch([statements[0], ...statements.slice(1)]);
@@ -201,7 +201,7 @@ adminTrackerRoutes.post(
   },
 );
 
-// Set display positions for a batch of ranklists within one tracker.
+// Set display order for a batch of ranklists within one tracker.
 adminTrackerRoutes.post(
   "/:id/ranklists/reorder",
   manageTrackers,
@@ -223,7 +223,7 @@ adminTrackerRoutes.post(
     const statements = items.map((item) =>
       db
         .update(ranklists)
-        .set({ position: item.position, updatedAt: now })
+        .set({ order: item.order, updatedAt: now })
         .where(and(eq(ranklists.id, item.id), eq(ranklists.trackerId, id))),
     );
     await db.batch([statements[0], ...statements.slice(1)]);

@@ -220,10 +220,10 @@ function EventDetailContent({ event }: { event: EventDetail }) {
       <Tabs defaultValue="performance">
         <TabsList>
           <TabsTrigger value="performance">
-            <Trophy className="size-4" /> Performance
+            <Trophy className="size-4" /> Performance ({event.performanceCount})
           </TabsTrigger>
           <TabsTrigger value="attendance">
-            <Users className="size-4" /> Attendance
+            <Users className="size-4" /> Attendance ({event.attendanceCount})
           </TabsTrigger>
         </TabsList>
         <TabsContent value="performance" className="mt-4">

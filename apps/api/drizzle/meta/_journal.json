@@ -64,6 +64,13 @@
       "when": 1784385360709,
       "tag": "0008_last_firestar",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1784400945013,
+      "tag": "0009_medical_catseye",
+      "breakpoints": true
     }
   ]
 }

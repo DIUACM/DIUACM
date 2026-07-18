@@ -268,7 +268,7 @@ export function AdminTrackerDetailPage() {
     const [moved] = rows.splice(from, 1)
     rows.splice(to, 0, moved)
     reorderRanklists.mutate(
-      rows.map((ranklist, index) => ({ id: ranklist.id, position: index })),
+      rows.map((ranklist, index) => ({ id: ranklist.id, order: index })),
       { onError: (error) => toast.error(errorMessage(error)) },
     )
   }

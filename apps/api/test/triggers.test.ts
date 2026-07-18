@@ -7,14 +7,17 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   addMember,
+  applyTestMigrations,
   attachEvent,
   attend,
+  eventCounts,
   insertEvent,
   insertRanklist,
   insertTracker,
   insertUser,
   member,
   openTestDb,
+  openTestDbThrough,
   ranklistCounts,
   setPerformance,
 } from "./db";
@@ -41,6 +44,41 @@ describe("count triggers", () => {
     db.prepare("DELETE FROM ranklist_user WHERE ranklist_id = 1 AND user_id = 2").run();
     db.prepare("DELETE FROM ranklist_event WHERE ranklist_id = 1 AND event_id = 1").run();
     expect(ranklistCounts(db, 1)).toEqual({ user_count: 1, event_count: 0 });
+  });
+
+  it("keeps attendance_count and performance_count in sync on events", () => {
+    insertUser(db, 1);
+    insertEvent(db, 1);
+    insertEvent(db, 2);
+
+    attend(db, 1, 1);
+    setPerformance(db, 1, 1, 3, 1);
+    expect(eventCounts(db, 1)).toEqual({ attendance_count: 1, performance_count: 1 });
+    expect(eventCounts(db, 2)).toEqual({ attendance_count: 0, performance_count: 0 });
+
+    db.prepare("UPDATE event_attendance SET event_id = 2 WHERE event_id = 1 AND user_id = 1").run();
+    db.prepare("UPDATE event_performance SET event_id = 2 WHERE event_id = 1 AND user_id = 1").run();
+    expect(eventCounts(db, 1)).toEqual({ attendance_count: 0, performance_count: 0 });
+    expect(eventCounts(db, 2)).toEqual({ attendance_count: 1, performance_count: 1 });
+
+    db.prepare("DELETE FROM event_attendance WHERE event_id = 2 AND user_id = 1").run();
+    db.prepare("DELETE FROM event_performance WHERE event_id = 2 AND user_id = 1").run();
+    expect(eventCounts(db, 2)).toEqual({ attendance_count: 0, performance_count: 0 });
+  });
+
+  it("backfills event counters for rows that predate the counter migration", () => {
+    const migrationDb = openTestDbThrough(8);
+    insertUser(migrationDb, 1);
+    insertEvent(migrationDb, 1);
+    attend(migrationDb, 1, 1);
+    setPerformance(migrationDb, 1, 1, 2, 1);
+
+    applyTestMigrations(migrationDb, 9, 9);
+
+    expect(eventCounts(migrationDb, 1)).toEqual({
+      attendance_count: 1,
+      performance_count: 1,
+    });
   });
 });
 

@@ -242,6 +242,14 @@ const eventCoreProps = {
   },
   openForAttendance: { type: "boolean" },
   strictAttendance: { type: "boolean" },
+  attendanceCount: {
+    type: "integer",
+    description: "Number of attendance rows, maintained by database triggers.",
+  },
+  performanceCount: {
+    type: "integer",
+    description: "Number of performance rows, maintained by database triggers.",
+  },
   createdAt: epoch("Unix epoch seconds (UTC)."),
   updatedAt: epoch("Unix epoch seconds (UTC)."),
 };
@@ -546,7 +554,7 @@ const adminTrackerProps = {
   description: { type: "string" },
   slug: { type: "string" },
   status: { type: "string", enum: ["published", "draft"] },
-  position: { type: "integer", description: "Display order (0 = first)." },
+  order: { type: "integer", description: "Display order (0 = first)." },
   createdAt: epoch("Unix epoch seconds (UTC)."),
   updatedAt: epoch("Unix epoch seconds (UTC)."),
 };
@@ -580,7 +588,7 @@ const adminRanklistSchema = {
       description:
         "When true, DB triggers keep membership in sync with participation on attached events.",
     },
-    position: {
+    order: {
       type: "integer",
       description: "Display order within the tracker (0 = first = latest).",
     },
@@ -599,7 +607,7 @@ const adminRanklistSchema = {
     "isLocked",
     "considerStrictAttendance",
     "autoAddUsers",
-    "position",
+    "order",
     "userCount",
     "eventCount",
     "createdAt",
@@ -1621,11 +1629,11 @@ export const openApiDoc = {
     "/admin/trackers/reorder": {
       post: {
         tags: ["admin-trackers"],
-        summary: "Set display positions for a batch of trackers",
+        summary: "Set display order for a batch of trackers",
         ...access("manage_trackers"),
         requestBody: { required: true, content: jsonBody(ref("AdminReorderRequest")) },
         responses: {
-          "200": { description: "Positions updated", content: jsonBody(ref("Ok")) },
+          "200": { description: "Order updated", content: jsonBody(ref("Ok")) },
           "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
           ...adminAuthResponses,
         },
@@ -1634,12 +1642,12 @@ export const openApiDoc = {
     "/admin/trackers/{id}/ranklists/reorder": {
       post: {
         tags: ["admin-ranklists"],
-        summary: "Set display positions for a batch of ranklists within a tracker",
+        summary: "Set display order for a batch of ranklists within a tracker",
         ...access("manage_trackers"),
         parameters: [idParam("id")],
         requestBody: { required: true, content: jsonBody(ref("AdminReorderRequest")) },
         responses: {
-          "200": { description: "Positions updated", content: jsonBody(ref("Ok")) },
+          "200": { description: "Order updated", content: jsonBody(ref("Ok")) },
           "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
           ...adminAuthResponses,
           "404": { description: "Tracker not found", content: jsonBody(ref("Error")) },

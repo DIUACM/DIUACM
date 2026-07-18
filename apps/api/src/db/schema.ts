@@ -92,6 +92,10 @@ export const events = sqliteTable(
     strictAttendance: integer("strict_attendance", { mode: "boolean" })
       .notNull()
       .default(false),
+    // Maintained by SQLite triggers on event_attendance / event_performance.
+    // Application code must never write these directly.
+    attendanceCount: integer("attendance_count").notNull().default(0),
+    performanceCount: integer("performance_count").notNull().default(0),
     createdAt: integer("created_at")
       .notNull()
       .default(sql`(unixepoch())`),
@@ -117,7 +121,7 @@ export const eventMedia = sqliteTable(
     type: text("type", { enum: ["image", "video"] }).notNull(),
     // R2 object key; served via GET /files/:key.
     key: text("key").notNull(),
-    position: integer("position").notNull().default(0),
+    order: integer("order").notNull().default(0),
     createdAt: integer("created_at")
       .notNull()
       .default(sql`(unixepoch())`),
@@ -187,7 +191,7 @@ export const trackers = sqliteTable(
       .notNull()
       .default("draft"),
     // Display order (0 = first). Admin-controlled via the reorder endpoint.
-    position: integer("position").notNull().default(0),
+    order: integer("order").notNull().default(0),
     createdAt: integer("created_at")
       .notNull()
       .default(sql`(unixepoch())`),
@@ -221,7 +225,7 @@ export const ranklists = sqliteTable(
     autoAddUsers: integer("auto_add_users", { mode: "boolean" }).notNull().default(false),
     // Display order within the tracker (0 = first = latest). Admin-controlled
     // via the reorder endpoint.
-    position: integer("position").notNull().default(0),
+    order: integer("order").notNull().default(0),
     // Maintained by SQLite triggers on ranklist_user / ranklist_event — never
     // write these directly from application code.
     userCount: integer("user_count").notNull().default(0),

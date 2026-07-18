@@ -15,18 +15,35 @@ export function openTestDb(): Database.Database {
   // D1 runs with foreign keys enforced; cascade behavior depends on it.
   db.pragma("foreign_keys = ON");
 
+  applyTestMigrations(db);
+  return db;
+}
+
+export function openTestDbThrough(lastMigrationIndex: number): Database.Database {
+  const db = new Database(":memory:");
+  db.pragma("foreign_keys = ON");
+  applyTestMigrations(db, 0, lastMigrationIndex);
+  return db;
+}
+
+export function applyTestMigrations(
+  db: Database.Database,
+  firstMigrationIndex = 0,
+  lastMigrationIndex = Number.POSITIVE_INFINITY,
+): void {
+
   const journal = JSON.parse(
     readFileSync(join(MIGRATIONS_DIR, "meta", "_journal.json"), "utf8"),
   ) as { entries: { tag: string }[] };
 
-  for (const entry of journal.entries) {
+  for (const [index, entry] of journal.entries.entries()) {
+    if (index < firstMigrationIndex || index > lastMigrationIndex) continue;
     const sql = readFileSync(join(MIGRATIONS_DIR, `${entry.tag}.sql`), "utf8");
     for (const statement of sql.split("--> statement-breakpoint")) {
       const trimmed = statement.trim();
       if (trimmed) db.exec(trimmed);
     }
   }
-  return db;
 }
 
 // ---------------------------------------------------------------------------
@@ -143,3 +160,11 @@ export const ranklistCounts = (
   db
     .prepare("SELECT user_count, event_count FROM ranklists WHERE id = ?")
     .get(id) as { user_count: number; event_count: number };
+
+export const eventCounts = (
+  db: Database.Database,
+  id: number,
+): { attendance_count: number; performance_count: number } =>
+  db
+    .prepare("SELECT attendance_count, performance_count FROM events WHERE id = ?")
+    .get(id) as { attendance_count: number; performance_count: number };

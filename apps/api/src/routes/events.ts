@@ -29,6 +29,8 @@ const eventListColumns = {
   participationScope: events.participationScope,
   openForAttendance: events.openForAttendance,
   strictAttendance: events.strictAttendance,
+  attendanceCount: events.attendanceCount,
+  performanceCount: events.performanceCount,
   createdAt: events.createdAt,
   updatedAt: events.updatedAt,
 };
@@ -82,7 +84,7 @@ eventRoutes.get("/:id", async (c) => {
     with: {
       media: {
         columns: { id: true, type: true, key: true },
-        orderBy: (m, { asc }) => [asc(m.position), asc(m.id)],
+        orderBy: (m, { asc }) => [asc(m.order), asc(m.id)],
       },
     },
   });

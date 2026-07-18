@@ -142,7 +142,8 @@ export function useAdminAddAttendance(eventId: number) {
         }),
       ),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['events', eventId, 'attendance'] })
+      void queryClient.invalidateQueries({ queryKey: ['events'] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'events'] })
     },
   })
 }
@@ -157,7 +158,8 @@ export function useAdminRemoveAttendance(eventId: number) {
         }),
       ),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['events', eventId, 'attendance'] })
+      void queryClient.invalidateQueries({ queryKey: ['events'] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'events'] })
     },
   })
 }
@@ -179,7 +181,8 @@ export function useAdminSetPerformance(eventId: number) {
         }),
       ),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['events', eventId, 'performance'] })
+      void queryClient.invalidateQueries({ queryKey: ['events'] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'events'] })
     },
   })
 }
@@ -194,7 +197,8 @@ export function useAdminRemovePerformance(eventId: number) {
         }),
       ),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['events', eventId, 'performance'] })
+      void queryClient.invalidateQueries({ queryKey: ['events'] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'events'] })
     },
   })
 }

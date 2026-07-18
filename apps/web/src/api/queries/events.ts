@@ -67,7 +67,7 @@ export function useMarkAttendance(id: number) {
         }),
       ),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['events', id, 'attendance'] })
+      void queryClient.invalidateQueries({ queryKey: ['events'] })
     },
   })
 }

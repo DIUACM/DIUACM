@@ -75,7 +75,7 @@ export function useAdminUpdateTracker(id: number) {
 
 export interface ReorderItem {
   id: number
-  position: number
+  order: number
 }
 
 interface AdminTrackerList {
@@ -83,10 +83,10 @@ interface AdminTrackerList {
   meta: components['schemas']['PaginationMeta']
 }
 
-function sortByPosition<T extends { id: number }>(rows: T[], items: ReorderItem[]): T[] {
-  const position = new Map(items.map((item) => [item.id, item.position]))
+function sortByOrder<T extends { id: number }>(rows: T[], items: ReorderItem[]): T[] {
+  const order = new Map(items.map((item) => [item.id, item.order]))
   return [...rows].sort(
-    (a, b) => (position.get(a.id) ?? 0) - (position.get(b.id) ?? 0),
+    (a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0),
   )
 }
 
@@ -106,7 +106,7 @@ export function useAdminReorderTrackers() {
       await queryClient.cancelQueries(listFilter)
       const previous = queryClient.getQueriesData<AdminTrackerList>(listFilter)
       queryClient.setQueriesData<AdminTrackerList>(listFilter, (old) =>
-        old ? { ...old, data: sortByPosition(old.data, items) } : old,
+        old ? { ...old, data: sortByOrder(old.data, items) } : old,
       )
       return { previous }
     },
@@ -137,7 +137,7 @@ export function useAdminReorderRanklists(trackerId: number) {
       await queryClient.cancelQueries({ queryKey })
       const previous = queryClient.getQueryData<AdminTrackerDetail>(queryKey)
       queryClient.setQueryData<AdminTrackerDetail>(queryKey, (old) =>
-        old ? { ...old, ranklists: sortByPosition(old.ranklists, items) } : old,
+        old ? { ...old, ranklists: sortByOrder(old.ranklists, items) } : old,
       )
       return { previous }
     },

@@ -49,7 +49,7 @@ trackerRoutes.get("/", validate("query", trackersListQuery), async (c) => {
       .select(trackerListColumns)
       .from(trackers)
       .where(where)
-      .orderBy(asc(trackers.position), desc(trackers.id))
+      .orderBy(asc(trackers.order), desc(trackers.id))
       .limit(perPage)
       .offset((page - 1) * perPage),
     db.select({ value: count() }).from(trackers).where(where),
@@ -79,7 +79,7 @@ trackerRoutes.get("/:slug", async (c) => {
           considerStrictAttendance: true,
           autoAddUsers: true,
         },
-        orderBy: (r, { asc: ascOp }) => [ascOp(r.position), ascOp(r.id)],
+        orderBy: (r, { asc: ascOp }) => [ascOp(r.order), ascOp(r.id)],
       },
     },
   });
