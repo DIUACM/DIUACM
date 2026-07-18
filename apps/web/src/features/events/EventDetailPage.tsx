@@ -145,6 +145,10 @@ function EventDetailContent({ event }: { event: EventDetail }) {
   const timing = eventTiming(event.startingAt, event.endingAt)
   const canMarkAttendance =
     isAuthenticated && event.openForAttendance && timing !== 'ended'
+  const defaultTab =
+    event.performanceCount === 0 && event.attendanceCount > 0
+      ? 'attendance'
+      : 'performance'
 
   return (
     <div className="space-y-6">
@@ -217,7 +221,7 @@ function EventDetailContent({ event }: { event: EventDetail }) {
         </div>
       )}
 
-      <Tabs defaultValue="performance">
+      <Tabs defaultValue={defaultTab}>
         <TabsList>
           <TabsTrigger value="performance">
             <Trophy className="size-4" /> Performance ({event.performanceCount})
