@@ -25,6 +25,15 @@ const trackerListColumns = {
   slug: trackers.slug,
 };
 
+// Split an array into consecutive slices of at most `size` items.
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    out.push(items.slice(i, i + size));
+  }
+  return out;
+}
+
 const trackerRoutes = new Hono<AppEnv>();
 
 // List published trackers (id / title / description / slug), newest first.
@@ -146,22 +155,35 @@ trackerRoutes.get("/:slug/:keyword", async (c) => {
   };
   const perfByUser = new Map<number, PerfEntry[]>();
   if (eventIds.length > 0 && userIds.length > 0) {
-    const perfRows = await db
-      .select({
-        eventId: eventPerformance.eventId,
-        userId: eventPerformance.userId,
-        position: eventPerformance.position,
-        solveCount: eventPerformance.solveCount,
-        upsolveCount: eventPerformance.upsolveCount,
-      })
-      .from(eventPerformance)
-      .where(
-        and(
-          inArray(eventPerformance.eventId, eventIds),
-          inArray(eventPerformance.userId, userIds),
+    // D1 caps a query at 100 bound parameters. This filter binds one param per
+    // event id plus one per user id, so a large ranklist (this endpoint is
+    // un-paginated) overflows the limit. Chunk both IN() lists so each executed
+    // query stays well under 100 params (max CHUNK * 2), then run them together.
+    const CHUNK = 45;
+    const eventChunks = chunk(eventIds, CHUNK);
+    const userChunks = chunk(userIds, CHUNK);
+    const perfRowGroups = await Promise.all(
+      eventChunks.flatMap((eventChunk) =>
+        userChunks.map((userChunk) =>
+          db
+            .select({
+              eventId: eventPerformance.eventId,
+              userId: eventPerformance.userId,
+              position: eventPerformance.position,
+              solveCount: eventPerformance.solveCount,
+              upsolveCount: eventPerformance.upsolveCount,
+            })
+            .from(eventPerformance)
+            .where(
+              and(
+                inArray(eventPerformance.eventId, eventChunk),
+                inArray(eventPerformance.userId, userChunk),
+              ),
+            ),
         ),
-      );
-    for (const p of perfRows) {
+      ),
+    );
+    for (const p of perfRowGroups.flat()) {
       const list = perfByUser.get(p.userId) ?? [];
       list.push({
         eventId: p.eventId,
