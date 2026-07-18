@@ -1,5 +1,5 @@
 {
-  "name": "diuacm-web-claude",
+  "name": "@diuacm/web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "api:types": "openapi-typescript https://diuacm.sourovcodes.workers.dev/openapi.json -o src/api/schema.d.ts",
-    "deploy": "npm run build && wrangler deploy"
+    "deploy": "pnpm build && wrangler deploy"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.9",

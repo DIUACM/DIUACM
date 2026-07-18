@@ -2,10 +2,17 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "diuacm-dev",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["wrangler", "dev", "--port", "8792"],
+      "name": "api",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@diuacm/api", "dev", "--port", "8792"],
       "port": 8792,
+      "autoPort": false
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@diuacm/web", "dev", "--port", "5199", "--strictPort"],
+      "port": 5199,
       "autoPort": false
     }
   ]

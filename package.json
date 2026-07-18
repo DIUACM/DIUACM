@@ -1,0 +1,14 @@
+{
+  "name": "diuacm",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:api": "pnpm --filter @diuacm/api dev",
+    "dev:web": "pnpm --filter @diuacm/web dev",
+    "build:web": "pnpm --filter @diuacm/web build",
+    "typecheck": "pnpm --filter @diuacm/api typecheck && pnpm --filter @diuacm/web exec tsc -b",
+    "deploy:api": "pnpm --filter @diuacm/api deploy",
+    "deploy:web": "pnpm --filter @diuacm/web deploy"
+  }
+}
