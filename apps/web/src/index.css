@@ -165,6 +165,12 @@
 
   /* Maths nodes are rendered by MathNodeView, which carries its own styling. */
 
+  /* The Placeholder extension only tags the empty node; the text is ours. */
+  .ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    @apply pointer-events-none float-left h-0 text-muted-foreground;
+  }
+
   /* Gapcursor + selected block nodes (images, hr). */
   .ProseMirror-selectednode {
     @apply outline-2 outline-primary;

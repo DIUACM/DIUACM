@@ -63,6 +63,8 @@ export function MarkdownContent({
       className={cn(
         'prose prose-neutral max-w-none dark:prose-invert',
         'prose-headings:scroll-mt-20 prose-pre:bg-muted prose-pre:text-foreground',
+        // Tailwind Typography wraps inline code in literal backticks by default.
+        'prose-code:before:content-none prose-code:after:content-none',
         '[&_img]:rounded-lg [&_video]:w-full [&_video]:rounded-lg [&_iframe]:aspect-video [&_iframe]:w-full [&_iframe]:rounded-lg',
         className,
       )}

@@ -1,6 +1,6 @@
 import { ArrowLeft, ImagePlus, Trash2, X } from 'lucide-react'
-import { useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useBlocker, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
 import {
@@ -14,6 +14,16 @@ import type { AdminBlogPostDetail } from '@/api/queries/admin-blog'
 import type { PublishStatus } from '@/api/queries/admin-events'
 import { BlogEditor } from '@/features/admin/blog/BlogEditor'
 import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
 import { ErrorState } from '@/components/shared/states'
 import { Button } from '@/components/ui/button'
@@ -42,27 +52,49 @@ const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
 
 function PostEditForm({ post }: { post: AdminBlogPostDetail }) {
   const updatePost = useAdminUpdateBlogPost(post.id)
-  const [form, setForm] = useState({
+  const loaded = {
     title: post.title,
     slug: post.slug,
     content: post.content,
     status: post.status,
-  })
+  }
+  const [form, setForm] = useState(loaded)
+  // Last successfully persisted values. Comparing against these — rather than
+  // the `post` prop — keeps the form clean straight after a save, without
+  // waiting for the query to refetch.
+  const [saved, setSaved] = useState(loaded)
+  const isDirty =
+    form.title !== saved.title ||
+    form.slug !== saved.slug ||
+    form.content !== saved.content ||
+    form.status !== saved.status
+
+  // Full page unloads (reload, close tab, external link) get the browser's
+  // native prompt; in-app navigation is caught by the blocker below.
+  useEffect(() => {
+    if (!isDirty) return
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault()
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [isDirty])
+
+  const blocker = useBlocker(isDirty)
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
-    updatePost.mutate(
-      {
-        title: form.title.trim(),
-        slug: form.slug,
-        content: form.content,
-        status: form.status,
+    const payload = {
+      title: form.title.trim(),
+      slug: form.slug,
+      content: form.content,
+      status: form.status,
+    }
+    updatePost.mutate(payload, {
+      onSuccess: () => {
+        setSaved(payload)
+        toast.success('Post updated.')
       },
-      {
-        onSuccess: () => toast.success('Post updated.'),
-        onError: (error) => toast.error(errorMessage(error)),
-      },
-    )
+      onError: (error) => toast.error(errorMessage(error)),
+    })
   }
 
   return (
@@ -118,9 +150,36 @@ function PostEditForm({ post }: { post: AdminBlogPostDetail }) {
           </SelectContent>
         </Select>
       </div>
-      <Button type="submit" disabled={updatePost.isPending}>
-        {updatePost.isPending ? 'Saving…' : 'Save changes'}
-      </Button>
+      <div className="flex items-center gap-3">
+        <Button type="submit" disabled={updatePost.isPending || !isDirty}>
+          {updatePost.isPending ? 'Saving…' : 'Save changes'}
+        </Button>
+        {isDirty && (
+          <span className="text-sm text-muted-foreground">Unsaved changes</span>
+        )}
+      </div>
+
+      <AlertDialog open={blocker.state === 'blocked'}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This post has edits that haven’t been saved. Leaving now discards them.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => blocker.reset?.()}>
+              Keep editing
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => blocker.proceed?.()}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   )
 }

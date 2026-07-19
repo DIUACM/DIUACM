@@ -1,13 +1,26 @@
-import { InputRule } from '@tiptap/core'
+import { Extension, InputRule } from '@tiptap/core'
 import Image from '@tiptap/extension-image'
 import { BlockMath, InlineMath } from '@tiptap/extension-mathematics'
+import Placeholder from '@tiptap/extension-placeholder'
 import { TableKit } from '@tiptap/extension-table'
 import { Markdown } from '@tiptap/markdown'
-import { EditorContent, ReactNodeViewRenderer, useEditor, type Editor } from '@tiptap/react'
+import { Plugin, PluginKey } from '@tiptap/pm/state'
+import {
+  EditorContent,
+  ReactNodeViewRenderer,
+  useEditor,
+  useEditorState,
+  type Editor,
+} from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import {
+  BetweenHorizontalEnd,
+  BetweenHorizontalStart,
+  BetweenVerticalEnd,
+  BetweenVerticalStart,
   Bold,
   Code,
+  Columns3,
   FileUp,
   Film,
   Heading1,
@@ -20,10 +33,13 @@ import {
   Link2,
   List,
   ListOrdered,
+  Merge,
   Minus,
   Redo2,
   RemoveFormatting,
+  Rows3,
   Sigma,
+  Split,
   SquareCode,
   SquareFunction,
   Table as TableIcon,
@@ -31,12 +47,21 @@ import {
   Trash2,
   Undo2,
 } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
 import { useAdminAddBlogAsset, useAdminRemoveBlogAsset } from '@/api/queries/admin-blog'
 import type { AdminBlogAsset } from '@/api/queries/admin-blog'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { MathNodeView } from './MathNodeView'
 
@@ -100,6 +125,56 @@ const BlockMathMarkdown = BlockMath.extend({
   },
 })
 
+/**
+ * Enforces exactly one header row — the first — on every table.
+ *
+ * GFM tables are always "one header row, then body rows", with no syntax for a
+ * headerless table or a second header. Left alone, the editor happily produces
+ * both: deleting the header row serialises an invented blank header, and
+ * inserting a row above the header leaves two rows styled as headers while the
+ * markdown calls the second one a body row. Either way the document says
+ * something the stored markdown cannot, so normalise after every change and
+ * keep what you see identical to what gets saved.
+ */
+const AlwaysTableHeader = Extension.create({
+  name: 'alwaysTableHeader',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('alwaysTableHeader'),
+        appendTransaction: (transactions, _oldState, newState) => {
+          if (!transactions.some((transaction) => transaction.docChanged)) return null
+          const { tableHeader, tableCell, table } = newState.schema.nodes
+          if (!tableHeader || !tableCell || !table) return null
+
+          const tr = newState.tr
+          let changed = false
+          newState.doc.descendants((node, pos) => {
+            if (node.type !== table) return
+            // Table content starts at pos + 1; each row's cells at rowPos + 1.
+            let rowPos = pos + 1
+            node.forEach((row, _offset, index) => {
+              const wanted = index === 0 ? tableHeader : tableCell
+              let cellPos = rowPos + 1
+              row.forEach((cell) => {
+                if (cell.type !== wanted) {
+                  // Retyping a cell leaves its size unchanged, so positions
+                  // gathered from `newState.doc` stay valid across the loop.
+                  tr.setNodeMarkup(cellPos, wanted, cell.attrs, cell.marks)
+                  changed = true
+                }
+                cellPos += cell.nodeSize
+              })
+              rowPos += row.nodeSize
+            })
+          })
+          return changed ? tr : null
+        },
+      }),
+    ]
+  },
+})
+
 const extensions = [
   // StarterKit v3 already bundles link, underline, undo/redo, blockquote,
   // horizontal rule, code block, headings and both list types.
@@ -111,7 +186,11 @@ const extensions = [
   BlockMathMarkdown,
   Image,
   TableKit,
+  AlwaysTableHeader,
   Markdown,
+  Placeholder.configure({
+    placeholder: 'Write your post… markdown shortcuts work, and $x$ becomes maths.',
+  }),
 ]
 
 /** Toolbar button: an icon that runs a command and reflects the active mark. */
@@ -159,145 +238,253 @@ function Toolbar({
   uploading: boolean
 }) {
   const chain = () => editor.chain().focus()
+  const [linkOpen, setLinkOpen] = useState(false)
+  const [href, setHref] = useState('')
 
-  // Prompt for a URL, seeded with the current link if the caret sits in one.
-  // An empty submission unlinks; cancelling leaves the document untouched.
-  const toggleLink = () => {
-    const current = editor.getAttributes('link').href as string | undefined
-    const href = window.prompt('Link URL (leave empty to remove)', current ?? 'https://')
-    if (href === null) return
-    if (href === '') {
-      chain().unsetLink().run()
-      return
-    }
-    chain().extendMarkRange('link').setLink({ href }).run()
+  // `useEditor` does not re-render on transactions in Tiptap 3, so reading
+  // `editor.isActive(…)` during render would freeze every button on whatever
+  // the state was at mount. This subscribes to just the flags the toolbar draws.
+  const state = useEditorState({
+    editor,
+    selector: ({ editor }) => ({
+      bold: editor.isActive('bold'),
+      italic: editor.isActive('italic'),
+      code: editor.isActive('code'),
+      link: editor.isActive('link'),
+      h1: editor.isActive('heading', { level: 1 }),
+      h2: editor.isActive('heading', { level: 2 }),
+      h3: editor.isActive('heading', { level: 3 }),
+      h4: editor.isActive('heading', { level: 4 }),
+      codeBlock: editor.isActive('codeBlock'),
+      bulletList: editor.isActive('bulletList'),
+      orderedList: editor.isActive('orderedList'),
+      blockquote: editor.isActive('blockquote'),
+      canUndo: editor.can().undo(),
+      canRedo: editor.can().redo(),
+      inTable: editor.isActive('table'),
+      canMergeCells: editor.can().mergeCells(),
+      canSplitCell: editor.can().splitCell(),
+    }),
+  })
+  const headingActive = { 1: state.h1, 2: state.h2, 3: state.h3, 4: state.h4 }
+
+  const openLinkDialog = () => {
+    setHref((editor.getAttributes('link').href as string | undefined) ?? 'https://')
+    setLinkOpen(true)
   }
 
+  const applyLink = (event: React.FormEvent) => {
+    event.preventDefault()
+    setLinkOpen(false)
+    // An empty URL means "unlink", matching the button's dual purpose.
+    if (href.trim() === '') chain().extendMarkRange('link').unsetLink().run()
+    else chain().extendMarkRange('link').setLink({ href: href.trim() }).run()
+  }
+
+  // Maths is edited in place by clicking the rendered node, so the toolbar just
+  // drops in a starter expression rather than asking for LaTeX up front.
   const insertMath = (block: boolean) => {
-    const latex = window.prompt(
-      block ? 'Display math (LaTeX)' : 'Inline math (LaTeX)',
-      block ? '\\int_0^1 x^2 \\, dx = \\frac{1}{3}' : 'a^2 + b^2 = c^2',
-    )
-    if (!latex) return
-    if (block) chain().insertBlockMath({ latex }).run()
-    else chain().insertInlineMath({ latex }).run()
+    if (block) chain().insertBlockMath({ latex: 'x^2 + y^2 = z^2' }).run()
+    else chain().insertInlineMath({ latex: 'x' }).run()
   }
 
-  return (
-    <div className="flex flex-wrap items-center gap-0.5 rounded-t-lg border border-b-0 bg-muted/40 px-2 py-1">
+  // Shown only while the caret sits inside a table. There is deliberately no
+  // "toggle header row" control: `AlwaysTableHeader` would undo it immediately.
+  const tableControls = state.inTable && (
+    <div className="flex flex-wrap items-center gap-0.5 border border-t-0 border-b-0 bg-accent/40 px-2 py-1">
+      <span className="mr-1 text-xs font-medium text-muted-foreground">Table</span>
       <ToolButton
-        icon={Bold}
-        label="Bold (Ctrl+B)"
-        active={editor.isActive('bold')}
-        onClick={() => chain().toggleBold().run()}
+        icon={BetweenHorizontalStart}
+        label="Insert row above"
+        onClick={() => chain().addRowBefore().run()}
       />
       <ToolButton
-        icon={Italic}
-        label="Italic (Ctrl+I)"
-        active={editor.isActive('italic')}
-        onClick={() => chain().toggleItalic().run()}
+        icon={BetweenHorizontalEnd}
+        label="Insert row below"
+        onClick={() => chain().addRowAfter().run()}
       />
-      <ToolButton
-        icon={Code}
-        label="Inline code"
-        active={editor.isActive('code')}
-        onClick={() => chain().toggleCode().run()}
-      />
-      <ToolButton
-        icon={Link2}
-        label="Add or remove link"
-        active={editor.isActive('link')}
-        onClick={toggleLink}
-      />
-
+      <ToolButton icon={Rows3} label="Delete row" onClick={() => chain().deleteRow().run()} />
       <Separator />
-
-      {([1, 2, 3, 4] as const).map((level) => {
-        const Icon = { 1: Heading1, 2: Heading2, 3: Heading3, 4: Heading4 }[level]
-        return (
-          <ToolButton
-            key={level}
-            icon={Icon}
-            label={`Heading ${level}`}
-            active={editor.isActive('heading', { level })}
-            onClick={() => chain().toggleHeading({ level }).run()}
-          />
-        )
-      })}
       <ToolButton
-        icon={SquareCode}
-        label="Code block"
-        active={editor.isActive('codeBlock')}
-        onClick={() => chain().toggleCodeBlock().run()}
+        icon={BetweenVerticalStart}
+        label="Insert column left"
+        onClick={() => chain().addColumnBefore().run()}
       />
-
+      <ToolButton
+        icon={BetweenVerticalEnd}
+        label="Insert column right"
+        onClick={() => chain().addColumnAfter().run()}
+      />
+      <ToolButton
+        icon={Columns3}
+        label="Delete column"
+        onClick={() => chain().deleteColumn().run()}
+      />
       <Separator />
-
       <ToolButton
-        icon={List}
-        label="Bullet list"
-        active={editor.isActive('bulletList')}
-        onClick={() => chain().toggleBulletList().run()}
+        icon={Merge}
+        label="Merge cells"
+        disabled={!state.canMergeCells}
+        onClick={() => chain().mergeCells().run()}
       />
       <ToolButton
-        icon={ListOrdered}
-        label="Ordered list"
-        active={editor.isActive('orderedList')}
-        onClick={() => chain().toggleOrderedList().run()}
+        icon={Split}
+        label="Split cell"
+        disabled={!state.canSplitCell}
+        onClick={() => chain().splitCell().run()}
       />
-      <ToolButton
-        icon={TextQuote}
-        label="Block quote"
-        active={editor.isActive('blockquote')}
-        onClick={() => chain().toggleBlockquote().run()}
-      />
-
       <Separator />
-
       <ToolButton
-        icon={Undo2}
-        label="Undo (Ctrl+Z)"
-        disabled={!editor.can().undo()}
-        onClick={() => chain().undo().run()}
-      />
-      <ToolButton
-        icon={Redo2}
-        label="Redo (Ctrl+Shift+Z)"
-        disabled={!editor.can().redo()}
-        onClick={() => chain().redo().run()}
-      />
-
-      <Separator />
-
-      <ToolButton
-        icon={ImagePlus}
-        label="Upload image, video, or file"
-        disabled={uploading}
-        onClick={onUpload}
-      />
-      <ToolButton icon={Sigma} label="Inline math" onClick={() => insertMath(false)} />
-      <ToolButton icon={SquareFunction} label="Math block" onClick={() => insertMath(true)} />
-      <ToolButton
-        icon={TableIcon}
-        label="Insert table"
-        onClick={() =>
-          chain().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
-        }
-      />
-      <ToolButton
-        icon={Minus}
-        label="Horizontal rule"
-        onClick={() => chain().setHorizontalRule().run()}
-      />
-
-      <Separator />
-
-      <ToolButton
-        icon={RemoveFormatting}
-        label="Clear formatting"
-        onClick={() => chain().unsetAllMarks().clearNodes().run()}
+        icon={Trash2}
+        label="Delete table"
+        onClick={() => chain().deleteTable().run()}
       />
     </div>
+  )
+
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-0.5 rounded-t-lg border border-b-0 bg-muted/40 px-2 py-1">
+        <ToolButton
+          icon={Bold}
+          label="Bold (Ctrl+B)"
+          active={state.bold}
+          onClick={() => chain().toggleBold().run()}
+        />
+        <ToolButton
+          icon={Italic}
+          label="Italic (Ctrl+I)"
+          active={state.italic}
+          onClick={() => chain().toggleItalic().run()}
+        />
+        <ToolButton
+          icon={Code}
+          label="Inline code"
+          active={state.code}
+          onClick={() => chain().toggleCode().run()}
+        />
+        <ToolButton
+          icon={Link2}
+          label="Add or remove link"
+          active={state.link}
+          onClick={openLinkDialog}
+        />
+
+        <Separator />
+
+        {([1, 2, 3, 4] as const).map((level) => {
+          const Icon = { 1: Heading1, 2: Heading2, 3: Heading3, 4: Heading4 }[level]
+          return (
+            <ToolButton
+              key={level}
+              icon={Icon}
+              label={`Heading ${level}`}
+              active={headingActive[level]}
+              onClick={() => chain().toggleHeading({ level }).run()}
+            />
+          )
+        })}
+        <ToolButton
+          icon={SquareCode}
+          label="Code block"
+          active={state.codeBlock}
+          onClick={() => chain().toggleCodeBlock().run()}
+        />
+
+        <Separator />
+
+        <ToolButton
+          icon={List}
+          label="Bullet list"
+          active={state.bulletList}
+          onClick={() => chain().toggleBulletList().run()}
+        />
+        <ToolButton
+          icon={ListOrdered}
+          label="Ordered list"
+          active={state.orderedList}
+          onClick={() => chain().toggleOrderedList().run()}
+        />
+        <ToolButton
+          icon={TextQuote}
+          label="Block quote"
+          active={state.blockquote}
+          onClick={() => chain().toggleBlockquote().run()}
+        />
+
+        <Separator />
+
+        <ToolButton
+          icon={Undo2}
+          label="Undo (Ctrl+Z)"
+          disabled={!state.canUndo}
+          onClick={() => chain().undo().run()}
+        />
+        <ToolButton
+          icon={Redo2}
+          label="Redo (Ctrl+Shift+Z)"
+          disabled={!state.canRedo}
+          onClick={() => chain().redo().run()}
+        />
+
+        <Separator />
+
+        <ToolButton
+          icon={ImagePlus}
+          label="Upload image, video, or file"
+          disabled={uploading}
+          onClick={onUpload}
+        />
+        <ToolButton icon={Sigma} label="Inline math" onClick={() => insertMath(false)} />
+        <ToolButton icon={SquareFunction} label="Math block" onClick={() => insertMath(true)} />
+        <ToolButton
+          icon={TableIcon}
+          label="Insert table"
+          onClick={() => chain().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+        />
+        <ToolButton
+          icon={Minus}
+          label="Horizontal rule"
+          onClick={() => chain().setHorizontalRule().run()}
+        />
+
+        <Separator />
+
+        <ToolButton
+          icon={RemoveFormatting}
+          label="Clear formatting"
+          onClick={() => chain().unsetAllMarks().clearNodes().run()}
+        />
+      </div>
+
+      {tableControls}
+
+      <Dialog open={linkOpen} onOpenChange={setLinkOpen}>
+        <DialogContent className="sm:max-w-md">
+          <form onSubmit={applyLink}>
+            <DialogHeader>
+              <DialogTitle>Link</DialogTitle>
+              <DialogDescription>
+                Enter a URL, or clear the field to remove the link.
+              </DialogDescription>
+            </DialogHeader>
+            <Input
+              value={href}
+              onChange={(event) => setHref(event.target.value)}
+              placeholder="https://example.com"
+              className="my-4"
+              autoFocus
+            />
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={() => setLinkOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Apply</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
 
@@ -318,6 +505,10 @@ export function BlogEditor({
   // Markdown we last handed to `onChange`. Lets the sync effect below tell an
   // echo of our own edit apart from a genuine external change to `value`.
   const lastEmitted = useRef(value)
+  // `editorProps` is captured when the editor is built, so the paste/drop
+  // handlers below reach the current upload function through a ref rather than
+  // closing over a stale one.
+  const uploadRef = useRef<(file: File, pos?: number) => void>(() => {})
 
   const editor = useEditor({
     extensions,
@@ -334,8 +525,30 @@ export function BlogEditor({
           'prose prose-neutral max-w-none dark:prose-invert',
           'min-h-[24rem] rounded-b-lg border p-4 focus:outline-none',
           'prose-pre:bg-muted prose-pre:text-foreground',
+          // Match MarkdownContent: no literal backticks around inline code.
+          'prose-code:before:content-none prose-code:after:content-none',
           '[&_img]:rounded-lg',
         ),
+      },
+      // Paste a screenshot straight in. Only claims the event when the
+      // clipboard actually carries files, so pasting text is untouched.
+      handlePaste: (_view, event) => {
+        const files = Array.from(event.clipboardData?.files ?? [])
+        if (files.length === 0) return false
+        event.preventDefault()
+        for (const file of files) uploadRef.current(file)
+        return true
+      },
+      // Drop files anywhere in the document; `moved` means the user dragged an
+      // existing node around, which ProseMirror should keep handling itself.
+      handleDrop: (view, event, _slice, moved) => {
+        if (moved) return false
+        const files = Array.from(event.dataTransfer?.files ?? [])
+        if (files.length === 0) return false
+        event.preventDefault()
+        const pos = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos
+        for (const file of files) uploadRef.current(file, pos)
+        return true
       },
     },
   })
@@ -348,36 +561,41 @@ export function BlogEditor({
     editor.commands.setContent(value, { contentType: 'markdown', emitUpdate: false })
   }, [editor, value])
 
-  /** Insert an uploaded asset: images as image nodes, everything else as a link. */
-  const insertAsset = (asset: AdminBlogAsset) => {
+  /**
+   * Insert an uploaded asset: images as image nodes, everything else as a link.
+   * `pos` targets a drop location; without it the insert lands at the caret.
+   */
+  const insertAsset = (asset: AdminBlogAsset, pos?: number) => {
     if (!editor) return
     const url = asset.url ?? ''
+    const chain = editor.chain().focus(pos)
     if (asset.kind === 'image') {
-      editor.chain().focus().setImage({ src: url, alt: asset.filename }).run()
+      chain.setImage({ src: url, alt: asset.filename }).run()
       return
     }
-    editor
-      .chain()
-      .focus()
-      .insertContent(`[${asset.filename}](${url})`, { contentType: 'markdown' })
-      .run()
+    chain.insertContent(`[${asset.filename}](${url})`, { contentType: 'markdown' }).run()
   }
 
-  const handleUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
+  /** Upload one file and drop the result into the document. */
+  const uploadFile = (file: File, pos?: number) => {
     if (file.size > MAX_ASSET_BYTES) {
-      toast.error('File must be 25 MB or smaller.')
+      toast.error(`${file.name} is larger than 25 MB.`)
       return
     }
     addAsset.mutate(file, {
       onSuccess: (asset) => {
-        insertAsset(asset)
+        insertAsset(asset, pos)
         toast.success('Uploaded and inserted.')
       },
       onError: (error) => toast.error(errorMessage(error)),
     })
+  }
+  uploadRef.current = uploadFile
+
+  const handleUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (file) uploadFile(file)
   }
 
   return (
