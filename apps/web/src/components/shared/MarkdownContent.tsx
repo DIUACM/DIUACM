@@ -1,10 +1,12 @@
 import 'katex/dist/katex.min.css'
 import Markdown from 'react-markdown'
+import rehypeHighlight from 'rehype-highlight'
 import rehypeKatex from 'rehype-katex'
 import rehypeRaw from 'rehype-raw'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
+import { highlightLanguages } from '@/lib/highlight'
 import { cn } from '@/lib/utils'
 
 const attrs = defaultSchema.attributes ?? {}
@@ -48,7 +50,14 @@ const schema = {
 }
 
 const remarkPlugins = [remarkGfm, remarkMath]
-const rehypePlugins = [rehypeRaw, rehypeKatex, [rehypeSanitize, schema]] as never
+// Sanitising stays last so it vets whatever the earlier plugins produced. The
+// highlighter only adds `hljs-*` classes to spans, which the schema permits.
+const rehypePlugins = [
+  rehypeRaw,
+  rehypeKatex,
+  [rehypeHighlight, { languages: highlightLanguages }],
+  [rehypeSanitize, schema],
+] as never
 
 /** Renders blog content: GitHub-flavoured Markdown + `$…$` LaTeX + safe HTML. */
 export function MarkdownContent({

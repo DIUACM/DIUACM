@@ -138,6 +138,101 @@
     }
 }
 
+/* Syntax highlighting tokens. highlight.js emits the same `hljs-*` classes from
+   both lowlight (editor) and rehype-highlight (public page), so this one theme
+   covers both. Colours are picked to hold contrast on `--muted` in either
+   scheme rather than lifted from a stock highlight.js theme, which would fight
+   the app's palette. */
+@layer components {
+  /* `hljs-meta` is declared before the token rules on purpose. rehype-highlight
+     nests spans (a keyword inside a meta line wins by being the inner element),
+     but ProseMirror decorations cannot nest, so lowlight flattens the same
+     markup into one element carrying `hljs-meta hljs-keyword`. Both rules then
+     match at equal specificity and source order decides — putting meta first
+     lets the specific token win, so `#include <foo>` colours identically in the
+     editor and on the public page. */
+  .hljs-meta,
+  .hljs-doctag {
+    color: oklch(0.52 0.09 320);
+  }
+  .hljs-comment,
+  .hljs-quote {
+    @apply text-muted-foreground italic;
+  }
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-literal,
+  .hljs-type,
+  .hljs-built_in {
+    color: oklch(0.48 0.18 285);
+  }
+  .hljs-string,
+  .hljs-regexp,
+  .hljs-addition {
+    color: oklch(0.48 0.13 150);
+  }
+  .hljs-number,
+  .hljs-symbol {
+    color: oklch(0.52 0.15 40);
+  }
+  .hljs-title,
+  .hljs-title.function_,
+  .hljs-section {
+    color: oklch(0.48 0.15 255);
+  }
+  .hljs-attr,
+  .hljs-attribute,
+  .hljs-variable,
+  .hljs-template-variable {
+    color: oklch(0.5 0.13 20);
+  }
+  .hljs-deletion {
+    color: oklch(0.52 0.18 25);
+  }
+  .hljs-emphasis {
+    @apply italic;
+  }
+  .hljs-strong {
+    @apply font-semibold;
+  }
+
+  /* Same ordering rule as above: meta first, so specific tokens win. */
+  .dark .hljs-meta,
+  .dark .hljs-doctag {
+    color: oklch(0.78 0.08 320);
+  }
+  .dark .hljs-keyword,
+  .dark .hljs-selector-tag,
+  .dark .hljs-literal,
+  .dark .hljs-type,
+  .dark .hljs-built_in {
+    color: oklch(0.78 0.14 285);
+  }
+  .dark .hljs-string,
+  .dark .hljs-regexp,
+  .dark .hljs-addition {
+    color: oklch(0.8 0.14 150);
+  }
+  .dark .hljs-number,
+  .dark .hljs-symbol {
+    color: oklch(0.82 0.12 60);
+  }
+  .dark .hljs-title,
+  .dark .hljs-title.function_,
+  .dark .hljs-section {
+    color: oklch(0.78 0.12 240);
+  }
+  .dark .hljs-attr,
+  .dark .hljs-attribute,
+  .dark .hljs-variable,
+  .dark .hljs-template-variable {
+    color: oklch(0.8 0.11 25);
+  }
+  .dark .hljs-deletion {
+    color: oklch(0.72 0.15 25);
+  }
+}
+
 /* Tiptap editor surface. Typography comes from `prose` on the editor element;
    these rules cover what ProseMirror needs but Tailwind Typography doesn't:
    resizable table grids, cell selection, and the math node states. */

@@ -1,4 +1,5 @@
 import { Extension, InputRule } from '@tiptap/core'
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import Image from '@tiptap/extension-image'
 import { BlockMath, InlineMath } from '@tiptap/extension-mathematics'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -62,7 +63,9 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { lowlight } from '@/lib/highlight'
 import { cn } from '@/lib/utils'
+import { CodeBlockView } from './CodeBlockView'
 import { MathNodeView } from './MathNodeView'
 
 const MAX_ASSET_BYTES = 25 * 1024 * 1024
@@ -181,7 +184,15 @@ const extensions = [
   StarterKit.configure({
     link: { openOnClick: false },
     heading: { levels: [1, 2, 3, 4] },
+    // Replaced below by the highlighting variant, which shares its node name.
+    codeBlock: false,
   }),
+  CodeBlockLowlight.extend({
+    // Adds the language picker; the block's code still renders through lowlight.
+    addNodeView() {
+      return ReactNodeViewRenderer(CodeBlockView)
+    },
+  }).configure({ lowlight, defaultLanguage: 'plaintext' }),
   InlineMathMarkdown,
   BlockMathMarkdown,
   Image,
