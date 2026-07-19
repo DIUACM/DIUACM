@@ -42,6 +42,8 @@ export const PERMISSIONS = [
   "manage_events",
   "manage_attendance",
   "manage_trackers",
+  "manage_gallery",
+  "manage_blog",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -290,6 +292,75 @@ export const ranklistUsers = sqliteTable(
   ],
 );
 
+export const galleryAlbums = sqliteTable(
+  "gallery_albums",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    title: text("title").notNull(),
+    description: text("description").notNull().default(""),
+    slug: text("slug").notNull().unique(),
+    status: text("status", { enum: ["published", "draft"] })
+      .notNull()
+      .default("draft"),
+    // Display order (0 = first). Admin-controlled via the reorder endpoint.
+    order: integer("order").notNull().default(0),
+    createdAt: integer("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer("updated_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [index("gallery_albums_status_idx").on(t.status)],
+);
+
+export const galleryMedia = sqliteTable(
+  "gallery_media",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    albumId: integer("album_id")
+      .notNull()
+      .references(() => galleryAlbums.id, { onDelete: "cascade" }),
+    // R2 object key; served via GET /files/:key.
+    key: text("key").notNull(),
+    order: integer("order").notNull().default(0),
+    createdAt: integer("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [index("gallery_media_album_id_idx").on(t.albumId)],
+);
+
+export const blogPosts = sqliteTable(
+  "blog_posts",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    title: text("title").notNull(),
+    slug: text("slug").notNull().unique(),
+    content: text("content").notNull().default(""),
+    status: text("status", { enum: ["published", "draft"] })
+      .notNull()
+      .default("draft"),
+    // R2 object key for the cover image (null if none). Served via GET /files/:key.
+    featuredImageKey: text("featured_image_key"),
+    // Nullable: the author's account may be deleted without losing the post.
+    authorId: integer("author_id").references(() => users.id, { onDelete: "set null" }),
+    // Unix epoch seconds (UTC). Set once, the first time the post is published;
+    // public listings sort by it.
+    publishedAt: integer("published_at"),
+    createdAt: integer("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer("updated_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [
+    index("blog_posts_status_idx").on(t.status),
+    index("blog_posts_published_at_idx").on(t.publishedAt),
+  ],
+);
+
 export const userHandles = sqliteTable(
   "user_handles",
   {
@@ -372,6 +443,18 @@ export const userHandlesRelations = relations(userHandles, ({ one }) => ({
   user: one(users, { fields: [userHandles.userId], references: [users.id] }),
 }));
 
+export const galleryAlbumsRelations = relations(galleryAlbums, ({ many }) => ({
+  media: many(galleryMedia),
+}));
+
+export const galleryMediaRelations = relations(galleryMedia, ({ one }) => ({
+  album: one(galleryAlbums, { fields: [galleryMedia.albumId], references: [galleryAlbums.id] }),
+}));
+
+export const blogPostsRelations = relations(blogPosts, ({ one }) => ({
+  author: one(users, { fields: [blogPosts.authorId], references: [users.id] }),
+}));
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Event = typeof events.$inferSelect;
@@ -388,3 +471,8 @@ export type RanklistUser = typeof ranklistUsers.$inferSelect;
 export type UserHandle = typeof userHandles.$inferSelect;
 export type NewUserHandle = typeof userHandles.$inferInsert;
 export type UserPermission = typeof userPermissions.$inferSelect;
+export type GalleryAlbum = typeof galleryAlbums.$inferSelect;
+export type NewGalleryAlbum = typeof galleryAlbums.$inferInsert;
+export type GalleryMedia = typeof galleryMedia.$inferSelect;
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type NewBlogPost = typeof blogPosts.$inferInsert;

@@ -30,4 +30,11 @@ export type ProgrammerListItem = Schemas['ProgrammerListItem']
 export type ProgrammerDetail = Schemas['ProgrammerDetail']
 export type TrackerPerformanceEntry = Schemas['TrackerPerformanceEntry']
 
+export type GalleryAlbumListItem = Schemas['GalleryAlbumListItem']
+export type GalleryAlbumDetail = Schemas['GalleryAlbumDetail']
+export type GalleryMedia = Schemas['GalleryMedia']
+
+export type BlogPostListItem = Schemas['BlogPostListItem']
+export type BlogPostDetail = Schemas['BlogPostDetail']
+
 export type PaginationMeta = Schemas['PaginationMeta']

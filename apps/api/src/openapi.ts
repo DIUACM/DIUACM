@@ -3,8 +3,12 @@ import { z } from "zod";
 import { PERMISSIONS, type Permission } from "./db/schema";
 import {
   adminAttendanceAddSchema,
+  adminBlogPostCreateSchema,
+  adminBlogPostUpdateSchema,
   adminEventCreateSchema,
   adminEventUpdateSchema,
+  adminGalleryAlbumCreateSchema,
+  adminGalleryAlbumUpdateSchema,
   adminPerformanceSetSchema,
   adminRanklistCreateSchema,
   adminRanklistEventSetSchema,
@@ -497,6 +501,93 @@ const programmerDetailSchema = {
   required: ["id", "name", "username", "image", "maxCfRating", "handles", "trackerPerformance"],
 };
 
+const galleryAlbumListItemSchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    title: { type: "string" },
+    description: { type: "string" },
+    slug: { type: "string" },
+    coverUrl: {
+      type: ["string", "null"],
+      format: "uri",
+      description: "Absolute URL to the album's first image, or null when empty.",
+    },
+    mediaCount: { type: "integer" },
+  },
+  required: ["id", "title", "description", "slug", "coverUrl", "mediaCount"],
+};
+
+const galleryAlbumListSchema = {
+  type: "object",
+  properties: {
+    data: { type: "array", items: ref("GalleryAlbumListItem") },
+    meta: ref("PaginationMeta"),
+  },
+  required: ["data", "meta"],
+};
+
+const galleryMediaSchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    url: { type: ["string", "null"], format: "uri", description: "Absolute URL to the image." },
+  },
+  required: ["id", "url"],
+};
+
+const galleryAlbumDetailSchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    title: { type: "string" },
+    description: { type: "string" },
+    slug: { type: "string" },
+    media: { type: "array", items: ref("GalleryMedia") },
+  },
+  required: ["id", "title", "description", "slug", "media"],
+};
+
+const blogPostListItemSchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    title: { type: "string" },
+    slug: { type: "string" },
+    excerpt: { type: "string", description: "Plain-text preview of the body (~240 chars)." },
+    featuredImageUrl: { type: ["string", "null"], format: "uri" },
+    publishedAt: {
+      type: ["integer", "null"],
+      description: "Unix epoch seconds (UTC); set when the post was first published.",
+    },
+    author: { oneOf: [ref("UserSummary"), { type: "null" }] },
+  },
+  required: ["id", "title", "slug", "excerpt", "featuredImageUrl", "publishedAt", "author"],
+};
+
+const blogPostListSchema = {
+  type: "object",
+  properties: {
+    data: { type: "array", items: ref("BlogPostListItem") },
+    meta: ref("PaginationMeta"),
+  },
+  required: ["data", "meta"],
+};
+
+const blogPostDetailSchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    title: { type: "string" },
+    slug: { type: "string" },
+    content: { type: "string", description: "Full post body (Markdown/plain text as authored)." },
+    featuredImageUrl: { type: ["string", "null"], format: "uri" },
+    publishedAt: { type: ["integer", "null"], description: "Unix epoch seconds (UTC)." },
+    author: { oneOf: [ref("UserSummary"), { type: "null" }] },
+  },
+  required: ["id", "title", "slug", "content", "featuredImageUrl", "publishedAt", "author"],
+};
+
 // ---------------------------------------------------------------------------
 // Admin shapes — like the public ones, but nothing is hidden: drafts are
 // visible, events include eventPassword, trackers/ranklists expose ids,
@@ -657,6 +748,103 @@ const adminRanklistDetailSchema = {
   required: [...adminRanklistSchema.required, "events", "users"],
 };
 
+const adminGalleryAlbumProps = {
+  id: { type: "integer" },
+  title: { type: "string" },
+  description: { type: "string" },
+  slug: { type: "string" },
+  status: { type: "string", enum: ["published", "draft"] },
+  order: { type: "integer", description: "Display order (0 = first)." },
+  createdAt: epoch("Unix epoch seconds (UTC)."),
+  updatedAt: epoch("Unix epoch seconds (UTC)."),
+};
+const adminGalleryAlbumRequired = Object.keys(adminGalleryAlbumProps);
+
+const adminGalleryAlbumSchema = {
+  type: "object",
+  properties: adminGalleryAlbumProps,
+  required: adminGalleryAlbumRequired,
+};
+
+const adminGalleryAlbumListSchema = {
+  type: "object",
+  properties: {
+    data: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: { ...adminGalleryAlbumProps, mediaCount: { type: "integer" } },
+        required: [...adminGalleryAlbumRequired, "mediaCount"],
+      },
+    },
+    meta: ref("PaginationMeta"),
+  },
+  required: ["data", "meta"],
+};
+
+const adminGalleryMediaSchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    order: { type: "integer", description: "Display order within the album (0 = first)." },
+    url: { type: ["string", "null"], format: "uri" },
+  },
+  required: ["id", "order", "url"],
+};
+
+const adminGalleryAlbumDetailSchema = {
+  type: "object",
+  properties: {
+    ...adminGalleryAlbumProps,
+    media: { type: "array", items: ref("AdminGalleryMedia") },
+  },
+  required: [...adminGalleryAlbumRequired, "media"],
+};
+
+const adminBlogPostProps = {
+  id: { type: "integer" },
+  title: { type: "string" },
+  slug: { type: "string" },
+  content: { type: "string" },
+  status: { type: "string", enum: ["published", "draft"] },
+  featuredImageUrl: { type: ["string", "null"], format: "uri" },
+  authorId: { type: ["integer", "null"] },
+  publishedAt: {
+    type: ["integer", "null"],
+    description: "Unix epoch seconds (UTC); stamped on the first transition to published.",
+  },
+  createdAt: epoch("Unix epoch seconds (UTC)."),
+  updatedAt: epoch("Unix epoch seconds (UTC)."),
+};
+const adminBlogPostRequired = Object.keys(adminBlogPostProps);
+
+const adminBlogPostSchema = {
+  type: "object",
+  properties: adminBlogPostProps,
+  required: adminBlogPostRequired,
+};
+
+const adminBlogPostListSchema = {
+  type: "object",
+  properties: { data: { type: "array", items: ref("AdminBlogPost") }, meta: ref("PaginationMeta") },
+  required: ["data", "meta"],
+};
+
+const adminBlogPostDetailSchema = {
+  type: "object",
+  properties: {
+    ...adminBlogPostProps,
+    author: { oneOf: [ref("UserSummary"), { type: "null" }] },
+  },
+  required: [...adminBlogPostRequired, "author"],
+};
+
+const featuredImageResultSchema = {
+  type: "object",
+  properties: { featuredImageUrl: { type: "string", format: "uri" } },
+  required: ["featuredImageUrl"],
+};
+
 const ranklistEventSetResultSchema = {
   type: "object",
   properties: { eventId: { type: "integer" }, weight: { type: "number" } },
@@ -736,6 +924,8 @@ Admin access is **permission-based**, not role-based. A user may hold any subset
 | \`manage_events\` | Events, media, and performance under \`/admin/events\` |
 | \`manage_attendance\` | Attendance under \`/admin/events/{id}/attendance\` |
 | \`manage_trackers\` | Trackers and ranklists under \`/admin/trackers\` and \`/admin/ranklists\` |
+| \`manage_gallery\` | Gallery albums and their images under \`/admin/gallery\` |
+| \`manage_blog\` | Blog posts under \`/admin/blog\` |
 
 The **super admin** — the account whose email matches \`SUPER_ADMIN_EMAIL\` — implicitly
 holds every permission and is the only one who can turn permissions on or off
@@ -763,6 +953,8 @@ export const openApiDoc = {
     { name: "events", description: "Events, media, and attendance" },
     { name: "trackers", description: "Trackers and their ranklists" },
     { name: "programmers", description: "Programmer directory, handles, and tracker performance" },
+    { name: "gallery", description: "Photo albums" },
+    { name: "blog", description: "Blog posts" },
     { name: "files", description: "Stored object serving" },
     {
       name: "admin-users",
@@ -781,15 +973,24 @@ export const openApiDoc = {
       description:
         "Admin: manage ranklists, their events, and their users (`manage_trackers`).",
     },
+    { name: "admin-gallery", description: "Admin: manage gallery albums and images (`manage_gallery`)." },
+    { name: "admin-blog", description: "Admin: manage blog posts (`manage_blog`)." },
   ],
   "x-tagGroups": [
     {
       name: "Non-admin",
-      tags: ["meta", "auth", "events", "trackers", "programmers", "files"],
+      tags: ["meta", "auth", "events", "trackers", "programmers", "gallery", "blog", "files"],
     },
     {
       name: "Admin",
-      tags: ["admin-users", "admin-events", "admin-trackers", "admin-ranklists"],
+      tags: [
+        "admin-users",
+        "admin-events",
+        "admin-trackers",
+        "admin-ranklists",
+        "admin-gallery",
+        "admin-blog",
+      ],
     },
   ],
   components: {
@@ -835,6 +1036,13 @@ export const openApiDoc = {
       TrackerPerformanceRanklist: trackerPerformanceRanklistSchema,
       TrackerPerformanceEntry: trackerPerformanceEntrySchema,
       ProgrammerDetail: programmerDetailSchema,
+      GalleryAlbumListItem: galleryAlbumListItemSchema,
+      GalleryAlbumList: galleryAlbumListSchema,
+      GalleryMedia: galleryMediaSchema,
+      GalleryAlbumDetail: galleryAlbumDetailSchema,
+      BlogPostListItem: blogPostListItemSchema,
+      BlogPostList: blogPostListSchema,
+      BlogPostDetail: blogPostDetailSchema,
       LoginRequest: toSchema(loginSchema),
       GoogleSignInRequest: toSchema(googleSignInSchema),
       ProfileUpdateRequest: toSchema(profileUpdateSchema),
@@ -868,6 +1076,18 @@ export const openApiDoc = {
       AdminRanklistUpdateRequest: toSchema(adminRanklistUpdateSchema),
       AdminRanklistEventSetRequest: toSchema(adminRanklistEventSetSchema),
       AdminReorderRequest: toSchema(adminReorderSchema),
+      AdminGalleryAlbum: adminGalleryAlbumSchema,
+      AdminGalleryAlbumList: adminGalleryAlbumListSchema,
+      AdminGalleryMedia: adminGalleryMediaSchema,
+      AdminGalleryAlbumDetail: adminGalleryAlbumDetailSchema,
+      AdminBlogPost: adminBlogPostSchema,
+      AdminBlogPostList: adminBlogPostListSchema,
+      AdminBlogPostDetail: adminBlogPostDetailSchema,
+      FeaturedImageResult: featuredImageResultSchema,
+      AdminGalleryAlbumCreateRequest: toSchema(adminGalleryAlbumCreateSchema),
+      AdminGalleryAlbumUpdateRequest: toSchema(adminGalleryAlbumUpdateSchema),
+      AdminBlogPostCreateRequest: toSchema(adminBlogPostCreateSchema),
+      AdminBlogPostUpdateRequest: toSchema(adminBlogPostUpdateSchema),
     },
   },
   paths: {
@@ -1223,6 +1443,60 @@ export const openApiDoc = {
         ],
         responses: {
           "200": { description: "The programmer", content: jsonBody(ref("ProgrammerDetail")) },
+          "404": { description: "Not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/gallery": {
+      get: {
+        tags: ["gallery"],
+        summary: "List published albums with cover image and media count",
+        ...access("public"),
+        parameters: [...pageParams],
+        responses: {
+          "200": { description: "A page of albums", content: jsonBody(ref("GalleryAlbumList")) },
+        },
+      },
+    },
+    "/gallery/{slug}": {
+      get: {
+        tags: ["gallery"],
+        summary: "Get a published album with its images",
+        ...access("public"),
+        parameters: [{ name: "slug", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          "200": { description: "The album", content: jsonBody(ref("GalleryAlbumDetail")) },
+          "404": { description: "Not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/blog": {
+      get: {
+        tags: ["blog"],
+        summary: "List published posts, newest first",
+        ...access("public"),
+        parameters: [
+          ...pageParams,
+          {
+            name: "q",
+            in: "query",
+            description: "Search on title or content.",
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": { description: "A page of posts", content: jsonBody(ref("BlogPostList")) },
+        },
+      },
+    },
+    "/blog/{slug}": {
+      get: {
+        tags: ["blog"],
+        summary: "Get a published post with its full body",
+        ...access("public"),
+        parameters: [{ name: "slug", in: "path", required: true, schema: { type: "string" } }],
+        responses: {
+          "200": { description: "The post", content: jsonBody(ref("BlogPostDetail")) },
           "404": { description: "Not found", content: jsonBody(ref("Error")) },
         },
       },
@@ -1765,6 +2039,252 @@ export const openApiDoc = {
           ...adminAuthResponses,
           "404": {
             description: "Ranklist not found or user not in it",
+            content: jsonBody(ref("Error")),
+          },
+        },
+      },
+    },
+    "/admin/gallery": {
+      get: {
+        tags: ["admin-gallery"],
+        summary: "List all albums (including drafts)",
+        ...access("manage_gallery"),
+        parameters: [
+          ...pageParams,
+          {
+            name: "status",
+            in: "query",
+            schema: { type: "string", enum: ["published", "draft"] },
+          },
+          {
+            name: "q",
+            in: "query",
+            description: "Search on title or slug.",
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "A page of albums",
+            content: jsonBody(ref("AdminGalleryAlbumList")),
+          },
+          ...adminAuthResponses,
+        },
+      },
+      post: {
+        tags: ["admin-gallery"],
+        summary: "Create an album",
+        ...access("manage_gallery"),
+        requestBody: { required: true, content: jsonBody(ref("AdminGalleryAlbumCreateRequest")) },
+        responses: {
+          "201": { description: "Album created", content: jsonBody(ref("AdminGalleryAlbum")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "409": { description: "Slug already exists", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/gallery/{id}": {
+      get: {
+        tags: ["admin-gallery"],
+        summary: "Get an album with its images",
+        ...access("manage_gallery"),
+        parameters: [idParam("id")],
+        responses: {
+          "200": { description: "The album", content: jsonBody(ref("AdminGalleryAlbumDetail")) },
+          ...adminAuthResponses,
+          "404": { description: "Album not found", content: jsonBody(ref("Error")) },
+        },
+      },
+      patch: {
+        tags: ["admin-gallery"],
+        summary: "Update an album",
+        ...access("manage_gallery"),
+        parameters: [idParam("id")],
+        requestBody: { required: true, content: jsonBody(ref("AdminGalleryAlbumUpdateRequest")) },
+        responses: {
+          "200": { description: "The updated album", content: jsonBody(ref("AdminGalleryAlbum")) },
+          "400": { description: "Validation failed or empty body", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Album not found", content: jsonBody(ref("Error")) },
+          "409": { description: "Slug already exists", content: jsonBody(ref("Error")) },
+        },
+      },
+      delete: {
+        tags: ["admin-gallery"],
+        summary: "Delete an album (cascades its images)",
+        ...access("manage_gallery"),
+        parameters: [idParam("id")],
+        responses: {
+          "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
+          ...adminAuthResponses,
+          "404": { description: "Album not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/gallery/reorder": {
+      post: {
+        tags: ["admin-gallery"],
+        summary: "Set display order for a batch of albums",
+        ...access("manage_gallery"),
+        requestBody: { required: true, content: jsonBody(ref("AdminReorderRequest")) },
+        responses: {
+          "200": { description: "Order updated", content: jsonBody(ref("Ok")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+        },
+      },
+    },
+    "/admin/gallery/{id}/media": {
+      post: {
+        tags: ["admin-gallery"],
+        summary: "Add an image to an album (appended last)",
+        ...access("manage_gallery"),
+        parameters: [idParam("id")],
+        requestBody: {
+          required: true,
+          content: { "multipart/form-data": { schema: imageUploadSchema } },
+        },
+        responses: {
+          "201": { description: "Image added", content: jsonBody(ref("AdminGalleryMedia")) },
+          "400": { description: "Missing or invalid image", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Album not found", content: jsonBody(ref("Error")) },
+          "413": { description: "Image exceeds the 5 MB limit", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/gallery/{id}/media/{mediaId}": {
+      delete: {
+        tags: ["admin-gallery"],
+        summary: "Remove an image from an album",
+        ...access("manage_gallery"),
+        parameters: [idParam("id"), idParam("mediaId")],
+        responses: {
+          "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
+          ...adminAuthResponses,
+          "404": { description: "Media not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/gallery/{id}/media/reorder": {
+      post: {
+        tags: ["admin-gallery"],
+        summary: "Set display order for a batch of images within an album",
+        ...access("manage_gallery"),
+        parameters: [idParam("id")],
+        requestBody: { required: true, content: jsonBody(ref("AdminReorderRequest")) },
+        responses: {
+          "200": { description: "Order updated", content: jsonBody(ref("Ok")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Album not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/blog": {
+      get: {
+        tags: ["admin-blog"],
+        summary: "List all posts (including drafts), newest first",
+        ...access("manage_blog"),
+        parameters: [
+          ...pageParams,
+          {
+            name: "status",
+            in: "query",
+            schema: { type: "string", enum: ["published", "draft"] },
+          },
+          {
+            name: "q",
+            in: "query",
+            description: "Search on title or slug.",
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": { description: "A page of posts", content: jsonBody(ref("AdminBlogPostList")) },
+          ...adminAuthResponses,
+        },
+      },
+      post: {
+        tags: ["admin-blog"],
+        summary: "Create a post (the caller becomes the author)",
+        ...access("manage_blog"),
+        requestBody: { required: true, content: jsonBody(ref("AdminBlogPostCreateRequest")) },
+        responses: {
+          "201": { description: "Post created", content: jsonBody(ref("AdminBlogPost")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "409": { description: "Slug already exists", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/blog/{id}": {
+      get: {
+        tags: ["admin-blog"],
+        summary: "Get a post with its author",
+        ...access("manage_blog"),
+        parameters: [idParam("id")],
+        responses: {
+          "200": { description: "The post", content: jsonBody(ref("AdminBlogPostDetail")) },
+          ...adminAuthResponses,
+          "404": { description: "Post not found", content: jsonBody(ref("Error")) },
+        },
+      },
+      patch: {
+        tags: ["admin-blog"],
+        summary: "Update a post (first publish stamps publishedAt)",
+        ...access("manage_blog"),
+        parameters: [idParam("id")],
+        requestBody: { required: true, content: jsonBody(ref("AdminBlogPostUpdateRequest")) },
+        responses: {
+          "200": { description: "The updated post", content: jsonBody(ref("AdminBlogPost")) },
+          "400": { description: "Validation failed or empty body", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Post not found", content: jsonBody(ref("Error")) },
+          "409": { description: "Slug already exists", content: jsonBody(ref("Error")) },
+        },
+      },
+      delete: {
+        tags: ["admin-blog"],
+        summary: "Delete a post",
+        ...access("manage_blog"),
+        parameters: [idParam("id")],
+        responses: {
+          "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
+          ...adminAuthResponses,
+          "404": { description: "Post not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/blog/{id}/featured-image": {
+      post: {
+        tags: ["admin-blog"],
+        summary: "Upload or replace a post's featured image",
+        ...access("manage_blog"),
+        parameters: [idParam("id")],
+        requestBody: {
+          required: true,
+          content: { "multipart/form-data": { schema: imageUploadSchema } },
+        },
+        responses: {
+          "201": { description: "Image set", content: jsonBody(ref("FeaturedImageResult")) },
+          "400": { description: "Missing or invalid image", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Post not found", content: jsonBody(ref("Error")) },
+          "413": { description: "Image exceeds the 5 MB limit", content: jsonBody(ref("Error")) },
+        },
+      },
+      delete: {
+        tags: ["admin-blog"],
+        summary: "Remove a post's featured image",
+        ...access("manage_blog"),
+        parameters: [idParam("id")],
+        responses: {
+          "200": { description: "Removed", content: jsonBody(ref("Ok")) },
+          ...adminAuthResponses,
+          "404": {
+            description: "Post not found or has no featured image",
             content: jsonBody(ref("Error")),
           },
         },

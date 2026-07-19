@@ -6,8 +6,10 @@ import { logger } from "hono/logger";
 import { openApiDoc } from "./openapi";
 import admin from "./routes/admin";
 import auth from "./routes/auth";
+import blog from "./routes/blog";
 import events from "./routes/events";
 import files from "./routes/files";
+import gallery from "./routes/gallery";
 import programmers from "./routes/programmers";
 import trackers from "./routes/trackers";
 import type { AppEnv } from "./types";
@@ -45,8 +47,10 @@ app.get("/docs", (c) =>
 
 app.route("/admin", admin);
 app.route("/auth", auth);
+app.route("/blog", blog);
 app.route("/events", events);
 app.route("/files", files);
+app.route("/gallery", gallery);
 app.route("/programmers", programmers);
 app.route("/trackers", trackers);
 

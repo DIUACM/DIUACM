@@ -178,6 +178,59 @@ export const adminRanklistEventSetSchema = z.object({
   weight: z.number().min(0).max(1),
 });
 
+// ---------------------------------------------------------------------------
+// Gallery
+// ---------------------------------------------------------------------------
+
+export const adminGalleryListQuery = z.object({
+  ...pageFields,
+  status: z.enum(PUBLISH_STATUSES).optional(),
+  // Searches title / slug.
+  q: z.string().trim().min(1).max(100).optional(),
+});
+
+export const adminGalleryAlbumCreateSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  description: descriptionField.optional(),
+  slug: slugField,
+  status: z.enum(PUBLISH_STATUSES).optional(),
+});
+
+export const adminGalleryAlbumUpdateSchema = z.object({
+  title: z.string().trim().min(1).max(200).optional(),
+  description: descriptionField.optional(),
+  slug: slugField.optional(),
+  status: z.enum(PUBLISH_STATUSES).optional(),
+});
+
+// ---------------------------------------------------------------------------
+// Blog
+// ---------------------------------------------------------------------------
+
+// Post bodies can be much longer than the shared description field.
+const blogContentField = z.string().max(100000);
+
+export const adminBlogListQuery = z.object({
+  ...pageFields,
+  status: z.enum(PUBLISH_STATUSES).optional(),
+  // Searches title / slug.
+  q: z.string().trim().min(1).max(100).optional(),
+});
+
+export const adminBlogPostCreateSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  slug: slugField,
+  content: blogContentField.optional(),
+  status: z.enum(PUBLISH_STATUSES).optional(),
+});
+
+export const adminBlogPostUpdateSchema = z.object({
+  title: z.string().trim().min(1).max(200).optional(),
+  slug: slugField.optional(),
+  content: blogContentField.optional(),
+  status: z.enum(PUBLISH_STATUSES).optional(),
+});
+
 // Explicit order values per row (not a full ordering), so partial pages can
 // swap neighbours without knowing the whole collection.
 export const adminReorderSchema = z.object({

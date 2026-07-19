@@ -71,6 +71,13 @@
       "when": 1784400945013,
       "tag": "0009_medical_catseye",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1784424770877,
+      "tag": "0010_damp_king_bedlam",
+      "breakpoints": true
     }
   ]
 }

@@ -28,6 +28,8 @@ const NAV_LINKS = [
   { to: '/events', label: 'Events' },
   { to: '/trackers', label: 'Trackers' },
   { to: '/programmers', label: 'Programmers' },
+  { to: '/gallery', label: 'Gallery' },
+  { to: '/blog', label: 'Blog' },
 ]
 
 export function Navbar() {
