@@ -25,6 +25,11 @@ const schema = {
     'audio',
     'source',
     'iframe',
+    // KaTeX draws radicals and stretchy delimiters with inline SVG paths;
+    // stripping these silently loses the √ sign and friends.
+    'svg',
+    'path',
+    'line',
   ],
   attributes: {
     ...attrs,
@@ -46,6 +51,9 @@ const schema = {
       'loading',
       'style',
     ],
+    svg: ['xmlns', 'width', 'height', 'viewBox', 'preserveAspectRatio', 'style'],
+    path: ['d'],
+    line: ['x1', 'y1', 'x2', 'y2', 'strokeWidth'],
   },
 }
 

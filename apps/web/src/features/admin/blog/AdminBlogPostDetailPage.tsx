@@ -337,7 +337,9 @@ export function AdminBlogPostDetailPage() {
           <CardTitle>Content</CardTitle>
         </CardHeader>
         <CardContent>
-          <PostEditForm key={post.updatedAt} post={post} />
+          {/* Keyed by id, not updatedAt: featured-image uploads bump updatedAt
+              and would remount the form, discarding unsaved edits. */}
+          <PostEditForm key={post.id} post={post} />
         </CardContent>
       </Card>
 

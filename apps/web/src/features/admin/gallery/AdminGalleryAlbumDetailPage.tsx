@@ -313,7 +313,9 @@ export function AdminGalleryAlbumDetailPage() {
           <CardTitle>Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <AlbumEditForm key={album.updatedAt} album={album} />
+          {/* Keyed by id, not updatedAt: a refetch after any mutation would
+              otherwise remount the form and discard in-progress edits. */}
+          <AlbumEditForm key={album.id} album={album} />
         </CardContent>
       </Card>
 
