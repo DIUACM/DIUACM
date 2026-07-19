@@ -2,6 +2,9 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
+@import "katex/dist/katex.min.css";
+
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -133,4 +136,37 @@
   html {
     @apply font-sans;
     }
+}
+
+/* Tiptap editor surface. Typography comes from `prose` on the editor element;
+   these rules cover what ProseMirror needs but Tailwind Typography doesn't:
+   resizable table grids, cell selection, and the math node states. */
+@layer components {
+  .ProseMirror table {
+    @apply w-full table-fixed border-collapse;
+  }
+  .ProseMirror th,
+  .ProseMirror td {
+    @apply relative border border-border px-3 py-2 align-top;
+  }
+  .ProseMirror th {
+    @apply bg-muted font-semibold;
+  }
+  /* prosemirror-tables marks multi-cell selections with this class. */
+  .ProseMirror .selectedCell::after {
+    @apply pointer-events-none absolute inset-0 bg-primary/20 content-[''];
+  }
+  .ProseMirror .column-resize-handle {
+    @apply pointer-events-none absolute top-0 -right-0.5 bottom-0 w-1 bg-primary;
+  }
+  .ProseMirror .tableWrapper {
+    @apply overflow-x-auto;
+  }
+
+  /* Maths nodes are rendered by MathNodeView, which carries its own styling. */
+
+  /* Gapcursor + selected block nodes (images, hr). */
+  .ProseMirror-selectednode {
+    @apply outline-2 outline-primary;
+  }
 }

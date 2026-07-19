@@ -1,13 +1,13 @@
 import { ArrowLeft, CalendarDays } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import { useBlogPost } from '@/api/queries/blog'
+import { MarkdownContent } from '@/components/shared/MarkdownContent'
 import { ErrorState } from '@/components/shared/states'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatDate } from '@/lib/datetime'
 import { useDocumentTitle } from '@/lib/use-document-title'
-import { stripHtml } from '@/lib/utils'
 
 export function BlogPostPage() {
   const params = useParams()
@@ -76,9 +76,7 @@ export function BlogPostPage() {
         />
       )}
 
-      <div className="whitespace-pre-line leading-relaxed">
-        {stripHtml(post.content)}
-      </div>
+      <MarkdownContent content={post.content} />
     </article>
   )
 }

@@ -3,7 +3,8 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import { getDb } from "../../db/client";
-import { blogPosts, users } from "../../db/schema";
+import { blogAssets, blogPosts, users } from "../../db/schema";
+import { parseAssetUpload } from "../../lib/asset-upload";
 import { parseImageUpload } from "../../lib/image-upload";
 import { likeContains } from "../../lib/like";
 import { buildMeta } from "../../lib/pagination";
@@ -102,6 +103,17 @@ adminBlogRoutes.post("/", manageBlog, validate("json", adminBlogPostCreateSchema
   return c.json(toAdminPost(post, origin), 201);
 });
 
+const assetShape = (
+  row: { id: number; kind: "image" | "video" | "file"; key: string; filename: string; mime: string },
+  origin: string,
+) => ({
+  id: row.id,
+  kind: row.kind,
+  filename: row.filename,
+  mime: row.mime,
+  url: fileUrlFor(origin, row.key),
+});
+
 adminBlogRoutes.get("/:id", manageBlog, async (c) => {
   const id = requirePostId(c);
   const db = getDb(c.env.DB);
@@ -119,7 +131,23 @@ adminBlogRoutes.get("/:id", manageBlog, async (c) => {
     if (row) author = toUserSummary(row, origin);
   }
 
-  return c.json({ ...toAdminPost(post, origin), author });
+  const assets = await db
+    .select({
+      id: blogAssets.id,
+      kind: blogAssets.kind,
+      key: blogAssets.key,
+      filename: blogAssets.filename,
+      mime: blogAssets.mime,
+    })
+    .from(blogAssets)
+    .where(eq(blogAssets.postId, id))
+    .orderBy(desc(blogAssets.id));
+
+  return c.json({
+    ...toAdminPost(post, origin),
+    author,
+    assets: assets.map((a) => assetShape(a, origin)),
+  });
 });
 
 adminBlogRoutes.patch("/:id", manageBlog, validate("json", adminBlogPostUpdateSchema), async (c) => {
@@ -148,20 +176,89 @@ adminBlogRoutes.patch("/:id", manageBlog, validate("json", adminBlogPostUpdateSc
   return c.json(toAdminPost(updated, origin));
 });
 
-// The stored featured image is removed best-effort.
+// Deleting a post cascades its asset rows (FK); the stored featured image and
+// asset objects are removed best-effort.
 adminBlogRoutes.delete("/:id", manageBlog, async (c) => {
   const id = requirePostId(c);
   const db = getDb(c.env.DB);
   const post = await loadPost(db, id);
 
+  const assets = await db
+    .select({ key: blogAssets.key })
+    .from(blogAssets)
+    .where(eq(blogAssets.postId, id));
+
   await db.delete(blogPosts).where(eq(blogPosts.id, id));
 
-  if (post.featuredImageKey) {
+  const keys = [...assets.map((a) => a.key)];
+  if (post.featuredImageKey) keys.push(post.featuredImageKey);
+  for (const key of keys) {
     try {
-      await c.env.BUCKET.delete(post.featuredImageKey);
+      await c.env.BUCKET.delete(key);
     } catch (err) {
-      console.error("R2 delete failed for blog featured image", post.featuredImageKey, err);
+      console.error("R2 delete failed for blog object", key, err);
     }
+  }
+
+  return c.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
+// Assets — body media (images, videos, downloadable files). Uploaded via the
+// "file" multipart field; the returned URL is embedded into the post body.
+// ---------------------------------------------------------------------------
+
+adminBlogRoutes.post("/:id/assets", manageBlog, async (c) => {
+  const id = requirePostId(c);
+  const db = getDb(c.env.DB);
+  await loadPost(db, id);
+
+  const { buffer, kind, contentType, ext, filename } = await parseAssetUpload(c);
+  const key = `blog/${id}/assets/${crypto.randomUUID()}.${ext}`;
+  await c.env.BUCKET.put(key, buffer, { httpMetadata: { contentType } });
+
+  let row;
+  try {
+    [row] = await db
+      .insert(blogAssets)
+      .values({ postId: id, kind, key, filename, mime: contentType })
+      .returning({
+        id: blogAssets.id,
+        kind: blogAssets.kind,
+        key: blogAssets.key,
+        filename: blogAssets.filename,
+        mime: blogAssets.mime,
+      });
+  } catch (err) {
+    // DB insert failed — don't leave an orphan object in R2.
+    try {
+      await c.env.BUCKET.delete(key);
+    } catch (cleanupErr) {
+      console.error("R2 cleanup failed for orphan blog asset", key, cleanupErr);
+    }
+    throw err;
+  }
+
+  const origin = new URL(c.req.url).origin;
+  return c.json(assetShape(row, origin), 201);
+});
+
+adminBlogRoutes.delete("/:id/assets/:assetId", manageBlog, async (c) => {
+  const id = requirePostId(c);
+  const assetId = parseId(c.req.param("assetId"));
+  if (assetId === null) throw new HTTPException(404, { message: "Asset not found" });
+
+  const db = getDb(c.env.DB);
+  const [deleted] = await db
+    .delete(blogAssets)
+    .where(and(eq(blogAssets.id, assetId), eq(blogAssets.postId, id)))
+    .returning({ key: blogAssets.key });
+  if (!deleted) throw new HTTPException(404, { message: "Asset not found" });
+
+  try {
+    await c.env.BUCKET.delete(deleted.key);
+  } catch (err) {
+    console.error("R2 delete failed for blog asset", deleted.key, err);
   }
 
   return c.json({ ok: true });

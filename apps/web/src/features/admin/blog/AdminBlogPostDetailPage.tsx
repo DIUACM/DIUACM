@@ -12,6 +12,7 @@ import {
 } from '@/api/queries/admin-blog'
 import type { AdminBlogPostDetail } from '@/api/queries/admin-blog'
 import type { PublishStatus } from '@/api/queries/admin-events'
+import { BlogEditor } from '@/features/admin/blog/BlogEditor'
 import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
 import { ErrorState } from '@/components/shared/states'
@@ -33,7 +34,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Textarea } from '@/components/ui/textarea'
 import { formatDate } from '@/lib/datetime'
 import { useDocumentTitle } from '@/lib/use-document-title'
 
@@ -93,16 +93,12 @@ function PostEditForm({ post }: { post: AdminBlogPostDetail }) {
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="bp-content">Body</Label>
-        <Textarea
-          id="bp-content"
+        <Label>Body</Label>
+        <BlogEditor
+          postId={post.id}
           value={form.content}
-          onChange={(event) =>
-            setForm((prev) => ({ ...prev, content: event.target.value }))
-          }
-          rows={16}
-          placeholder="Write the post…"
-          className="font-mono text-sm"
+          onChange={(content) => setForm((prev) => ({ ...prev, content }))}
+          assets={post.assets}
         />
       </div>
       <div className="space-y-2">

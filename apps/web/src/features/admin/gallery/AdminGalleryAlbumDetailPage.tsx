@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronLeft, ChevronRight, ImagePlus, Trash2, X } from 'lucide-react'
+import { ArrowLeft, GripVertical, ImagePlus, Trash2, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
@@ -14,6 +14,7 @@ import {
 import type { AdminGalleryAlbumDetail } from '@/api/queries/admin-gallery'
 import type { PublishStatus } from '@/api/queries/admin-events'
 import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
+import { SortableGrid, SortableGridItem } from '@/features/admin/shared/SortableGrid'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
 import { ErrorState } from '@/components/shared/states'
 import { Button } from '@/components/ui/button'
@@ -166,54 +167,55 @@ function PhotoManager({ album }: { album: AdminGalleryAlbumDetail }) {
       {album.media.length === 0 ? (
         <p className="text-sm text-muted-foreground">No photos yet.</p>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {album.media.map(
-            (item, index) =>
-              item.url && (
-                <div key={item.id} className="group relative overflow-hidden rounded-lg border">
-                  <img
-                    src={item.url}
-                    alt=""
-                    loading="lazy"
-                    className="aspect-square w-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    aria-label="Remove photo"
-                    className="absolute top-1.5 right-1.5 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
-                    onClick={() =>
-                      removeMedia.mutate(item.id, {
-                        onSuccess: () => toast.success('Photo removed.'),
-                        onError: (error) => toast.error(errorMessage(error)),
-                      })
-                    }
+        <>
+          <p className="text-sm text-muted-foreground">
+            Drag photos to reorder — the first one is the album cover.
+          </p>
+          <SortableGrid
+            ids={album.media.map((item) => item.id)}
+            disabled={reorderMedia.isPending}
+            onMove={movePhoto}
+            className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
+          >
+            {album.media.map(
+              (item) =>
+                item.url && (
+                  <SortableGridItem
+                    key={item.id}
+                    id={item.id}
+                    disabled={reorderMedia.isPending}
+                    className="group relative overflow-hidden rounded-lg border"
                   >
-                    <X className="size-4" />
-                  </button>
-                  <div className="absolute bottom-1.5 left-1.5 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    <img
+                      src={item.url}
+                      alt=""
+                      loading="lazy"
+                      draggable={false}
+                      className="aspect-square w-full object-cover"
+                    />
+                    <span className="absolute top-1.5 left-1.5 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                      <GripVertical className="size-4" />
+                    </span>
                     <button
                       type="button"
-                      aria-label="Move earlier"
-                      disabled={index === 0 || reorderMedia.isPending}
-                      className="rounded-full bg-black/60 p-1 text-white disabled:opacity-40"
-                      onClick={() => movePhoto(index, index - 1)}
+                      aria-label="Remove photo"
+                      // Pointer-down would otherwise start a drag instead of a click.
+                      onPointerDown={(event) => event.stopPropagation()}
+                      className="absolute top-1.5 right-1.5 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                      onClick={() =>
+                        removeMedia.mutate(item.id, {
+                          onSuccess: () => toast.success('Photo removed.'),
+                          onError: (error) => toast.error(errorMessage(error)),
+                        })
+                      }
                     >
-                      <ChevronLeft className="size-4" />
+                      <X className="size-4" />
                     </button>
-                    <button
-                      type="button"
-                      aria-label="Move later"
-                      disabled={index === album.media.length - 1 || reorderMedia.isPending}
-                      className="rounded-full bg-black/60 p-1 text-white disabled:opacity-40"
-                      onClick={() => movePhoto(index, index + 1)}
-                    >
-                      <ChevronRight className="size-4" />
-                    </button>
-                  </div>
-                </div>
-              ),
-          )}
-        </div>
+                  </SortableGridItem>
+                ),
+            )}
+          </SortableGrid>
+        </>
       )}
       <Button
         variant="outline"

@@ -361,6 +361,29 @@ export const blogPosts = sqliteTable(
   ],
 );
 
+// Media authored into a blog post's body (images, videos, or downloadable
+// files). The body references these by their served URL; the rows exist so the
+// admin UI can list/remove them and so R2 objects are cleaned up on delete.
+export const blogAssets = sqliteTable(
+  "blog_assets",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    postId: integer("post_id")
+      .notNull()
+      .references(() => blogPosts.id, { onDelete: "cascade" }),
+    kind: text("kind", { enum: ["image", "video", "file"] }).notNull(),
+    // R2 object key; served via GET /files/:key.
+    key: text("key").notNull(),
+    // Original upload filename, shown as link text for downloadable files.
+    filename: text("filename").notNull(),
+    mime: text("mime").notNull(),
+    createdAt: integer("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [index("blog_assets_post_id_idx").on(t.postId)],
+);
+
 export const userHandles = sqliteTable(
   "user_handles",
   {
@@ -451,8 +474,13 @@ export const galleryMediaRelations = relations(galleryMedia, ({ one }) => ({
   album: one(galleryAlbums, { fields: [galleryMedia.albumId], references: [galleryAlbums.id] }),
 }));
 
-export const blogPostsRelations = relations(blogPosts, ({ one }) => ({
+export const blogPostsRelations = relations(blogPosts, ({ one, many }) => ({
   author: one(users, { fields: [blogPosts.authorId], references: [users.id] }),
+  assets: many(blogAssets),
+}));
+
+export const blogAssetsRelations = relations(blogAssets, ({ one }) => ({
+  post: one(blogPosts, { fields: [blogAssets.postId], references: [blogPosts.id] }),
 }));
 
 export type User = typeof users.$inferSelect;
@@ -476,3 +504,4 @@ export type NewGalleryAlbum = typeof galleryAlbums.$inferInsert;
 export type GalleryMedia = typeof galleryMedia.$inferSelect;
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type NewBlogPost = typeof blogPosts.$inferInsert;
+export type BlogAsset = typeof blogAssets.$inferSelect;

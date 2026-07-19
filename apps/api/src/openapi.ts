@@ -830,13 +830,38 @@ const adminBlogPostListSchema = {
   required: ["data", "meta"],
 };
 
+const adminBlogAssetSchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    kind: { type: "string", enum: ["image", "video", "file"] },
+    filename: { type: "string" },
+    mime: { type: "string" },
+    url: { type: ["string", "null"], format: "uri" },
+  },
+  required: ["id", "kind", "filename", "mime", "url"],
+};
+
 const adminBlogPostDetailSchema = {
   type: "object",
   properties: {
     ...adminBlogPostProps,
     author: { oneOf: [ref("UserSummary"), { type: "null" }] },
+    assets: { type: "array", items: ref("AdminBlogAsset") },
   },
-  required: [...adminBlogPostRequired, "author"],
+  required: [...adminBlogPostRequired, "author", "assets"],
+};
+
+const assetUploadSchema = {
+  type: "object",
+  properties: {
+    file: {
+      type: "string",
+      format: "binary",
+      description: "Image, video, or file — max 25 MB.",
+    },
+  },
+  required: ["file"],
 };
 
 const featuredImageResultSchema = {
@@ -1083,6 +1108,7 @@ export const openApiDoc = {
       AdminBlogPost: adminBlogPostSchema,
       AdminBlogPostList: adminBlogPostListSchema,
       AdminBlogPostDetail: adminBlogPostDetailSchema,
+      AdminBlogAsset: adminBlogAssetSchema,
       FeaturedImageResult: featuredImageResultSchema,
       AdminGalleryAlbumCreateRequest: toSchema(adminGalleryAlbumCreateSchema),
       AdminGalleryAlbumUpdateRequest: toSchema(adminGalleryAlbumUpdateSchema),
@@ -2287,6 +2313,43 @@ export const openApiDoc = {
             description: "Post not found or has no featured image",
             content: jsonBody(ref("Error")),
           },
+        },
+      },
+    },
+    "/admin/blog/{id}/assets": {
+      post: {
+        tags: ["admin-blog"],
+        summary: "Upload a body asset (image, video, or file) for a post",
+        ...access(
+          "manage_blog",
+          "The returned `url` is embedded into the post body. Images and common " +
+            "videos/PDFs are detected by content; anything else is stored as a " +
+            "downloadable file.",
+        ),
+        parameters: [idParam("id")],
+        requestBody: {
+          required: true,
+          content: { "multipart/form-data": { schema: assetUploadSchema } },
+        },
+        responses: {
+          "201": { description: "Asset uploaded", content: jsonBody(ref("AdminBlogAsset")) },
+          "400": { description: "Missing or empty file", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Post not found", content: jsonBody(ref("Error")) },
+          "413": { description: "File exceeds the 25 MB limit", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/blog/{id}/assets/{assetId}": {
+      delete: {
+        tags: ["admin-blog"],
+        summary: "Delete a post's body asset",
+        ...access("manage_blog"),
+        parameters: [idParam("id"), idParam("assetId")],
+        responses: {
+          "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
+          ...adminAuthResponses,
+          "404": { description: "Asset not found", content: jsonBody(ref("Error")) },
         },
       },
     },

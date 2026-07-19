@@ -5,6 +5,7 @@ import type { PublishStatus } from './admin-events'
 
 export type AdminBlogPost = components['schemas']['AdminBlogPost']
 export type AdminBlogPostDetail = components['schemas']['AdminBlogPostDetail']
+export type AdminBlogAsset = components['schemas']['AdminBlogAsset']
 
 export interface AdminBlogFilters {
   page?: number
@@ -114,6 +115,41 @@ export function useAdminRemoveBlogFeaturedImage(postId: number) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'blog'] })
       void queryClient.invalidateQueries({ queryKey: ['blog'] })
+    },
+  })
+}
+
+export function useAdminAddBlogAsset(postId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (file: File) => {
+      const body = new FormData()
+      body.append('file', file)
+      return unwrap(
+        api.POST('/admin/blog/{id}/assets', {
+          params: { path: { id: postId } },
+          body: body as unknown as { file: string },
+          bodySerializer: (formData) => formData as unknown as BodyInit,
+        }),
+      )
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'blog', postId] })
+    },
+  })
+}
+
+export function useAdminRemoveBlogAsset(postId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (assetId: number) =>
+      unwrap(
+        api.DELETE('/admin/blog/{id}/assets/{assetId}', {
+          params: { path: { id: postId, assetId } },
+        }),
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'blog', postId] })
     },
   })
 }
