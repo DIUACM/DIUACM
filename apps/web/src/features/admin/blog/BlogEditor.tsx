@@ -67,6 +67,7 @@ import { lowlight } from '@/lib/highlight'
 import { cn } from '@/lib/utils'
 import { CodeBlockView } from './CodeBlockView'
 import { MathNodeView } from './MathNodeView'
+import { Video } from './VideoNode'
 
 const MAX_ASSET_BYTES = 25 * 1024 * 1024
 
@@ -196,6 +197,7 @@ const extensions = [
   InlineMathMarkdown,
   BlockMathMarkdown,
   Image,
+  Video,
   TableKit,
   AlwaysTableHeader,
   Markdown,
@@ -573,8 +575,9 @@ export function BlogEditor({
   }, [editor, value])
 
   /**
-   * Insert an uploaded asset: images as image nodes, everything else as a link.
-   * `pos` targets a drop location; without it the insert lands at the caret.
+   * Insert an uploaded asset: images as image nodes, videos as players, and
+   * everything else as a link. `pos` targets a drop location; without it the
+   * insert lands at the caret.
    */
   const insertAsset = (asset: AdminBlogAsset, pos?: number) => {
     if (!editor) return
@@ -582,6 +585,10 @@ export function BlogEditor({
     const chain = editor.chain().focus(pos)
     if (asset.kind === 'image') {
       chain.setImage({ src: url, alt: asset.filename }).run()
+      return
+    }
+    if (asset.kind === 'video') {
+      chain.insertContent({ type: 'video', attrs: { src: url } }).run()
       return
     }
     chain.insertContent(`[${asset.filename}](${url})`, { contentType: 'markdown' }).run()

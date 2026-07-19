@@ -1,6 +1,6 @@
 import { ArrowLeft, GripVertical, ImagePlus, Trash2, X } from 'lucide-react'
-import { useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useBlocker, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
 import {
@@ -13,6 +13,16 @@ import {
 } from '@/api/queries/admin-gallery'
 import type { AdminGalleryAlbumDetail } from '@/api/queries/admin-gallery'
 import type { PublishStatus } from '@/api/queries/admin-events'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
 import { SortableGrid, SortableGridItem } from '@/features/admin/shared/SortableGrid'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
@@ -43,27 +53,49 @@ const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
 
 function AlbumEditForm({ album }: { album: AdminGalleryAlbumDetail }) {
   const updateAlbum = useAdminUpdateGalleryAlbum(album.id)
-  const [form, setForm] = useState({
+  const loaded = {
     title: album.title,
     slug: album.slug,
     description: album.description,
     status: album.status,
-  })
+  }
+  const [form, setForm] = useState(loaded)
+  // Last successfully persisted values. Comparing against these — rather than
+  // the `album` prop — keeps the form clean straight after a save, without
+  // waiting for the query to refetch.
+  const [saved, setSaved] = useState(loaded)
+  const isDirty =
+    form.title !== saved.title ||
+    form.slug !== saved.slug ||
+    form.description !== saved.description ||
+    form.status !== saved.status
+
+  // Full page unloads (reload, close tab, external link) get the browser's
+  // native prompt; in-app navigation is caught by the blocker below.
+  useEffect(() => {
+    if (!isDirty) return
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault()
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [isDirty])
+
+  const blocker = useBlocker(isDirty)
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
-    updateAlbum.mutate(
-      {
-        title: form.title.trim(),
-        slug: form.slug,
-        description: form.description,
-        status: form.status,
+    const payload = {
+      title: form.title.trim(),
+      slug: form.slug,
+      description: form.description,
+      status: form.status,
+    }
+    updateAlbum.mutate(payload, {
+      onSuccess: () => {
+        setSaved(payload)
+        toast.success('Album updated.')
       },
-      {
-        onSuccess: () => toast.success('Album updated.'),
-        onError: (error) => toast.error(errorMessage(error)),
-      },
-    )
+      onError: (error) => toast.error(errorMessage(error)),
+    })
   }
 
   return (
@@ -121,9 +153,36 @@ function AlbumEditForm({ album }: { album: AdminGalleryAlbumDetail }) {
           </SelectContent>
         </Select>
       </div>
-      <Button type="submit" disabled={updateAlbum.isPending}>
-        {updateAlbum.isPending ? 'Saving…' : 'Save changes'}
-      </Button>
+      <div className="flex items-center gap-3">
+        <Button type="submit" disabled={updateAlbum.isPending || !isDirty}>
+          {updateAlbum.isPending ? 'Saving…' : 'Save changes'}
+        </Button>
+        {isDirty && (
+          <span className="text-sm text-muted-foreground">Unsaved changes</span>
+        )}
+      </div>
+
+      <AlertDialog open={blocker.state === 'blocked'}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This album has edits that haven’t been saved. Leaving now discards them.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => blocker.reset?.()}>
+              Keep editing
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => blocker.proceed?.()}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </form>
   )
 }

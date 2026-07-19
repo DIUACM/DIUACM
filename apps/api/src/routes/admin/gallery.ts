@@ -204,13 +204,15 @@ adminGalleryRoutes.post("/:id/media", manageGallery, async (c) => {
 
   let row;
   try {
-    const [{ value: order }] = await db
-      .select({ value: count() })
-      .from(galleryMedia)
-      .where(eq(galleryMedia.albumId, id));
+    // MAX + 1, not COUNT: after deletions COUNT can collide with an existing
+    // order value, filing the new photo before the last one.
     [row] = await db
       .insert(galleryMedia)
-      .values({ albumId: id, key, order })
+      .values({
+        albumId: id,
+        key,
+        order: sql`(SELECT COALESCE(MAX("order"), -1) + 1 FROM gallery_media WHERE album_id = ${id})`,
+      })
       .returning({ id: galleryMedia.id, order: galleryMedia.order });
   } catch (err) {
     // DB insert failed — don't leave an orphan object in R2.

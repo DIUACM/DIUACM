@@ -14,9 +14,13 @@ import type { AppEnv } from "../types";
 /** Short plain-text preview of a post body for list cards. */
 export const excerptOf = (content: string, max = 240): string => {
   const plain = content
-    // Markdown-ish noise that reads badly in a snippet.
+    // Markdown-ish noise that reads badly in a snippet. LaTeX and raw HTML go
+    // first, while their delimiters are still intact.
     .replace(/```[\s\S]*?```/g, " ")
-    .replace(/[#>*_`~[\]()!-]/g, " ")
+    .replace(/\$\$[\s\S]*?\$\$/g, " ")
+    .replace(/\$[^$\n]+\$/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[#>*_`~[\]()!|-]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
   return plain.length > max ? `${plain.slice(0, max).trimEnd()}…` : plain;
