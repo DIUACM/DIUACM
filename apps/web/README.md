@@ -29,17 +29,22 @@ assets, backed by the [diuacm API](https://diuacm.sourovcodes.workers.dev/openap
 ## Development
 
 ```sh
-npm install
-npm run dev          # dev server
-npm run build        # typecheck + production build to dist/
-npm run api:types    # regenerate src/api/schema.d.ts from the live OpenAPI spec
+pnpm install
+pnpm dev             # dev server
+pnpm build           # typecheck + production build to dist/
+pnpm api:types       # regenerate src/api/schema.d.ts from the live OpenAPI spec
 ```
 
-The API base URL defaults to the production backend; override with
-`VITE_API_BASE_URL` in a `.env` file if needed.
+The API base URL defaults to the production backend; copy `.env.example` to
+`.env.local` and set `VITE_API_BASE_URL` to point elsewhere (e.g. a local
+`wrangler dev` API on http://localhost:8787).
+
+The admin area and the blog post reader are code-split (`lazy` routes in
+`src/App.tsx`), so the heavy editor/markdown stacks aren't in the initial bundle.
+Static assets are served with the security/caching headers in `public/_headers`.
 
 ## Deploy
 
 ```sh
-npm run deploy       # build + wrangler deploy (needs `wrangler login`)
+pnpm run deploy      # build + wrangler deploy (needs `wrangler login`)
 ```

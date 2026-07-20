@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
+import { secureHeaders } from "hono/secure-headers";
 
 import { openApiDoc } from "./openapi";
 import admin from "./routes/admin";
@@ -17,7 +18,28 @@ import type { AppEnv } from "./types";
 const app = new Hono<AppEnv>();
 
 app.use("*", logger());
-app.use("*", cors());
+app.use("*", secureHeaders());
+
+// Browsers may only call the API from the origins listed in CORS_ORIGINS
+// (comma-separated, set in wrangler.jsonc). Localhost is always allowed so
+// the Vite dev server works without extra config. An empty/missing value
+// allows every origin (useful before the web origin is known).
+const LOCALHOST_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
+app.use("*", (c, next) => {
+  const configured = (c.env.CORS_ORIGINS ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return cors({
+    origin: (origin) => {
+      if (configured.length === 0) return origin;
+      if (LOCALHOST_ORIGIN.test(origin)) return origin;
+      return configured.includes(origin) ? origin : null;
+    },
+    maxAge: 86400,
+  })(c, next);
+});
 
 app.get("/", (c) =>
   c.json({ ok: true, service: "diuacm", docs: "/docs", openapi: "/openapi.json" }),

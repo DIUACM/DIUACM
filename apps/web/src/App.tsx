@@ -1,21 +1,9 @@
+import type { ComponentType } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import { Layout } from '@/components/layout/Layout'
-import { AdminLayout } from '@/features/admin/AdminLayout'
-import { AdminBlogPage } from '@/features/admin/blog/AdminBlogPage'
-import { AdminBlogPostDetailPage } from '@/features/admin/blog/AdminBlogPostDetailPage'
-import { AdminEventDetailPage } from '@/features/admin/events/AdminEventDetailPage'
-import { AdminEventsPage } from '@/features/admin/events/AdminEventsPage'
-import { AdminGalleryAlbumDetailPage } from '@/features/admin/gallery/AdminGalleryAlbumDetailPage'
-import { AdminGalleryPage } from '@/features/admin/gallery/AdminGalleryPage'
-import { AdminRanklistDetailPage } from '@/features/admin/trackers/AdminRanklistDetailPage'
-import { AdminTrackerDetailPage } from '@/features/admin/trackers/AdminTrackerDetailPage'
-import { AdminTrackersPage } from '@/features/admin/trackers/AdminTrackersPage'
-import { AdminUserDetailPage } from '@/features/admin/users/AdminUserDetailPage'
-import { AdminUsersPage } from '@/features/admin/users/AdminUsersPage'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { RequireAuth } from '@/features/auth/RequireAuth'
 import { BlogPage } from '@/features/blog/BlogPage'
-import { BlogPostPage } from '@/features/blog/BlogPostPage'
 import { EventDetailPage } from '@/features/events/EventDetailPage'
 import { EventsPage } from '@/features/events/EventsPage'
 import { GalleryAlbumPage } from '@/features/gallery/GalleryAlbumPage'
@@ -27,6 +15,14 @@ import { ProgrammerDetailPage } from '@/features/programmers/ProgrammerDetailPag
 import { ProgrammersPage } from '@/features/programmers/ProgrammersPage'
 import { TrackerDetailPage } from '@/features/trackers/TrackerDetailPage'
 import { TrackersPage } from '@/features/trackers/TrackersPage'
+
+// The admin area pulls in the heavy editor stack (TipTap, dnd-kit, …) and the
+// blog post page pulls in markdown/KaTeX/highlight.js, so those routes are
+// code-split: each `lazy` below becomes a separate chunk downloaded on demand.
+const lazily =
+  (load: () => Promise<Record<string, unknown>>, name: string) => async () => ({
+    Component: (await load())[name] as ComponentType,
+  })
 
 const router = createBrowserRouter([
   {
@@ -42,7 +38,10 @@ const router = createBrowserRouter([
       { path: '/gallery', element: <GalleryPage /> },
       { path: '/gallery/:slug', element: <GalleryAlbumPage /> },
       { path: '/blog', element: <BlogPage /> },
-      { path: '/blog/:slug', element: <BlogPostPage /> },
+      {
+        path: '/blog/:slug',
+        lazy: lazily(() => import('@/features/blog/BlogPostPage'), 'BlogPostPage'),
+      },
       { path: '/login', element: <LoginPage /> },
       {
         element: <RequireAuth />,
@@ -50,19 +49,79 @@ const router = createBrowserRouter([
       },
       {
         path: '/admin',
-        element: <AdminLayout />,
+        lazy: lazily(() => import('@/features/admin/AdminLayout'), 'AdminLayout'),
         children: [
-          { path: 'users', element: <AdminUsersPage /> },
-          { path: 'users/:id', element: <AdminUserDetailPage /> },
-          { path: 'events', element: <AdminEventsPage /> },
-          { path: 'events/:id', element: <AdminEventDetailPage /> },
-          { path: 'trackers', element: <AdminTrackersPage /> },
-          { path: 'trackers/:id', element: <AdminTrackerDetailPage /> },
-          { path: 'ranklists/:id', element: <AdminRanklistDetailPage /> },
-          { path: 'gallery', element: <AdminGalleryPage /> },
-          { path: 'gallery/:id', element: <AdminGalleryAlbumDetailPage /> },
-          { path: 'blog', element: <AdminBlogPage /> },
-          { path: 'blog/:id', element: <AdminBlogPostDetailPage /> },
+          {
+            path: 'users',
+            lazy: lazily(() => import('@/features/admin/users/AdminUsersPage'), 'AdminUsersPage'),
+          },
+          {
+            path: 'users/:id',
+            lazy: lazily(
+              () => import('@/features/admin/users/AdminUserDetailPage'),
+              'AdminUserDetailPage',
+            ),
+          },
+          {
+            path: 'events',
+            lazy: lazily(
+              () => import('@/features/admin/events/AdminEventsPage'),
+              'AdminEventsPage',
+            ),
+          },
+          {
+            path: 'events/:id',
+            lazy: lazily(
+              () => import('@/features/admin/events/AdminEventDetailPage'),
+              'AdminEventDetailPage',
+            ),
+          },
+          {
+            path: 'trackers',
+            lazy: lazily(
+              () => import('@/features/admin/trackers/AdminTrackersPage'),
+              'AdminTrackersPage',
+            ),
+          },
+          {
+            path: 'trackers/:id',
+            lazy: lazily(
+              () => import('@/features/admin/trackers/AdminTrackerDetailPage'),
+              'AdminTrackerDetailPage',
+            ),
+          },
+          {
+            path: 'ranklists/:id',
+            lazy: lazily(
+              () => import('@/features/admin/trackers/AdminRanklistDetailPage'),
+              'AdminRanklistDetailPage',
+            ),
+          },
+          {
+            path: 'gallery',
+            lazy: lazily(
+              () => import('@/features/admin/gallery/AdminGalleryPage'),
+              'AdminGalleryPage',
+            ),
+          },
+          {
+            path: 'gallery/:id',
+            lazy: lazily(
+              () => import('@/features/admin/gallery/AdminGalleryAlbumDetailPage'),
+              'AdminGalleryAlbumDetailPage',
+            ),
+          },
+          {
+            path: 'blog',
+            lazy: lazily(() => import('@/features/admin/blog/AdminBlogPage'), 'AdminBlogPage'),
+          },
+          {
+            path: 'blog/:id',
+            lazy: lazily(
+              () => import('@/features/admin/blog/AdminBlogPostDetailPage'),
+              'AdminBlogPostDetailPage',
+            ),
+          },
         ],
       },
       { path: '*', element: <NotFoundPage /> },

@@ -1,0 +1,11 @@
+# Served by Cloudflare Workers static assets (copied into dist/ by Vite).
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+# Vite emits content-hashed filenames under /assets — safe to cache forever.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

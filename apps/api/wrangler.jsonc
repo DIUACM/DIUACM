@@ -31,6 +31,9 @@
     }
   ],
   "vars": {
+    // Browser origins allowed to call the API (comma-separated). Localhost is
+    // always allowed in addition; an empty value allows every origin.
+    "CORS_ORIGINS": "https://diuacm-web.sourovcodes.workers.dev",
     // Google OAuth client id (public value — fine to commit). The ID token's
     // `aud` claim must match this. Replace with your own from the Google Cloud
     // console (OAuth 2.0 Client IDs).

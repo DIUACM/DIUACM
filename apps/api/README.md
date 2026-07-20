@@ -57,11 +57,16 @@ The user object includes an absolute `image` URL (or `null`) served by `/files/:
   record per user per event; the timestamp is stored.
 - `participation_scope` and `strict_attendance` are stored/filterable metadata and are **not
   enforced** yet (enforcing scope needs user gender/rank/selected-person data).
-- There is no create/update, media-upload, or performance-write API yet — events, their media, and
-  performance rows are seeded directly in D1 (`wrangler d1 execute`) until an admin API exists.
 - `ranklists.user_count` / `event_count` are maintained by SQLite triggers on the `ranklist_user` /
   `ranklist_event` pivots (see `drizzle/0007_ranklist_count_triggers.sql`) — never write them from app
-  code. Trackers/ranklists are likewise seeded in D1 for now.
+  code.
+
+### Admin API
+
+Content management lives under `/admin/*` (users, events, trackers, ranklists, gallery,
+blog). Admin routes require a Bearer token plus per-area permissions; the super admin
+(`vars.SUPER_ADMIN_EMAIL`) implicitly holds every permission. The endpoint table above
+covers the public surface — browse `/docs` (Scalar) for the complete, always-current list.
 
 ## Local development
 
@@ -87,12 +92,16 @@ and set a `JWT_SECRET`.
 
 Migrations are applied with `wrangler d1 migrations apply`, **not** the Drizzle client.
 
-## Deploying to Cloudflare (later)
+## Deploying to Cloudflare
 
 ```bash
 wrangler d1 create diuacm-db          # paste the returned database_id into wrangler.jsonc
 wrangler r2 bucket create diuacm-files
-# set vars.GOOGLE_CLIENT_ID in wrangler.jsonc (public value, committed)
+# set committed vars in wrangler.jsonc:
+#   GOOGLE_CLIENT_ID  — Google OAuth client id (public value)
+#   SUPER_ADMIN_EMAIL — implicitly holds every admin permission
+#   CORS_ORIGINS      — comma-separated browser origins allowed to call the API
+#                       (localhost is always allowed; empty = allow all)
 pnpm db:migrate:remote                # apply migrations to the remote D1
 wrangler secret put JWT_SECRET        # set a strong production secret
 pnpm run deploy
