@@ -142,8 +142,10 @@ eventRoutes.post(
       });
     }
 
+    // 403, not 401: the client treats 401 on an authenticated request as an
+    // expired session and logs the user out.
     if (!ev.eventPassword || password !== ev.eventPassword) {
-      throw new HTTPException(401, { message: "Incorrect event password" });
+      throw new HTTPException(403, { message: "Incorrect event password" });
     }
 
     const [existing] = await db

@@ -1358,11 +1358,12 @@ export const openApiDoc = {
           "201": { description: "Attendance recorded", content: jsonBody(ref("AttendanceResult")) },
           "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
           "401": {
-            description: "Missing token or incorrect event password",
+            description: "Missing or invalid token",
             content: jsonBody(ref("Error")),
           },
           "403": {
-            description: "Attendance not open, or outside the attendance window",
+            description:
+              "Incorrect event password, attendance not open, or outside the attendance window",
             content: jsonBody(ref("Error")),
           },
           "404": { description: "Event not found", content: jsonBody(ref("Error")) },

@@ -29,7 +29,11 @@ const authMiddleware: Middleware = {
     return request
   },
   onResponse({ request, response }) {
-    if (response.status === 401 && request.headers.has('Authorization')) {
+    // A 401 on an authenticated request means the token is dead — except on
+    // the login endpoints, where it just means wrong credentials (the
+    // middleware attaches the stored token to those requests too).
+    const isLoginRequest = /\/auth\/(login|google)$/.test(new URL(request.url).pathname)
+    if (response.status === 401 && request.headers.has('Authorization') && !isLoginRequest) {
       onUnauthorized?.()
     }
     return response
