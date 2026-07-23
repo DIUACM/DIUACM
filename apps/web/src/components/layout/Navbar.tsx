@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils'
 import { ThemeToggle } from './ThemeToggle'
 
 const NAV_LINKS = [
+  { to: '/', label: 'Home' },
   { to: '/events', label: 'Events' },
   { to: '/trackers', label: 'Trackers' },
   { to: '/programmers', label: 'Programmers' },
@@ -57,6 +58,7 @@ export function Navbar() {
             <NavLink
               key={link.to}
               to={link.to}
+              end={link.to === '/'}
               className={({ isActive }) =>
                 cn(
                   'rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
@@ -128,6 +130,7 @@ export function Navbar() {
                   <NavLink
                     key={link.to}
                     to={link.to}
+                    end={link.to === '/'}
                     onClick={() => setMobileOpen(false)}
                     className={({ isActive }) =>
                       cn(
