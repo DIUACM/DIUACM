@@ -35,9 +35,10 @@ pnpm build           # typecheck + production build to dist/
 pnpm api:types       # regenerate src/api/schema.d.ts from the live OpenAPI spec
 ```
 
-The API base URL defaults to the production backend; copy `.env.example` to
-`.env.local` and set `VITE_API_BASE_URL` to point elsewhere (e.g. a local
-`wrangler dev` API on http://localhost:8787).
+The API base URL is selected automatically: the Vite development server uses
+the local `wrangler dev` API at http://localhost:8787, while production builds
+use the deployed backend. To point either mode elsewhere, copy `.env.example`
+to `.env.local` and set `VITE_API_BASE_URL`.
 
 The admin area and the blog post reader are code-split (`lazy` routes in
 `src/App.tsx`), so the heavy editor/markdown stacks aren't in the initial bundle.

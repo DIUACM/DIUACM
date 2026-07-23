@@ -1,8 +1,12 @@
 import createClient, { type Middleware } from 'openapi-fetch'
 import type { paths } from './schema'
 
+const DEFAULT_API_BASE_URL = import.meta.env.DEV
+  ? 'http://localhost:8787'
+  : 'https://diuacm.sourovcodes.workers.dev'
+
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? 'https://diuacm.sourovcodes.workers.dev'
+  import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL
 
 const TOKEN_KEY = 'diuacm.token'
 
