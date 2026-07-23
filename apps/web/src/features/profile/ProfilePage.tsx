@@ -22,6 +22,7 @@ import { useAuth } from '@/features/auth/auth-context'
 import type { User } from '@/api/types'
 import { HandlesManager } from './HandlesManager'
 import { useDocumentTitle } from '@/lib/use-document-title'
+import { CfRatingBadge } from '@/components/shared/CfRatingBadge'
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
@@ -149,6 +150,16 @@ function ProfileForm({ user }: { user: User }) {
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input id="email" value={user.email} disabled />
+        </div>
+        <div className="space-y-2">
+          <Label>Max Codeforces rating</Label>
+          <div className="flex h-9 items-center rounded-md border bg-muted/40 px-3 text-sm">
+            {user.maxCfRating === null ? (
+              <span className="text-muted-foreground">Unrated</span>
+            ) : (
+              <CfRatingBadge rating={user.maxCfRating} />
+            )}
+          </div>
         </div>
       </div>
       <Button type="submit" disabled={!dirty || updateProfile.isPending}>

@@ -520,6 +520,15 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
+                /** @description Codeforces could not be reached or returned an invalid response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
                 /** @description Handle already taken by another user for this platform */
                 409: {
                     headers: {
@@ -5027,6 +5036,8 @@ export interface components {
         };
         HandlesResponse: {
             handles: components["schemas"]["HandlesMap"];
+            /** @description The user's highest Codeforces rating, or null when unrated or unlinked. */
+            maxCfRating: number | null;
         };
         ProgrammerListItem: {
             id: number;

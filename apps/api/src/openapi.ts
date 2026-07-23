@@ -436,8 +436,14 @@ const handlesMapSchema = {
 
 const handlesResponseSchema = {
   type: "object",
-  properties: { handles: ref("HandlesMap") },
-  required: ["handles"],
+  properties: {
+    handles: ref("HandlesMap"),
+    maxCfRating: {
+      type: ["integer", "null"],
+      description: "The user's highest Codeforces rating, or null when unrated or unlinked.",
+    },
+  },
+  required: ["handles", "maxCfRating"],
 };
 
 const programmerListItemSchema = {
@@ -1275,6 +1281,10 @@ export const openApiDoc = {
           "200": { description: "The updated handles map", content: jsonBody(ref("HandlesResponse")) },
           "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
           "401": { description: "Missing or invalid token", content: jsonBody(ref("Error")) },
+          "502": {
+            description: "Codeforces could not be reached or returned an invalid response",
+            content: jsonBody(ref("Error")),
+          },
           "409": {
             description: "Handle already taken by another user for this platform",
             content: jsonBody(ref("Error")),

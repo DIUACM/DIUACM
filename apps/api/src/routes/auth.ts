@@ -4,6 +4,7 @@ import { HTTPException } from "hono/http-exception";
 
 import { getDb } from "../db/client";
 import { userHandles, users } from "../db/schema";
+import { CodeforcesApiError, getCodeforcesUser } from "../lib/codeforces";
 import { GoogleAuthError, verifyGoogleIdToken } from "../lib/google-oauth";
 import { parseImageUpload } from "../lib/image-upload";
 import { signAuthToken } from "../lib/jwt";
@@ -273,9 +274,26 @@ const loadHandles = async (db: ReturnType<typeof getDb>, userId: number) => {
   return toHandlesMap(rows);
 };
 
+const loadHandleState = async (db: ReturnType<typeof getDb>, userId: number) => {
+  const [user] = await db
+    .select({ maxCfRating: users.maxCfRating })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!user) {
+    throw new HTTPException(404, { message: "User not found" });
+  }
+
+  return {
+    handles: await loadHandles(db, userId),
+    maxCfRating: user.maxCfRating,
+  };
+};
+
 auth.get("/me/handles", requireAuth, async (c) => {
   const db = getDb(c.env.DB);
-  return c.json({ handles: await loadHandles(db, c.get("user").sub) });
+  return c.json(await loadHandleState(db, c.get("user").sub));
 });
 
 auth.put(
@@ -285,9 +303,26 @@ auth.put(
   validate("json", handleSetSchema),
   async (c) => {
     const { type } = c.req.valid("param");
-    const { handle } = c.req.valid("json");
+    const input = c.req.valid("json");
     const userId = c.get("user").sub;
     const db = getDb(c.env.DB);
+    let handle = input.handle;
+    let maxCfRating: number | null | undefined;
+
+    if (type === "codeforces") {
+      try {
+        const codeforcesUser = await getCodeforcesUser(handle);
+        handle = codeforcesUser.handle;
+        maxCfRating = codeforcesUser.maxRating;
+      } catch (err) {
+        if (err instanceof CodeforcesApiError) {
+          throw new HTTPException(err.kind === "invalid-handle" ? 400 : 502, {
+            message: err.message,
+          });
+        }
+        throw err;
+      }
+    }
 
     // A handle already claimed by another user for this platform hits the
     // unique(type, handle) index → 409 via the global onError handler.
@@ -299,7 +334,14 @@ auth.put(
         set: { handle, updatedAt: Math.floor(Date.now() / 1000) },
       });
 
-    return c.json({ handles: await loadHandles(db, userId) });
+    if (maxCfRating !== undefined) {
+      await db
+        .update(users)
+        .set({ maxCfRating, updatedAt: Math.floor(Date.now() / 1000) })
+        .where(eq(users.id, userId));
+    }
+
+    return c.json(await loadHandleState(db, userId));
   },
 );
 
@@ -316,7 +358,14 @@ auth.delete(
       .delete(userHandles)
       .where(and(eq(userHandles.userId, userId), eq(userHandles.type, type)));
 
-    return c.json({ handles: await loadHandles(db, userId) });
+    if (type === "codeforces") {
+      await db
+        .update(users)
+        .set({ maxCfRating: null, updatedAt: Math.floor(Date.now() / 1000) })
+        .where(eq(users.id, userId));
+    }
+
+    return c.json(await loadHandleState(db, userId));
   },
 );
 

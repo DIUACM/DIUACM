@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ErrorState } from '@/components/shared/states'
 import { HANDLE_LABELS, HANDLE_TYPES, handleProfileUrl } from '@/lib/constants'
 import type { HandleType } from '@/api/types'
+import { useAuth } from '@/features/auth/auth-context'
 
 function HandleRow({
   type,
@@ -21,6 +22,7 @@ function HandleRow({
   const [value, setValue] = useState(handle ?? '')
   const setHandle = useSetHandle()
   const deleteHandle = useDeleteHandle()
+  const { user, setUser } = useAuth()
 
   const save = () => {
     const trimmed = value.trim()
@@ -28,7 +30,8 @@ function HandleRow({
     setHandle.mutate(
       { type, handle: trimmed },
       {
-        onSuccess: () => {
+        onSuccess: (response) => {
+          if (user) setUser({ ...user, maxCfRating: response.maxCfRating })
           toast.success(`${HANDLE_LABELS[type]} handle saved.`)
           setEditing(false)
         },
@@ -39,7 +42,8 @@ function HandleRow({
 
   const remove = () => {
     deleteHandle.mutate(type, {
-      onSuccess: () => {
+      onSuccess: (response) => {
+        if (user) setUser({ ...user, maxCfRating: response.maxCfRating })
         toast.success(`${HANDLE_LABELS[type]} handle removed.`)
         setValue('')
       },
