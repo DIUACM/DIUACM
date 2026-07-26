@@ -4,3 +4,6 @@
 # In production set the secret instead with:
 #   wrangler secret put JWT_SECRET
 JWT_SECRET=replace-with-a-long-random-string
+
+# Used by scripts/import-structure.mjs when fetching from the protected export URL.
+MIGRATION_EXPORT_KEY=replace-with-the-migration-export-key
