@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, unwrap } from '../client'
-import type { Permission } from '../types'
+import type { HandleType, Permission } from '../types'
 
 export interface AdminUserFilters {
   page?: number
@@ -87,33 +87,57 @@ export function useAdminDeleteUser() {
   })
 }
 
-export function useAdminAddVjudgeHandle(id: number) {
+export function useAdminAddHandle(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (handle: string) =>
+    mutationFn: ({ type, handle }: { type: HandleType; handle: string }) =>
       unwrap(
-        api.POST('/admin/users/{id}/vjudge-handles', {
-          params: { path: { id } },
+        api.POST('/admin/users/{id}/handles/{type}', {
+          params: { path: { id, type } },
           body: { handle },
         }),
       ),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['admin', 'users', id] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
     },
   })
 }
 
-export function useAdminDeleteVjudgeHandle(id: number) {
+export function useAdminUpdateHandle(id: number) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (handleId: number) =>
+    mutationFn: ({
+      type,
+      handleId,
+      handle,
+    }: {
+      type: HandleType
+      handleId: number
+      handle: string
+    }) =>
       unwrap(
-        api.DELETE('/admin/users/{id}/vjudge-handles/{handleId}', {
-          params: { path: { id, handleId } },
+        api.PUT('/admin/users/{id}/handles/{type}/{handleId}', {
+          params: { path: { id, type, handleId } },
+          body: { handle },
         }),
       ),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['admin', 'users', id] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+    },
+  })
+}
+
+export function useAdminDeleteHandle(id: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ type, handleId }: { type: HandleType; handleId: number }) =>
+      unwrap(
+        api.DELETE('/admin/users/{id}/handles/{type}/{handleId}', {
+          params: { path: { id, type, handleId } },
+        }),
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
     },
   })
 }

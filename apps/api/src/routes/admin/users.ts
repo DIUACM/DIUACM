@@ -4,6 +4,7 @@ import { HTTPException } from "hono/http-exception";
 
 import { getDb } from "../../db/client";
 import { userHandles, userPermissions, users } from "../../db/schema";
+import { CodeforcesApiError, getCodeforcesUser } from "../../lib/codeforces";
 import { likeContains } from "../../lib/like";
 import { buildMeta } from "../../lib/pagination";
 import { parseId } from "../../lib/parse-id";
@@ -23,7 +24,12 @@ import {
   permissionParam,
   permissionToggleSchema,
 } from "../../schemas/admin";
-import { handleSetSchema } from "../../schemas/handles";
+import {
+  handleDeleteParam,
+  handleSetSchema,
+  handleTypeParam,
+  type HandleType,
+} from "../../schemas/handles";
 import type { AppEnv } from "../../types";
 
 // Same safe shape the auth routes use — never includes passwordHash.
@@ -52,6 +58,34 @@ const shapeUser = async (c: Context<AppEnv>, row: UserRow) => {
 const manageUsers = requirePermission("manage_users");
 
 const adminUserRoutes = new Hono<AppEnv>();
+
+const HANDLE_LABELS: Record<HandleType, string> = {
+  codeforces: "Codeforces",
+  vjudge: "VJudge",
+  atcoder: "AtCoder",
+};
+
+const resolveHandle = async (
+  type: HandleType,
+  handle: string,
+): Promise<{ handle: string; maxCfRating?: number | null }> => {
+  if (type !== "codeforces") return { handle };
+
+  try {
+    const codeforcesUser = await getCodeforcesUser(handle);
+    return {
+      handle: codeforcesUser.handle,
+      maxCfRating: codeforcesUser.maxRating,
+    };
+  } catch (err) {
+    if (err instanceof CodeforcesApiError) {
+      throw new HTTPException(err.kind === "invalid-handle" ? 400 : 502, {
+        message: err.message,
+      });
+    }
+    throw err;
+  }
+};
 
 // All users, newest first. Searchable on name / username / email / student id;
 // filterable by granted permission.
@@ -148,16 +182,18 @@ adminUserRoutes.get("/:id", manageUsers, async (c) => {
   return c.json({ user: await shapeUser(c, user), handles: toHandlesMap(handleRows) });
 });
 
-// Admin-only VJudge management. Users can create at most one VJudge handle
-// themselves; callers with manage_users may attach additional rows.
+// Admin handle management. VJudge may have multiple rows per user; the
+// database keeps Codeforces and AtCoder limited to one row per user.
 adminUserRoutes.post(
-  "/:id/vjudge-handles",
+  "/:id/handles/:type",
   manageUsers,
+  validate("param", handleTypeParam),
   validate("json", handleSetSchema),
   async (c) => {
     const id = parseId(c.req.param("id"));
     if (id === null) throw new HTTPException(404, { message: "User not found" });
 
+    const { type } = c.req.valid("param");
     const db = getDb(c.env.DB);
     const [user] = await db
       .select({ id: users.id })
@@ -166,39 +202,114 @@ adminUserRoutes.post(
       .limit(1);
     if (!user) throw new HTTPException(404, { message: "User not found" });
 
-    const [handle] = await db
+    const resolved = await resolveHandle(type, c.req.valid("json").handle);
+    const [created] = await db
       .insert(userHandles)
-      .values({ userId: id, type: "vjudge", handle: c.req.valid("json").handle })
+      .values({ userId: id, type, handle: resolved.handle })
       .returning({ id: userHandles.id, handle: userHandles.handle });
 
-    return c.json(handle, 201);
+    if (type === "codeforces") {
+      await db
+        .update(users)
+        .set({
+          maxCfRating: resolved.maxCfRating ?? null,
+          updatedAt: Math.floor(Date.now() / 1000),
+        })
+        .where(eq(users.id, id));
+    }
+
+    return c.json(created, 201);
   },
 );
 
-adminUserRoutes.delete("/:id/vjudge-handles/:handleId", manageUsers, async (c) => {
-  const id = parseId(c.req.param("id"));
-  const handleId = parseId(c.req.param("handleId"));
-  if (id === null || handleId === null) {
-    throw new HTTPException(404, { message: "VJudge handle not found" });
-  }
+adminUserRoutes.put(
+  "/:id/handles/:type/:handleId",
+  manageUsers,
+  validate("param", handleDeleteParam),
+  validate("json", handleSetSchema),
+  async (c) => {
+    const id = parseId(c.req.param("id"));
+    if (id === null) throw new HTTPException(404, { message: "Handle not found" });
 
-  const db = getDb(c.env.DB);
-  const [deleted] = await db
-    .delete(userHandles)
-    .where(
-      and(
-        eq(userHandles.id, handleId),
-        eq(userHandles.userId, id),
-        eq(userHandles.type, "vjudge"),
-      ),
-    )
-    .returning({ id: userHandles.id });
-  if (!deleted) {
-    throw new HTTPException(404, { message: "VJudge handle not found" });
-  }
+    const { type, handleId } = c.req.valid("param");
+    const db = getDb(c.env.DB);
+    const [existing] = await db
+      .select({ id: userHandles.id })
+      .from(userHandles)
+      .where(
+        and(
+          eq(userHandles.id, handleId),
+          eq(userHandles.userId, id),
+          eq(userHandles.type, type),
+        ),
+      )
+      .limit(1);
+    if (!existing) {
+      throw new HTTPException(404, {
+        message: `${HANDLE_LABELS[type]} handle not found`,
+      });
+    }
 
-  return c.json({ ok: true });
-});
+    const resolved = await resolveHandle(type, c.req.valid("json").handle);
+    const [updated] = await db
+      .update(userHandles)
+      .set({
+        handle: resolved.handle,
+        updatedAt: Math.floor(Date.now() / 1000),
+      })
+      .where(eq(userHandles.id, existing.id))
+      .returning({ id: userHandles.id, handle: userHandles.handle });
+
+    if (type === "codeforces") {
+      await db
+        .update(users)
+        .set({
+          maxCfRating: resolved.maxCfRating ?? null,
+          updatedAt: Math.floor(Date.now() / 1000),
+        })
+        .where(eq(users.id, id));
+    }
+
+    return c.json(updated);
+  },
+);
+
+adminUserRoutes.delete(
+  "/:id/handles/:type/:handleId",
+  manageUsers,
+  validate("param", handleDeleteParam),
+  async (c) => {
+    const id = parseId(c.req.param("id"));
+    if (id === null) throw new HTTPException(404, { message: "Handle not found" });
+
+    const { type, handleId } = c.req.valid("param");
+    const db = getDb(c.env.DB);
+    const [deleted] = await db
+      .delete(userHandles)
+      .where(
+        and(
+          eq(userHandles.id, handleId),
+          eq(userHandles.userId, id),
+          eq(userHandles.type, type),
+        ),
+      )
+      .returning({ id: userHandles.id });
+    if (!deleted) {
+      throw new HTTPException(404, {
+        message: `${HANDLE_LABELS[type]} handle not found`,
+      });
+    }
+
+    if (type === "codeforces") {
+      await db
+        .update(users)
+        .set({ maxCfRating: null, updatedAt: Math.floor(Date.now() / 1000) })
+        .where(eq(users.id, id));
+    }
+
+    return c.json({ ok: true });
+  },
+);
 
 adminUserRoutes.patch("/:id", manageUsers, validate("json", adminUserUpdateSchema), async (c) => {
   const id = parseId(c.req.param("id"));

@@ -1704,7 +1704,7 @@ export interface paths {
         };
         trace?: never;
     };
-    "/admin/users/{id}/vjudge-handles": {
+    "/admin/users/{id}/handles/{type}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1714,10 +1714,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Attach another VJudge handle to a user
+         * Add a platform handle to a user
          * @description **Access:** `manage_users` — Requires a bearer token for a user granted the `manage_users` permission. The super admin always passes.
          *
-         *     Admins may attach multiple VJudge handles. The handle remains globally unique.
+         *     Admins may attach multiple VJudge handles. Codeforces and AtCoder remain limited to one handle per user. Every handle remains globally unique within its platform.
          */
         post: {
             parameters: {
@@ -1725,6 +1725,7 @@ export interface paths {
                 header?: never;
                 path: {
                     id: number;
+                    type: "codeforces" | "vjudge" | "atcoder";
                 };
                 cookie?: never;
             };
@@ -1734,7 +1735,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Handle attached */
+                /** @description Handle added */
                 201: {
                     headers: {
                         [name: string]: unknown;
@@ -1743,7 +1744,7 @@ export interface paths {
                         "application/json": components["schemas"]["HandleEntry"];
                     };
                 };
-                /** @description Validation failed */
+                /** @description Validation failed or invalid Codeforces handle */
                 400: {
                     headers: {
                         [name: string]: unknown;
@@ -1779,8 +1780,17 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description VJudge handle already belongs to a user */
+                /** @description Handle already belongs to a user, or the platform already has a handle */
                 409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Codeforces could not be reached or returned an invalid response */
+                502: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -1796,7 +1806,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin/users/{id}/vjudge-handles/{handleId}": {
+    "/admin/users/{id}/handles/{type}/{handleId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -1804,10 +1814,95 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
+        /**
+         * Edit one of a user's platform handles
+         * @description **Access:** `manage_users` — Requires a bearer token for a user granted the `manage_users` permission. The super admin always passes.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                    type: "codeforces" | "vjudge" | "atcoder";
+                    handleId: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["HandleSetRequest"];
+                };
+            };
+            responses: {
+                /** @description Handle updated */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HandleEntry"];
+                    };
+                };
+                /** @description Validation failed or invalid Codeforces handle */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Caller lacks the required permission */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Handle not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Handle already belongs to a user */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Codeforces could not be reached or returned an invalid response */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
         post?: never;
         /**
-         * Remove one VJudge handle from a user
+         * Remove one of a user's platform handles
          * @description **Access:** `manage_users` — Requires a bearer token for a user granted the `manage_users` permission. The super admin always passes.
          */
         delete: {
@@ -1816,6 +1911,7 @@ export interface paths {
                 header?: never;
                 path: {
                     id: number;
+                    type: "codeforces" | "vjudge" | "atcoder";
                     handleId: number;
                 };
                 cookie?: never;
@@ -1849,7 +1945,7 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description VJudge handle not found */
+                /** @description Handle not found */
                 404: {
                     headers: {
                         [name: string]: unknown;

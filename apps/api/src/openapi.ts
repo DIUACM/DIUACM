@@ -932,6 +932,13 @@ const permissionPathParam = {
   schema: ref("Permission"),
 };
 
+const handleTypePathParam = {
+  name: "type",
+  in: "path",
+  required: true,
+  schema: { type: "string", enum: ["codeforces", "vjudge", "atcoder"] },
+};
+
 // Every admin endpoint returns these when the caller lacks access.
 const adminAuthResponses = {
   "401": { description: "Missing or invalid token", content: jsonBody(ref("Error")) },
@@ -1672,38 +1679,70 @@ export const openApiDoc = {
         },
       },
     },
-    "/admin/users/{id}/vjudge-handles": {
+    "/admin/users/{id}/handles/{type}": {
       post: {
         tags: ["admin-users"],
-        summary: "Attach another VJudge handle to a user",
+        summary: "Add a platform handle to a user",
         ...access(
           "manage_users",
-          "Admins may attach multiple VJudge handles. The handle remains globally unique.",
+          "Admins may attach multiple VJudge handles. Codeforces and AtCoder remain " +
+            "limited to one handle per user. Every handle remains globally unique within its platform.",
         ),
-        parameters: [idParam("id")],
+        parameters: [idParam("id"), handleTypePathParam],
         requestBody: { required: true, content: jsonBody(ref("HandleSetRequest")) },
         responses: {
-          "201": { description: "Handle attached", content: jsonBody(ref("HandleEntry")) },
-          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          "201": { description: "Handle added", content: jsonBody(ref("HandleEntry")) },
+          "400": {
+            description: "Validation failed or invalid Codeforces handle",
+            content: jsonBody(ref("Error")),
+          },
           ...adminAuthResponses,
           "404": { description: "User not found", content: jsonBody(ref("Error")) },
           "409": {
-            description: "VJudge handle already belongs to a user",
+            description: "Handle already belongs to a user, or the platform already has a handle",
+            content: jsonBody(ref("Error")),
+          },
+          "502": {
+            description: "Codeforces could not be reached or returned an invalid response",
             content: jsonBody(ref("Error")),
           },
         },
       },
     },
-    "/admin/users/{id}/vjudge-handles/{handleId}": {
+    "/admin/users/{id}/handles/{type}/{handleId}": {
+      put: {
+        tags: ["admin-users"],
+        summary: "Edit one of a user's platform handles",
+        ...access("manage_users"),
+        parameters: [idParam("id"), handleTypePathParam, idParam("handleId")],
+        requestBody: { required: true, content: jsonBody(ref("HandleSetRequest")) },
+        responses: {
+          "200": { description: "Handle updated", content: jsonBody(ref("HandleEntry")) },
+          "400": {
+            description: "Validation failed or invalid Codeforces handle",
+            content: jsonBody(ref("Error")),
+          },
+          ...adminAuthResponses,
+          "404": { description: "Handle not found", content: jsonBody(ref("Error")) },
+          "409": {
+            description: "Handle already belongs to a user",
+            content: jsonBody(ref("Error")),
+          },
+          "502": {
+            description: "Codeforces could not be reached or returned an invalid response",
+            content: jsonBody(ref("Error")),
+          },
+        },
+      },
       delete: {
         tags: ["admin-users"],
-        summary: "Remove one VJudge handle from a user",
+        summary: "Remove one of a user's platform handles",
         ...access("manage_users"),
-        parameters: [idParam("id"), idParam("handleId")],
+        parameters: [idParam("id"), handleTypePathParam, idParam("handleId")],
         responses: {
           "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
           ...adminAuthResponses,
-          "404": { description: "VJudge handle not found", content: jsonBody(ref("Error")) },
+          "404": { description: "Handle not found", content: jsonBody(ref("Error")) },
         },
       },
     },
