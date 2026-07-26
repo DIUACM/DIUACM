@@ -1,10 +1,12 @@
-import { ArrowLeft, Trash2 } from 'lucide-react'
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
 import {
+  useAdminAddVjudgeHandle,
   useAdminDeleteUser,
+  useAdminDeleteVjudgeHandle,
   useAdminTogglePermission,
   useAdminUpdateUser,
   useAdminUser,
@@ -34,7 +36,7 @@ import {
   handleProfileUrl,
 } from '@/lib/constants'
 import { useDocumentTitle } from '@/lib/use-document-title'
-import type { User } from '@/api/types'
+import type { HandlesMap, User } from '@/api/types'
 
 function UserEditForm({ user }: { user: User }) {
   const updateUser = useAdminUpdateUser(user.id)
@@ -181,6 +183,96 @@ function PermissionToggles({ user }: { user: User }) {
   )
 }
 
+function AdminHandles({
+  userId,
+  handles,
+}: {
+  userId: number
+  handles: HandlesMap
+}) {
+  const [value, setValue] = useState('')
+  const addHandle = useAdminAddVjudgeHandle(userId)
+  const deleteHandle = useAdminDeleteVjudgeHandle(userId)
+  const linkedHandles = HANDLE_TYPES.flatMap((type) =>
+    handles[type].map(({ id, handle }) => ({ id, type, handle })),
+  )
+
+  const addVjudgeHandle = (event: React.FormEvent) => {
+    event.preventDefault()
+    const handle = value.trim()
+    if (!handle) return
+    addHandle.mutate(handle, {
+      onSuccess: () => {
+        setValue('')
+        toast.success('VJudge handle added.')
+      },
+      onError: (error) => toast.error(errorMessage(error)),
+    })
+  }
+
+  return (
+    <div className="space-y-4">
+      {linkedHandles.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No handles linked.</p>
+      ) : (
+        <ul className="space-y-2">
+          {linkedHandles.map(({ id, type, handle }) => (
+            <li
+              key={`${type}-${id}`}
+              className="flex items-center gap-3 text-sm"
+            >
+              <span className="w-24 shrink-0 font-medium">
+                {HANDLE_LABELS[type]}
+              </span>
+              <a
+                href={handleProfileUrl(type, handle)}
+                target="_blank"
+                rel="noreferrer"
+                className="min-w-0 flex-1 truncate text-muted-foreground hover:text-foreground hover:underline"
+              >
+                {handle}
+              </a>
+              {type === 'vjudge' && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-8 text-destructive hover:text-destructive"
+                  disabled={deleteHandle.isPending}
+                  onClick={() =>
+                    deleteHandle.mutate(id, {
+                      onSuccess: () => toast.success('VJudge handle removed.'),
+                      onError: (error) => toast.error(errorMessage(error)),
+                    })
+                  }
+                  aria-label={`Remove VJudge handle ${handle}`}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <form className="flex gap-2" onSubmit={addVjudgeHandle}>
+        <Input
+          value={value}
+          onChange={(event) => setValue(event.target.value)}
+          placeholder="Add VJudge handle"
+          aria-label="VJudge handle"
+        />
+        <Button
+          type="submit"
+          disabled={addHandle.isPending || value.trim() === ''}
+        >
+          <Plus className="size-4" />
+          Add
+        </Button>
+      </form>
+    </div>
+  )
+}
+
 export function AdminUserDetailPage() {
   const params = useParams()
   const id = Number(params.id)
@@ -207,10 +299,6 @@ export function AdminUserDetailPage() {
   }
 
   const { user, handles } = userQuery.data
-  const linkedHandles = HANDLE_TYPES.flatMap((type) => {
-    const handle = handles[type]
-    return handle ? [{ type, handle }] : []
-  })
 
   return (
     <div className="space-y-6">
@@ -284,29 +372,11 @@ export function AdminUserDetailPage() {
           <CardHeader>
             <CardTitle>Handles</CardTitle>
             <CardDescription>
-              Managed by the user from their profile page.
+              Add multiple VJudge handles or remove them individually.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {linkedHandles.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No handles linked.</p>
-            ) : (
-              <ul className="space-y-2">
-                {linkedHandles.map(({ type, handle }) => (
-                  <li key={type} className="flex items-center gap-3 text-sm">
-                    <span className="w-24 font-medium">{HANDLE_LABELS[type]}</span>
-                    <a
-                      href={handleProfileUrl(type, handle)}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-muted-foreground hover:text-foreground hover:underline"
-                    >
-                      {handle}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <AdminHandles userId={user.id} handles={handles} />
           </CardContent>
         </Card>
       </div>

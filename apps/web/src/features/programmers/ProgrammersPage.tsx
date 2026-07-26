@@ -13,7 +13,9 @@ import type { ProgrammerListItem } from '@/api/types'
 import { useDocumentTitle } from '@/lib/use-document-title'
 
 function ProgrammerCard({ programmer }: { programmer: ProgrammerListItem }) {
-  const platforms = HANDLE_TYPES.filter((type) => programmer.handles[type])
+  const platforms = HANDLE_TYPES.filter(
+    (type) => programmer.handles[type].length > 0,
+  )
   return (
     <Link to={`/programmers/${programmer.username}`} className="group block">
       <Card className="h-full transition-colors group-hover:border-primary/40">

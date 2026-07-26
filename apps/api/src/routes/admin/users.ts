@@ -23,6 +23,7 @@ import {
   permissionParam,
   permissionToggleSchema,
 } from "../../schemas/admin";
+import { handleSetSchema } from "../../schemas/handles";
 import type { AppEnv } from "../../types";
 
 // Same safe shape the auth routes use — never includes passwordHash.
@@ -140,11 +141,63 @@ adminUserRoutes.get("/:id", manageUsers, async (c) => {
   if (!user) throw new HTTPException(404, { message: "User not found" });
 
   const handleRows = await db
-    .select({ type: userHandles.type, handle: userHandles.handle })
+    .select({ id: userHandles.id, type: userHandles.type, handle: userHandles.handle })
     .from(userHandles)
     .where(eq(userHandles.userId, id));
 
   return c.json({ user: await shapeUser(c, user), handles: toHandlesMap(handleRows) });
+});
+
+// Admin-only VJudge management. Users can create at most one VJudge handle
+// themselves; callers with manage_users may attach additional rows.
+adminUserRoutes.post(
+  "/:id/vjudge-handles",
+  manageUsers,
+  validate("json", handleSetSchema),
+  async (c) => {
+    const id = parseId(c.req.param("id"));
+    if (id === null) throw new HTTPException(404, { message: "User not found" });
+
+    const db = getDb(c.env.DB);
+    const [user] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
+    if (!user) throw new HTTPException(404, { message: "User not found" });
+
+    const [handle] = await db
+      .insert(userHandles)
+      .values({ userId: id, type: "vjudge", handle: c.req.valid("json").handle })
+      .returning({ id: userHandles.id, handle: userHandles.handle });
+
+    return c.json(handle, 201);
+  },
+);
+
+adminUserRoutes.delete("/:id/vjudge-handles/:handleId", manageUsers, async (c) => {
+  const id = parseId(c.req.param("id"));
+  const handleId = parseId(c.req.param("handleId"));
+  if (id === null || handleId === null) {
+    throw new HTTPException(404, { message: "VJudge handle not found" });
+  }
+
+  const db = getDb(c.env.DB);
+  const [deleted] = await db
+    .delete(userHandles)
+    .where(
+      and(
+        eq(userHandles.id, handleId),
+        eq(userHandles.userId, id),
+        eq(userHandles.type, "vjudge"),
+      ),
+    )
+    .returning({ id: userHandles.id });
+  if (!deleted) {
+    throw new HTTPException(404, { message: "VJudge handle not found" });
+  }
+
+  return c.json({ ok: true });
 });
 
 adminUserRoutes.patch("/:id", manageUsers, validate("json", adminUserUpdateSchema), async (c) => {

@@ -65,18 +65,22 @@ export const toUserSummary = (
 
 export type UserSummary = ReturnType<typeof toUserSummary>;
 
-/**
- * Collapse a user's handle rows into a predictable map keyed by platform. Every
- * platform key is always present; the value is the handle string or null when unset.
- */
+export type HandleEntry = {
+  id: number;
+  handle: string;
+};
+
+/** Group a user's handle rows by platform, retaining ids for individual deletion. */
 export const toHandlesMap = (
-  rows: { type: HandleType; handle: string }[],
-): Record<HandleType, string | null> => {
-  const map = Object.fromEntries(HANDLE_TYPES.map((t) => [t, null])) as Record<
-    HandleType,
-    string | null
-  >;
-  for (const row of rows) map[row.type] = row.handle;
+  rows: { id: number; type: HandleType; handle: string }[],
+): Record<HandleType, HandleEntry[]> => {
+  const map: Record<HandleType, HandleEntry[]> = {
+    codeforces: [],
+    vjudge: [],
+    atcoder: [],
+  };
+  for (const row of rows) map[row.type].push({ id: row.id, handle: row.handle });
+  for (const type of HANDLE_TYPES) map[type].sort((a, b) => a.id - b.id);
   return map;
 };
 
@@ -85,7 +89,7 @@ export type HandlesMap = ReturnType<typeof toHandlesMap>;
 /** Public programmer-directory item: a user summary plus rating and handles. */
 export const toProgrammerListItem = (
   row: Pick<User, "id" | "name" | "username" | "imageKey" | "maxCfRating">,
-  handleRows: { type: HandleType; handle: string }[],
+  handleRows: { id: number; type: HandleType; handle: string }[],
   origin: string,
 ) => ({
   id: row.id,

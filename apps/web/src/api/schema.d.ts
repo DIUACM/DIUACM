@@ -475,8 +475,10 @@ export interface paths {
         };
         get?: never;
         /**
-         * Set (create or replace) the current user's handle for a platform
+         * Set the current user's handle for a platform
          * @description **Access:** `User` — Requires a bearer token (`Authorization: Bearer <token>`).
+         *
+         *     For VJudge, this creates the first handle or edits the existing handle. When an admin has attached multiple VJudge handles, the user must remove extras before this operation is allowed.
          */
         put: {
             parameters: {
@@ -520,8 +522,8 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Codeforces could not be reached or returned an invalid response */
-                502: {
+                /** @description Handle already taken, or multiple admin-managed VJudge handles prevent editing */
+                409: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -529,8 +531,8 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Handle already taken by another user for this platform */
-                409: {
+                /** @description Codeforces could not be reached or returned an invalid response */
+                502: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -541,9 +543,27 @@ export interface paths {
             };
         };
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/me/handles/{type}/{handleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
         /**
-         * Remove the current user's handle for a platform
+         * Remove one of the current user's handles
          * @description **Access:** `User` — Requires a bearer token (`Authorization: Bearer <token>`).
+         *
+         *     The handle id must belong to the signed-in user and platform.
          */
         delete: {
             parameters: {
@@ -551,6 +571,7 @@ export interface paths {
                 header?: never;
                 path: {
                     type: "codeforces" | "vjudge" | "atcoder";
+                    handleId: number;
                 };
                 cookie?: never;
             };
@@ -567,6 +588,15 @@ export interface paths {
                 };
                 /** @description Missing or invalid token */
                 401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Handle not found */
+                404: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -761,7 +791,7 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Missing token or incorrect event password */
+                /** @description Missing or invalid token */
                 401: {
                     headers: {
                         [name: string]: unknown;
@@ -770,7 +800,7 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Attendance not open, or outside the attendance window */
+                /** @description Incorrect event password, attendance not open, or outside the attendance window */
                 403: {
                     headers: {
                         [name: string]: unknown;
@@ -1672,6 +1702,167 @@ export interface paths {
                 };
             };
         };
+        trace?: never;
+    };
+    "/admin/users/{id}/vjudge-handles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Attach another VJudge handle to a user
+         * @description **Access:** `manage_users` — Requires a bearer token for a user granted the `manage_users` permission. The super admin always passes.
+         *
+         *     Admins may attach multiple VJudge handles. The handle remains globally unique.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["HandleSetRequest"];
+                };
+            };
+            responses: {
+                /** @description Handle attached */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["HandleEntry"];
+                    };
+                };
+                /** @description Validation failed */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Caller lacks the required permission */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description User not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description VJudge handle already belongs to a user */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/users/{id}/vjudge-handles/{handleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove one VJudge handle from a user
+         * @description **Access:** `manage_users` — Requires a bearer token for a user granted the `manage_users` permission. The super admin always passes.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                    handleId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Ok"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Caller lacks the required permission */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description VJudge handle not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/admin/users/{id}/permissions/{permission}": {
@@ -5028,11 +5219,15 @@ export interface components {
             events: components["schemas"]["RanklistEventEntry"][];
             users: components["schemas"]["RanklistStanding"][];
         };
-        /** @description A user's handles keyed by platform; each value is the handle or null. */
+        HandleEntry: {
+            id: number;
+            handle: string;
+        };
+        /** @description A user's handles grouped by platform. VJudge may contain multiple entries; Codeforces and AtCoder contain at most one. */
         HandlesMap: {
-            codeforces: string | null;
-            vjudge: string | null;
-            atcoder: string | null;
+            codeforces: components["schemas"]["HandleEntry"][];
+            vjudge: components["schemas"]["HandleEntry"][];
+            atcoder: components["schemas"]["HandleEntry"][];
         };
         HandlesResponse: {
             handles: components["schemas"]["HandlesMap"];

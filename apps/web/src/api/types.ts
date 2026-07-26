@@ -7,6 +7,7 @@ export type Permission = Schemas['Permission']
 export type UserSummary = Schemas['UserSummary']
 export type AuthResponse = Schemas['AuthResponse']
 export type AuthConfig = Schemas['AuthConfig']
+export type HandleEntry = Schemas['HandleEntry']
 export type HandlesMap = Schemas['HandlesMap']
 export type HandleType = keyof HandlesMap
 

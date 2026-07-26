@@ -64,9 +64,17 @@ export function useSetHandle() {
 export function useDeleteHandle() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (type: HandleType) =>
+    mutationFn: ({
+      type,
+      handleId,
+    }: {
+      type: HandleType
+      handleId: number
+    }) =>
       unwrap(
-        api.DELETE('/auth/me/handles/{type}', { params: { path: { type } } }),
+        api.DELETE('/auth/me/handles/{type}/{handleId}', {
+          params: { path: { type, handleId } },
+        }),
       ),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['auth', 'handles'] })

@@ -423,13 +423,24 @@ const ranklistStandingsSchema = {
   required: ["keyword", "events", "users"],
 };
 
+const handleEntrySchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    handle: { type: "string" },
+  },
+  required: ["id", "handle"],
+};
+
 const handlesMapSchema = {
   type: "object",
-  description: "A user's handles keyed by platform; each value is the handle or null.",
+  description:
+    "A user's handles grouped by platform. VJudge may contain multiple entries; " +
+    "Codeforces and AtCoder contain at most one.",
   properties: {
-    codeforces: { type: ["string", "null"] },
-    vjudge: { type: ["string", "null"] },
-    atcoder: { type: ["string", "null"] },
+    codeforces: { type: "array", items: ref("HandleEntry"), maxItems: 1 },
+    vjudge: { type: "array", items: ref("HandleEntry") },
+    atcoder: { type: "array", items: ref("HandleEntry"), maxItems: 1 },
   },
   required: ["codeforces", "vjudge", "atcoder"],
 };
@@ -1060,6 +1071,7 @@ export const openApiDoc = {
       RanklistUserPerformance: ranklistUserPerformanceSchema,
       RanklistStanding: ranklistStandingSchema,
       RanklistStandings: ranklistStandingsSchema,
+      HandleEntry: handleEntrySchema,
       HandlesMap: handlesMapSchema,
       HandlesResponse: handlesResponseSchema,
       ProgrammerListItem: programmerListItemSchema,
@@ -1266,8 +1278,13 @@ export const openApiDoc = {
     "/auth/me/handles/{type}": {
       put: {
         tags: ["programmers"],
-        summary: "Set (create or replace) the current user's handle for a platform",
-        ...access("user"),
+        summary: "Set the current user's handle for a platform",
+        ...access(
+          "user",
+          "For VJudge, this creates the first handle or edits the existing handle. " +
+            "When an admin has attached multiple VJudge handles, the user must remove " +
+            "extras before this operation is allowed.",
+        ),
         parameters: [
           {
             name: "type",
@@ -1286,15 +1303,18 @@ export const openApiDoc = {
             content: jsonBody(ref("Error")),
           },
           "409": {
-            description: "Handle already taken by another user for this platform",
+            description:
+              "Handle already taken, or multiple admin-managed VJudge handles prevent editing",
             content: jsonBody(ref("Error")),
           },
         },
       },
+    },
+    "/auth/me/handles/{type}/{handleId}": {
       delete: {
         tags: ["programmers"],
-        summary: "Remove the current user's handle for a platform",
-        ...access("user"),
+        summary: "Remove one of the current user's handles",
+        ...access("user", "The handle id must belong to the signed-in user and platform."),
         parameters: [
           {
             name: "type",
@@ -1302,10 +1322,12 @@ export const openApiDoc = {
             required: true,
             schema: { type: "string", enum: ["codeforces", "vjudge", "atcoder"] },
           },
+          idParam("handleId"),
         ],
         responses: {
           "200": { description: "The updated handles map", content: jsonBody(ref("HandlesResponse")) },
           "401": { description: "Missing or invalid token", content: jsonBody(ref("Error")) },
+          "404": { description: "Handle not found", content: jsonBody(ref("Error")) },
         },
       },
     },
@@ -1647,6 +1669,41 @@ export const openApiDoc = {
           },
           ...adminAuthResponses,
           "404": { description: "User not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/users/{id}/vjudge-handles": {
+      post: {
+        tags: ["admin-users"],
+        summary: "Attach another VJudge handle to a user",
+        ...access(
+          "manage_users",
+          "Admins may attach multiple VJudge handles. The handle remains globally unique.",
+        ),
+        parameters: [idParam("id")],
+        requestBody: { required: true, content: jsonBody(ref("HandleSetRequest")) },
+        responses: {
+          "201": { description: "Handle attached", content: jsonBody(ref("HandleEntry")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "User not found", content: jsonBody(ref("Error")) },
+          "409": {
+            description: "VJudge handle already belongs to a user",
+            content: jsonBody(ref("Error")),
+          },
+        },
+      },
+    },
+    "/admin/users/{id}/vjudge-handles/{handleId}": {
+      delete: {
+        tags: ["admin-users"],
+        summary: "Remove one VJudge handle from a user",
+        ...access("manage_users"),
+        parameters: [idParam("id"), idParam("handleId")],
+        responses: {
+          "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
+          ...adminAuthResponses,
+          "404": { description: "VJudge handle not found", content: jsonBody(ref("Error")) },
         },
       },
     },

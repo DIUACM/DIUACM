@@ -401,8 +401,11 @@ export const userHandles = sqliteTable(
       .default(sql`(unixepoch())`),
   },
   (t) => [
-    // A user can have at most one handle per platform.
-    uniqueIndex("user_handles_user_type_unique").on(t.userId, t.type),
+    // VJudge may have multiple rows per user (admin-managed). The other
+    // platforms remain limited to one row per user.
+    uniqueIndex("user_handles_user_type_non_vjudge_unique")
+      .on(t.userId, t.type)
+      .where(sql`${t.type} <> 'vjudge'`),
     // A handle value is unique within its platform (no two users share it).
     uniqueIndex("user_handles_type_handle_unique").on(t.type, t.handle),
     index("user_handles_user_id_idx").on(t.userId),

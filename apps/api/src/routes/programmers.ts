@@ -53,10 +53,14 @@ programmerRoutes.get("/", validate("query", programmersListQuery), async (c) => 
   ]);
 
   const userIds = rows.map((r) => r.id);
-  const handlesByUser = new Map<number, { type: HandleType; handle: string }[]>();
+  const handlesByUser = new Map<
+    number,
+    { id: number; type: HandleType; handle: string }[]
+  >();
   if (userIds.length > 0) {
     const handleRows = await db
       .select({
+        id: userHandles.id,
         userId: userHandles.userId,
         type: userHandles.type,
         handle: userHandles.handle,
@@ -65,7 +69,7 @@ programmerRoutes.get("/", validate("query", programmersListQuery), async (c) => 
       .where(inArray(userHandles.userId, userIds));
     for (const h of handleRows) {
       const list = handlesByUser.get(h.userId) ?? [];
-      list.push({ type: h.type, handle: h.handle });
+      list.push({ id: h.id, type: h.type, handle: h.handle });
       handlesByUser.set(h.userId, list);
     }
   }
@@ -96,7 +100,7 @@ programmerRoutes.get("/:username", async (c) => {
   if (!user) throw new HTTPException(404, { message: "Programmer not found" });
 
   const handleRows = await db
-    .select({ type: userHandles.type, handle: userHandles.handle })
+    .select({ id: userHandles.id, type: userHandles.type, handle: userHandles.handle })
     .from(userHandles)
     .where(eq(userHandles.userId, user.id));
 

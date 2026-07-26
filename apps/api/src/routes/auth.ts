@@ -1,4 +1,4 @@
-import { and, eq, or } from "drizzle-orm";
+import { and, eq, or, sql } from "drizzle-orm";
 import { Hono, type Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 
@@ -11,6 +11,7 @@ import { signAuthToken } from "../lib/jwt";
 import { verifyPassword } from "../lib/password";
 import { isSuperAdminEmail, loadPermissions } from "../lib/permissions";
 import { toAuthUser, toHandlesMap } from "../lib/user-shape";
+import { setSelfVjudgeHandle } from "../lib/vjudge-handles";
 import { validate } from "../lib/validator";
 import { requireAuth } from "../middleware/auth";
 import { authRateLimit } from "../middleware/rate-limit";
@@ -19,7 +20,11 @@ import {
   loginSchema,
   profileUpdateSchema,
 } from "../schemas/auth";
-import { handleSetSchema, handleTypeParam } from "../schemas/handles";
+import {
+  handleDeleteParam,
+  handleSetSchema,
+  handleTypeParam,
+} from "../schemas/handles";
 import type { AppEnv } from "../types";
 
 // Columns safe to expose — never includes passwordHash. Shaped via toAuthUser.
@@ -262,13 +267,14 @@ auth.put("/me/image", requireAuth, async (c) => {
 });
 
 // ---------------------------------------------------------------------------
-// Handles — the current user's Codeforces / VJudge / AtCoder handles. At most one
-// per platform; a handle value is unique within its platform (DB-enforced).
+// Handles — users may self-manage one handle per platform. Admins may attach
+// multiple VJudge handles; in that state the user can remove them individually
+// but cannot add or edit until only one remains.
 // ---------------------------------------------------------------------------
 
 const loadHandles = async (db: ReturnType<typeof getDb>, userId: number) => {
   const rows = await db
-    .select({ type: userHandles.type, handle: userHandles.handle })
+    .select({ id: userHandles.id, type: userHandles.type, handle: userHandles.handle })
     .from(userHandles)
     .where(eq(userHandles.userId, userId));
   return toHandlesMap(rows);
@@ -306,6 +312,7 @@ auth.put(
     const input = c.req.valid("json");
     const userId = c.get("user").sub;
     const db = getDb(c.env.DB);
+    const updatedAt = Math.floor(Date.now() / 1000);
     let handle = input.handle;
     let maxCfRating: number | null | undefined;
 
@@ -324,20 +331,31 @@ auth.put(
       }
     }
 
-    // A handle already claimed by another user for this platform hits the
-    // unique(type, handle) index → 409 via the global onError handler.
-    await db
-      .insert(userHandles)
-      .values({ userId, type, handle })
-      .onConflictDoUpdate({
-        target: [userHandles.userId, userHandles.type],
-        set: { handle, updatedAt: Math.floor(Date.now() / 1000) },
-      });
+    if (type === "vjudge") {
+      const result = await setSelfVjudgeHandle(c.env.DB, userId, handle, updatedAt);
+      if (result === "multiple") {
+        throw new HTTPException(409, {
+          message:
+            "Multiple VJudge handles are admin-managed; remove extras before adding or editing",
+        });
+      }
+    } else {
+      // A handle claimed by another user hits unique(type, handle) → global 409.
+      // The partial target matches the non-VJudge unique index.
+      await db
+        .insert(userHandles)
+        .values({ userId, type, handle })
+        .onConflictDoUpdate({
+          target: [userHandles.userId, userHandles.type],
+          targetWhere: sql`${userHandles.type} <> 'vjudge'`,
+          set: { handle, updatedAt },
+        });
+    }
 
     if (maxCfRating !== undefined) {
       await db
         .update(users)
-        .set({ maxCfRating, updatedAt: Math.floor(Date.now() / 1000) })
+        .set({ maxCfRating, updatedAt })
         .where(eq(users.id, userId));
     }
 
@@ -346,17 +364,27 @@ auth.put(
 );
 
 auth.delete(
-  "/me/handles/:type",
+  "/me/handles/:type/:handleId",
   requireAuth,
-  validate("param", handleTypeParam),
+  validate("param", handleDeleteParam),
   async (c) => {
-    const { type } = c.req.valid("param");
+    const { type, handleId } = c.req.valid("param");
     const userId = c.get("user").sub;
     const db = getDb(c.env.DB);
 
-    await db
+    const [deleted] = await db
       .delete(userHandles)
-      .where(and(eq(userHandles.userId, userId), eq(userHandles.type, type)));
+      .where(
+        and(
+          eq(userHandles.id, handleId),
+          eq(userHandles.userId, userId),
+          eq(userHandles.type, type),
+        ),
+      )
+      .returning({ id: userHandles.id });
+    if (!deleted) {
+      throw new HTTPException(404, { message: "Handle not found" });
+    }
 
     if (type === "codeforces") {
       await db

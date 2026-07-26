@@ -87,6 +87,37 @@ export function useAdminDeleteUser() {
   })
 }
 
+export function useAdminAddVjudgeHandle(id: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (handle: string) =>
+      unwrap(
+        api.POST('/admin/users/{id}/vjudge-handles', {
+          params: { path: { id } },
+          body: { handle },
+        }),
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'users', id] })
+    },
+  })
+}
+
+export function useAdminDeleteVjudgeHandle(id: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (handleId: number) =>
+      unwrap(
+        api.DELETE('/admin/users/{id}/vjudge-handles/{handleId}', {
+          params: { path: { id, handleId } },
+        }),
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'users', id] })
+    },
+  })
+}
+
 export function useAdminTogglePermission(id: number) {
   const queryClient = useQueryClient()
   return useMutation({

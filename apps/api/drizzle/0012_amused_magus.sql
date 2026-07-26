@@ -1,0 +1,2 @@
+DROP INDEX `user_handles_user_type_unique`;--> statement-breakpoint
+CREATE UNIQUE INDEX `user_handles_user_type_non_vjudge_unique` ON `user_handles` (`user_id`,`type`) WHERE "user_handles"."type" <> 'vjudge';

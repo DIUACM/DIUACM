@@ -40,10 +40,9 @@ export function ProgrammerDetailPage() {
   }
 
   const programmer = programmerQuery.data
-  const handles = HANDLE_TYPES.flatMap((type) => {
-    const handle = programmer.handles[type]
-    return handle ? [{ type, handle }] : []
-  })
+  const handles = HANDLE_TYPES.flatMap((type) =>
+    programmer.handles[type].map(({ id, handle }) => ({ id, type, handle })),
+  )
 
   return (
     <div className="space-y-6">
@@ -73,8 +72,8 @@ export function ProgrammerDetailPage() {
 
       {handles.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {handles.map(({ type, handle }) => (
-            <Button key={type} variant="outline" size="sm" asChild>
+          {handles.map(({ id, type, handle }) => (
+            <Button key={`${type}-${id}`} variant="outline" size="sm" asChild>
               <a
                 href={handleProfileUrl(type, handle)}
                 target="_blank"

@@ -313,7 +313,7 @@ const sqlValue = (value) => {
   return `'${String(value).replace(/'/g, "''")}'`;
 };
 
-const insertSql = (table, row, conflictTarget, updateColumns) => {
+const insertSql = (table, row, conflictTarget, updateColumns, conflictWhere = null) => {
   const columns = Object.keys(row);
   const values = columns.map((column) => sqlValue(row[column]));
   const quotedColumns = columns.map((column) => `\`${column}\``).join(", ");
@@ -322,7 +322,8 @@ const insertSql = (table, row, conflictTarget, updateColumns) => {
     .filter((column) => columns.includes(column))
     .map((column) => `\`${column}\` = excluded.\`${column}\``);
   const action = updates.length > 0 ? `DO UPDATE SET ${updates.join(", ")}` : "DO NOTHING";
-  return `INSERT INTO \`${table}\` (${quotedColumns}) VALUES (${values.join(", ")}) ON CONFLICT (${conflict}) ${action};`;
+  const where = conflictWhere ? ` WHERE ${conflictWhere}` : "";
+  return `INSERT INTO \`${table}\` (${quotedColumns}) VALUES (${values.join(", ")}) ON CONFLICT (${conflict})${where} ${action};`;
 };
 
 const rowId = (row) => toInt(direct(row, ["id", "source_id", "sourceId"]));
@@ -448,7 +449,11 @@ const mapUserHandles = (handleRows, userRows, warnings) => {
     }
   }
 
-  const byUserAndType = addUnique(out, (row) => `${row.user_id}:${row.type}`);
+  const byUserAndType = addUnique(out, (row) =>
+    row.type === "vjudge"
+      ? `${row.user_id}:${row.type}:${row.handle.toLowerCase()}`
+      : `${row.user_id}:${row.type}`,
+  );
   const usedHandles = new Set();
   const uniqueHandles = [];
   for (const row of byUserAndType) {
@@ -745,7 +750,22 @@ const buildImport = (payload, options) => {
       updated_at: row.updated_at ?? Math.floor(Date.now() / 1000),
     };
     if (row.id !== null) payloadRow.id = row.id;
-    lines.push(insertSql("user_handles", payloadRow, ["user_id", "type"], ["handle", "updated_at"]));
+    lines.push(
+      row.type === "vjudge"
+        ? insertSql(
+            "user_handles",
+            payloadRow,
+            ["type", "handle"],
+            ["user_id", "updated_at"],
+          )
+        : insertSql(
+            "user_handles",
+            payloadRow,
+            ["user_id", "type"],
+            ["handle", "updated_at"],
+            "`type` <> 'vjudge'",
+          ),
+    );
   }
 
   for (const row of rows.events) {
