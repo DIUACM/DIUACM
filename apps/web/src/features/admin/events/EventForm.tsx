@@ -11,7 +11,9 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
-import { EVENT_TYPE_LABELS, SCOPE_LABELS } from '@/lib/constants'
+import { Badge } from '@/components/ui/badge'
+import { CONTEST_PLATFORM_LABELS, EVENT_TYPE_LABELS, SCOPE_LABELS } from '@/lib/constants'
+import { detectContestLink } from '@/lib/contest-link'
 import { epochToLocalInput, localInputToEpoch } from '@/lib/datetime'
 import type { AdminEventDetail, AdminEventInput } from '@/api/queries/admin-events'
 import type { EventType, ParticipationScope } from '@/api/types'
@@ -42,6 +44,10 @@ export function EventForm({ initial, submitLabel, isPending, onSubmit }: EventFo
 
   const set = <K extends keyof typeof form>(field: K, value: (typeof form)[K]) =>
     setForm((prev) => ({ ...prev, [field]: value }))
+
+  // Contests are the only type we can resolve a judge/contest id for.
+  const showContestHint = form.type === 'contest' && form.eventLink.trim() !== ''
+  const contest = showContestHint ? detectContestLink(form.eventLink) : null
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
@@ -165,6 +171,22 @@ export function EventForm({ initial, submitLabel, isPending, onSubmit }: EventFo
             onChange={(event) => set('eventLink', event.target.value)}
             placeholder="https://…"
           />
+          {showContestHint &&
+            (contest ? (
+              <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                <Badge variant="secondary">
+                  {CONTEST_PLATFORM_LABELS[contest.platform]}
+                </Badge>
+                <span>{contest.kind === 'gym' ? 'Gym' : 'Contest'} ID</span>
+                <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">
+                  {contest.contestId}
+                </span>
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                No contest detected — supported: Codeforces, VJudge, AtCoder.
+              </p>
+            ))}
         </div>
         <div className="space-y-2">
           <Label htmlFor="e-password">Event password</Label>

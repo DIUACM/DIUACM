@@ -1,4 +1,5 @@
 import type { EventType, HandleType, ParticipationScope, Permission, User } from '@/api/types'
+import type { ContestPlatform } from '@/lib/contest-link'
 
 export const PERMISSION_LABELS: Record<Permission, string> = {
   manage_users: 'Manage users',
@@ -40,6 +41,12 @@ export const HANDLE_LABELS: Record<HandleType, string> = {
 }
 
 export const HANDLE_TYPES: HandleType[] = ['codeforces', 'vjudge', 'atcoder']
+
+export const CONTEST_PLATFORM_LABELS: Record<ContestPlatform, string> = {
+  codeforces: 'Codeforces',
+  vjudge: 'VJudge',
+  atcoder: 'AtCoder',
+}
 
 export function handleProfileUrl(type: HandleType, handle: string): string {
   switch (type) {
