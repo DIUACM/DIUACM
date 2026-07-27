@@ -231,6 +231,36 @@ type HandleRow = { id: number; user_id: number; handle: string };
  */
 export type StopReason = "time-budget" | "rate-limit" | null;
 
+/**
+ * Why the failures in one run happened, keyed by message and counted by how many
+ * units hit each one.
+ *
+ * Carried on the summary rather than derived later, because the per-row copies in
+ * `last_sync_error` are overwritten by the next successful sync — roughly two
+ * hours after a transient outage, and long before anyone reads the alert it
+ * pointed them at. This is the copy that survives, in the log line and the mail.
+ */
+export type ErrorTally = Record<string, number>;
+
+/** Long enough to keep a judge's own wording, short enough not to bloat a log line. */
+const MAX_REASON_LENGTH = 160;
+/** Distinct messages kept before the rest collapse into one bucket. */
+const MAX_DISTINCT_REASONS = 8;
+const OTHER_REASONS = "(other)";
+
+/**
+ * Folds one failure into the tally, bounded in both length and cardinality: a
+ * message that embeds a handle or an id would otherwise give every failed row its
+ * own bucket, which is exactly the run where a summary is worth most.
+ */
+export const tallyError = (tally: ErrorTally, message: string): void => {
+  const reason =
+    message.length > MAX_REASON_LENGTH ? `${message.slice(0, MAX_REASON_LENGTH)}…` : message;
+  const key =
+    reason in tally || Object.keys(tally).length < MAX_DISTINCT_REASONS ? reason : OTHER_REASONS;
+  tally[key] = (tally[key] ?? 0) + 1;
+};
+
 export type SyncSummary = {
   events: number;
   handlesProcessed: number;
@@ -241,6 +271,8 @@ export type SyncSummary = {
   stoppedReason: StopReason;
   /** Handles whose submission history hit the judge's paging cap. */
   truncatedHandles: string[];
+  /** Distinct failure messages in this run, and how many handles hit each. */
+  errorReasons: ErrorTally;
 };
 
 export type SyncOptions = {
@@ -307,6 +339,7 @@ export const runSync = async (
     stoppedEarly: false,
     stoppedReason: null,
     truncatedHandles: [],
+    errorReasons: {},
   };
 
   const eventRows = await d1.prepare(SYNC_EVENTS_SQL).bind(now).all<EventRow>();
@@ -386,7 +419,10 @@ export const runSync = async (
     await d1.prepare(HANDLE_CURSOR_SQL).bind(now, error, row.id).run();
 
     summary.handlesProcessed += 1;
-    if (error) summary.errors += 1;
+    if (error) {
+      summary.errors += 1;
+      tallyError(summary.errorReasons, error);
+    }
     if (rateLimited) {
       summary.stoppedEarly = true;
       summary.stoppedReason = "rate-limit";

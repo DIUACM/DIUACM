@@ -191,11 +191,26 @@ not qualify; they live in `last_sync_error` and are summarised in the digest.
 
 A time-budget stop is **not** a fault — leftovers are picked up next tick by design.
 
+An `error-rate` mail carries the **aggregated failure reasons** — `17× Could not reach
+Codeforces.` — not just a count. The per-row copies in `last_sync_error` are overwritten by
+the next successful sync, roughly two hours later, so on a transient outage the mail is
+usually the only surviving evidence of what went wrong.
+
 **Volume is the hard constraint**: four crons fire 289 times a day, so a persistent fault
 would otherwise mail every 15 minutes. Every occurrence is recorded in `admin_notices`, but
-a given key only sends once per **24 h**, and the mail says how many times it fired in
+a given key only sends once per **hour**, and the mail says how many times it fired in
 between. Sending never breaks a sync — an unset sender or a rejection is logged and the run
 continues, so this ships fine before the domain is onboarded.
+
+### Finding a bad run in the dashboard
+
+A run where every unit failed is **not** a Workers exception — the scheduled handler returns
+normally, so Observability records the invocation as a success and its error charts stay
+flat. Two things to search for in Workers Logs instead:
+
+- `<platform> sync` — the per-run summary line, including `errorReasons`, on every tick.
+- **level = `error`** — every fault is `console.error`d as well as mailed, so anything that
+  sent a mail is findable there.
 
 ### Setup
 

@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NOTICE_COOLDOWN_SECONDS, reportNotice, sendMail } from "../src/lib/notify";
 import { buildDigest } from "../src/sync/digest";
 import { collectFaults, runFailedFault, type RunOutcome } from "../src/sync/faults";
+import { tallyError, type ErrorTally } from "../src/sync/runner";
 import type { Bindings } from "../src/types";
 import { d1Shim } from "./d1";
 import { insertUser, openTestDb } from "./db";
@@ -197,6 +198,27 @@ describe("collectFaults", () => {
     expect(faults[0].detail).toContain("20 of 30");
   });
 
+  it("spells out the failure reasons, commonest first", () => {
+    // The mail has to carry these: `last_sync_error` is cleared by the next
+    // successful sync, usually well before anyone reads the alert.
+    const [fault] = collectFaults({
+      ...healthy,
+      processed: 30,
+      errors: 20,
+      errorReasons: { "Invalid Codeforces handle.": 3, "Could not reach Codeforces.": 17 },
+    });
+
+    expect(fault.detail).toContain("17× Could not reach Codeforces.");
+    expect(fault.detail).toContain("3× Invalid Codeforces handle.");
+    expect(fault.detail.indexOf("17×")).toBeLessThan(fault.detail.indexOf("3×"));
+  });
+
+  it("omits the reasons block when there is nothing to say", () => {
+    const [fault] = collectFaults({ ...healthy, processed: 30, errors: 20, errorReasons: {} });
+
+    expect(fault.detail).not.toContain("Reasons:");
+  });
+
   it("ignores a bad ratio on a sample too small to mean anything", () => {
     // 2 of 3 is 67%, but it is also just two dead handles.
     expect(collectFaults({ ...healthy, processed: 3, errors: 2 })).toEqual([]);
@@ -228,6 +250,35 @@ describe("collectFaults", () => {
       "codeforces:blocked",
       "codeforces:error-rate",
     ]);
+  });
+});
+
+describe("tallyError", () => {
+  it("counts repeats of the same message", () => {
+    const tally: ErrorTally = {};
+    tallyError(tally, "Could not reach Codeforces.");
+    tallyError(tally, "Could not reach Codeforces.");
+
+    expect(tally).toEqual({ "Could not reach Codeforces.": 2 });
+  });
+
+  it("truncates a message too long to belong in a log line", () => {
+    const tally: ErrorTally = {};
+    tallyError(tally, "x".repeat(400));
+
+    const [reason] = Object.keys(tally);
+    expect(reason).toHaveLength(161);
+    expect(reason.endsWith("…")).toBe(true);
+  });
+
+  it("collapses the tail once too many distinct messages arrive", () => {
+    // A message embedding a handle or an id would otherwise give every failed
+    // row its own bucket — the run where the summary matters most.
+    const tally: ErrorTally = {};
+    for (let i = 0; i < 30; i += 1) tallyError(tally, `failure ${i}`);
+
+    expect(Object.keys(tally)).toHaveLength(9);
+    expect(tally["(other)"]).toBe(22);
   });
 });
 

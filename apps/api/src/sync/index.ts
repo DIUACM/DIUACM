@@ -53,6 +53,7 @@ const JOBS: Record<string, Job> = {
           errors: summary.errors,
           stoppedReason: summary.stoppedReason,
           truncated: summary.truncatedHandles,
+          errorReasons: summary.errorReasons,
         },
       };
     },
@@ -70,6 +71,7 @@ const JOBS: Record<string, Job> = {
           errors: summary.errors,
           stoppedReason: summary.stoppedReason,
           truncated: summary.truncatedHandles,
+          errorReasons: summary.errorReasons,
         },
       };
     },
@@ -86,6 +88,7 @@ const JOBS: Record<string, Job> = {
           processed: summary.contestsAttempted,
           errors: summary.errors,
           stoppedReason: summary.stoppedReason,
+          errorReasons: summary.errorReasons,
         },
       };
     },
@@ -127,6 +130,14 @@ export const handleScheduled = async (
 
   if (!result.outcome) return;
   for (const fault of collectFaults(result.outcome)) {
+    // Logged at error level as well as mailed. A bad run is deliberately not a
+    // thrown exception — the invocation succeeded, it just got nothing done —
+    // so Workers Observability records it as a healthy tick and its error charts
+    // stay flat. Without this line the mail is the only signal that exists, and
+    // a run where every unit failed is indistinguishable from a perfect one in
+    // the dashboard. It still will not colour the invocation red; it does make
+    // the run findable by filtering logs to level=error.
+    console.error(`${fault.key} ${fault.detail}`);
     await reportNotice(env, env.DB, fault, now);
   }
 };

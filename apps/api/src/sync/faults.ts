@@ -1,5 +1,5 @@
 import type { Notice } from "../lib/notify";
-import type { StopReason } from "./runner";
+import type { ErrorTally, StopReason } from "./runner";
 
 // ---------------------------------------------------------------------------
 // Which sync outcomes are worth waking the super admin for.
@@ -33,11 +33,25 @@ export type RunOutcome = {
   stoppedReason: StopReason;
   /** Handles whose history hit the judge's paging cap. Empty for VJudge. */
   truncated?: string[];
+  /** What the failures said, counted per distinct message (see `tallyError`). */
+  errorReasons?: ErrorTally;
 };
 
 const list = (values: string[]): string => {
   const shown = values.slice(0, MAX_LISTED).join(", ");
   return values.length > MAX_LISTED ? `${shown}, and ${values.length - MAX_LISTED} more` : shown;
+};
+
+/**
+ * The failure messages as an indented block, commonest first — the part of the
+ * mail that says *why*, rather than pointing at a column that a later successful
+ * sync will have cleared by the time it is read.
+ */
+const reasonBlock = (tally: ErrorTally | undefined): string => {
+  const entries = Object.entries(tally ?? {}).sort((a, b) => b[1] - a[1]);
+  if (entries.length === 0) return "";
+  const lines = entries.map(([reason, count]) => `  ${count}× ${reason}`).join("\n");
+  return `Reasons:\n${lines}\n\n`;
 };
 
 /**
@@ -92,7 +106,9 @@ export const collectFaults = (outcome: RunOutcome): Notice[] => {
         `${errors} of ${processed} ${unit}(s) failed in the last ${platform} run (${percent}%). ` +
         `A few failures are normal — a deleted account, a hidden contest — but this many at once ` +
         `usually means the API changed or is down.\n\n` +
-        `The per-row reasons are in ${unit === "handle" ? "user_handles.last_sync_error" : "event_sync_state.last_sync_error"}.`,
+        reasonBlock(outcome.errorReasons) +
+        `Which ${unit}s: ${unit === "handle" ? "user_handles.last_sync_error" : "event_sync_state.last_sync_error"}, ` +
+        `until the next successful sync clears them (~2h).`,
     });
   }
 

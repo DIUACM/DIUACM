@@ -2,9 +2,11 @@ import { getContestRank, isAccepted, VjudgeApiError } from "../lib/vjudge";
 import {
   computePerformance,
   PERFORMANCE_UPSERT_SQL,
+  tallyError,
   throttle,
   toSyncEvent,
   WRITE_CHUNK_SIZE,
+  type ErrorTally,
   type Solve,
   type StopReason,
   type SyncEvent,
@@ -93,6 +95,8 @@ export type VjudgeSyncSummary = {
   /** True when the batch stopped early (time budget or VJudge pushing back). */
   stoppedEarly: boolean;
   stoppedReason: StopReason;
+  /** Distinct failure messages in this run, and how many contests hit each. */
+  errorReasons: ErrorTally;
 };
 
 export type VjudgeSyncOptions = {
@@ -180,6 +184,7 @@ export const runVjudgeSync = async (
     errors: 0,
     stoppedEarly: false,
     stoppedReason: null,
+    errorReasons: {},
   };
 
   const eventRows = await d1.prepare(DUE_CONTESTS_SQL).bind(now).all<EventRow>();
@@ -267,7 +272,10 @@ export const runVjudgeSync = async (
     const cursor = d1.prepare(EVENT_CURSOR_SQL);
     await d1.batch(events.map((event) => cursor.bind(event.eventId, now, error)));
 
-    if (error) summary.errors += 1;
+    if (error) {
+      summary.errors += 1;
+      tallyError(summary.errorReasons, error);
+    }
     if (rateLimited) {
       summary.stoppedEarly = true;
       summary.stoppedReason = "rate-limit";

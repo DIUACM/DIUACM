@@ -296,6 +296,31 @@ describe("runSync — Codeforces", () => {
     expect(state.last_sync_error).toMatch(/Invalid Codeforces handle/);
   });
 
+  it("tallies why the failures happened, grouped by message", async () => {
+    insertUser(db, 2);
+    insertHandle(db, 2, 2, "bob");
+    insertUser(db, 3);
+    insertHandle(db, 3, 3, "carol");
+
+    // Two dead accounts and one outage: the whole point of the tally is that the
+    // alert can tell those apart without the per-row column, which the next
+    // successful sync clears.
+    const summary = await run(
+      db,
+      fetcherFor({
+        alice: { failure: "handles: User with handle alice not found" },
+        bob: { failure: "handles: User with handle bob not found" },
+        carol: { failure: "Codeforces is temporarily unavailable" },
+      }),
+    );
+
+    expect(summary.errors).toBe(3);
+    expect(summary.errorReasons).toEqual({
+      "Invalid Codeforces handle.": 2,
+      "Codeforces is temporarily unavailable": 1,
+    });
+  });
+
   it("clears a stale error once the handle works again", async () => {
     await run(db, fetcherFor({ alice: { failure: "handles: User with handle alice not found" } }));
     await run(db, fetcherFor({ alice: [submission("A", "CONTESTANT", CONTEST_START + 1)] }));

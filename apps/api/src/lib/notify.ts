@@ -17,8 +17,16 @@ import type { Bindings } from "../types";
 // Nothing here may break a sync: every failure path logs and returns.
 // ---------------------------------------------------------------------------
 
-/** How long one fault stays quiet after its mail goes out. */
-export const NOTICE_COOLDOWN_SECONDS = 24 * 60 * 60;
+/**
+ * How long one fault stays quiet after its mail goes out.
+ *
+ * An hour, not a day: a day of silence is long enough for a transient outage to
+ * start, alert, and fully recover unobserved, and the mail now carries the
+ * failure reasons rather than pointing at a column the next successful sync
+ * clears. The worst case is one mail an hour per distinct fault key while
+ * something is genuinely broken, which is the point.
+ */
+export const NOTICE_COOLDOWN_SECONDS = 60 * 60;
 
 export type Notice = {
   /** Stable and specific, one per distinct fault: "codeforces:paging-truncated". */
