@@ -75,10 +75,15 @@ longer depend on an admin typing numbers in. `src/sync/index.ts` dispatches on t
 expression, giving each platform its own cadence; only **Codeforces** is implemented so
 far (`*/15 * * * *`, see `src/sync/codeforces.ts`).
 
-Per tick it takes the next 100 Codeforces handles, least recently synced first
-(`user_handles.last_synced_at`, stamped even on failure so a dead handle can't wedge the
-queue), and reads each user's submissions with one `user.status` call — the only endpoint
-that exposes practice submissions, and hence upsolves.
+Per tick it takes the next 100 Codeforces handles, least recently synced first and
+skipping any read within the last **2 hours** (`user_handles.last_synced_at`, stamped even
+on failure so a dead handle can't wedge the queue). It reads each user's submissions with
+one `user.status` call — the only endpoint that exposes practice submissions, and hence
+upsolves.
+
+The queue therefore drains in ~45 min and then idles until the oldest handle ages past the
+window, so each account is re-read roughly every 2 hours. `POST /admin/sync/codeforces`
+ignores the window, since asking for a sync by hand means now.
 
 - **In scope**: published, finished events whose `event_link` is a public Codeforces
   contest and which belong to at least one ranklist with `is_locked = 0`. Locking a

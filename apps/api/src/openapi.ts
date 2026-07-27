@@ -2490,7 +2490,8 @@ export const openApiDoc = {
         summary: "Run one batch of the Codeforces performance sync",
         ...access(
           "manage_events",
-          "Same work the cron trigger does every few minutes: reads Codeforces " +
+          "Same work the cron trigger does, minus the 2-hour freshness window — " +
+            "asking by hand means now. Reads Codeforces " +
             "submissions for the next batch of handles and refreshes their " +
             "`solve_count` / `upsolve_count` on every published, finished event " +
             "whose link is a public Codeforces contest and which belongs to an " +

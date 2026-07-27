@@ -198,9 +198,19 @@ const fetcherFor = (
 
 const NOW = CONTEST_END + 200_000;
 
-/** No sleeping and no clock dependence — the batch logic is what is under test. */
+/**
+ * No sleeping, no clock dependence, and no freshness window — those are covered
+ * on their own below, and leaving the window on would make several of these
+ * pass for the wrong reason (nothing due rather than nothing changed).
+ */
 const run = (db: Database.Database, fetcher: typeof fetch, limit = 10) =>
-  runCodeforcesSync(d1Shim(db), { fetcher, now: NOW, limit, requestDelayMs: 0 });
+  runCodeforcesSync(d1Shim(db), {
+    fetcher,
+    now: NOW,
+    limit,
+    requestDelayMs: 0,
+    minResyncSeconds: 0,
+  });
 
 describe("runCodeforcesSync", () => {
   let db: Database.Database;
@@ -286,10 +296,19 @@ describe("runCodeforcesSync", () => {
     const calls: string[] = [];
     const fetcher = fetcherFor({}, calls);
 
-    await runCodeforcesSync(d1Shim(db), { fetcher, now: NOW, limit: 2, requestDelayMs: 0 });
+    const tick = (now: number) =>
+      runCodeforcesSync(d1Shim(db), {
+        fetcher,
+        now,
+        limit: 2,
+        requestDelayMs: 0,
+        minResyncSeconds: 0,
+      });
+
+    await tick(NOW);
     expect(calls).toEqual(["alice", "bob"]);
 
-    await runCodeforcesSync(d1Shim(db), { fetcher, now: NOW + 1, limit: 2, requestDelayMs: 0 });
+    await tick(NOW + 1);
     expect(calls.slice(2)).toEqual(["carol", "alice"]);
   });
 
@@ -381,6 +400,7 @@ describe("runCodeforcesSync", () => {
       fetcher: fetcherFor({ alice: [submission("A", "CONTESTANT", CONTEST_START + 1)] }),
       now: NOW,
       requestDelayMs: 0,
+      minResyncSeconds: 0,
     });
 
     expect(summary).toMatchObject({ handlesProcessed: 1, rowsWritten: 0, errors: 1 });
@@ -388,6 +408,45 @@ describe("runCodeforcesSync", () => {
     // Without this the next tick would retry the same handle forever.
     expect(handleState(db, 1)).toMatchObject({ last_synced_at: NOW });
     expect(handleState(db, 1).last_sync_error).toMatch(/timed out/);
+  });
+
+  describe("freshness window", () => {
+    const TWO_HOURS = 2 * 60 * 60;
+
+    /** The real default — no `minResyncSeconds` override. */
+    const tick = (now: number, calls: string[]) =>
+      runCodeforcesSync(d1Shim(db), {
+        fetcher: fetcherFor({ alice: [submission("A", "CONTESTANT", CONTEST_START + 1)] }, calls),
+        now,
+        limit: 10,
+        requestDelayMs: 0,
+      });
+
+    it("skips a handle synced inside the window", async () => {
+      const first: string[] = [];
+      await tick(NOW, first);
+      expect(first).toEqual(["alice"]);
+
+      // One second short of the window: still too fresh, no Codeforces call.
+      const second: string[] = [];
+      const summary = await tick(NOW + TWO_HOURS - 1, second);
+      expect(second).toEqual([]);
+      expect(summary).toMatchObject({ handlesProcessed: 0, rowsWritten: 0, errors: 0 });
+    });
+
+    it("picks the handle back up once the window has passed", async () => {
+      await tick(NOW, []);
+
+      const later: string[] = [];
+      await tick(NOW + TWO_HOURS, later);
+      expect(later).toEqual(["alice"]);
+    });
+
+    it("never skips a handle that has never been synced", async () => {
+      const calls: string[] = [];
+      await tick(NOW, calls);
+      expect(calls).toEqual(["alice"]);
+    });
   });
 
   it("auto-adds a non-member to an auto-add ranklist through the existing trigger", async () => {

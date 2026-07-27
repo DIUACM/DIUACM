@@ -29,6 +29,13 @@ const BATCH_SIZE = 100;
 /** Codeforces documents roughly one request per two seconds. Stay there. */
 const REQUEST_DELAY_MS = 2000;
 /**
+ * A handle synced more recently than this is skipped. Upsolves trickle in over
+ * days, so re-reading the same account every tick burns API calls and CPU to
+ * rediscover the same numbers. With 275 handles at 100 per tick the queue
+ * drains in ~45 min, then idles until the oldest handle ages past this.
+ */
+const MIN_RESYNC_SECONDS = 2 * 60 * 60;
+/**
  * Wall-clock ceiling for a single run; leftovers are picked up next tick. Set
  * well under the platform's 15 min so even a slow Codeforces leaves room for
  * the in-flight handle to finish and its cursor to land.
@@ -136,11 +143,14 @@ export const SYNC_EVENTS_SQL = `
   WHERE e.status = 'published' AND e.ending_at <= ? AND e.event_link IS NOT NULL
 `;
 
-/** Least recently synced first, so every handle gets its turn. */
+/**
+ * Least recently synced first, so every handle gets its turn, and never one
+ * that was read within the freshness window.
+ */
 export const DUE_HANDLES_SQL = `
   SELECT id, user_id, handle
   FROM user_handles
-  WHERE type = 'codeforces'
+  WHERE type = 'codeforces' AND COALESCE(last_synced_at, 0) <= ?
   ORDER BY COALESCE(last_synced_at, 0) ASC, id ASC
   LIMIT ?
 `;
@@ -194,6 +204,8 @@ export type CodeforcesSyncOptions = {
   limit?: number;
   requestDelayMs?: number;
   timeBudgetMs?: number;
+  /** Skip handles synced within this many seconds. 0 forces a re-read. */
+  minResyncSeconds?: number;
 };
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -238,6 +250,7 @@ export const runCodeforcesSync = async (
   const limit = options.limit ?? BATCH_SIZE;
   const requestDelayMs = options.requestDelayMs ?? REQUEST_DELAY_MS;
   const timeBudgetMs = options.timeBudgetMs ?? TIME_BUDGET_MS;
+  const minResyncSeconds = options.minResyncSeconds ?? MIN_RESYNC_SECONDS;
   const startedAt = Date.now();
 
   const summary: CodeforcesSyncSummary = {
@@ -258,7 +271,10 @@ export const runCodeforcesSync = async (
   // Nothing before the earliest contest can be a solve or an upsolve.
   const since = Math.min(...events.map((event) => event.startingAt));
 
-  const handleRows = await d1.prepare(DUE_HANDLES_SQL).bind(limit).all<HandleRow>();
+  const handleRows = await d1
+    .prepare(DUE_HANDLES_SQL)
+    .bind(now - minResyncSeconds, limit)
+    .all<HandleRow>();
   const handles = handleRows.results ?? [];
   const fetcher = throttle(options.fetcher ?? fetch, requestDelayMs);
 

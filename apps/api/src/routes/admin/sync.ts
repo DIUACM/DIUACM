@@ -11,7 +11,9 @@ const adminSyncRoutes = new Hono<AppEnv>();
 const manageEvents = requirePermission("manage_events");
 
 adminSyncRoutes.post("/codeforces", manageEvents, async (c) => {
-  const summary = await runCodeforcesSync(c.env.DB);
+  // Bypasses the freshness window the cron respects: asking for a sync by hand
+  // means now, not "whenever the batch next comes round".
+  const summary = await runCodeforcesSync(c.env.DB, { minResyncSeconds: 0 });
   return c.json(summary);
 });
 
