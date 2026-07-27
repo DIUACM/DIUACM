@@ -27,11 +27,16 @@
     ]
   },
   // Alerts and the daily digest to SUPER_ADMIN_EMAIL (see src/lib/notify.ts).
-  // Sends fail closed and are logged, never breaking a sync, so this can ship
-  // before the sender domain is onboarded.
+  // Sends fail closed and are logged, never breaking a sync.
+  //
+  // `remote: true` only affects `wrangler dev`, where it proxies sends to the
+  // real service. Without it a local send silently no-ops, which is the one
+  // failure mode this whole feature exists to avoid — so local runs really do
+  // mail the super admin. The 24h per-key cooldown keeps that bearable.
   "send_email": [
     {
-      "name": "EMAIL"
+      "name": "EMAIL",
+      "remote": true
     }
   ],
   "d1_databases": [
@@ -69,10 +74,10 @@
     // from the Google sign-in email-domain restriction. Compared case-insensitively.
     // Also the recipient of every sync alert and the daily digest.
     "SUPER_ADMIN_EMAIL": "sourovcodes@gmail.com",
-    // Sender for those alerts. The domain must be onboarded onto Email Sending
-    // first — `wrangler email sending enable <domain>` — and must be a zone in
-    // this Cloudflare account. Leave empty to disable sending entirely: the
-    // faults are still recorded in `admin_notices` and logged.
-    "ALERT_FROM_EMAIL": ""
+    // Sender for those alerts. diuqbank.com is onboarded onto Email Sending in
+    // this account (`wrangler email sending list`); the mailbox itself does not
+    // need to exist, only the domain. Leave empty to disable sending entirely:
+    // the faults are still recorded in `admin_notices` and logged.
+    "ALERT_FROM_EMAIL": "alerts@diuqbank.com"
   }
 }

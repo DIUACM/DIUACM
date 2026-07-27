@@ -183,7 +183,7 @@ numbers being silently wrong, or the sync having stopped working. Individual fai
 not qualify; they live in `last_sync_error` and are summarised in the digest.
 
 | Notice key | Raised when | Why it matters |
-| --- | --- | --- |
+| ---------- | ----------- | -------------- |
 | `<platform>:paging-truncated` | A handle's history hit `MAX_PAGES` with more to read | Counts are **silently too low** and nothing else would ever show it |
 | `<platform>:blocked` | A run stopped on a rate limit or VJudge's Cloudflare challenge | That platform stops updating entirely until it clears |
 | `<platform>:error-rate` | More than ⅓ of a batch of ≥5 failed | A handful of dead handles is normal; this many means the API moved |
@@ -199,7 +199,13 @@ continues, so this ships fine before the domain is onboarded.
 
 ### Setup
 
-Sending is **off until both are done**:
+Already done — mail goes **from `alerts@diuqbank.com` to `SUPER_ADMIN_EMAIL`**. `diuqbank.com`
+is onboarded onto Email Sending in this account (`wrangler email sending list`), which
+published its DKIM key and left the zone's existing MX and SPF records — Email Routing, so
+inbound mail — untouched. The `alerts@` mailbox does not need to exist; only the domain is
+verified.
+
+To move it to another domain:
 
 1. Onboard a domain that is a zone in this Cloudflare account:
 
@@ -207,12 +213,17 @@ Sending is **off until both are done**:
    pnpm exec wrangler email sending enable <yourdomain>
    ```
 
-2. Point `vars.ALERT_FROM_EMAIL` in `wrangler.jsonc` at an address on it (e.g.
-   `alerts@<yourdomain>`) and run `pnpm cf-typegen`.
+2. Point `vars.ALERT_FROM_EMAIL` in `wrangler.jsonc` at an address on it and run
+   `pnpm cf-typegen`.
 
-Until then the faults are still recorded in `admin_notices` and logged; only the mail is
-skipped. `SUPER_ADMIN_EMAIL` is the recipient and must be a **verified destination address**
-(`wrangler email routing addresses list`).
+Setting `ALERT_FROM_EMAIL` to an empty string switches sending off without disabling
+detection: faults are still recorded in `admin_notices` and logged. The recipient
+(`SUPER_ADMIN_EMAIL`) must be a **verified destination address** —
+`wrangler email routing addresses list`.
+
+> **Deliverability.** `diuqbank.com` publishes SPF and DKIM but **no DMARC record**. Mail
+> should still authenticate, but adding `_dmarc.diuqbank.com` (`v=DMARC1; p=none;`) is worth
+> doing before relying on these alerts reaching Gmail.
 
 ### Platform budget
 
