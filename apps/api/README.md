@@ -191,6 +191,16 @@ not qualify; they live in `last_sync_error` and are summarised in the digest.
 
 A time-budget stop is **not** a fault — leftovers are picked up next tick by design.
 
+**The outage breaker.** Every unit stamps its cursor even when it failed, so a poison handle
+can never wedge the queue — but that also means a batch spent on a judge that is down pushes
+100 handles out of the freshness window and leaves them stale for two hours. So a run of
+`OUTAGE_STREAK` (5) *consecutive judge-side* failures ends the run instead: five units are
+given up, the rest keep their cursor and are retried on the next tick. Judge-side is decided
+by `SyncPlatform.isOutage` — `unavailable` for all three clients. A handle's own failure
+(Codeforces `invalid-handle`) or a contest's (VJudge `not-found`) resets the streak and can
+never trip it, because those cluster by age exactly as the cursor order walks them and would
+otherwise stop every batch at the same place.
+
 An `error-rate` mail carries the **aggregated failure reasons** — `17× Could not reach
 Codeforces.` — not just a count. The per-row copies in `last_sync_error` are overwritten by
 the next successful sync, roughly two hours later, so on a transient outage the mail is

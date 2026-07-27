@@ -20,6 +20,11 @@ export const atcoderPlatform: SyncPlatform = {
 
   isRateLimit: (cause) => cause instanceof AtcoderApiError && cause.kind === "rate-limited",
 
+  // AtCoder answers an unknown user with an empty list rather than an error, so
+  // it has no handle-specific failure kind at all: anything thrown here is the
+  // API itself.
+  isOutage: (cause) => cause instanceof AtcoderApiError && cause.kind === "unavailable",
+
   start: async ({ events, since, fetcher }) => {
     const wanted = new Set(events.map((event) => event.contestId));
     const windows = new Map<string, { start: number; end: number }>();

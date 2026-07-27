@@ -25,6 +25,12 @@ export const codeforcesPlatform: SyncPlatform = {
 
   isRateLimit: (cause) => cause instanceof CodeforcesApiError && cause.kind === "call-limit",
 
+  // "unavailable" covers a dead connection, a non-JSON body and a FAILED status
+  // that is not about the handle — all judge-side. "invalid-handle" is the one
+  // kind a handle owns, and it deliberately does not count: a few dead accounts
+  // in a row are normal and must never stop the batch.
+  isOutage: (cause) => cause instanceof CodeforcesApiError && cause.kind === "unavailable",
+
   // Nothing to load up front: every signal needed to classify a submission is
   // on the submission itself.
   start: async ({ since, fetcher }) => ({

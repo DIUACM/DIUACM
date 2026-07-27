@@ -1,6 +1,7 @@
 import { getContestRank, isAccepted, VjudgeApiError } from "../lib/vjudge";
 import {
   computePerformance,
+  OUTAGE_STREAK,
   PERFORMANCE_UPSERT_SQL,
   tallyError,
   throttle,
@@ -218,6 +219,12 @@ export const runVjudgeSync = async (
 
   const fetcher = throttle(options.fetcher ?? fetch, requestDelayMs);
 
+  // Same breaker as the handle runner: consecutive VJudge-side failures end the
+  // run so the rest of the batch keeps its cursor and is retried next tick.
+  // "not-found" is a contest VJudge has hidden — that one contest's problem, not
+  // an outage — so it resets the streak like any other non-outage outcome.
+  let outageStreak = 0;
+
   for (const [contestId, events] of groupByContest(due)) {
     if (Date.now() - startedAt > timeBudgetMs) {
       summary.stoppedEarly = true;
@@ -228,6 +235,7 @@ export const runVjudgeSync = async (
 
     let error: string | null = null;
     let rateLimited = false;
+    let outage = false;
     let upserts: D1PreparedStatement[] = [];
 
     try {
@@ -251,6 +259,7 @@ export const runVjudgeSync = async (
       // Backing off is the only useful response; the rest of the batch would
       // fail the same way.
       rateLimited = cause instanceof VjudgeApiError && cause.kind === "rate-limited";
+      outage = cause instanceof VjudgeApiError && cause.kind === "unavailable";
     }
 
     // Chunked for the same reason as the handle runner: the score triggers turn
@@ -279,6 +288,15 @@ export const runVjudgeSync = async (
     if (rateLimited) {
       summary.stoppedEarly = true;
       summary.stoppedReason = "rate-limit";
+      break;
+    }
+
+    // After the cursor above has landed, so the contests already spent still
+    // advance and none of them can be retried forever.
+    outageStreak = outage ? outageStreak + 1 : 0;
+    if (outageStreak >= OUTAGE_STREAK) {
+      summary.stoppedEarly = true;
+      summary.stoppedReason = "judge-down";
       break;
     }
   }

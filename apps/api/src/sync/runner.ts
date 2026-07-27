@@ -48,6 +48,21 @@ const TIME_BUDGET_MS = 600_000;
  * batch can set off (see the write loop) against D1's 30s query limit.
  */
 export const WRITE_CHUNK_SIZE = 50;
+/**
+ * Consecutive judge-side failures that end the run early (see `isOutage`).
+ *
+ * When a judge goes down, every remaining handle in the batch will fail the same
+ * way — and each one still stamps its cursor, so a full batch spent on an outage
+ * pushes 100 handles out of the freshness window and leaves them stale for the
+ * next two hours, long after the judge came back. Stopping at five gives up five
+ * handles instead of a hundred, and the leftovers are retried on the next tick
+ * fifteen minutes later rather than in two hours.
+ *
+ * Deliberately equal to `MIN_SAMPLE` in faults.ts: an aborted run has processed
+ * exactly this many units, all of them failed, and that still has to clear the
+ * bar for the error-rate alert or the outage would stop the sync silently.
+ */
+export const OUTAGE_STREAK = 5;
 
 // Kept as module constants rather than wrangler `vars`: vars are typed as
 // string literals in worker-configuration.d.ts, so every tweak would force a
@@ -102,6 +117,16 @@ export type SyncPlatform = {
   requestDelayMs: number;
   /** Whether a thrown error means the whole batch should back off. */
   isRateLimit: (cause: unknown) => boolean;
+  /**
+   * Whether this failure is the judge's fault rather than the handle's — the
+   * judge being down or answering with something that is not the documented
+   * shape, as opposed to an account that no longer exists.
+   *
+   * The distinction is the whole safety of the outage breaker below: a run of
+   * genuinely dead handles must never look like an outage, or a cluster of them
+   * would stop every batch at the same place and wedge the queue permanently.
+   */
+  isOutage: (cause: unknown) => boolean;
   /**
    * Called once per run, before any handle — the place to load whatever shared
    * metadata the judge needs (contest windows, for instance). The returned
@@ -227,9 +252,10 @@ type HandleRow = { id: number; user_id: number; handle: string };
 /**
  * Why a batch ended before its last handle. `time-budget` is routine — the
  * leftovers go on the next tick. `rate-limit` means the judge pushed back and
- * is worth telling someone about, so the two are kept apart.
+ * `judge-down` that it stopped answering at all; both are worth telling someone
+ * about, so the three are kept apart.
  */
-export type StopReason = "time-budget" | "rate-limit" | null;
+export type StopReason = "time-budget" | "rate-limit" | "judge-down" | null;
 
 /**
  * Why the failures in one run happened, keyed by message and counted by how many
@@ -365,6 +391,10 @@ export const runSync = async (
   // leaves every cursor untouched so the next tick retries cleanly.
   const reader = await platform.start({ events, since, fetcher });
 
+  // Consecutive judge-side failures. Reset by anything else — a success, or a
+  // failure this handle owns — so only an unbroken run of them trips the breaker.
+  let outageStreak = 0;
+
   for (const row of handles) {
     if (Date.now() - startedAt > timeBudgetMs) {
       summary.stoppedEarly = true;
@@ -374,6 +404,7 @@ export const runSync = async (
 
     let error: string | null = null;
     let rateLimited = false;
+    let outage = false;
     let upserts: D1PreparedStatement[] = [];
 
     try {
@@ -395,6 +426,7 @@ export const runSync = async (
       // Backing off is the only useful response; the rest of the batch would
       // fail the same way.
       rateLimited = platform.isRateLimit(cause);
+      outage = platform.isOutage(cause);
     }
 
     // Chunked rather than one transaction per handle: the score triggers turn a
@@ -426,6 +458,17 @@ export const runSync = async (
     if (rateLimited) {
       summary.stoppedEarly = true;
       summary.stoppedReason = "rate-limit";
+      break;
+    }
+
+    // Counted only for judge-side failures, and only after the cursor above has
+    // landed: the handles already spent still advance, so a poison handle can
+    // never be retried forever, but the rest of the batch is left untouched for
+    // the next tick.
+    outageStreak = outage ? outageStreak + 1 : 0;
+    if (outageStreak >= OUTAGE_STREAK) {
+      summary.stoppedEarly = true;
+      summary.stoppedReason = "judge-down";
       break;
     }
   }

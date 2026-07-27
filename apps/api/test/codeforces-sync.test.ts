@@ -5,6 +5,7 @@ import type { CodeforcesSubmission } from "../src/lib/codeforces";
 import { codeforcesPlatform } from "../src/sync/codeforces";
 import {
   computePerformance,
+  OUTAGE_STREAK,
   runSync,
   WRITE_CHUNK_SIZE,
   type Solve,
@@ -318,6 +319,68 @@ describe("runSync — Codeforces", () => {
     expect(summary.errorReasons).toEqual({
       "Invalid Codeforces handle.": 2,
       "Codeforces is temporarily unavailable": 1,
+    });
+  });
+
+  describe("outage breaker", () => {
+    const OUTAGE = { failure: "Codeforces is temporarily unavailable" };
+    const DEAD = { failure: "handles: User with handle x not found" };
+
+    /** Handles 2..count, so the fixture keyed by name can decide each one's fate. */
+    const addHandles = (count: number): string[] => {
+      const names = ["alice"];
+      for (let id = 2; id <= count; id += 1) {
+        insertUser(db, id);
+        insertHandle(db, id, id, `user${id}`);
+        names.push(`user${id}`);
+      }
+      return names;
+    };
+
+    it("stops the run once the judge fails several handles in a row", async () => {
+      const names = addHandles(OUTAGE_STREAK + 2);
+      const summary = await run(db, fetcherFor(Object.fromEntries(names.map((n) => [n, OUTAGE]))));
+
+      expect(summary).toMatchObject({
+        handlesProcessed: OUTAGE_STREAK,
+        errors: OUTAGE_STREAK,
+        stoppedEarly: true,
+        stoppedReason: "judge-down",
+      });
+      // The point of the breaker: the untouched handles keep a null cursor, so
+      // the next tick retries them instead of the freshness window hiding them
+      // for two hours.
+      expect(handleState(db, OUTAGE_STREAK).last_synced_at).toBe(NOW);
+      expect(handleState(db, OUTAGE_STREAK + 1).last_synced_at).toBeNull();
+      expect(handleState(db, OUTAGE_STREAK + 2).last_synced_at).toBeNull();
+    });
+
+    it("never trips on dead accounts, however many are adjacent", async () => {
+      // The regression the breaker could have introduced: handles are walked
+      // oldest-cursor-first, so a cluster of dead ones would otherwise stop every
+      // batch at the same place and wedge the queue permanently.
+      const names = addHandles(OUTAGE_STREAK + 2);
+      const summary = await run(db, fetcherFor(Object.fromEntries(names.map((n) => [n, DEAD]))));
+
+      expect(summary).toMatchObject({
+        handlesProcessed: OUTAGE_STREAK + 2,
+        errors: OUTAGE_STREAK + 2,
+        stoppedEarly: false,
+        stoppedReason: null,
+      });
+    });
+
+    it("counts only an unbroken streak", async () => {
+      // Split so neither side reaches the threshold on its own.
+      const total = OUTAGE_STREAK * 2 - 2;
+      const names = addHandles(total);
+      const byHandle = Object.fromEntries(names.map((n) => [n, OUTAGE]));
+      // One dead account partway resets the count, so the whole batch is walked.
+      byHandle[names[OUTAGE_STREAK - 1]] = DEAD;
+
+      const summary = await run(db, fetcherFor(byHandle));
+
+      expect(summary).toMatchObject({ handlesProcessed: total, stoppedReason: null });
     });
   });
 

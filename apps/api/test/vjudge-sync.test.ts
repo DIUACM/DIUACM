@@ -2,6 +2,7 @@ import type Database from "better-sqlite3";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import type { VjudgeRank, VjudgeSubmission } from "../src/lib/vjudge";
+import { OUTAGE_STREAK } from "../src/sync/runner";
 import { runVjudgeSync } from "../src/sync/vjudge";
 import { d1Shim } from "./d1";
 import { attachEvent, insertRanklist, insertTracker, insertUser, openTestDb } from "./db";
@@ -301,6 +302,45 @@ describe("runVjudgeSync", () => {
     // at 500, is not in a batch of two. Deduped because the fixture answers
     // empty, which the client retries once.
     expect([...new Set(calls.contests)]).toEqual(["800002", "800001"]);
+  });
+
+  it("stops the run once VJudge fails several contests in a row", async () => {
+    // Event 1 is already attached by the setup; add enough to overshoot the
+    // breaker so there is something left for it to spare.
+    for (let id = 2; id <= OUTAGE_STREAK + 2; id += 1) {
+      insertVjudgeEvent(db, id, `80000${id}`);
+      attachEvent(db, 1, id, 1);
+    }
+
+    const summary = await run(db, fetcherFor({}, undefined, { status: 500 }));
+
+    expect(summary).toMatchObject({
+      contestsAttempted: OUTAGE_STREAK,
+      errors: OUTAGE_STREAK,
+      stoppedEarly: true,
+      stoppedReason: "judge-down",
+    });
+    // Never attempted, so no cursor row at all: the next tick picks them up.
+    expect(eventState(db, OUTAGE_STREAK + 1)).toBeUndefined();
+    expect(eventState(db, OUTAGE_STREAK + 2)).toBeUndefined();
+  });
+
+  it("does not let hidden contests trip the outage breaker", async () => {
+    // A deleted or non-public contest answers 200 with an empty body. That is
+    // the contest's problem, not VJudge's, and a run of them must not stop the
+    // batch — they cluster by age exactly like the cursor order walks them.
+    for (let id = 2; id <= OUTAGE_STREAK + 2; id += 1) {
+      insertVjudgeEvent(db, id, `80000${id}`);
+      attachEvent(db, 1, id, 1);
+    }
+
+    const summary = await run(db, fetcherFor({}, undefined, { empty: true }));
+
+    expect(summary).toMatchObject({
+      contestsAttempted: OUTAGE_STREAK + 2,
+      stoppedEarly: false,
+      stoppedReason: null,
+    });
   });
 
   it("records a failure, advances the cursor, and keeps going", async () => {

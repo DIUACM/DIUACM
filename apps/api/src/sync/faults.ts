@@ -16,6 +16,10 @@ import type { ErrorTally, StopReason } from "./runner";
 /**
  * Below this many units of work, an error ratio means nothing — one failure out
  * of two is 50% and is usually just one dead handle.
+ *
+ * Must stay ≤ `OUTAGE_STREAK` in runner.ts: a run the outage breaker cut short
+ * has processed exactly that many units, all of them failed, and if that did not
+ * clear this bar an outage would stop the sync without mailing anyone.
  */
 const MIN_SAMPLE = 5;
 /** Above this share of a batch failing, assume the judge broke rather than the data. */
@@ -99,6 +103,15 @@ export const collectFaults = (outcome: RunOutcome): Notice[] => {
   //    a handful of dead handles is normal and deliberately excluded.
   if (processed >= MIN_SAMPLE && errors / processed > ERROR_RATE_THRESHOLD) {
     const percent = Math.round((errors / processed) * 100);
+    // The breaker aborts after a short run of judge-side failures, so the counts
+    // here are small by design. Saying so keeps "5 of 5" from reading as a
+    // rounding error, and says the rest of the batch was not thrown away.
+    const aborted =
+      stoppedReason === "judge-down"
+        ? `\n\nThe run was stopped after ${processed} consecutive failures rather than spending ` +
+          `the whole batch on a judge that is not answering. The untouched ${unit}s keep their ` +
+          `cursor and are retried on the next tick, not in two hours.`
+        : "";
     faults.push({
       key: `${platform}:error-rate`,
       subject: `[DIU ACM] ${platform} sync is failing on most ${unit}s`,
@@ -108,7 +121,8 @@ export const collectFaults = (outcome: RunOutcome): Notice[] => {
         `usually means the API changed or is down.\n\n` +
         reasonBlock(outcome.errorReasons) +
         `Which ${unit}s: ${unit === "handle" ? "user_handles.last_sync_error" : "event_sync_state.last_sync_error"}, ` +
-        `until the next successful sync clears them (~2h).`,
+        `until the next successful sync clears them (~2h).` +
+        aborted,
     });
   }
 

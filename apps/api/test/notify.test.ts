@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NOTICE_COOLDOWN_SECONDS, reportNotice, sendMail } from "../src/lib/notify";
 import { buildDigest } from "../src/sync/digest";
 import { collectFaults, runFailedFault, type RunOutcome } from "../src/sync/faults";
-import { tallyError, type ErrorTally } from "../src/sync/runner";
+import { OUTAGE_STREAK, tallyError, type ErrorTally } from "../src/sync/runner";
 import type { Bindings } from "../src/types";
 import { d1Shim } from "./d1";
 import { insertUser, openTestDb } from "./db";
@@ -211,6 +211,29 @@ describe("collectFaults", () => {
     expect(fault.detail).toContain("17× Could not reach Codeforces.");
     expect(fault.detail).toContain("3× Invalid Codeforces handle.");
     expect(fault.detail.indexOf("17×")).toBeLessThan(fault.detail.indexOf("3×"));
+  });
+
+  /** Exactly what a run the outage breaker cut short looks like. */
+  const aborted: RunOutcome = {
+    ...healthy,
+    processed: OUTAGE_STREAK,
+    errors: OUTAGE_STREAK,
+    stoppedReason: "judge-down",
+  };
+
+  it("still alerts on the smallest run the outage breaker can produce", () => {
+    // The one interaction that would let an outage stop the sync silently:
+    // MIN_SAMPLE here and OUTAGE_STREAK in runner.ts are coupled, and an aborted
+    // run sits exactly on the boundary.
+    expect(collectFaults(aborted).map((f) => f.key)).toEqual(["codeforces:error-rate"]);
+  });
+
+  it("explains a run the outage breaker cut short", () => {
+    // Otherwise "5 of 5" reads as a rounding error rather than an aborted batch.
+    const [fault] = collectFaults(aborted);
+
+    expect(fault.detail).toContain(`stopped after ${OUTAGE_STREAK} consecutive failures`);
+    expect(fault.detail).toContain("retried on the next tick");
   });
 
   it("omits the reasons block when there is nothing to say", () => {
