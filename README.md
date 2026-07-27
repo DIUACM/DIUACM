@@ -31,11 +31,12 @@ For a full local setup (D1 migrations, `.dev.vars`, env overrides) see each app'
 CI (`.github/workflows/ci.yml`) runs typecheck, lint, test, and the web build on
 every push to `main` and every pull request.
 
-## Production deployment
+## Stage deployment
 
 One-time setup (see [`apps/api/README.md`](apps/api/README.md) for details):
 
-1. `wrangler d1 create diuacm-db` and `wrangler r2 bucket create diuacm-files`,
+1. `wrangler d1 create diuacm-db-stage` and
+   `wrangler r2 bucket create diuacm-files-stage`,
    then put the ids in `apps/api/wrangler.jsonc`.
 2. Set the committed vars in `apps/api/wrangler.jsonc`: `GOOGLE_CLIENT_ID`,
    `SUPER_ADMIN_EMAIL`, and `CORS_ORIGINS` (the web app's origin).

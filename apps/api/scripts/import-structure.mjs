@@ -5,7 +5,7 @@ import { dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 
 const DEFAULT_EXPORT_URL = "https://diuacm.com/api/migration/export";
-const DEFAULT_DATABASE = "diuacm-db";
+const DEFAULT_DATABASE = "DB";
 const VALID_EVENT_TYPES = new Set(["contest", "class", "other"]);
 const VALID_EVENT_SCOPES = new Set([
   "open_for_all",

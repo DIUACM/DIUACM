@@ -143,8 +143,8 @@ Migrations are applied with `wrangler d1 migrations apply`, **not** the Drizzle 
 ## Deploying to Cloudflare
 
 ```bash
-wrangler d1 create diuacm-db          # paste the returned database_id into wrangler.jsonc
-wrangler r2 bucket create diuacm-files
+wrangler d1 create diuacm-db-stage  # paste the returned database_id into wrangler.jsonc
+wrangler r2 bucket create diuacm-files-stage
 # set committed vars in wrangler.jsonc:
 #   GOOGLE_CLIENT_ID  — Google OAuth client id (public value)
 #   SUPER_ADMIN_EMAIL — implicitly holds every admin permission

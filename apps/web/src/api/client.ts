@@ -3,7 +3,7 @@ import type { paths } from './schema'
 
 const DEFAULT_API_BASE_URL = import.meta.env.DEV
   ? 'http://localhost:8787'
-  : 'https://diuacm.sourovcodes.workers.dev'
+  : 'https://diuacm-api-stage.sourov-cse.workers.dev'
 
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL

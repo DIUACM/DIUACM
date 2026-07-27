@@ -2,9 +2,9 @@
 
 Frontend for **DIU ACM** — the competitive programming community of Daffodil
 International University. A React SPA served as Cloudflare Workers static
-assets, backed by the [diuacm API](https://diuacm.sourovcodes.workers.dev/openapi.json).
+assets, backed by the [diuacm API](https://diuacm-api-stage.sourov-cse.workers.dev/openapi.json).
 
-**Live:** https://diuacm-web.sourovcodes.workers.dev
+**Live:** https://diuacm-web-stage.sourov-cse.workers.dev
 
 ## Stack
 
