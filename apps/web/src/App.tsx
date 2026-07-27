@@ -122,6 +122,13 @@ const router = createBrowserRouter([
               'AdminBlogPostDetailPage',
             ),
           },
+          {
+            path: 'system',
+            lazy: lazily(
+              () => import('@/features/admin/system/AdminSystemPage'),
+              'AdminSystemPage',
+            ),
+          },
         ],
       },
       { path: '*', element: <NotFoundPage /> },

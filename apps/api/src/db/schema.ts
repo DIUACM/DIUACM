@@ -47,6 +47,9 @@ export const PERMISSIONS = [
   "manage_trackers",
   "manage_gallery",
   "manage_blog",
+  // Read-only view of the scheduled jobs (src/routes/admin/system.ts), plus the
+  // one write it allows: acknowledging a fault.
+  "manage_system",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -218,6 +221,46 @@ export const adminNotices = sqliteTable("admin_notices", {
   occurrences: integer("occurrences").notNull().default(0),
   lastDetail: text("last_detail"),
 });
+
+/**
+ * One row per scheduled invocation (src/sync/index.ts). The summaries used to
+ * exist only as a `console.log` line, which means they lived in Workers
+ * Observability — behind a Cloudflare login, with its own retention — and could
+ * not be read by the admin panel at all.
+ *
+ * More importantly, every other signal the crons produce is derived from a run
+ * that *happened*. A cron that silently stops firing produces no log, no fault,
+ * and no mail. This table is what makes that detectable: the digest counts the
+ * rows it expected against the rows it found (see `checkLiveness` in digest.ts).
+ *
+ * Pruned to `RUN_RETENTION_DAYS` on the digest tick, so it stays a rolling
+ * window rather than growing forever.
+ */
+export const cronRuns = sqliteTable(
+  "cron_runs",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    /** The job name from the dispatch table: "codeforces", "digest", … */
+    job: text("job").notNull(),
+    startedAt: integer("started_at").notNull(),
+    durationMs: integer("duration_ms").notNull(),
+    /**
+     * `degraded` is the one worth having: the invocation succeeded and
+     * Cloudflare's dashboard paints it green, but the run raised faults — a
+     * blocked judge, a batch that failed wholesale. Without this column that
+     * state is invisible everywhere except the alert mail.
+     */
+    status: text("status", { enum: ["ok", "degraded", "crashed"] }).notNull(),
+    /** Comma-joined fault keys behind a `degraded`/`crashed` status. */
+    faults: text("faults"),
+    /** Lifted out of `summary` so the health page can chart it without parsing JSON. */
+    rowsWritten: integer("rows_written"),
+    errors: integer("errors"),
+    /** The full per-job summary, shape depending on the job. */
+    summary: text("summary"),
+  },
+  (t) => [index("cron_runs_job_started_idx").on(t.job, t.startedAt)],
+);
 
 export const trackers = sqliteTable(
   "trackers",
@@ -541,6 +584,7 @@ export type EventAttendance = typeof eventAttendance.$inferSelect;
 export type EventPerformance = typeof eventPerformance.$inferSelect;
 export type EventSyncState = typeof eventSyncState.$inferSelect;
 export type AdminNotice = typeof adminNotices.$inferSelect;
+export type CronRun = typeof cronRuns.$inferSelect;
 export type Tracker = typeof trackers.$inferSelect;
 export type NewTracker = typeof trackers.$inferInsert;
 export type Ranklist = typeof ranklists.$inferSelect;

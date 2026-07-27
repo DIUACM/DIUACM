@@ -5,6 +5,7 @@ import adminBlog from "./blog";
 import adminEvents from "./events";
 import adminGallery from "./gallery";
 import adminRanklists from "./ranklists";
+import adminSystem from "./system";
 import adminTrackers from "./trackers";
 import adminUsers from "./users";
 import type { AppEnv } from "../../types";
@@ -21,5 +22,6 @@ admin.route("/trackers", adminTrackers);
 admin.route("/ranklists", adminRanklists);
 admin.route("/gallery", adminGallery);
 admin.route("/blog", adminBlog);
+admin.route("/system", adminSystem);
 
 export default admin;

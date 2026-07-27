@@ -25,6 +25,7 @@ import {
   permissionToggleSchema,
 } from "./schemas/admin";
 import { googleSignInSchema, loginSchema, profileUpdateSchema } from "./schemas/auth";
+import { RUN_RETENTION_DAYS } from "./sync/runs";
 import { attendanceGiveSchema } from "./schemas/events";
 import { handleSetSchema } from "./schemas/handles";
 
@@ -899,6 +900,163 @@ const assetUploadSchema = {
   required: ["file"],
 };
 
+// ---------------------------------------------------------------------------
+// System health — the scheduled jobs, as seen from the admin panel.
+// ---------------------------------------------------------------------------
+
+const runStatusSchema = {
+  type: "string",
+  enum: ["ok", "degraded", "crashed"],
+  description:
+    "`degraded` is an invocation that finished but raised faults — the state " +
+    "Cloudflare's own dashboard cannot show, because the invocation succeeded.",
+};
+
+const cronRunSchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    job: { type: "string" },
+    startedAt: epoch("Unix epoch seconds (UTC)."),
+    durationMs: { type: "integer" },
+    status: ref("CronRunStatus"),
+    faults: {
+      type: "array",
+      items: { type: "string" },
+      description: "Fault keys raised by this run, e.g. `codeforces:blocked`.",
+    },
+    rowsWritten: { type: ["integer", "null"] },
+    errors: { type: ["integer", "null"] },
+    summary: {
+      description: "The job's own summary object; shape varies by job.",
+    },
+  },
+  required: [
+    "id",
+    "job",
+    "startedAt",
+    "durationMs",
+    "status",
+    "faults",
+    "rowsWritten",
+    "errors",
+    "summary",
+  ],
+};
+
+const cronRunListSchema = {
+  type: "object",
+  properties: { data: { type: "array", items: ref("CronRun") }, meta: ref("PaginationMeta") },
+  required: ["data", "meta"],
+};
+
+const systemJobSchema = {
+  type: "object",
+  properties: {
+    job: { type: "string" },
+    cron: { type: "string", description: "The expression registered in wrangler.jsonc." },
+    expected: {
+      type: ["integer", "null"],
+      description:
+        "Ticks a full day should contain, derived from `cron`. Null when the " +
+        "expression restricts day-of-month/month/day-of-week, which makes the " +
+        "count depend on the calendar.",
+    },
+    observed: {
+      type: "integer",
+      description: "Ticks recorded within `livenessWindowSeconds`.",
+    },
+    lastRunAt: { type: ["integer", "null"] },
+    lastStatus: { oneOf: [ref("CronRunStatus"), { type: "null" }] },
+    lastDurationMs: { type: ["integer", "null"] },
+    lastFaults: { type: "array", items: { type: "string" } },
+    day: {
+      type: "object",
+      description: "Totals over the last 24 hours.",
+      properties: {
+        runs: { type: "integer" },
+        ok: { type: "integer" },
+        degraded: { type: "integer" },
+        crashed: { type: "integer" },
+        rowsWritten: { type: "integer" },
+        errors: { type: "integer" },
+        slowestMs: { type: "integer" },
+      },
+      required: ["runs", "ok", "degraded", "crashed", "rowsWritten", "errors", "slowestMs"],
+    },
+    recent: {
+      type: "array",
+      description: "The job's most recent runs, oldest first — ready to chart as-is.",
+      items: {
+        type: "object",
+        properties: {
+          startedAt: epoch("Unix epoch seconds (UTC)."),
+          durationMs: { type: "integer" },
+          status: ref("CronRunStatus"),
+          rowsWritten: { type: ["integer", "null"] },
+          errors: { type: ["integer", "null"] },
+        },
+        required: ["startedAt", "durationMs", "status", "rowsWritten", "errors"],
+      },
+    },
+  },
+  required: [
+    "job",
+    "cron",
+    "expected",
+    "observed",
+    "lastRunAt",
+    "lastStatus",
+    "lastDurationMs",
+    "lastFaults",
+    "day",
+    "recent",
+  ],
+};
+
+const systemNoticeSchema = {
+  type: "object",
+  properties: {
+    key: { type: "string", description: "Stable fault id, e.g. `codeforces:paging-truncated`." },
+    firstSeenAt: epoch("Unix epoch seconds (UTC)."),
+    lastSeenAt: epoch("Unix epoch seconds (UTC)."),
+    lastSentAt: { type: ["integer", "null"], description: "When the last alert mail went out." },
+    occurrences: { type: "integer", description: "Occurrences since that mail." },
+    lastDetail: { type: ["string", "null"] },
+  },
+  required: ["key", "firstSeenAt", "lastSeenAt", "lastSentAt", "occurrences", "lastDetail"],
+};
+
+const systemHealthSchema = {
+  type: "object",
+  properties: {
+    now: epoch("Server time, so the client can age the timestamps below consistently."),
+    recordingSince: {
+      type: ["integer", "null"],
+      description: "Oldest run still in the ledger.",
+    },
+    livenessReady: {
+      type: "boolean",
+      description:
+        "False while the ledger is younger than one liveness window, when " +
+        "`observed` counts the ledger's age rather than the job's health.",
+    },
+    livenessWindowSeconds: { type: "integer" },
+    retentionDays: { type: "integer", description: "How long runs are kept." },
+    jobs: { type: "array", items: ref("SystemJob") },
+    notices: { type: "array", items: ref("SystemNotice") },
+  },
+  required: [
+    "now",
+    "recordingSince",
+    "livenessReady",
+    "livenessWindowSeconds",
+    "retentionDays",
+    "jobs",
+    "notices",
+  ],
+};
+
 const featuredImageResultSchema = {
   type: "object",
   properties: { featuredImageUrl: { type: "string", format: "uri" } },
@@ -1042,6 +1200,12 @@ export const openApiDoc = {
     },
     { name: "admin-gallery", description: "Admin: manage gallery albums and images (`manage_gallery`)." },
     { name: "admin-blog", description: "Admin: manage blog posts (`manage_blog`)." },
+    {
+      name: "admin-system",
+      description:
+        "Admin: what the scheduled jobs have been doing (`manage_system`) — run " +
+        "history, missed ticks, and the open fault list.",
+    },
   ],
   "x-tagGroups": [
     {
@@ -1057,6 +1221,7 @@ export const openApiDoc = {
         "admin-ranklists",
         "admin-gallery",
         "admin-blog",
+        "admin-system",
       ],
     },
   ],
@@ -1162,6 +1327,12 @@ export const openApiDoc = {
       AdminGalleryAlbumUpdateRequest: toSchema(adminGalleryAlbumUpdateSchema),
       AdminBlogPostCreateRequest: toSchema(adminBlogPostCreateSchema),
       AdminBlogPostUpdateRequest: toSchema(adminBlogPostUpdateSchema),
+      CronRunStatus: runStatusSchema,
+      CronRun: cronRunSchema,
+      CronRunList: cronRunListSchema,
+      SystemJob: systemJobSchema,
+      SystemNotice: systemNoticeSchema,
+      SystemHealth: systemHealthSchema,
     },
   },
   paths: {
@@ -2667,6 +2838,77 @@ export const openApiDoc = {
           "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
           ...adminAuthResponses,
           "404": { description: "Asset not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/system/health": {
+      get: {
+        tags: ["admin-system"],
+        summary: "Scheduled job health",
+        ...access(
+          "manage_system",
+          "Per-job liveness, the last 24 hours of totals, a run strip to chart, " +
+            "and every open fault.\n\n" +
+            "`observed` against `expected` is what detects a cron that has stopped " +
+            "firing — a failure no error, log line, or alert can show, because " +
+            "nothing ran to produce one. Ignore it while `livenessReady` is false.",
+        ),
+        responses: {
+          "200": { description: "Current health", content: jsonBody(ref("SystemHealth")) },
+          ...adminAuthResponses,
+        },
+      },
+    },
+    "/admin/system/runs": {
+      get: {
+        tags: ["admin-system"],
+        summary: "Scheduled run history",
+        ...access(
+          "manage_system",
+          `Newest first. Runs are kept for ${RUN_RETENTION_DAYS} days, then pruned ` +
+            "on the digest tick.",
+        ),
+        parameters: [
+          ...pageParams,
+          {
+            name: "job",
+            in: "query",
+            description: "Filter to one job, e.g. `codeforces`.",
+            schema: { type: "string" },
+          },
+          { name: "status", in: "query", schema: ref("CronRunStatus") },
+        ],
+        responses: {
+          "200": { description: "A page of runs", content: jsonBody(ref("CronRunList")) },
+          ...adminAuthResponses,
+        },
+      },
+    },
+    "/admin/system/notices/{key}": {
+      delete: {
+        tags: ["admin-system"],
+        summary: "Acknowledge a fault",
+        ...access(
+          "manage_system",
+          "Drops the fault's cooldown row. Its only purpose is to suppress repeat " +
+            "mail for an hour, so clearing it means both *handled* and *tell me " +
+            "immediately if it recurs* — rather than leaving the admin inside a " +
+            "cooldown started by the problem they just fixed. The runs that raised " +
+            "it stay in the history.",
+        ),
+        parameters: [
+          {
+            name: "key",
+            in: "path",
+            required: true,
+            description: "Fault key, e.g. `codeforces:paging-truncated`.",
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": { description: "Acknowledged", content: jsonBody(ref("Ok")) },
+          ...adminAuthResponses,
+          "404": { description: "Notice not found", content: jsonBody(ref("Error")) },
         },
       },
     },

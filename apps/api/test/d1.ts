@@ -5,8 +5,8 @@ type ShimStatement = { sql: string; params: unknown[] };
 const meta = (changes: number) => ({ changes, duration: 0, success: true });
 
 /**
- * The slice of the D1 API the sync jobs use, backed by the in-memory test
- * database. Enough to run the real SQL — real triggers included — without a
+ * The slice of the D1 API the sync jobs and routes use, backed by the in-memory
+ * test database. Enough to run the real SQL — real triggers included — without a
  * workerd pool.
  */
 export function d1Shim(db: Database.Database): D1Database {
@@ -36,6 +36,22 @@ export function d1Shim(db: Database.Database): D1Database {
       }),
       first: async () => db.prepare(sql).get(...(params as never[])) ?? null,
       run: async () => run(statement),
+      // Rows as value arrays rather than objects. Not used by the sync jobs, but
+      // it is what drizzle's D1 driver calls underneath every `.select()`, so
+      // any route-level test goes through here.
+      raw: async (options?: { columnNames?: boolean }) => {
+        const prepared = db.prepare(sql);
+        if (!prepared.reader) {
+          prepared.run(...(params as never[]));
+          return [];
+        }
+        const rows = prepared.raw(true).all(...(params as never[])) as unknown[][];
+        // D1 prepends the column names as a leading row when asked, which is how
+        // drizzle maps positional values back onto columns.
+        return options?.columnNames
+          ? [prepared.columns().map((column) => column.name), ...rows]
+          : rows;
+      },
     } as unknown as D1PreparedStatement;
   };
 

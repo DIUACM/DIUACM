@@ -1,6 +1,7 @@
-import type { Notice } from "../lib/notify";
+import { isoish, type Notice } from "../lib/notify";
 import type { CfRatingSummary } from "./cf-rating";
 import type { ErrorTally, StopReason } from "./runner";
+import { LIVENESS_WINDOW_SECONDS, livenessIsMeaningful, type Liveness } from "./runs";
 
 // ---------------------------------------------------------------------------
 // Which sync outcomes are worth waking the super admin for.
@@ -214,6 +215,65 @@ export const collectCfRatingFaults = (summary: CfRatingSummary): Notice[] => {
         `has not been found yet, so treat the list in any accompanying alert as partial.\n\n` +
         `The next run is in 24 hours. If this repeats, Codeforces is rejecting us rather than ` +
         `having a bad minute.`,
+    });
+  }
+
+  return faults;
+};
+
+// ---------------------------------------------------------------------------
+// Liveness — the one fault that is not derived from a run at all.
+//
+// Every notice above needs a run to have happened and reported something. The
+// failure none of them can see is a cron that stopped firing: no summary, no
+// error, no log line, and a digest that cheerfully reports "0 failing" because
+// nothing failed — nothing ran. This reads the run ledger (runs.ts) and alerts
+// on ticks that never arrived.
+// ---------------------------------------------------------------------------
+
+/**
+ * Share of a day's expected ticks that must be present for a job to count as
+ * alive. Cloudflare does not guarantee every scheduled invocation, so a couple
+ * of skipped ticks are normal and must not page anyone; at 96 ticks a day this
+ * still trips after about five hours of silence.
+ */
+const MIN_TICK_RATIO = 0.8;
+
+export const collectLivenessFaults = (liveness: Liveness, now: number): Notice[] => {
+  if (!livenessIsMeaningful(liveness, now)) return [];
+
+  const faults: Notice[] = [];
+  const windowHours = Math.round(LIVENESS_WINDOW_SECONDS / 3600);
+
+  for (const job of liveness.jobs) {
+    // An expression whose daily count cannot be derived (see `firesPerDay`).
+    if (job.expected === null) continue;
+    if (job.observed >= Math.floor(job.expected * MIN_TICK_RATIO)) continue;
+
+    const silent = job.observed === 0;
+    const lastSeen =
+      job.lastRunAt === null
+        ? "It has never run."
+        : `It last ran ${isoish(job.lastRunAt)}.`;
+
+    faults.push({
+      key: `${job.job}:not-firing`,
+      subject: silent
+        ? `[DIU ACM] ${job.job} cron has stopped firing`
+        : `[DIU ACM] ${job.job} cron is missing ticks`,
+      detail:
+        `The ${job.job} job ran ${job.observed} time(s) in the last ${windowHours}h, against ` +
+        `${job.expected} expected for a full day on "${job.cron}". ${lastSeen}\n\n` +
+        (silent
+          ? `Nothing this job maintains is being updated at all. This is not a failing run — ` +
+            `there are no runs, which is why no other alert can see it.\n\n` +
+            `Check that "${job.cron}" is still listed under triggers.crons in wrangler.jsonc ` +
+            `and survived the last deploy, and that the expression there matches the one in ` +
+            `src/sync/schedule.ts — the dispatcher looks the job up by its exact string, so a ` +
+            `changed expression fires an invocation that matches no handler.`
+          : `Cloudflare does not guarantee every scheduled invocation, so a few gaps are ` +
+            `normal — this many is not. If it keeps up, the job is either overrunning its ` +
+            `window or the trigger is being dropped.`),
     });
   }
 

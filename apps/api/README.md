@@ -83,7 +83,9 @@ expression, so every platform gets its own cadence:
 | Health digest | `12 1 * * *` | — | the database (see [Alerting](#alerting)) |
 
 The three solve syncs are offset by 5 minutes so no two start in the same minute; the two
-daily jobs sit on minutes none of them uses.
+daily jobs sit on minutes none of them uses. The expressions live in `src/sync/schedule.ts`
+— the dispatcher keys off them, and the liveness check measures against them, so a cadence
+change touches `wrangler.jsonc` and that file and nothing else.
 
 **The rating refresh is the odd one out.** `src/sync/cf-rating.ts` keeps
 `users.max_cf_rating` current, which is otherwise only written when a person saves a handle
@@ -223,6 +225,7 @@ not qualify; they live in `last_sync_error` and are summarised in the digest.
 | `codeforces-rating:invalid-handles` | Codeforces does not recognise a stored handle | That member's rating **and** solve counts are frozen; only a human can fix it |
 | `codeforces-rating:rename-conflict` | A rename collided with another row's handle | Two rows point at one account, so the rename cannot land |
 | `codeforces-rating:unreachable` | A batch went unanswered, or the run stopped early | Some handles were never checked, so the dead-handle list above is partial |
+| `<job>:not-firing` | Fewer than 80% of a day's expected ticks were recorded | The job **is not running at all** — see [Run history](#run-history-and-the-system-page) |
 
 A time-budget stop is **not** a fault for the solve syncs — leftovers are picked up next tick
 by design. It *is* one for the daily rating refresh, whose next tick is 24 hours away.
@@ -256,11 +259,47 @@ a given key only sends once per **hour**, and the mail says how many times it fi
 between. Sending never breaks a sync — an unset sender or a rejection is logged and the run
 continues, so this ships fine before the domain is onboarded.
 
+### Run history and the System page
+
+Every fault above is derived from a run that *happened*. The one failure none of them can
+see is a cron that **stops firing**: no summary to inspect, no error to log, no mail — and a
+digest that cheerfully reports "0 failing", because nothing failed, nothing ran.
+
+`src/sync/runs.ts` closes that hole. Every invocation appends a row to `cron_runs`
+(job, start, duration, status, fault keys, rows written, the full summary), and the digest
+compares the ticks it found against the ticks `src/sync/schedule.ts` says the expression
+should have produced. Absence becomes a row that isn't there.
+
+- **`status` is the useful column.** `degraded` means the invocation succeeded — so
+  Cloudflare paints it green — but the run raised faults. Without it, a run where every
+  single unit failed is indistinguishable from a perfect one in the dashboard.
+- **Expectations come from the cron expression itself** (`firesPerDay`), so changing a
+  cadence in `wrangler.jsonc` and `schedule.ts` cannot leave the monitoring measuring the
+  old one. An expression restricted by day-of-month/month/day-of-week returns `null` and is
+  skipped rather than measured against an invented number.
+- **The window is 25 hours against a day of ticks.** The slack is for the daily jobs, whose
+  previous run sits almost exactly one day back; an exact window would have the digest
+  accusing itself of a missed tick on scheduler jitter alone.
+- **The check stays quiet until the ledger is a full window old**, or deploying it would
+  alert on all five jobs at once.
+- Runs are kept 14 days and pruned on the digest tick.
+
+`GET /admin/system/health` serves that to the admin panel's **System** page
+(`manage_system`), alongside the open `admin_notices` — which until then were written and
+never read by anything. The page is the pull-based counterpart to the mail: per-job ticks
+against expected, a status strip of recent runs, 24h totals, the paginated run history, and
+a **Mark resolved** button that drops a fault's cooldown row so a recurrence alerts
+immediately rather than waiting out an hour started by the fix.
+
+`manage_system` is read-only apart from that acknowledgement, so it can be granted to
+whoever is on call without handing over users, events, or content.
+
 ### Finding a bad run in the dashboard
 
-A run where every unit failed is **not** a Workers exception — the scheduled handler returns
-normally, so Observability records the invocation as a success and its error charts stay
-flat. Two things to search for in Workers Logs instead:
+The System page above is the first place to look. In Workers Logs, note that a run where
+every unit failed is **not** a Workers exception — the scheduled handler returns normally,
+so Observability records the invocation as a success and its error charts stay flat. Two
+things to search for instead:
 
 - `<platform> sync` — the per-run summary line, including `errorReasons`, on every tick.
 - **level = `error`** — every fault is `console.error`d as well as mailed, so anything that

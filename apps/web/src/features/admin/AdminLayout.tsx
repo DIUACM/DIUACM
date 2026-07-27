@@ -1,4 +1,12 @@
-import { CalendarDays, ChartNoAxesColumn, Images, Newspaper, ShieldAlert, Users } from 'lucide-react'
+import {
+  Activity,
+  CalendarDays,
+  ChartNoAxesColumn,
+  Images,
+  Newspaper,
+  ShieldAlert,
+  Users,
+} from 'lucide-react'
 import { Navigate, NavLink, Outlet, useLocation } from 'react-router'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/features/auth/auth-context'
@@ -19,6 +27,7 @@ const SECTIONS: AdminSection[] = [
   { to: '/admin/trackers', label: 'Trackers', icon: ChartNoAxesColumn, permission: 'manage_trackers' },
   { to: '/admin/gallery', label: 'Gallery', icon: Images, permission: 'manage_gallery' },
   { to: '/admin/blog', label: 'Blog', icon: Newspaper, permission: 'manage_blog' },
+  { to: '/admin/system', label: 'System', icon: Activity, permission: 'manage_system' },
 ]
 
 function visibleSections(user: User | null): AdminSection[] {

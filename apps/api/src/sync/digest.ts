@@ -1,5 +1,7 @@
-import { sendMail } from "../lib/notify";
+import { sendMail, type Notice } from "../lib/notify";
 import type { Bindings } from "../types";
+import { collectLivenessFaults } from "./faults";
+import { livenessIsMeaningful, loadLiveness, pruneRuns, type Liveness } from "./runs";
 
 // ---------------------------------------------------------------------------
 // The daily health digest.
@@ -7,6 +9,10 @@ import type { Bindings } from "../types";
 // Alerts only fire when something is wrong, which leaves one question they can
 // never answer: is the system quiet because it is healthy, or because it is
 // dead? One mail a day, sent unconditionally, is what makes silence readable.
+//
+// It is also where the run ledger is checked (see runs.ts). Every other section
+// here reports on runs that happened; the CRON section reports on ones that did
+// not, which is the only failure the rest of the system cannot see.
 //
 // Everything here is a read. If a query fails the mail still goes out with the
 // rest, because a partial digest beats no digest.
@@ -84,22 +90,60 @@ const ago = (epochSeconds: number, now: number): string => {
 };
 
 /**
- * The digest body. Split out from sending so a test can assert on the text
- * without an email binding.
+ * The CRON section: expected ticks against recorded ones, every job listed
+ * whether or not it is healthy. The faults raised alongside it (see
+ * `collectLivenessFaults`) only cover the jobs that fall short, so this table is
+ * what lets a reader confirm the others really are ticking rather than merely
+ * not complaining.
  */
-export const buildDigest = async (d1: D1Database, now: number): Promise<string> => {
+const livenessLines = (liveness: Liveness, now: number): string[] => {
+  const lines = ["CRON"];
+
+  if (!livenessIsMeaningful(liveness, now)) {
+    lines.push("  not enough run history yet — this section starts reporting after a full day");
+    return lines;
+  }
+
+  for (const job of liveness.jobs) {
+    const head = `  ${job.job.padEnd(18)}`;
+    const seen =
+      job.expected === null
+        ? `${job.observed} run(s), cadence not countable from "${job.cron}"`
+        : `${job.observed}/${job.expected} ticks`;
+    lines.push(`${head}${seen.padEnd(28)}last ${ago(job.lastRunAt ?? 0, now)}` +
+      (job.lastStatus && job.lastStatus !== "ok" ? ` (${job.lastStatus})` : ""));
+  }
+
+  return lines;
+};
+
+/**
+ * The digest body and the faults its liveness check raised. Split out from
+ * sending so a test can assert on the text without an email binding.
+ */
+export const buildDigest = async (
+  d1: D1Database,
+  now: number,
+): Promise<{ body: string; faults: Notice[] }> => {
   const since = now - DAY_SECONDS;
 
-  const [handles, contests, stuck, failing, activity, notices] = await Promise.all([
+  const [handles, contests, stuck, failing, activity, notices, liveness] = await Promise.all([
     d1.prepare(HANDLE_STATS_SQL).all<HandleStat>(),
     d1.prepare(CONTEST_STATS_SQL).first<ContestStat>(),
     d1.prepare(STUCK_CONTESTS_SQL).bind(MAX_LISTED).all<StuckContest>(),
     d1.prepare(FAILING_HANDLES_SQL).bind(MAX_LISTED).all<FailingHandle>(),
     d1.prepare(WRITE_ACTIVITY_SQL).bind(since).first<{ rows_updated: number }>(),
     d1.prepare(RECENT_NOTICES_SQL).bind(since).all<RecentNotice>(),
+    loadLiveness(d1, now),
   ]);
 
+  const livenessFaults = collectLivenessFaults(liveness, now);
+
   const lines: string[] = [`DIU ACM sync digest — ${new Date(now * 1000).toISOString().slice(0, 16).replace("T", " ")} UTC`, ""];
+
+  // First, deliberately: a job that is not running makes every count below it
+  // meaningless, and the reader should know that before reading them.
+  lines.push(...livenessLines(liveness, now), "");
 
   lines.push("HANDLES");
   const handleRows = handles.results ?? [];
@@ -152,14 +196,30 @@ export const buildDigest = async (d1: D1Database, now: number): Promise<string> 
     noticeRows.length === 0 &&
     stuckRows.length === 0 &&
     failingRows.length === 0 &&
+    livenessFaults.length === 0 &&
     (activity?.rows_updated ?? 0) >= 0;
   lines.push("", healthy ? "No action needed." : "Sections above marked 'needing attention' are worth a look.");
 
-  return lines.join("\n");
+  return { body: lines.join("\n"), faults: livenessFaults };
 };
 
-export const runDigest = async (env: Bindings, now = Math.floor(Date.now() / 1000)): Promise<void> => {
-  const body = await buildDigest(env.DB, now);
+/**
+ * Sends the digest and hands back whatever the liveness check found, for the
+ * dispatcher to record and mail on its own cooldown.
+ *
+ * Those faults deliberately get their own alert rather than living only in the
+ * digest section: a job that has stopped firing should not have to wait for
+ * someone to read to the top of tomorrow's mail.
+ */
+export const runDigest = async (
+  env: Bindings,
+  now = Math.floor(Date.now() / 1000),
+): Promise<{ faults: Notice[] }> => {
+  const { body, faults } = await buildDigest(env.DB, now);
   console.log("digest\n" + body);
   await sendMail(env, { subject: "[DIU ACM] Daily sync digest", text: body });
+  // Once a day, on the job least likely to be starved of time, and after the
+  // mail is away so a slow delete can never cost the digest itself.
+  await pruneRuns(env.DB, now);
+  return { faults };
 };

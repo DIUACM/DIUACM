@@ -8,6 +8,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   manage_trackers: 'Manage trackers',
   manage_gallery: 'Manage gallery',
   manage_blog: 'Manage blog',
+  manage_system: 'View system health',
 }
 
 export const PERMISSIONS = Object.keys(PERMISSION_LABELS) as Permission[]

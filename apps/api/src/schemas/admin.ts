@@ -274,3 +274,21 @@ export const adminRanklistEventBulkSchema = z.object({
   // Required by "set-weight"; the route rejects the combination when missing.
   weight: z.number().min(0).max(1).optional(),
 });
+
+// ---------------------------------------------------------------------------
+// System health
+// ---------------------------------------------------------------------------
+
+export const adminSystemRunsQuery = z.object({
+  ...pageFields,
+  // Unconstrained rather than z.enum(JOB_NAMES): the ledger keeps runs under
+  // whatever name recorded them, so filtering has to stay able to reach rows
+  // written by a job that has since been renamed or removed.
+  job: z.string().trim().min(1).max(64).optional(),
+  status: z.enum(["ok", "degraded", "crashed"]).optional(),
+});
+
+// Fault keys are structured ("codeforces:paging-truncated"), not numeric ids.
+export const adminNoticeKeyParam = z.object({
+  key: z.string().trim().min(1).max(200),
+});

@@ -62,7 +62,8 @@ type NoticeRow = {
   occurrences: number;
 };
 
-const isoish = (epochSeconds: number): string =>
+/** "2027-03-04 09:15 UTC" — compact, unambiguous, and readable in a plain-text mail. */
+export const isoish = (epochSeconds: number): string =>
   new Date(epochSeconds * 1000).toISOString().replace("T", " ").slice(0, 16) + " UTC";
 
 /** Escapes the four characters that matter inside the <pre> body. */

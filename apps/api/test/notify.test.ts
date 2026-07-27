@@ -426,7 +426,7 @@ describe("buildDigest", () => {
       "INSERT INTO user_handles (user_id, type, handle, last_synced_at) VALUES (1, 'codeforces', 'alice', ?)",
     ).run(NOW - 600);
 
-    const body = await buildDigest(d1Shim(db), NOW);
+    const { body } = await buildDigest(d1Shim(db), NOW);
 
     expect(body).toContain("codeforces");
     expect(body).toContain("1 total");
@@ -449,7 +449,7 @@ describe("buildDigest", () => {
       "INSERT INTO admin_notices (key, first_seen_at, last_seen_at, occurrences) VALUES ('vjudge:blocked', ?, ?, 4)",
     ).run(NOW - 7200, NOW - 3600);
 
-    const body = await buildDigest(d1Shim(db), NOW);
+    const { body } = await buildDigest(d1Shim(db), NOW);
 
     expect(body).toContain("atcoder/ghost — HTTP 500");
     expect(body).toContain("event 7");
@@ -459,6 +459,7 @@ describe("buildDigest", () => {
   });
 
   it("works on an empty database", async () => {
-    await expect(buildDigest(d1Shim(db), NOW)).resolves.toContain("none registered");
+    const { body } = await buildDigest(d1Shim(db), NOW);
+    expect(body).toContain("none registered");
   });
 });
