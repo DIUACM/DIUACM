@@ -19,6 +19,15 @@ import type { AppEnv, Bindings } from "./types";
 const app = new Hono<AppEnv>();
 
 app.use("*", logger());
+
+// Public R2-backed files are embedded by the separately hosted web app. This
+// middleware must be registered before secureHeaders() so its response header
+// is applied last and overrides the default CORP value of "same-origin".
+app.use("/files/*", async (c, next) => {
+  await next();
+  c.header("Cross-Origin-Resource-Policy", "cross-origin");
+});
+
 app.use("*", secureHeaders());
 
 // Browsers may only call the API from the origins listed in CORS_ORIGINS

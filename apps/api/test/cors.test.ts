@@ -33,5 +33,20 @@ describe("CORS", () => {
   it("sets security headers", async () => {
     const res = await app.request("/health", {}, { CORS_ORIGINS: WEB_ORIGIN });
     expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.headers.get("Cross-Origin-Resource-Policy")).toBe("same-origin");
+  });
+
+  it("allows public files to be embedded cross-origin", async () => {
+    const res = await app.request(
+      "/files/missing.jpg",
+      {},
+      {
+        CORS_ORIGINS: WEB_ORIGIN,
+        BUCKET: { get: async () => null },
+      },
+    );
+
+    expect(res.status).toBe(404);
+    expect(res.headers.get("Cross-Origin-Resource-Policy")).toBe("cross-origin");
   });
 });
