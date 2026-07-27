@@ -82,8 +82,7 @@ one `user.status` call — the only endpoint that exposes practice submissions, 
 upsolves.
 
 The queue therefore drains in ~45 min and then idles until the oldest handle ages past the
-window, so each account is re-read roughly every 2 hours. `POST /admin/sync/codeforces`
-ignores the window, since asking for a sync by hand means now.
+window, so each account is re-read roughly every 2 hours.
 
 - **In scope**: published, finished events whose `event_link` is a public Codeforces
   contest and which belong to at least one ranklist with `is_locked = 0`. Locking a
@@ -96,8 +95,8 @@ ignores the window, since asking for a sync by hand means now.
 - Gym and group contests are **not** synced — the Codeforces API keeps them private
   ("You have to be authenticated to use this method").
 
-`POST /admin/sync/codeforces` (`manage_events`) runs one batch on demand. Locally,
-`pnpm dev` passes `--test-scheduled`, so the trigger can be fired by hand:
+There is no HTTP trigger — the cron is the only entry point. Locally, `pnpm dev` passes
+`--test-scheduled`, so a tick can be fired by hand:
 
 ```bash
 curl "http://localhost:8787/__scheduled?cron=*/15+*+*+*+*"
