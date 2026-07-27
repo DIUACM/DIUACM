@@ -1,4 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { runBulkInChunks } from '../bulk'
 import { api, unwrap } from '../client'
 import type { components } from '../schema'
 import type { BulkPublishAction } from '../types'
@@ -86,9 +87,11 @@ export function useAdminDeleteBlogPost() {
 export function useAdminBulkBlogPosts() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (body: { ids: number[]; action: BulkPublishAction }) =>
-      unwrap(api.POST('/admin/blog/bulk', { body })),
-    onSuccess: () => {
+    mutationFn: ({ ids, action }: { ids: number[]; action: BulkPublishAction }) =>
+      runBulkInChunks(ids, (chunk) =>
+        unwrap(api.POST('/admin/blog/bulk', { body: { ids: chunk, action } })),
+      ),
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'blog'] })
       void queryClient.invalidateQueries({ queryKey: ['blog'] })
     },

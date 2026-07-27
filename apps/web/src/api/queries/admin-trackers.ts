@@ -1,4 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { runBulkInChunks } from '../bulk'
 import { api, unwrap } from '../client'
 import type { components } from '../schema'
 import type { BulkPublishAction } from '../types'
@@ -167,9 +168,11 @@ export function useAdminDeleteTracker() {
 export function useAdminBulkTrackers() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (body: { ids: number[]; action: BulkPublishAction }) =>
-      unwrap(api.POST('/admin/trackers/bulk', { body })),
-    onSuccess: () => {
+    mutationFn: ({ ids, action }: { ids: number[]; action: BulkPublishAction }) =>
+      runBulkInChunks(ids, (chunk) =>
+        unwrap(api.POST('/admin/trackers/bulk', { body: { ids: chunk, action } })),
+      ),
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'trackers'] })
       void queryClient.invalidateQueries({ queryKey: ['trackers'] })
     },
@@ -182,14 +185,16 @@ export type RanklistBulkAction =
 export function useAdminBulkRanklists(trackerId: number) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (body: { ids: number[]; action: RanklistBulkAction }) =>
-      unwrap(
-        api.POST('/admin/trackers/{id}/ranklists/bulk', {
-          params: { path: { id: trackerId } },
-          body,
-        }),
+    mutationFn: ({ ids, action }: { ids: number[]; action: RanklistBulkAction }) =>
+      runBulkInChunks(ids, (chunk) =>
+        unwrap(
+          api.POST('/admin/trackers/{id}/ranklists/bulk', {
+            params: { path: { id: trackerId } },
+            body: { ids: chunk, action },
+          }),
+        ),
       ),
-    onSuccess: () => {
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'trackers', trackerId] })
       void queryClient.invalidateQueries({ queryKey: ['admin', 'ranklists'] })
       void queryClient.invalidateQueries({ queryKey: ['trackers'] })
@@ -289,18 +294,24 @@ export function useAdminRemoveRanklistEvent(ranklistId: number) {
 export function useAdminBulkRanklistEvents(ranklistId: number) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (body: {
+    mutationFn: ({
+      ids,
+      action,
+      weight,
+    }: {
       ids: number[]
       action: 'detach' | 'set-weight'
       weight?: number
     }) =>
-      unwrap(
-        api.POST('/admin/ranklists/{id}/events/bulk', {
-          params: { path: { id: ranklistId } },
-          body,
-        }),
+      runBulkInChunks(ids, (chunk) =>
+        unwrap(
+          api.POST('/admin/ranklists/{id}/events/bulk', {
+            params: { path: { id: ranklistId } },
+            body: { ids: chunk, action, weight },
+          }),
+        ),
       ),
-    onSuccess: () => {
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'ranklists', ranklistId] })
       void queryClient.invalidateQueries({ queryKey: ['trackers'] })
     },
@@ -341,13 +352,15 @@ export function useAdminBulkRemoveRanklistUsers(ranklistId: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (ids: number[]) =>
-      unwrap(
-        api.POST('/admin/ranklists/{id}/users/bulk-remove', {
-          params: { path: { id: ranklistId } },
-          body: { ids },
-        }),
+      runBulkInChunks(ids, (chunk) =>
+        unwrap(
+          api.POST('/admin/ranklists/{id}/users/bulk-remove', {
+            params: { path: { id: ranklistId } },
+            body: { ids: chunk },
+          }),
+        ),
       ),
-    onSuccess: () => {
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'ranklists', ranklistId] })
       void queryClient.invalidateQueries({ queryKey: ['trackers'] })
     },

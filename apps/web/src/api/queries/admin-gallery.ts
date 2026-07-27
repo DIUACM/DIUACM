@@ -1,4 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { runBulkInChunks } from '../bulk'
 import { api, unwrap } from '../client'
 import type { components } from '../schema'
 import type { BulkPublishAction } from '../types'
@@ -88,9 +89,11 @@ export function useAdminDeleteGalleryAlbum() {
 export function useAdminBulkGalleryAlbums() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (body: { ids: number[]; action: BulkPublishAction }) =>
-      unwrap(api.POST('/admin/gallery/bulk', { body })),
-    onSuccess: () => {
+    mutationFn: ({ ids, action }: { ids: number[]; action: BulkPublishAction }) =>
+      runBulkInChunks(ids, (chunk) =>
+        unwrap(api.POST('/admin/gallery/bulk', { body: { ids: chunk, action } })),
+      ),
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'gallery'] })
       void queryClient.invalidateQueries({ queryKey: ['gallery'] })
     },
@@ -182,13 +185,15 @@ export function useAdminBulkRemoveGalleryMedia(albumId: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (ids: number[]) =>
-      unwrap(
-        api.POST('/admin/gallery/{id}/media/bulk-remove', {
-          params: { path: { id: albumId } },
-          body: { ids },
-        }),
+      runBulkInChunks(ids, (chunk) =>
+        unwrap(
+          api.POST('/admin/gallery/{id}/media/bulk-remove', {
+            params: { path: { id: albumId } },
+            body: { ids: chunk },
+          }),
+        ),
       ),
-    onSuccess: () => {
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'gallery'] })
       void queryClient.invalidateQueries({ queryKey: ['gallery'] })
     },

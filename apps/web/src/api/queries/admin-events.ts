@@ -1,4 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { runBulkInChunks } from '../bulk'
 import { api, unwrap } from '../client'
 import type { components } from '../schema'
 import type { BulkPublishAction, EventType, ParticipationScope } from '../types'
@@ -99,9 +100,11 @@ export function useAdminDeleteEvent() {
 export function useAdminBulkEvents() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (body: { ids: number[]; action: BulkPublishAction }) =>
-      unwrap(api.POST('/admin/events/bulk', { body })),
-    onSuccess: () => {
+    mutationFn: ({ ids, action }: { ids: number[]; action: BulkPublishAction }) =>
+      runBulkInChunks(ids, (chunk) =>
+        unwrap(api.POST('/admin/events/bulk', { body: { ids: chunk, action } })),
+      ),
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'events'] })
       void queryClient.invalidateQueries({ queryKey: ['events'] })
     },
@@ -147,13 +150,15 @@ export function useAdminBulkRemoveEventMedia(eventId: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (ids: number[]) =>
-      unwrap(
-        api.POST('/admin/events/{id}/media/bulk-remove', {
-          params: { path: { id: eventId } },
-          body: { ids },
-        }),
+      runBulkInChunks(ids, (chunk) =>
+        unwrap(
+          api.POST('/admin/events/{id}/media/bulk-remove', {
+            params: { path: { id: eventId } },
+            body: { ids: chunk },
+          }),
+        ),
       ),
-    onSuccess: () => {
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'events', eventId] })
     },
   })
@@ -196,13 +201,15 @@ export function useAdminBulkRemoveAttendance(eventId: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (ids: number[]) =>
-      unwrap(
-        api.POST('/admin/events/{id}/attendance/bulk-remove', {
-          params: { path: { id: eventId } },
-          body: { ids },
-        }),
+      runBulkInChunks(ids, (chunk) =>
+        unwrap(
+          api.POST('/admin/events/{id}/attendance/bulk-remove', {
+            params: { path: { id: eventId } },
+            body: { ids: chunk },
+          }),
+        ),
       ),
-    onSuccess: () => {
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['events'] })
       void queryClient.invalidateQueries({ queryKey: ['admin', 'events'] })
     },
@@ -252,13 +259,15 @@ export function useAdminBulkRemovePerformance(eventId: number) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (ids: number[]) =>
-      unwrap(
-        api.POST('/admin/events/{id}/performance/bulk-remove', {
-          params: { path: { id: eventId } },
-          body: { ids },
-        }),
+      runBulkInChunks(ids, (chunk) =>
+        unwrap(
+          api.POST('/admin/events/{id}/performance/bulk-remove', {
+            params: { path: { id: eventId } },
+            body: { ids: chunk },
+          }),
+        ),
       ),
-    onSuccess: () => {
+    onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ['events'] })
       void queryClient.invalidateQueries({ queryKey: ['admin', 'events'] })
       void queryClient.invalidateQueries({ queryKey: ['trackers'] })
