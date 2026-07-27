@@ -16,7 +16,10 @@
       // hourly and slower ones 15 min. This job needs seconds, not minutes.
       "*/15 * * * *",
       // AtCoder, offset to :05/:20/:35/:50 so the two never start together.
-      "5,20,35,50 * * * *"
+      "5,20,35,50 * * * *",
+      // VJudge at :10/:25/:40/:55 — a batch of contests, not handles (see
+      // src/sync/vjudge.ts), completing the 5-minute stagger.
+      "10,25,40,55 * * * *"
     ]
   },
   "d1_databases": [

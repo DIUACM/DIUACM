@@ -17,6 +17,11 @@ import type { HandleType } from "../schemas/handles";
 //
 // Everything judge-specific lives behind `SyncPlatform` (see codeforces.ts and
 // atcoder.ts). This file owns the batching, throttling, cursor, and writes.
+//
+// VJudge does not fit that shape — one call there returns every participant of
+// one contest, so its unit of work is a contest, not a handle. It runs its own
+// loop in vjudge.ts and borrows the pieces that are genuinely shared:
+// `computePerformance`, `toSyncEvent`, `throttle`, and the write SQL.
 // ---------------------------------------------------------------------------
 
 /**
@@ -236,7 +241,7 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
  * rather than sleeping between handles is what keeps a user with a long
  * submission history — several pages in a row — from tripping the rate limit.
  */
-const throttle = (fetcher: typeof fetch, delayMs: number): typeof fetch => {
+export const throttle = (fetcher: typeof fetch, delayMs: number): typeof fetch => {
   let previousCallAt = 0;
   return (async (...args: Parameters<typeof fetch>) => {
     const wait = previousCallAt + delayMs - Date.now();

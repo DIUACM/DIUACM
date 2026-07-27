@@ -71,25 +71,36 @@ covers the public surface — browse `/docs` (Scalar) for the complete, always-c
 ## Scheduled solve/upsolve sync
 
 Cron Triggers keep `event_performance` current from the judges, so ranklist scores no
-longer depend on an admin typing numbers in. `src/sync/runner.ts` owns everything
-platform-neutral — batching, throttling, the cursor, the writes — and each judge plugs in a
-`SyncPlatform` adapter. `src/sync/index.ts` dispatches on the cron expression, so every
-platform gets its own cadence:
+longer depend on an admin typing numbers in. `src/sync/index.ts` dispatches on the cron
+expression, so every platform gets its own cadence:
 
-| Platform | Cron | Adapter | Source |
+| Platform | Cron | Unit of work | Source |
 |---|---|---|---|
-| Codeforces | `*/15 * * * *` | `src/sync/codeforces.ts` | `codeforces.com/api/user.status` |
-| AtCoder | `5,20,35,50 * * * *` | `src/sync/atcoder.ts` | AtCoder Problems (kenkoooo) |
+| Codeforces | `*/15 * * * *` | handle | `codeforces.com/api/user.status` |
+| AtCoder | `5,20,35,50 * * * *` | handle | AtCoder Problems (kenkoooo) |
+| VJudge | `10,25,40,55 * * * *` | contest | `vjudge.net/contest/rank/single/<id>` |
 
-The two are offset so they never start in the same minute. VJudge is not implemented yet;
-it becomes a third adapter, not a third copy of the runner.
+The three are offset by 5 minutes so no two start in the same minute.
 
-Per tick a platform takes its next 100 handles, least recently synced first and skipping
-any read within the last **2 hours** (`user_handles.last_synced_at`, stamped even on
-failure so a dead handle can't wedge the queue). One API call covers a user across *every*
-tracked contest, so the unit of work is a handle, not an (event, user) pair. A queue of
-~275 handles drains in ~45 min and then idles until the oldest ages past the window, so
-each account is re-read roughly every 2 hours.
+**Codeforces and AtCoder are handle-driven.** One API call covers a user across *every*
+tracked contest, so the unit of work is a handle, not an (event, user) pair.
+`src/sync/runner.ts` owns everything platform-neutral — batching, throttling, the cursor,
+the writes — and each judge plugs in a `SyncPlatform` adapter (`src/sync/codeforces.ts`,
+`src/sync/atcoder.ts`). Per tick a platform takes its next 100 handles, least recently
+synced first and skipping any read within the last **2 hours**
+(`user_handles.last_synced_at`, stamped even on failure so a dead handle can't wedge the
+queue). A queue of ~275 handles drains in ~45 min and then idles until the oldest ages past
+the window, so each account is re-read roughly every 2 hours.
+
+**VJudge is contest-driven**, and so does not fit that shape: one call there returns every
+participant of one contest at once. It runs its own loop in `src/sync/vjudge.ts` and
+borrows from the runner only what is genuinely shared — `computePerformance`,
+`toSyncEvent`, `throttle`, and the write SQL. Per tick it takes 40 contests, least recently
+synced first, against the same 2-hour window, held in `event_sync_state` (a separate table
+because `GET /events/:id` returns every `events` column bar `event_password`). ~120 events
+drain in three ticks.
+
+Both halves share the same scope and counting rules:
 
 - **In scope**: published, finished events whose `event_link` the platform claims, and
   which belong to at least one ranklist with `is_locked = 0`. Locking a ranklist at the end
@@ -121,6 +132,24 @@ counts as in-contest when it lands inside the contest's real start + duration. P
 > forever and never set `last_sync_error`, and unlike Codeforces there is no validation
 > when the handle is entered either.
 
+**VJudge.** There is no documented API, but `/contest/rank/single/<id>` — the endpoint the
+standings page itself calls — is public JSON and needs no session, even for the
+password-protected contests the club runs. It returns every participant plus their whole
+submission history for that contest, live rows and upsolves together (4–19 KB), which is
+what makes one call per contest enough and why this half is contest-driven. In-contest is
+`secondsSinceBegin <= length`; only status `1` counts as accepted. Participants are matched
+to users by lowercased `user_handles.handle`, and unknown names — usually 5–20% of a
+standings page — are ignored. VJudge is the one platform where a user may hold several
+handles, so their submissions are merged before counting; otherwise the second handle's
+upsert would overwrite the first on the `(event_id, user_id)` row.
+
+> **Watch out.** VJudge sits behind Cloudflare bot protection: a request with an empty
+> `User-Agent` is answered with `403` and `cf-mitigated: challenge`. Workers' `fetch` sends
+> none by default, so the `User-Agent` in `src/lib/vjudge.ts` is load bearing. A `403` is
+> treated as a rate limit and stops the whole batch, because the next contest would be
+> answered the same way. Separately, a contest id that does not exist or is not public
+> comes back as **HTTP 200 with an empty body**, not a 404.
+
 There is no HTTP trigger — the crons are the only entry point. Locally, `pnpm dev` passes
 `--test-scheduled`, so a tick can be fired by hand:
 
@@ -130,6 +159,10 @@ curl "http://localhost:8787/__scheduled?cron=*/15+*+*+*+*"
 
 ```bash
 curl "http://localhost:8787/__scheduled?cron=5,20,35,50+*+*+*+*"
+```
+
+```bash
+curl "http://localhost:8787/__scheduled?cron=10,25,40,55+*+*+*+*"
 ```
 
 ### Platform budget
@@ -143,6 +176,10 @@ is picked up next tick.
 
 Measured per handle: Codeforces ~2.9 ms of parse CPU (1.5 calls, ~0.5 MB), AtCoder ~0.3 ms
 (1 call, ~30 KB). Across both platforms that is roughly 1% of the included monthly CPU.
+
+VJudge is far cheaper per user because it is contest-driven: a 40-contest tick is 40
+subrequests and ~0.5 MB total, and one pass over ~120 events covers all ~350 handles —
+against the ~480 calls the same work would cost handle-first.
 
 Writes are chunked (`WRITE_CHUNK_SIZE`) because the score triggers amplify one upsert into
 a whole-ranklist re-rank, and an unbounded transaction can approach D1's 30 s query limit.

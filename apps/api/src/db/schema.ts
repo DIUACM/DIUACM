@@ -182,6 +182,23 @@ export const eventPerformance = sqliteTable(
   ],
 );
 
+/**
+ * Cursor for the contest-driven half of the scheduled sync (src/sync/vjudge.ts),
+ * which walks events rather than handles and so cannot use
+ * `user_handles.last_synced_at`. Kept out of `events` because
+ * `GET /events/:id` returns every column bar `event_password`.
+ *
+ * Stamped on every attempt, successful or not, so one dead contest can't block
+ * the queue; `last_sync_error` holds the last failure and is cleared on success.
+ */
+export const eventSyncState = sqliteTable("event_sync_state", {
+  eventId: integer("event_id")
+    .primaryKey()
+    .references(() => events.id, { onDelete: "cascade" }),
+  lastSyncedAt: integer("last_synced_at"),
+  lastSyncError: text("last_sync_error"),
+});
+
 export const trackers = sqliteTable(
   "trackers",
   {
@@ -498,6 +515,7 @@ export type NewEvent = typeof events.$inferInsert;
 export type EventMedia = typeof eventMedia.$inferSelect;
 export type EventAttendance = typeof eventAttendance.$inferSelect;
 export type EventPerformance = typeof eventPerformance.$inferSelect;
+export type EventSyncState = typeof eventSyncState.$inferSelect;
 export type Tracker = typeof trackers.$inferSelect;
 export type NewTracker = typeof trackers.$inferInsert;
 export type Ranklist = typeof ranklists.$inferSelect;
