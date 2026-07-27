@@ -79,7 +79,7 @@ platform gets its own cadence:
 | Platform | Cron | Adapter | Source |
 |---|---|---|---|
 | Codeforces | `*/15 * * * *` | `src/sync/codeforces.ts` | `codeforces.com/api/user.status` |
-| AtCoder | `5-59/15 * * * *` | `src/sync/atcoder.ts` | AtCoder Problems (kenkoooo) |
+| AtCoder | `5,20,35,50 * * * *` | `src/sync/atcoder.ts` | AtCoder Problems (kenkoooo) |
 
 The two are offset so they never start in the same minute. VJudge is not implemented yet;
 it becomes a third adapter, not a third copy of the runner.
@@ -129,7 +129,7 @@ curl "http://localhost:8787/__scheduled?cron=*/15+*+*+*+*"
 ```
 
 ```bash
-curl "http://localhost:8787/__scheduled?cron=5-59/15+*+*+*+*"
+curl "http://localhost:8787/__scheduled?cron=5,20,35,50+*+*+*+*"
 ```
 
 ### Platform budget

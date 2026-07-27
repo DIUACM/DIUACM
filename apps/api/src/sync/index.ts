@@ -13,8 +13,8 @@ import { runSync, type SyncPlatform } from "./runner";
 // ---------------------------------------------------------------------------
 
 export const CODEFORCES_CRON = "*/15 * * * *";
-/** :05, :20, :35, :50 — the range-step form avoids commas in the cron string. */
-export const ATCODER_CRON = "5-59/15 * * * *";
+/** :05, :20, :35, :50 — offset from Codeforces to avoid overlapping writes. */
+export const ATCODER_CRON = "5,20,35,50 * * * *";
 
 const PLATFORMS: Record<string, SyncPlatform> = {
   [CODEFORCES_CRON]: codeforcesPlatform,
