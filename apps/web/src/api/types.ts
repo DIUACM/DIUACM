@@ -39,3 +39,6 @@ export type BlogPostListItem = Schemas['BlogPostListItem']
 export type BlogPostDetail = Schemas['BlogPostDetail']
 
 export type PaginationMeta = Schemas['PaginationMeta']
+
+/** Shared by every `/admin/…/bulk` endpoint on a publishable resource. */
+export type BulkPublishAction = Schemas['AdminBulkPublishRequest']['action']

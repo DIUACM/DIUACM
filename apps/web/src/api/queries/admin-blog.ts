@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, unwrap } from '../client'
 import type { components } from '../schema'
+import type { BulkPublishAction } from '../types'
 import type { PublishStatus } from './admin-events'
 
 export type AdminBlogPost = components['schemas']['AdminBlogPost']
@@ -75,6 +76,18 @@ export function useAdminDeleteBlogPost() {
   return useMutation({
     mutationFn: (id: number) =>
       unwrap(api.DELETE('/admin/blog/{id}', { params: { path: { id } } })),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'blog'] })
+      void queryClient.invalidateQueries({ queryKey: ['blog'] })
+    },
+  })
+}
+
+export function useAdminBulkBlogPosts() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { ids: number[]; action: BulkPublishAction }) =>
+      unwrap(api.POST('/admin/blog/bulk', { body })),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'blog'] })
       void queryClient.invalidateQueries({ queryKey: ['blog'] })

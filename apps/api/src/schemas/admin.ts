@@ -244,3 +244,33 @@ export const adminReorderSchema = z.object({
     .min(1)
     .max(200),
 });
+
+// ---------------------------------------------------------------------------
+// Bulk actions
+// ---------------------------------------------------------------------------
+
+// D1 allows at most 100 bound parameters per statement. Some scoped bulk
+// queries bind an owning resource id as well, so leave room below that ceiling.
+const bulkIdsField = z.array(z.number().int().positive()).min(1).max(90);
+
+// Bulk endpoints whose only action is removal take the ids alone.
+export const adminBulkIdsSchema = z.object({ ids: bulkIdsField });
+
+// Shared by every top-level publishable resource (events, trackers, gallery
+// albums, blog posts).
+export const adminBulkPublishSchema = z.object({
+  ids: bulkIdsField,
+  action: z.enum(["publish", "draft", "delete"]),
+});
+
+export const adminRanklistBulkSchema = z.object({
+  ids: bulkIdsField,
+  action: z.enum(["publish", "draft", "lock", "unlock", "delete"]),
+});
+
+export const adminRanklistEventBulkSchema = z.object({
+  ids: bulkIdsField,
+  action: z.enum(["detach", "set-weight"]),
+  // Required by "set-weight"; the route rejects the combination when missing.
+  weight: z.number().min(0).max(1).optional(),
+});

@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, unwrap } from '../client'
 import type { components } from '../schema'
+import type { BulkPublishAction } from '../types'
 import type { PublishStatus } from './admin-events'
 
 export type AdminTracker = components['schemas']['AdminTracker']
@@ -163,6 +164,39 @@ export function useAdminDeleteTracker() {
   })
 }
 
+export function useAdminBulkTrackers() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { ids: number[]; action: BulkPublishAction }) =>
+      unwrap(api.POST('/admin/trackers/bulk', { body })),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'trackers'] })
+      void queryClient.invalidateQueries({ queryKey: ['trackers'] })
+    },
+  })
+}
+
+export type RanklistBulkAction =
+  components['schemas']['AdminRanklistBulkRequest']['action']
+
+export function useAdminBulkRanklists(trackerId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { ids: number[]; action: RanklistBulkAction }) =>
+      unwrap(
+        api.POST('/admin/trackers/{id}/ranklists/bulk', {
+          params: { path: { id: trackerId } },
+          body,
+        }),
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'trackers', trackerId] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'ranklists'] })
+      void queryClient.invalidateQueries({ queryKey: ['trackers'] })
+    },
+  })
+}
+
 export interface AdminRanklistInput {
   keyword: string
   description?: string
@@ -252,6 +286,27 @@ export function useAdminRemoveRanklistEvent(ranklistId: number) {
   })
 }
 
+export function useAdminBulkRanklistEvents(ranklistId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: {
+      ids: number[]
+      action: 'detach' | 'set-weight'
+      weight?: number
+    }) =>
+      unwrap(
+        api.POST('/admin/ranklists/{id}/events/bulk', {
+          params: { path: { id: ranklistId } },
+          body,
+        }),
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'ranklists', ranklistId] })
+      void queryClient.invalidateQueries({ queryKey: ['trackers'] })
+    },
+  })
+}
+
 export function useAdminAddRanklistUser(ranklistId: number) {
   const queryClient = useQueryClient()
   return useMutation({
@@ -278,6 +333,23 @@ export function useAdminRemoveRanklistUser(ranklistId: number) {
       ),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'ranklists', ranklistId] })
+    },
+  })
+}
+
+export function useAdminBulkRemoveRanklistUsers(ranklistId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: number[]) =>
+      unwrap(
+        api.POST('/admin/ranklists/{id}/users/bulk-remove', {
+          params: { path: { id: ranklistId } },
+          body: { ids },
+        }),
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'ranklists', ranklistId] })
+      void queryClient.invalidateQueries({ queryKey: ['trackers'] })
     },
   })
 }

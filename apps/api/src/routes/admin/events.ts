@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
@@ -13,6 +13,8 @@ import { validate } from "../../lib/validator";
 import { requirePermission } from "../../middleware/auth";
 import {
   adminAttendanceAddSchema,
+  adminBulkIdsSchema,
+  adminBulkPublishSchema,
   adminEventCreateSchema,
   adminEventsListQuery,
   adminEventUpdateSchema,
@@ -170,6 +172,46 @@ adminEventRoutes.delete("/:id", manageEvents, async (c) => {
   return c.json({ ok: true });
 });
 
+// Publish, unpublish, or delete a batch of events. Deletes cascade the same
+// rows as DELETE /:id; their stored media objects go best-effort afterwards.
+adminEventRoutes.post("/bulk", manageEvents, validate("json", adminBulkPublishSchema), async (c) => {
+  const { ids, action } = c.req.valid("json");
+  const db = getDb(c.env.DB);
+
+  if (action === "delete") {
+    const media = await db
+      .select({ key: eventMedia.key })
+      .from(eventMedia)
+      .where(inArray(eventMedia.eventId, ids));
+
+    const deleted = await db
+      .delete(events)
+      .where(inArray(events.id, ids))
+      .returning({ id: events.id });
+
+    const keys = media.map((item) => item.key);
+    if (keys.length > 0) {
+      try {
+        await c.env.BUCKET.delete(keys);
+      } catch (err) {
+        console.error("R2 bulk delete failed for event media", keys, err);
+      }
+    }
+
+    return c.json({ ok: true, affected: deleted.length });
+  }
+
+  const updated = await db
+    .update(events)
+    .set({
+      status: action === "publish" ? "published" : "draft",
+      updatedAt: Math.floor(Date.now() / 1000),
+    })
+    .where(inArray(events.id, ids))
+    .returning({ id: events.id });
+  return c.json({ ok: true, affected: updated.length });
+});
+
 // ---------------------------------------------------------------------------
 // Media — image uploads only (multipart field "image"); appended last.
 // ---------------------------------------------------------------------------
@@ -228,6 +270,34 @@ adminEventRoutes.delete("/:id/media/:mediaId", manageEvents, async (c) => {
   return c.json({ ok: true });
 });
 
+adminEventRoutes.post(
+  "/:id/media/bulk-remove",
+  manageEvents,
+  validate("json", adminBulkIdsSchema),
+  async (c) => {
+    const id = requireEventId(c);
+    const { ids } = c.req.valid("json");
+    const db = getDb(c.env.DB);
+    await loadEvent(db, id);
+
+    const removed = await db
+      .delete(eventMedia)
+      .where(and(eq(eventMedia.eventId, id), inArray(eventMedia.id, ids)))
+      .returning({ key: eventMedia.key });
+
+    const keys = removed.map((item) => item.key);
+    if (keys.length > 0) {
+      try {
+        await c.env.BUCKET.delete(keys);
+      } catch (err) {
+        console.error("R2 bulk delete failed for event media", keys, err);
+      }
+    }
+
+    return c.json({ ok: true, affected: removed.length });
+  },
+);
+
 // ---------------------------------------------------------------------------
 // Attendance — admins can add/remove anyone, ignoring password and window.
 // ---------------------------------------------------------------------------
@@ -250,6 +320,26 @@ adminEventRoutes.post("/:id/attendance", manageAttendance, validate("json", admi
 
   return c.json({ ok: true, attendedAt: row.attendedAt }, 201);
 });
+
+// `ids` are user ids. Strict-attendance ranklists recalculate via the triggers.
+adminEventRoutes.post(
+  "/:id/attendance/bulk-remove",
+  manageAttendance,
+  validate("json", adminBulkIdsSchema),
+  async (c) => {
+    const id = requireEventId(c);
+    const { ids } = c.req.valid("json");
+    const db = getDb(c.env.DB);
+    await loadEvent(db, id);
+
+    const removed = await db
+      .delete(eventAttendance)
+      .where(and(eq(eventAttendance.eventId, id), inArray(eventAttendance.userId, ids)))
+      .returning({ id: eventAttendance.id });
+
+    return c.json({ ok: true, affected: removed.length });
+  },
+);
 
 adminEventRoutes.delete("/:id/attendance/:userId", manageAttendance, async (c) => {
   const id = requireEventId(c);
@@ -301,6 +391,26 @@ adminEventRoutes.put(
 
     const origin = new URL(c.req.url).origin;
     return c.json({ position, solveCount, upsolveCount, user: toUserSummary(user, origin) });
+  },
+);
+
+// `ids` are user ids. Ranklist scores and ranks recalculate via the triggers.
+adminEventRoutes.post(
+  "/:id/performance/bulk-remove",
+  manageEvents,
+  validate("json", adminBulkIdsSchema),
+  async (c) => {
+    const id = requireEventId(c);
+    const { ids } = c.req.valid("json");
+    const db = getDb(c.env.DB);
+    await loadEvent(db, id);
+
+    const removed = await db
+      .delete(eventPerformance)
+      .where(and(eq(eventPerformance.eventId, id), inArray(eventPerformance.userId, ids)))
+      .returning({ id: eventPerformance.id });
+
+    return c.json({ ok: true, affected: removed.length });
   },
 );
 

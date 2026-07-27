@@ -12,6 +12,8 @@ import { fileUrlFor } from "../../lib/user-shape";
 import { validate } from "../../lib/validator";
 import { requirePermission } from "../../middleware/auth";
 import {
+  adminBulkIdsSchema,
+  adminBulkPublishSchema,
   adminGalleryAlbumCreateSchema,
   adminGalleryAlbumUpdateSchema,
   adminGalleryListQuery,
@@ -189,6 +191,46 @@ adminGalleryRoutes.post("/reorder", manageGallery, validate("json", adminReorder
   return c.json({ ok: true });
 });
 
+// Publish, unpublish, or delete a batch of albums. Deletes cascade their media
+// rows (FK); stored objects follow best-effort, same as DELETE /:id.
+adminGalleryRoutes.post("/bulk", manageGallery, validate("json", adminBulkPublishSchema), async (c) => {
+  const { ids, action } = c.req.valid("json");
+  const db = getDb(c.env.DB);
+
+  if (action === "delete") {
+    const media = await db
+      .select({ key: galleryMedia.key })
+      .from(galleryMedia)
+      .where(inArray(galleryMedia.albumId, ids));
+
+    const deleted = await db
+      .delete(galleryAlbums)
+      .where(inArray(galleryAlbums.id, ids))
+      .returning({ id: galleryAlbums.id });
+
+    const keys = media.map((item) => item.key);
+    if (keys.length > 0) {
+      try {
+        await c.env.BUCKET.delete(keys);
+      } catch (err) {
+        console.error("R2 bulk delete failed for gallery media", keys, err);
+      }
+    }
+
+    return c.json({ ok: true, affected: deleted.length });
+  }
+
+  const updated = await db
+    .update(galleryAlbums)
+    .set({
+      status: action === "publish" ? "published" : "draft",
+      updatedAt: Math.floor(Date.now() / 1000),
+    })
+    .where(inArray(galleryAlbums.id, ids))
+    .returning({ id: galleryAlbums.id });
+  return c.json({ ok: true, affected: updated.length });
+});
+
 // ---------------------------------------------------------------------------
 // Media — image uploads only (multipart field "image"); appended last.
 // ---------------------------------------------------------------------------
@@ -248,6 +290,35 @@ adminGalleryRoutes.delete("/:id/media/:mediaId", manageGallery, async (c) => {
 
   return c.json({ ok: true });
 });
+
+// Remove a batch of photos from one album; stored objects follow best-effort.
+adminGalleryRoutes.post(
+  "/:id/media/bulk-remove",
+  manageGallery,
+  validate("json", adminBulkIdsSchema),
+  async (c) => {
+    const id = requireAlbumId(c);
+    const { ids } = c.req.valid("json");
+    const db = getDb(c.env.DB);
+    await loadAlbum(db, id);
+
+    const removed = await db
+      .delete(galleryMedia)
+      .where(and(eq(galleryMedia.albumId, id), inArray(galleryMedia.id, ids)))
+      .returning({ key: galleryMedia.key });
+
+    const keys = removed.map((item) => item.key);
+    if (keys.length > 0) {
+      try {
+        await c.env.BUCKET.delete(keys);
+      } catch (err) {
+        console.error("R2 bulk delete failed for gallery media", keys, err);
+      }
+    }
+
+    return c.json({ ok: true, affected: removed.length });
+  },
+);
 
 // Set display order for a batch of images within one album.
 adminGalleryRoutes.post(

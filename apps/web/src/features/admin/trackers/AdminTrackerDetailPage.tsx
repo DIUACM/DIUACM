@@ -1,19 +1,23 @@
-import { ArrowLeft, Lock, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Lock, LockOpen, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
 import {
+  useAdminBulkRanklists,
   useAdminCreateRanklist,
   useAdminDeleteTracker,
   useAdminReorderRanklists,
   useAdminTracker,
   useAdminUpdateTracker,
+  type RanklistBulkAction,
 } from '@/api/queries/admin-trackers'
 import type { PublishStatus } from '@/api/queries/admin-events'
+import { BulkBar, RowCheckbox, SelectAllHead } from '@/features/admin/shared/BulkBar'
 import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
 import { SortableRow, SortableRows } from '@/features/admin/shared/SortableRows'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
+import { useRowSelection } from '@/features/admin/shared/use-row-selection'
 import { ErrorState } from '@/components/shared/states'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -254,6 +258,19 @@ function CreateRanklistDialog({ trackerId }: { trackerId: number }) {
   )
 }
 
+/** Explicit either way — an admin needs to read lock state off the row. */
+function LockCell({ isLocked }: { isLocked: boolean }) {
+  return isLocked ? (
+    <Badge variant="outline" className="gap-1">
+      <Lock className="size-3" /> Locked
+    </Badge>
+  ) : (
+    <span className="flex items-center gap-1 text-sm text-muted-foreground">
+      <LockOpen className="size-3" /> Unlocked
+    </span>
+  )
+}
+
 export function AdminTrackerDetailPage() {
   const params = useParams()
   const id = Number(params.id)
@@ -261,6 +278,23 @@ export function AdminTrackerDetailPage() {
   const trackerQuery = useAdminTracker(id)
   const deleteTracker = useAdminDeleteTracker()
   const reorderRanklists = useAdminReorderRanklists(id)
+  const bulkRanklists = useAdminBulkRanklists(id)
+  const selection = useRowSelection(
+    (trackerQuery.data?.ranklists ?? []).map((ranklist) => ranklist.id),
+  )
+
+  const runBulk = (action: RanklistBulkAction, done: string) => {
+    bulkRanklists.mutate(
+      { ids: selection.selected, action },
+      {
+        onSuccess: ({ affected }) => {
+          selection.clear()
+          toast.success(`${affected} ranklist${affected === 1 ? '' : 's'} ${done}.`)
+        },
+        onError: (error) => toast.error(errorMessage(error)),
+      },
+    )
+  }
 
   const moveRanklist = (from: number, to: number) => {
     if (!trackerQuery.data) return
@@ -361,54 +395,111 @@ export function AdminTrackerDetailPage() {
           {tracker.ranklists.length === 0 ? (
             <p className="text-sm text-muted-foreground">No ranklists yet.</p>
           ) : (
-            <div className="overflow-x-auto rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12 pl-4">Order</TableHead>
-                    <TableHead>Keyword</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-center">Users</TableHead>
-                    <TableHead className="text-center">Events</TableHead>
-                    <TableHead className="pr-4 text-center">Upsolve wt.</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <SortableRows
-                  ids={tracker.ranklists.map((ranklist) => ranklist.id)}
-                  disabled={reorderRanklists.isPending}
-                  onMove={moveRanklist}
+            <div className="space-y-3">
+              <BulkBar selection={selection}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={bulkRanklists.isPending}
+                  onClick={() => runBulk('publish', 'published')}
                 >
-                  {tracker.ranklists.map((ranklist) => (
-                    <SortableRow key={ranklist.id} id={ranklist.id}>
-                      <TableCell>
-                        <Link
-                          to={`/admin/ranklists/${ranklist.id}`}
-                          className="flex items-center gap-2 font-medium hover:underline"
-                        >
-                          {ranklist.keyword}
-                          {ranklist.isLocked && (
-                            <Badge variant="outline" className="gap-1">
-                              <Lock className="size-3" /> Locked
-                            </Badge>
-                          )}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={ranklist.status} />
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {ranklist.userCount}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {ranklist.eventCount}
-                      </TableCell>
-                      <TableCell className="pr-4 text-center">
-                        {ranklist.upsolveWeight}
-                      </TableCell>
-                    </SortableRow>
-                  ))}
-                </SortableRows>
-              </Table>
+                  Publish
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={bulkRanklists.isPending}
+                  onClick={() => runBulk('draft', 'moved to draft')}
+                >
+                  Draft
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={bulkRanklists.isPending}
+                  onClick={() => runBulk('lock', 'locked')}
+                >
+                  <Lock className="size-4" /> Lock
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={bulkRanklists.isPending}
+                  onClick={() => runBulk('unlock', 'unlocked')}
+                >
+                  <LockOpen className="size-4" /> Unlock
+                </Button>
+                <ConfirmDialog
+                  trigger={
+                    <Button variant="destructive" size="sm" disabled={bulkRanklists.isPending}>
+                      <Trash2 className="size-4" /> Delete
+                    </Button>
+                  }
+                  title={`Delete ${selection.count} ranklist${selection.count === 1 ? '' : 's'}?`}
+                  description="This permanently removes them along with their event links and user memberships."
+                  onConfirm={() => runBulk('delete', 'deleted')}
+                />
+              </BulkBar>
+              <div className="overflow-x-auto rounded-lg border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12 pl-4">Order</TableHead>
+                      <SelectAllHead
+                        selection={selection}
+                        label="Select all ranklists"
+                        className="w-10"
+                      />
+                      <TableHead>Keyword</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Lock</TableHead>
+                      <TableHead className="text-center">Users</TableHead>
+                      <TableHead className="text-center">Events</TableHead>
+                      <TableHead className="pr-4 text-center">Upsolve wt.</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <SortableRows
+                    ids={tracker.ranklists.map((ranklist) => ranklist.id)}
+                    disabled={reorderRanklists.isPending}
+                    onMove={moveRanklist}
+                  >
+                    {tracker.ranklists.map((ranklist) => (
+                      <SortableRow key={ranklist.id} id={ranklist.id}>
+                        <TableCell>
+                          <RowCheckbox
+                            selection={selection}
+                            id={ranklist.id}
+                            label={`Select ${ranklist.keyword}`}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Link
+                            to={`/admin/ranklists/${ranklist.id}`}
+                            className="font-medium hover:underline"
+                          >
+                            {ranklist.keyword}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge status={ranklist.status} />
+                        </TableCell>
+                        <TableCell>
+                          <LockCell isLocked={ranklist.isLocked} />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {ranklist.userCount}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {ranklist.eventCount}
+                        </TableCell>
+                        <TableCell className="pr-4 text-center">
+                          {ranklist.upsolveWeight}
+                        </TableCell>
+                      </SortableRow>
+                    ))}
+                  </SortableRows>
+                </Table>
+              </div>
             </div>
           )}
         </CardContent>

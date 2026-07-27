@@ -1,4 +1,4 @@
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
@@ -9,6 +9,8 @@ import { toUserSummary } from "../../lib/user-shape";
 import { validate } from "../../lib/validator";
 import { requirePermission } from "../../middleware/auth";
 import {
+  adminBulkIdsSchema,
+  adminRanklistEventBulkSchema,
   adminRanklistEventSetSchema,
   adminRanklistUpdateSchema,
 } from "../../schemas/admin";
@@ -155,6 +157,41 @@ adminRanklistRoutes.put(
   },
 );
 
+// Detach a batch of events, or set the same weight on all of them. Both run as
+// a single statement; scores, ranks, and eventCount follow via the triggers.
+adminRanklistRoutes.post(
+  "/:id/events/bulk",
+  manageTrackers,
+  validate("json", adminRanklistEventBulkSchema),
+  async (c) => {
+    const id = requireRanklistId(c);
+    const { ids, action, weight } = c.req.valid("json");
+    if (action === "set-weight" && weight === undefined) {
+      throw new HTTPException(400, { message: "weight is required for set-weight" });
+    }
+
+    const db = getDb(c.env.DB);
+    await loadRanklist(db, id);
+
+    const scope = and(eq(ranklistEvents.ranklistId, id), inArray(ranklistEvents.eventId, ids));
+
+    if (action === "detach") {
+      const detached = await db
+        .delete(ranklistEvents)
+        .where(scope)
+        .returning({ eventId: ranklistEvents.eventId });
+      return c.json({ ok: true, affected: detached.length });
+    }
+
+    const updated = await db
+      .update(ranklistEvents)
+      .set({ weight })
+      .where(scope)
+      .returning({ eventId: ranklistEvents.eventId });
+    return c.json({ ok: true, affected: updated.length });
+  },
+);
+
 adminRanklistRoutes.delete("/:id/events/:eventId", manageTrackers, async (c) => {
   const id = requireRanklistId(c);
   const eventId = parseId(c.req.param("eventId"));
@@ -204,6 +241,27 @@ adminRanklistRoutes.put("/:id/users/:userId", manageTrackers, async (c) => {
 
   return c.json({ userId, score: row.score, rank: row.rank });
 });
+
+// Remove a batch of members in one statement. userCount and the remaining
+// members' ranks are recalculated by the triggers.
+adminRanklistRoutes.post(
+  "/:id/users/bulk-remove",
+  manageTrackers,
+  validate("json", adminBulkIdsSchema),
+  async (c) => {
+    const id = requireRanklistId(c);
+    const { ids } = c.req.valid("json");
+    const db = getDb(c.env.DB);
+    await loadRanklist(db, id);
+
+    const removed = await db
+      .delete(ranklistUsers)
+      .where(and(eq(ranklistUsers.ranklistId, id), inArray(ranklistUsers.userId, ids)))
+      .returning({ userId: ranklistUsers.userId });
+
+    return c.json({ ok: true, affected: removed.length });
+  },
+);
 
 adminRanklistRoutes.delete("/:id/users/:userId", manageTrackers, async (c) => {
   const id = requireRanklistId(c);

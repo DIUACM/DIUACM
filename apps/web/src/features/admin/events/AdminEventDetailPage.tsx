@@ -6,6 +6,9 @@ import { errorMessage } from '@/api/client'
 import {
   useAdminAddAttendance,
   useAdminAddEventMedia,
+  useAdminBulkRemoveEventMedia,
+  useAdminBulkRemoveAttendance,
+  useAdminBulkRemovePerformance,
   useAdminDeleteEvent,
   useAdminEvent,
   useAdminRemoveAttendance,
@@ -15,9 +18,16 @@ import {
   useAdminUpdateEvent,
 } from '@/api/queries/admin-events'
 import { useEvent, useEventAttendance, useEventPerformance } from '@/api/queries/events'
+import {
+  BulkBar,
+  RowCheckbox,
+  SelectAllCheckbox,
+  SelectAllHead,
+} from '@/features/admin/shared/BulkBar'
 import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
 import { UserPicker } from '@/features/admin/shared/UserPicker'
+import { useRowSelection } from '@/features/admin/shared/use-row-selection'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { ErrorState } from '@/components/shared/states'
 import { Button } from '@/components/ui/button'
@@ -54,6 +64,7 @@ function MediaManager({ eventId }: { eventId: number }) {
   const eventQuery = useAdminEvent(eventId)
   const addMedia = useAdminAddEventMedia(eventId)
   const removeMedia = useAdminRemoveEventMedia(eventId)
+  const bulkRemoveMedia = useAdminBulkRemoveEventMedia(eventId)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleFile = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,39 +86,88 @@ function MediaManager({ eventId }: { eventId: number }) {
   }
 
   const media = eventQuery.data?.media ?? []
+  const selection = useRowSelection(media.map((item) => item.id))
 
   return (
     <div className="space-y-4">
       {media.length === 0 ? (
         <p className="text-sm text-muted-foreground">No media yet.</p>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {media.map(
-            (item) =>
-              item.url && (
-                <div key={item.id} className="group relative overflow-hidden rounded-lg border">
-                  <img
-                    src={item.url}
-                    alt=""
-                    loading="lazy"
-                    className="aspect-video w-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    aria-label="Remove image"
-                    className="absolute top-1.5 right-1.5 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
-                    onClick={() =>
-                      removeMedia.mutate(item.id, {
-                        onSuccess: () => toast.success('Image removed.'),
-                        onError: (error) => toast.error(errorMessage(error)),
-                      })
-                    }
+        <div className="space-y-3">
+          <div className="flex justify-end">
+            <label className="flex items-center gap-2 text-sm">
+              <SelectAllCheckbox
+                selection={selection}
+                label="Select all event images"
+              />
+              Select all
+            </label>
+          </div>
+          <BulkBar selection={selection}>
+            <ConfirmDialog
+              trigger={
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={bulkRemoveMedia.isPending}
+                >
+                  <Trash2 className="size-4" /> Remove
+                </Button>
+              }
+              title={`Remove ${selection.count} image${selection.count === 1 ? '' : 's'}?`}
+              description="The selected files will be permanently removed from this event."
+              confirmLabel="Remove"
+              onConfirm={() =>
+                bulkRemoveMedia.mutate(selection.selected, {
+                  onSuccess: ({ affected }) => {
+                    selection.clear()
+                    toast.success(
+                      `${affected} image${affected === 1 ? '' : 's'} removed.`,
+                    )
+                  },
+                  onError: (error) => toast.error(errorMessage(error)),
+                })
+              }
+            />
+          </BulkBar>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {media.map(
+              (item) =>
+                item.url && (
+                  <div
+                    key={item.id}
+                    className="group relative overflow-hidden rounded-lg border"
                   >
-                    <X className="size-4" />
-                  </button>
-                </div>
-              ),
-          )}
+                    <img
+                      src={item.url}
+                      alt=""
+                      loading="lazy"
+                      className="aspect-video w-full object-cover"
+                    />
+                    <span className="absolute bottom-1.5 left-1.5 rounded bg-background/90 p-1">
+                      <RowCheckbox
+                        selection={selection}
+                        id={item.id}
+                        label="Select image"
+                      />
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Remove image"
+                      className="absolute top-1.5 right-1.5 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                      onClick={() =>
+                        removeMedia.mutate(item.id, {
+                          onSuccess: () => toast.success('Image removed.'),
+                          onError: (error) => toast.error(errorMessage(error)),
+                        })
+                      }
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                ),
+            )}
+          </div>
         </div>
       )}
       <Button
@@ -133,6 +193,12 @@ function AttendanceManager({ eventId }: { eventId: number }) {
   const attendanceQuery = useEventAttendance(eventId)
   const addAttendance = useAdminAddAttendance(eventId)
   const removeAttendance = useAdminRemoveAttendance(eventId)
+  const bulkRemoveAttendance = useAdminBulkRemoveAttendance(eventId)
+  const selection = useRowSelection(
+    (attendanceQuery.data?.data ?? []).flatMap((attendance) =>
+      attendance.user ? [attendance.user.id] : [],
+    ),
+  )
 
   return (
     <div className="space-y-4">
@@ -154,41 +220,99 @@ function AttendanceManager({ eventId }: { eventId: number }) {
       ) : attendanceQuery.data.data.length === 0 ? (
         <p className="text-sm text-muted-foreground">No attendees yet.</p>
       ) : (
-        <ul className="divide-y">
-          {attendanceQuery.data.data.map(
-            (attendance, index) =>
-              attendance.user && (
-                <li
-                  key={attendance.user.id ?? index}
-                  className="flex items-center gap-3 py-2"
+        <div className="space-y-3">
+          <BulkBar selection={selection}>
+            <ConfirmDialog
+              trigger={
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={bulkRemoveAttendance.isPending}
                 >
-                  <UserAvatar
-                    name={attendance.user.name}
-                    image={attendance.user.image}
-                    className="size-7"
+                  <Trash2 className="size-4" /> Remove
+                </Button>
+              }
+              title={`Remove ${selection.count} attendance record${selection.count === 1 ? '' : 's'}?`}
+              description="The selected users will no longer be marked present for this event."
+              confirmLabel="Remove"
+              onConfirm={() =>
+                bulkRemoveAttendance.mutate(selection.selected, {
+                  onSuccess: ({ affected }) => {
+                    selection.clear()
+                    toast.success(
+                      `${affected} attendance record${affected === 1 ? '' : 's'} removed.`,
+                    )
+                  },
+                  onError: (error) => toast.error(errorMessage(error)),
+                })
+              }
+            />
+          </BulkBar>
+          <div className="overflow-x-auto rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <SelectAllHead
+                    selection={selection}
+                    label="Select all attendance records"
                   />
-                  <span className="font-medium">{attendance.user.name}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {formatDateTime(attendance.attendedAt)}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="ml-auto size-7 text-destructive hover:text-destructive"
-                    aria-label={`Remove ${attendance.user.name}`}
-                    onClick={() =>
-                      removeAttendance.mutate(attendance.user!.id, {
-                        onSuccess: () => toast.success('Attendance removed.'),
-                        onError: (error) => toast.error(errorMessage(error)),
-                      })
-                    }
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </li>
-              ),
-          )}
-        </ul>
+                  <TableHead>Attendee</TableHead>
+                  <TableHead>Marked present</TableHead>
+                  <TableHead className="w-12 pr-4" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {attendanceQuery.data.data.map(
+                  (attendance) =>
+                    attendance.user && (
+                      <TableRow key={attendance.user.id}>
+                        <TableCell className="pl-4">
+                          <RowCheckbox
+                            selection={selection}
+                            id={attendance.user.id}
+                            label={`Select ${attendance.user.name}`}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2.5">
+                            <UserAvatar
+                              name={attendance.user.name}
+                              image={attendance.user.image}
+                              className="size-7"
+                            />
+                            <span className="font-medium">
+                              {attendance.user.name}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {formatDateTime(attendance.attendedAt)}
+                        </TableCell>
+                        <TableCell className="pr-4">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-7 text-destructive hover:text-destructive"
+                            aria-label={`Remove ${attendance.user.name}`}
+                            onClick={() =>
+                              removeAttendance.mutate(attendance.user!.id, {
+                                onSuccess: () =>
+                                  toast.success('Attendance removed.'),
+                                onError: (error) =>
+                                  toast.error(errorMessage(error)),
+                              })
+                            }
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ),
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       )}
     </div>
   )
@@ -198,6 +322,10 @@ function PerformanceManager({ eventId }: { eventId: number }) {
   const performanceQuery = useEventPerformance(eventId)
   const setPerformance = useAdminSetPerformance(eventId)
   const removePerformance = useAdminRemovePerformance(eventId)
+  const bulkRemovePerformance = useAdminBulkRemovePerformance(eventId)
+  const selection = useRowSelection(
+    (performanceQuery.data?.data ?? []).map((row) => row.user.id),
+  )
 
   const [selectedUser, setSelectedUser] = useState<UserSummary | null>(null)
   const [position, setPosition] = useState('')
@@ -314,64 +442,104 @@ function PerformanceManager({ eventId }: { eventId: number }) {
           No performance rows yet.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-16 pl-4 text-center">#</TableHead>
-                <TableHead>Participant</TableHead>
-                <TableHead className="text-center">Solves</TableHead>
-                <TableHead className="text-center">Upsolves</TableHead>
-                <TableHead className="w-12 pr-4" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {performanceQuery.data.data.map((row) => (
-                <TableRow key={row.user.id}>
-                  <TableCell className="pl-4 text-center text-muted-foreground">
-                    {row.position ?? '—'}
-                  </TableCell>
-                  <TableCell>
-                    <button
-                      type="button"
-                      className="flex items-center gap-2 hover:underline"
-                      onClick={() => {
-                        setSelectedUser(row.user)
-                        setPosition(row.position?.toString() ?? '')
-                        setSolveCount(String(row.solveCount))
-                        setUpsolveCount(String(row.upsolveCount))
-                      }}
-                    >
-                      <UserAvatar
-                        name={row.user.name}
-                        image={row.user.image}
-                        className="size-6"
-                      />
-                      <span className="font-medium">{row.user.name}</span>
-                    </button>
-                  </TableCell>
-                  <TableCell className="text-center">{row.solveCount}</TableCell>
-                  <TableCell className="text-center">{row.upsolveCount}</TableCell>
-                  <TableCell className="pr-4">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-7 text-destructive hover:text-destructive"
-                      aria-label={`Remove ${row.user.name}'s row`}
-                      onClick={() =>
-                        removePerformance.mutate(row.user.id, {
-                          onSuccess: () => toast.success('Row removed.'),
-                          onError: (error) => toast.error(errorMessage(error)),
-                        })
-                      }
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </TableCell>
+        <div className="space-y-3">
+          <BulkBar selection={selection}>
+            <ConfirmDialog
+              trigger={
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={bulkRemovePerformance.isPending}
+                >
+                  <Trash2 className="size-4" /> Remove
+                </Button>
+              }
+              title={`Remove ${selection.count} performance row${selection.count === 1 ? '' : 's'}?`}
+              description="This also recalculates any ranklists that use this event."
+              confirmLabel="Remove"
+              onConfirm={() =>
+                bulkRemovePerformance.mutate(selection.selected, {
+                  onSuccess: ({ affected }) => {
+                    selection.clear()
+                    toast.success(
+                      `${affected} performance row${affected === 1 ? '' : 's'} removed.`,
+                    )
+                  },
+                  onError: (error) => toast.error(errorMessage(error)),
+                })
+              }
+            />
+          </BulkBar>
+          <div className="overflow-x-auto rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <SelectAllHead
+                    selection={selection}
+                    label="Select all performance rows"
+                  />
+                  <TableHead className="w-16 text-center">#</TableHead>
+                  <TableHead>Participant</TableHead>
+                  <TableHead className="text-center">Solves</TableHead>
+                  <TableHead className="text-center">Upsolves</TableHead>
+                  <TableHead className="w-12 pr-4" />
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {performanceQuery.data.data.map((row) => (
+                  <TableRow key={row.user.id}>
+                    <TableCell className="pl-4">
+                      <RowCheckbox
+                        selection={selection}
+                        id={row.user.id}
+                        label={`Select ${row.user.name}`}
+                      />
+                    </TableCell>
+                    <TableCell className="text-center text-muted-foreground">
+                      {row.position ?? '—'}
+                    </TableCell>
+                    <TableCell>
+                      <button
+                        type="button"
+                        className="flex items-center gap-2 hover:underline"
+                        onClick={() => {
+                          setSelectedUser(row.user)
+                          setPosition(row.position?.toString() ?? '')
+                          setSolveCount(String(row.solveCount))
+                          setUpsolveCount(String(row.upsolveCount))
+                        }}
+                      >
+                        <UserAvatar
+                          name={row.user.name}
+                          image={row.user.image}
+                          className="size-6"
+                        />
+                        <span className="font-medium">{row.user.name}</span>
+                      </button>
+                    </TableCell>
+                    <TableCell className="text-center">{row.solveCount}</TableCell>
+                    <TableCell className="text-center">{row.upsolveCount}</TableCell>
+                    <TableCell className="pr-4">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 text-destructive hover:text-destructive"
+                        aria-label={`Remove ${row.user.name}'s row`}
+                        onClick={() =>
+                          removePerformance.mutate(row.user.id, {
+                            onSuccess: () => toast.success('Row removed.'),
+                            onError: (error) => toast.error(errorMessage(error)),
+                          })
+                        }
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
     </div>

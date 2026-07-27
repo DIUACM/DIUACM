@@ -5,12 +5,16 @@ import {
   adminAttendanceAddSchema,
   adminBlogPostCreateSchema,
   adminBlogPostUpdateSchema,
+  adminBulkIdsSchema,
+  adminBulkPublishSchema,
   adminEventCreateSchema,
   adminEventUpdateSchema,
   adminGalleryAlbumCreateSchema,
   adminGalleryAlbumUpdateSchema,
   adminPerformanceSetSchema,
+  adminRanklistBulkSchema,
   adminRanklistCreateSchema,
+  adminRanklistEventBulkSchema,
   adminRanklistEventSetSchema,
   adminRanklistUpdateSchema,
   adminReorderSchema,
@@ -617,6 +621,20 @@ const okSchema = {
   required: ["ok"],
 };
 
+const bulkResultSchema = {
+  type: "object",
+  properties: {
+    ok: { type: "boolean" },
+    affected: {
+      type: "integer",
+      description:
+        "Rows the action actually touched. Lower than the number of ids sent when " +
+        "some of them no longer exist or fall outside the parent in the path.",
+    },
+  },
+  required: ["ok", "affected"],
+};
+
 const userListSchema = {
   type: "object",
   properties: { data: { type: "array", items: ref("User") }, meta: ref("PaginationMeta") },
@@ -1099,6 +1117,7 @@ export const openApiDoc = {
       AttendanceRequest: toSchema(attendanceGiveSchema),
       HandleSetRequest: toSchema(handleSetSchema),
       Ok: okSchema,
+      BulkResult: bulkResultSchema,
       UserList: userListSchema,
       AdminUserDetail: adminUserDetailSchema,
       AdminEvent: adminEventSchema,
@@ -1126,6 +1145,10 @@ export const openApiDoc = {
       AdminRanklistUpdateRequest: toSchema(adminRanklistUpdateSchema),
       AdminRanklistEventSetRequest: toSchema(adminRanklistEventSetSchema),
       AdminReorderRequest: toSchema(adminReorderSchema),
+      AdminBulkIdsRequest: toSchema(adminBulkIdsSchema),
+      AdminBulkPublishRequest: toSchema(adminBulkPublishSchema),
+      AdminRanklistBulkRequest: toSchema(adminRanklistBulkSchema),
+      AdminRanklistEventBulkRequest: toSchema(adminRanklistEventBulkSchema),
       AdminGalleryAlbum: adminGalleryAlbumSchema,
       AdminGalleryAlbumList: adminGalleryAlbumListSchema,
       AdminGalleryMedia: adminGalleryMediaSchema,
@@ -1872,6 +1895,23 @@ export const openApiDoc = {
         },
       },
     },
+    "/admin/events/bulk": {
+      post: {
+        tags: ["admin-events"],
+        summary: "Publish, unpublish, or delete a batch of events",
+        ...access(
+          "manage_events",
+          "`delete` cascades each event's media, attendance, performance rows, and " +
+            "ranklist links, exactly like `DELETE /admin/events/{id}`.",
+        ),
+        requestBody: { required: true, content: jsonBody(ref("AdminBulkPublishRequest")) },
+        responses: {
+          "200": { description: "Action applied", content: jsonBody(ref("BulkResult")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+        },
+      },
+    },
     "/admin/events/{id}/media": {
       post: {
         tags: ["admin-events"],
@@ -1904,6 +1944,21 @@ export const openApiDoc = {
         },
       },
     },
+    "/admin/events/{id}/media/bulk-remove": {
+      post: {
+        tags: ["admin-events"],
+        summary: "Remove a batch of media items from an event",
+        ...access("manage_events", "`ids` are media ids."),
+        parameters: [idParam("id")],
+        requestBody: { required: true, content: jsonBody(ref("AdminBulkIdsRequest")) },
+        responses: {
+          "200": { description: "Media removed", content: jsonBody(ref("BulkResult")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Event not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
     "/admin/events/{id}/attendance": {
       post: {
         tags: ["admin-events"],
@@ -1930,6 +1985,39 @@ export const openApiDoc = {
           "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
           ...adminAuthResponses,
           "404": { description: "Attendance not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/events/{id}/attendance/bulk-remove": {
+      post: {
+        tags: ["admin-events"],
+        summary: "Remove attendance for a batch of users",
+        ...access("manage_attendance", "`ids` are user ids."),
+        parameters: [idParam("id")],
+        requestBody: { required: true, content: jsonBody(ref("AdminBulkIdsRequest")) },
+        responses: {
+          "200": { description: "Attendance removed", content: jsonBody(ref("BulkResult")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Event not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/events/{id}/performance/bulk-remove": {
+      post: {
+        tags: ["admin-events"],
+        summary: "Delete performance rows for a batch of users",
+        ...access(
+          "manage_events",
+          "`ids` are user ids. Ranklist scores and ranks recalculate automatically.",
+        ),
+        parameters: [idParam("id")],
+        requestBody: { required: true, content: jsonBody(ref("AdminBulkIdsRequest")) },
+        responses: {
+          "200": { description: "Rows deleted", content: jsonBody(ref("BulkResult")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Event not found", content: jsonBody(ref("Error")) },
         },
       },
     },
@@ -2051,6 +2139,38 @@ export const openApiDoc = {
         },
       },
     },
+    "/admin/trackers/bulk": {
+      post: {
+        tags: ["admin-trackers"],
+        summary: "Publish, unpublish, or delete a batch of trackers",
+        ...access("manage_trackers", "`delete` cascades each tracker's ranklists."),
+        requestBody: { required: true, content: jsonBody(ref("AdminBulkPublishRequest")) },
+        responses: {
+          "200": { description: "Action applied", content: jsonBody(ref("BulkResult")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+        },
+      },
+    },
+    "/admin/trackers/{id}/ranklists/bulk": {
+      post: {
+        tags: ["admin-ranklists"],
+        summary: "Publish, unpublish, lock, unlock, or delete a batch of ranklists",
+        ...access(
+          "manage_trackers",
+          "Scoped to the tracker in the path — ids belonging to another tracker are ignored " +
+            "and left out of `affected`.",
+        ),
+        parameters: [idParam("id")],
+        requestBody: { required: true, content: jsonBody(ref("AdminRanklistBulkRequest")) },
+        responses: {
+          "200": { description: "Action applied", content: jsonBody(ref("BulkResult")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Tracker not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
     "/admin/trackers/{id}/ranklists/reorder": {
       post: {
         tags: ["admin-ranklists"],
@@ -2129,6 +2249,28 @@ export const openApiDoc = {
         },
       },
     },
+    "/admin/ranklists/{id}/events/bulk": {
+      post: {
+        tags: ["admin-ranklists"],
+        summary: "Detach a batch of events, or set one weight across them",
+        ...access(
+          "manage_trackers",
+          "`ids` are event ids. `set-weight` requires `weight`; scores and ranks " +
+            "recalculate automatically either way.",
+        ),
+        parameters: [idParam("id")],
+        requestBody: { required: true, content: jsonBody(ref("AdminRanklistEventBulkRequest")) },
+        responses: {
+          "200": { description: "Action applied", content: jsonBody(ref("BulkResult")) },
+          "400": {
+            description: "Validation failed, or `set-weight` sent without `weight`",
+            content: jsonBody(ref("Error")),
+          },
+          ...adminAuthResponses,
+          "404": { description: "Ranklist not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
     "/admin/ranklists/{id}/events/{eventId}": {
       put: {
         tags: ["admin-ranklists"],
@@ -2155,6 +2297,21 @@ export const openApiDoc = {
             description: "Ranklist not found or event not in it",
             content: jsonBody(ref("Error")),
           },
+        },
+      },
+    },
+    "/admin/ranklists/{id}/users/bulk-remove": {
+      post: {
+        tags: ["admin-ranklists"],
+        summary: "Remove a batch of users from a ranklist",
+        ...access("manage_trackers", "`ids` are user ids."),
+        parameters: [idParam("id")],
+        requestBody: { required: true, content: jsonBody(ref("AdminBulkIdsRequest")) },
+        responses: {
+          "200": { description: "Members removed", content: jsonBody(ref("BulkResult")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Ranklist not found", content: jsonBody(ref("Error")) },
         },
       },
     },
@@ -2263,6 +2420,19 @@ export const openApiDoc = {
         },
       },
     },
+    "/admin/gallery/bulk": {
+      post: {
+        tags: ["admin-gallery"],
+        summary: "Publish, unpublish, or delete a batch of albums",
+        ...access("manage_gallery", "`delete` cascades each album's photos."),
+        requestBody: { required: true, content: jsonBody(ref("AdminBulkPublishRequest")) },
+        responses: {
+          "200": { description: "Action applied", content: jsonBody(ref("BulkResult")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+        },
+      },
+    },
     "/admin/gallery/reorder": {
       post: {
         tags: ["admin-gallery"],
@@ -2305,6 +2475,21 @@ export const openApiDoc = {
           "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
           ...adminAuthResponses,
           "404": { description: "Media not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/gallery/{id}/media/bulk-remove": {
+      post: {
+        tags: ["admin-gallery"],
+        summary: "Remove a batch of photos from an album",
+        ...access("manage_gallery", "`ids` are media ids."),
+        parameters: [idParam("id")],
+        requestBody: { required: true, content: jsonBody(ref("AdminBulkIdsRequest")) },
+        responses: {
+          "200": { description: "Photos removed", content: jsonBody(ref("BulkResult")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Album not found", content: jsonBody(ref("Error")) },
         },
       },
     },
@@ -2395,6 +2580,23 @@ export const openApiDoc = {
           "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
           ...adminAuthResponses,
           "404": { description: "Post not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/blog/bulk": {
+      post: {
+        tags: ["admin-blog"],
+        summary: "Publish, unpublish, or delete a batch of posts",
+        ...access(
+          "manage_blog",
+          "`publish` stamps `publishedAt` only on posts that have never been published, " +
+            "matching `PATCH /admin/blog/{id}`.",
+        ),
+        requestBody: { required: true, content: jsonBody(ref("AdminBulkPublishRequest")) },
+        responses: {
+          "200": { description: "Action applied", content: jsonBody(ref("BulkResult")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
         },
       },
     },

@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
 import {
   useAdminAddGalleryMedia,
+  useAdminBulkRemoveGalleryMedia,
   useAdminDeleteGalleryAlbum,
   useAdminGalleryAlbum,
   useAdminRemoveGalleryMedia,
@@ -23,9 +24,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import {
+  BulkBar,
+  RowCheckbox,
+  SelectAllCheckbox,
+} from '@/features/admin/shared/BulkBar'
 import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
 import { SortableGrid, SortableGridItem } from '@/features/admin/shared/SortableGrid'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
+import { useRowSelection } from '@/features/admin/shared/use-row-selection'
 import { ErrorState } from '@/components/shared/states'
 import { Button } from '@/components/ui/button'
 import {
@@ -190,7 +197,9 @@ function AlbumEditForm({ album }: { album: AdminGalleryAlbumDetail }) {
 function PhotoManager({ album }: { album: AdminGalleryAlbumDetail }) {
   const addMedia = useAdminAddGalleryMedia(album.id)
   const removeMedia = useAdminRemoveGalleryMedia(album.id)
+  const bulkRemoveMedia = useAdminBulkRemoveGalleryMedia(album.id)
   const reorderMedia = useAdminReorderGalleryMedia(album.id)
+  const selection = useRowSelection(album.media.map((item) => item.id))
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleFile = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -227,9 +236,45 @@ function PhotoManager({ album }: { album: AdminGalleryAlbumDetail }) {
         <p className="text-sm text-muted-foreground">No photos yet.</p>
       ) : (
         <>
-          <p className="text-sm text-muted-foreground">
-            Drag photos to reorder — the first one is the album cover.
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">
+              Drag photos to reorder — the first one is the album cover.
+            </p>
+            <label className="flex shrink-0 items-center gap-2 text-sm">
+              <SelectAllCheckbox
+                selection={selection}
+                label="Select all photos"
+              />
+              Select all
+            </label>
+          </div>
+          <BulkBar selection={selection}>
+            <ConfirmDialog
+              trigger={
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={bulkRemoveMedia.isPending}
+                >
+                  <Trash2 className="size-4" /> Remove
+                </Button>
+              }
+              title={`Remove ${selection.count} photo${selection.count === 1 ? '' : 's'}?`}
+              description="The selected files will be permanently removed from this album."
+              confirmLabel="Remove"
+              onConfirm={() =>
+                bulkRemoveMedia.mutate(selection.selected, {
+                  onSuccess: ({ affected }) => {
+                    selection.clear()
+                    toast.success(
+                      `${affected} photo${affected === 1 ? '' : 's'} removed.`,
+                    )
+                  },
+                  onError: (error) => toast.error(errorMessage(error)),
+                })
+              }
+            />
+          </BulkBar>
           <SortableGrid
             ids={album.media.map((item) => item.id)}
             disabled={reorderMedia.isPending}
@@ -254,6 +299,16 @@ function PhotoManager({ album }: { album: AdminGalleryAlbumDetail }) {
                     />
                     <span className="absolute top-1.5 left-1.5 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100">
                       <GripVertical className="size-4" />
+                    </span>
+                    <span
+                      className="absolute bottom-1.5 left-1.5 rounded bg-background/90 p-1"
+                      onPointerDown={(event) => event.stopPropagation()}
+                    >
+                      <RowCheckbox
+                        selection={selection}
+                        id={item.id}
+                        label="Select photo"
+                      />
                     </span>
                     <button
                       type="button"

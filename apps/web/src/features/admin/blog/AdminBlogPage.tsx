@@ -3,8 +3,13 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
-import { useAdminBlogPosts, useAdminCreateBlogPost } from '@/api/queries/admin-blog'
+import {
+  useAdminBlogPosts,
+  useAdminBulkBlogPosts,
+  useAdminCreateBlogPost,
+} from '@/api/queries/admin-blog'
 import type { PublishStatus } from '@/api/queries/admin-events'
+import type { BulkPublishAction } from '@/api/types'
 import { Pagination } from '@/components/shared/Pagination'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { SearchInput } from '@/components/shared/SearchInput'
@@ -38,6 +43,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
+import {
+  PublishBulkBar,
+  RowCheckbox,
+  SelectAllHead,
+} from '@/features/admin/shared/BulkBar'
+import { useRowSelection } from '@/features/admin/shared/use-row-selection'
 import { formatDate } from '@/lib/datetime'
 import { useDocumentTitle } from '@/lib/use-document-title'
 
@@ -135,6 +146,10 @@ export function AdminBlogPage() {
   const status = (searchParams.get('status') as PublishStatus | null) ?? undefined
 
   const postsQuery = useAdminBlogPosts({ page, q, status })
+  const bulkPosts = useAdminBulkBlogPosts()
+  const selection = useRowSelection(
+    (postsQuery.data?.data ?? []).map((post) => post.id),
+  )
 
   const updateParams = (updates: Record<string, string | undefined>) => {
     setSearchParams((prev) => {
@@ -145,6 +160,25 @@ export function AdminBlogPage() {
       }
       return next
     })
+  }
+
+  const runBulk = (action: BulkPublishAction) => {
+    bulkPosts.mutate(
+      { ids: selection.selected, action },
+      {
+        onSuccess: ({ affected }) => {
+          selection.clear()
+          const result =
+            action === 'publish'
+              ? 'published'
+              : action === 'draft'
+                ? 'moved to drafts'
+                : 'deleted'
+          toast.success(`${affected} post${affected === 1 ? '' : 's'} ${result}.`)
+        },
+        onError: (error) => toast.error(errorMessage(error)),
+      },
+    )
   }
 
   return (
@@ -186,11 +220,21 @@ export function AdminBlogPage() {
         <EmptyState message="No posts match your filters." />
       ) : (
         <div className="space-y-4">
+          <PublishBulkBar
+            selection={selection}
+            itemLabel="post"
+            isPending={bulkPosts.isPending}
+            onAction={runBulk}
+          />
           <div className="overflow-x-auto rounded-xl border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="pl-4">Title</TableHead>
+                  <SelectAllHead
+                    selection={selection}
+                    label="Select all posts"
+                  />
+                  <TableHead>Title</TableHead>
                   <TableHead>Slug</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Published</TableHead>
@@ -201,6 +245,13 @@ export function AdminBlogPage() {
                 {postsQuery.data.data.map((post) => (
                   <TableRow key={post.id}>
                     <TableCell className="pl-4">
+                      <RowCheckbox
+                        selection={selection}
+                        id={post.id}
+                        label={`Select ${post.title}`}
+                      />
+                    </TableCell>
+                    <TableCell>
                       <Link
                         to={`/admin/blog/${post.id}`}
                         className="font-medium hover:underline"

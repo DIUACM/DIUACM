@@ -1,4 +1,4 @@
-import { and, count, desc, eq, or, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
@@ -16,6 +16,7 @@ import {
   adminBlogListQuery,
   adminBlogPostCreateSchema,
   adminBlogPostUpdateSchema,
+  adminBulkPublishSchema,
 } from "../../schemas/admin";
 import type { AppEnv } from "../../types";
 
@@ -201,6 +202,61 @@ adminBlogRoutes.delete("/:id", manageBlog, async (c) => {
   }
 
   return c.json({ ok: true });
+});
+
+// Publish, unpublish, or delete a batch of posts. Deletes cascade asset rows
+// (FK); stored objects follow best-effort, same as DELETE /:id.
+adminBlogRoutes.post("/bulk", manageBlog, validate("json", adminBulkPublishSchema), async (c) => {
+  const { ids, action } = c.req.valid("json");
+  const db = getDb(c.env.DB);
+
+  if (action === "delete") {
+    const [assets, posts] = await Promise.all([
+      db.select({ key: blogAssets.key }).from(blogAssets).where(inArray(blogAssets.postId, ids)),
+      db
+        .select({ featuredImageKey: blogPosts.featuredImageKey })
+        .from(blogPosts)
+        .where(inArray(blogPosts.id, ids)),
+    ]);
+
+    const deleted = await db
+      .delete(blogPosts)
+      .where(inArray(blogPosts.id, ids))
+      .returning({ id: blogPosts.id });
+
+    const keys = [
+      ...new Set([
+        ...assets.map((asset) => asset.key),
+        ...posts.flatMap((post) =>
+          post.featuredImageKey ? [post.featuredImageKey] : [],
+        ),
+      ]),
+    ];
+    if (keys.length > 0) {
+      try {
+        await c.env.BUCKET.delete(keys);
+      } catch (err) {
+        console.error("R2 bulk delete failed for blog objects", keys, err);
+      }
+    }
+
+    return c.json({ ok: true, affected: deleted.length });
+  }
+
+  // Same publishedAt rule as PATCH /:id — stamped on the first publish and
+  // kept from then on, so COALESCE leaves an existing timestamp alone.
+  const updated = await db
+    .update(blogPosts)
+    .set({
+      status: action === "publish" ? "published" : "draft",
+      ...(action === "publish"
+        ? { publishedAt: sql`COALESCE(${blogPosts.publishedAt}, unixepoch())` }
+        : {}),
+      updatedAt: Math.floor(Date.now() / 1000),
+    })
+    .where(inArray(blogPosts.id, ids))
+    .returning({ id: blogPosts.id });
+  return c.json({ ok: true, affected: updated.length });
 });
 
 // ---------------------------------------------------------------------------

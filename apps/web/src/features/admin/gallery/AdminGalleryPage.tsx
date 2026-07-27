@@ -4,11 +4,13 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
 import {
+  useAdminBulkGalleryAlbums,
   useAdminCreateGalleryAlbum,
   useAdminGalleryAlbums,
   useAdminReorderGalleryAlbums,
 } from '@/api/queries/admin-gallery'
 import type { PublishStatus } from '@/api/queries/admin-events'
+import type { BulkPublishAction } from '@/api/types'
 import { Pagination } from '@/components/shared/Pagination'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { SearchInput } from '@/components/shared/SearchInput'
@@ -42,7 +44,13 @@ import {
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
 import { SortableRow, SortableRows } from '@/features/admin/shared/SortableRows'
+import {
+  PublishBulkBar,
+  RowCheckbox,
+  SelectAllHead,
+} from '@/features/admin/shared/BulkBar'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
+import { useRowSelection } from '@/features/admin/shared/use-row-selection'
 import { formatDate } from '@/lib/datetime'
 import { useDocumentTitle } from '@/lib/use-document-title'
 
@@ -179,6 +187,10 @@ export function AdminGalleryPage() {
 
   const albumsQuery = useAdminGalleryAlbums({ page, q, status })
   const reorderAlbums = useAdminReorderGalleryAlbums()
+  const bulkAlbums = useAdminBulkGalleryAlbums()
+  const selection = useRowSelection(
+    (albumsQuery.data?.data ?? []).map((album) => album.id),
+  )
   // Reordering a filtered subset would scramble the global order, so only
   // allow it on the unfiltered list.
   const canReorder = !q && !status
@@ -204,6 +216,25 @@ export function AdminGalleryPage() {
       }
       return next
     })
+  }
+
+  const runBulk = (action: BulkPublishAction) => {
+    bulkAlbums.mutate(
+      { ids: selection.selected, action },
+      {
+        onSuccess: ({ affected }) => {
+          selection.clear()
+          const result =
+            action === 'publish'
+              ? 'published'
+              : action === 'draft'
+                ? 'moved to drafts'
+                : 'deleted'
+          toast.success(`${affected} album${affected === 1 ? '' : 's'} ${result}.`)
+        },
+        onError: (error) => toast.error(errorMessage(error)),
+      },
+    )
   }
 
   return (
@@ -245,11 +276,22 @@ export function AdminGalleryPage() {
         <EmptyState message="No albums match your filters." />
       ) : (
         <div className="space-y-4">
+          <PublishBulkBar
+            selection={selection}
+            itemLabel="album"
+            isPending={bulkAlbums.isPending}
+            onAction={runBulk}
+          />
           <div className="overflow-x-auto rounded-xl border">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-12 pl-4">Order</TableHead>
+                  <SelectAllHead
+                    selection={selection}
+                    label="Select all albums"
+                    className="w-10"
+                  />
                   <TableHead>Title</TableHead>
                   <TableHead>Slug</TableHead>
                   <TableHead>Status</TableHead>
@@ -264,6 +306,13 @@ export function AdminGalleryPage() {
               >
                 {albumsQuery.data.data.map((album) => (
                   <SortableRow key={album.id} id={album.id}>
+                    <TableCell>
+                      <RowCheckbox
+                        selection={selection}
+                        id={album.id}
+                        label={`Select ${album.title}`}
+                      />
+                    </TableCell>
                     <TableCell>
                       <Link
                         to={`/admin/gallery/${album.id}`}

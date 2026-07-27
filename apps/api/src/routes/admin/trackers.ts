@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
@@ -10,6 +10,8 @@ import { parseId } from "../../lib/parse-id";
 import { validate } from "../../lib/validator";
 import { requirePermission } from "../../middleware/auth";
 import {
+  adminBulkPublishSchema,
+  adminRanklistBulkSchema,
   adminRanklistCreateSchema,
   adminReorderSchema,
   adminTrackerCreateSchema,
@@ -201,6 +203,31 @@ adminTrackerRoutes.post(
   },
 );
 
+// Publish, unpublish, or delete a batch of trackers in one statement.
+// Deletes cascade each tracker's ranklists (FKs), same as DELETE /:id.
+adminTrackerRoutes.post("/bulk", manageTrackers, validate("json", adminBulkPublishSchema), async (c) => {
+  const { ids, action } = c.req.valid("json");
+  const db = getDb(c.env.DB);
+
+  if (action === "delete") {
+    const deleted = await db
+      .delete(trackers)
+      .where(inArray(trackers.id, ids))
+      .returning({ id: trackers.id });
+    return c.json({ ok: true, affected: deleted.length });
+  }
+
+  const updated = await db
+    .update(trackers)
+    .set({
+      status: action === "publish" ? "published" : "draft",
+      updatedAt: Math.floor(Date.now() / 1000),
+    })
+    .where(inArray(trackers.id, ids))
+    .returning({ id: trackers.id });
+  return c.json({ ok: true, affected: updated.length });
+});
+
 // Set display order for a batch of ranklists within one tracker.
 adminTrackerRoutes.post(
   "/:id/ranklists/reorder",
@@ -229,6 +256,41 @@ adminTrackerRoutes.post(
     await db.batch([statements[0], ...statements.slice(1)]);
 
     return c.json({ ok: true });
+  },
+);
+
+// Publish, unpublish, lock, unlock, or delete a batch of ranklists. Scoped to
+// the tracker in the path, so ids from another tracker are simply ignored.
+adminTrackerRoutes.post(
+  "/:id/ranklists/bulk",
+  manageTrackers,
+  validate("json", adminRanklistBulkSchema),
+  async (c) => {
+    const id = parseId(c.req.param("id"));
+    if (id === null) throw new HTTPException(404, { message: "Tracker not found" });
+    const { ids, action } = c.req.valid("json");
+    const db = getDb(c.env.DB);
+
+    const scope = and(inArray(ranklists.id, ids), eq(ranklists.trackerId, id));
+
+    if (action === "delete") {
+      const deleted = await db.delete(ranklists).where(scope).returning({ id: ranklists.id });
+      return c.json({ ok: true, affected: deleted.length });
+    }
+
+    const patch =
+      action === "publish"
+        ? { status: "published" as const }
+        : action === "draft"
+          ? { status: "draft" as const }
+          : { isLocked: action === "lock" };
+
+    const updated = await db
+      .update(ranklists)
+      .set({ ...patch, updatedAt: Math.floor(Date.now() / 1000) })
+      .where(scope)
+      .returning({ id: ranklists.id });
+    return c.json({ ok: true, affected: updated.length });
   },
 );
 

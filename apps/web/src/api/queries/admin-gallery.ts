@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, unwrap } from '../client'
 import type { components } from '../schema'
+import type { BulkPublishAction } from '../types'
 import type { PublishStatus } from './admin-events'
 import type { ReorderItem } from './admin-trackers'
 
@@ -84,6 +85,18 @@ export function useAdminDeleteGalleryAlbum() {
   })
 }
 
+export function useAdminBulkGalleryAlbums() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: { ids: number[]; action: BulkPublishAction }) =>
+      unwrap(api.POST('/admin/gallery/bulk', { body })),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'gallery'] })
+      void queryClient.invalidateQueries({ queryKey: ['gallery'] })
+    },
+  })
+}
+
 interface AdminGalleryAlbumList {
   data: (AdminGalleryAlbum & { mediaCount: number })[]
   meta: components['schemas']['PaginationMeta']
@@ -156,6 +169,23 @@ export function useAdminRemoveGalleryMedia(albumId: number) {
       unwrap(
         api.DELETE('/admin/gallery/{id}/media/{mediaId}', {
           params: { path: { id: albumId, mediaId } },
+        }),
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'gallery'] })
+      void queryClient.invalidateQueries({ queryKey: ['gallery'] })
+    },
+  })
+}
+
+export function useAdminBulkRemoveGalleryMedia(albumId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (ids: number[]) =>
+      unwrap(
+        api.POST('/admin/gallery/{id}/media/bulk-remove', {
+          params: { path: { id: albumId } },
+          body: { ids },
         }),
       ),
     onSuccess: () => {

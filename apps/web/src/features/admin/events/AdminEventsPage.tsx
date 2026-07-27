@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
 import {
+  useAdminBulkEvents,
   useAdminCreateEvent,
   useAdminEvents,
   type PublishStatus,
@@ -39,11 +40,17 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useAuth } from '@/features/auth/auth-context'
+import {
+  PublishBulkBar,
+  RowCheckbox,
+  SelectAllHead,
+} from '@/features/admin/shared/BulkBar'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
+import { useRowSelection } from '@/features/admin/shared/use-row-selection'
 import { EVENT_TYPE_LABELS, SCOPE_LABELS, hasPermission } from '@/lib/constants'
 import { formatDateTime } from '@/lib/datetime'
 import { useDocumentTitle } from '@/lib/use-document-title'
-import type { EventType, ParticipationScope } from '@/api/types'
+import type { BulkPublishAction, EventType, ParticipationScope } from '@/api/types'
 import { EventForm } from './EventForm'
 
 const ALL = 'all'
@@ -104,6 +111,10 @@ export function AdminEventsPage() {
   const adminQuery = useAdminEvents({ page, q, type, scope, status }, canManageEvents)
   const publicQuery = useEvents({ page, q, type, scope }, !canManageEvents)
   const eventsQuery = canManageEvents ? adminQuery : publicQuery
+  const bulkEvents = useAdminBulkEvents()
+  const selection = useRowSelection(
+    (eventsQuery.data?.data ?? []).map((event) => event.id),
+  )
 
   const updateParams = (updates: Record<string, string | undefined>) => {
     setSearchParams((prev) => {
@@ -114,6 +125,25 @@ export function AdminEventsPage() {
       }
       return next
     })
+  }
+
+  const runBulk = (action: BulkPublishAction) => {
+    bulkEvents.mutate(
+      { ids: selection.selected, action },
+      {
+        onSuccess: ({ affected }) => {
+          selection.clear()
+          const result =
+            action === 'publish'
+              ? 'published'
+              : action === 'draft'
+                ? 'moved to drafts'
+                : 'deleted'
+          toast.success(`${affected} event${affected === 1 ? '' : 's'} ${result}.`)
+        },
+        onError: (error) => toast.error(errorMessage(error)),
+      },
+    )
   }
 
   return (
@@ -184,11 +214,27 @@ export function AdminEventsPage() {
         <EmptyState message="No events match your filters." />
       ) : (
         <div className="space-y-4">
+          {canManageEvents && (
+            <PublishBulkBar
+              selection={selection}
+              itemLabel="event"
+              isPending={bulkEvents.isPending}
+              onAction={runBulk}
+            />
+          )}
           <div className="overflow-x-auto rounded-xl border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="pl-4">Title</TableHead>
+                  {canManageEvents && (
+                    <SelectAllHead
+                      selection={selection}
+                      label="Select all events"
+                    />
+                  )}
+                  <TableHead className={canManageEvents ? undefined : 'pl-4'}>
+                    Title
+                  </TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Starts</TableHead>
@@ -198,7 +244,16 @@ export function AdminEventsPage() {
               <TableBody>
                 {eventsQuery.data.data.map((event) => (
                   <TableRow key={event.id}>
-                    <TableCell className="pl-4">
+                    {canManageEvents && (
+                      <TableCell className="pl-4">
+                        <RowCheckbox
+                          selection={selection}
+                          id={event.id}
+                          label={`Select ${event.title}`}
+                        />
+                      </TableCell>
+                    )}
+                    <TableCell className={canManageEvents ? undefined : 'pl-4'}>
                       <Link
                         to={`/admin/events/${event.id}`}
                         className="font-medium hover:underline"

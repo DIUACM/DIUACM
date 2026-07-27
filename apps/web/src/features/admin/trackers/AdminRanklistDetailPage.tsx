@@ -1,10 +1,12 @@
-import { ArrowLeft, Check, Trash2 } from 'lucide-react'
+import { ArrowLeft, Check, Lock, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
 import {
   useAdminAddRanklistUser,
+  useAdminBulkRanklistEvents,
+  useAdminBulkRemoveRanklistUsers,
   useAdminDeleteRanklist,
   useAdminRanklist,
   useAdminRemoveRanklistEvent,
@@ -14,10 +16,12 @@ import {
   type AdminRanklistDetail,
 } from '@/api/queries/admin-trackers'
 import type { PublishStatus } from '@/api/queries/admin-events'
+import { BulkBar, RowCheckbox, SelectAllHead } from '@/features/admin/shared/BulkBar'
 import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
 import { EventPicker } from '@/features/admin/shared/EventPicker'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
 import { UserPicker } from '@/features/admin/shared/UserPicker'
+import { useRowSelection } from '@/features/admin/shared/use-row-selection'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { ErrorState } from '@/components/shared/states'
 import { Badge } from '@/components/ui/badge'
@@ -253,6 +257,17 @@ export function AdminRanklistDetailPage() {
   const removeEvent = useAdminRemoveRanklistEvent(id)
   const addUser = useAdminAddRanklistUser(id)
   const removeUser = useAdminRemoveRanklistUser(id)
+
+  const bulkEvents = useAdminBulkRanklistEvents(id)
+  const bulkRemoveUsers = useAdminBulkRemoveRanklistUsers(id)
+  const eventSelection = useRowSelection(
+    (ranklistQuery.data?.events ?? []).map((event) => event.id),
+  )
+  const userSelection = useRowSelection(
+    (ranklistQuery.data?.users ?? []).map((standing) => standing.user.id),
+  )
+  const [bulkWeight, setBulkWeight] = useState('1')
+
   useDocumentTitle(
     ranklistQuery.data
       ? `Admin · ${ranklistQuery.data.keyword}`
@@ -279,6 +294,23 @@ export function AdminRanklistDetailPage() {
 
   const ranklist = ranklistQuery.data
 
+  const runEventBulk = (action: 'detach' | 'set-weight', weight?: number) => {
+    bulkEvents.mutate(
+      { ids: eventSelection.selected, action, weight },
+      {
+        onSuccess: ({ affected }) => {
+          eventSelection.clear()
+          toast.success(
+            action === 'detach'
+              ? `${affected} event${affected === 1 ? '' : 's'} detached.`
+              : `Weight set on ${affected} event${affected === 1 ? '' : 's'}. Scores recalculated.`,
+          )
+        },
+        onError: (error) => toast.error(errorMessage(error)),
+      },
+    )
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -291,6 +323,11 @@ export function AdminRanklistDetailPage() {
           <h1 className="flex flex-wrap items-center gap-3 text-2xl font-bold tracking-tight">
             {ranklist.keyword}
             <StatusBadge status={ranklist.status} />
+            {ranklist.isLocked && (
+              <Badge variant="outline" className="gap-1">
+                <Lock className="size-3" /> Locked
+              </Badge>
+            )}
           </h1>
           <ConfirmDialog
             trigger={
@@ -371,62 +408,109 @@ export function AdminRanklistDetailPage() {
               {ranklist.events.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No events attached.</p>
               ) : (
-                <div className="overflow-x-auto rounded-lg border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="pl-4">Event</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-center">Weight</TableHead>
-                        <TableHead className="w-12 pr-4" />
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {ranklist.events.map((event) => (
-                        <TableRow key={event.id}>
-                          <TableCell className="pl-4">
-                            <Link
-                              to={`/admin/events/${event.id}`}
-                              className="font-medium hover:underline"
-                            >
-                              {event.title}
-                            </Link>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {formatDate(event.startingAt)}
-                          </TableCell>
-                          <TableCell>
-                            <StatusBadge status={event.status} />
-                          </TableCell>
-                          <TableCell>
-                            <WeightCell
-                              key={`${event.id}-${event.weight}`}
-                              ranklistId={id}
-                              eventId={event.id}
-                              weight={event.weight}
-                            />
-                          </TableCell>
-                          <TableCell className="pr-4">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-7 text-destructive hover:text-destructive"
-                              aria-label={`Detach ${event.title}`}
-                              onClick={() =>
-                                removeEvent.mutate(event.id, {
-                                  onSuccess: () => toast.success('Event detached.'),
-                                  onError: (error) => toast.error(errorMessage(error)),
-                                })
-                              }
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
-                          </TableCell>
+                <div className="space-y-3">
+                  <BulkBar selection={eventSelection}>
+                    <div className="flex items-center gap-1.5">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={1}
+                        step="0.05"
+                        value={bulkWeight}
+                        onChange={(event) => setBulkWeight(event.target.value)}
+                        className="h-8 w-20"
+                        aria-label="Weight for selected events"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={bulkEvents.isPending}
+                        onClick={() => runEventBulk('set-weight', Number(bulkWeight) || 0)}
+                      >
+                        Set weight
+                      </Button>
+                    </div>
+                    <ConfirmDialog
+                      trigger={
+                        <Button variant="destructive" size="sm" disabled={bulkEvents.isPending}>
+                          <Trash2 className="size-4" /> Detach
+                        </Button>
+                      }
+                      title={`Detach ${eventSelection.count} event${eventSelection.count === 1 ? '' : 's'}?`}
+                      description="The events stay, but drop out of this ranklist's standings."
+                      confirmLabel="Detach"
+                      onConfirm={() => runEventBulk('detach')}
+                    />
+                  </BulkBar>
+                  <div className="overflow-x-auto rounded-lg border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <SelectAllHead
+                            selection={eventSelection}
+                            label="Select all events"
+                          />
+                          <TableHead>Event</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-center">Weight</TableHead>
+                          <TableHead className="w-12 pr-4" />
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {ranklist.events.map((event) => (
+                          <TableRow key={event.id}>
+                            <TableCell className="pl-4">
+                              <RowCheckbox
+                                selection={eventSelection}
+                                id={event.id}
+                                label={`Select ${event.title}`}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Link
+                                to={`/admin/events/${event.id}`}
+                                className="font-medium hover:underline"
+                              >
+                                {event.title}
+                              </Link>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {formatDate(event.startingAt)}
+                            </TableCell>
+                            <TableCell>
+                              <StatusBadge status={event.status} />
+                            </TableCell>
+                            <TableCell>
+                              <WeightCell
+                                key={`${event.id}-${event.weight}`}
+                                ranklistId={id}
+                                eventId={event.id}
+                                weight={event.weight}
+                              />
+                            </TableCell>
+                            <TableCell className="pr-4">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-7 text-destructive hover:text-destructive"
+                                aria-label={`Detach ${event.title}`}
+                                onClick={() =>
+                                  removeEvent.mutate(event.id, {
+                                    onSuccess: () => toast.success('Event detached.'),
+                                    onError: (error) =>
+                                      toast.error(errorMessage(error)),
+                                  })
+                                }
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               )}
             </TabsContent>
@@ -448,61 +532,105 @@ export function AdminRanklistDetailPage() {
               {ranklist.users.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No participants yet.</p>
               ) : (
-                <div className="overflow-x-auto rounded-lg border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-16 pl-4 text-center">Rank</TableHead>
-                        <TableHead>Participant</TableHead>
-                        <TableHead className="text-right">Score</TableHead>
-                        <TableHead className="w-12 pr-4" />
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {ranklist.users.map((standing) => (
-                        <TableRow key={standing.user.id}>
-                          <TableCell className="pl-4 text-center font-semibold text-muted-foreground">
-                            {standing.rank}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2.5">
-                              <UserAvatar
-                                name={standing.user.name}
-                                image={standing.user.image}
-                                className="size-7"
-                              />
-                              <span className="font-medium">{standing.user.name}</span>
-                              <span className="text-muted-foreground">
-                                @{standing.user.username}
-                              </span>
-                              {standing.autoAdded && (
-                                <Badge variant="secondary">auto</Badge>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right font-medium tabular-nums">
-                            {standing.score.toFixed(2)}
-                          </TableCell>
-                          <TableCell className="pr-4">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="size-7 text-destructive hover:text-destructive"
-                              aria-label={`Remove ${standing.user.name}`}
-                              onClick={() =>
-                                removeUser.mutate(standing.user.id, {
-                                  onSuccess: () => toast.success('Participant removed.'),
-                                  onError: (error) => toast.error(errorMessage(error)),
-                                })
-                              }
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
-                          </TableCell>
+                <div className="space-y-3">
+                  <BulkBar selection={userSelection}>
+                    <ConfirmDialog
+                      trigger={
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          disabled={bulkRemoveUsers.isPending}
+                        >
+                          <Trash2 className="size-4" /> Remove
+                        </Button>
+                      }
+                      title={`Remove ${userSelection.count} participant${userSelection.count === 1 ? '' : 's'}?`}
+                      description="Their event data remains, but they will no longer appear in this ranklist."
+                      confirmLabel="Remove"
+                      onConfirm={() =>
+                        bulkRemoveUsers.mutate(userSelection.selected, {
+                          onSuccess: ({ affected }) => {
+                            userSelection.clear()
+                            toast.success(
+                              `${affected} participant${affected === 1 ? '' : 's'} removed.`,
+                            )
+                          },
+                          onError: (error) => toast.error(errorMessage(error)),
+                        })
+                      }
+                    />
+                  </BulkBar>
+                  <div className="overflow-x-auto rounded-lg border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <SelectAllHead
+                            selection={userSelection}
+                            label="Select all participants"
+                          />
+                          <TableHead className="w-16 text-center">Rank</TableHead>
+                          <TableHead>Participant</TableHead>
+                          <TableHead className="text-right">Score</TableHead>
+                          <TableHead className="w-12 pr-4" />
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {ranklist.users.map((standing) => (
+                          <TableRow key={standing.user.id}>
+                            <TableCell className="pl-4">
+                              <RowCheckbox
+                                selection={userSelection}
+                                id={standing.user.id}
+                                label={`Select ${standing.user.name}`}
+                              />
+                            </TableCell>
+                            <TableCell className="text-center font-semibold text-muted-foreground">
+                              {standing.rank}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2.5">
+                                <UserAvatar
+                                  name={standing.user.name}
+                                  image={standing.user.image}
+                                  className="size-7"
+                                />
+                                <span className="font-medium">
+                                  {standing.user.name}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  @{standing.user.username}
+                                </span>
+                                {standing.autoAdded && (
+                                  <Badge variant="secondary">auto</Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right font-medium tabular-nums">
+                              {standing.score.toFixed(2)}
+                            </TableCell>
+                            <TableCell className="pr-4">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-7 text-destructive hover:text-destructive"
+                                aria-label={`Remove ${standing.user.name}`}
+                                onClick={() =>
+                                  removeUser.mutate(standing.user.id, {
+                                    onSuccess: () =>
+                                      toast.success('Participant removed.'),
+                                    onError: (error) =>
+                                      toast.error(errorMessage(error)),
+                                  })
+                                }
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               )}
             </TabsContent>
