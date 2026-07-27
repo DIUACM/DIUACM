@@ -2,12 +2,14 @@ import type Database from "better-sqlite3";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import type { CodeforcesSubmission } from "../src/lib/codeforces";
+import { codeforcesPlatform } from "../src/sync/codeforces";
 import {
   computePerformance,
-  runCodeforcesSync,
+  runSync,
   WRITE_CHUNK_SIZE,
+  type Solve,
   type SyncEvent,
-} from "../src/sync/codeforces";
+} from "../src/sync/runner";
 import { d1Shim } from "./d1";
 import {
   addMember,
@@ -47,61 +49,75 @@ const EVENT: SyncEvent = {
   endingAt: CONTEST_END,
 };
 
-describe("computePerformance", () => {
-  it("counts in-contest accepted submissions as solves", () => {
+/**
+ * Codeforces submissions through the real adapter, so these cases cover the
+ * verdict filter and contest-id resolution as well as the counting itself.
+ */
+const solvesFor = async (submissions: CodeforcesSubmission[]): Promise<Solve[]> => {
+  const reader = await codeforcesPlatform.start({
+    events: [],
+    since: 0,
+    fetcher: (async () =>
+      Response.json({ status: "OK", result: submissions })) as unknown as typeof fetch,
+  });
+  return reader.fetchSolves("alice");
+};
+
+describe("computePerformance — Codeforces submissions", () => {
+  it("counts in-contest accepted submissions as solves", async () => {
     const counts = computePerformance(
       [EVENT],
-      [
+      await solvesFor([
         submission("A", "CONTESTANT", CONTEST_START + 100),
         submission("B", "CONTESTANT", CONTEST_START + 900),
-      ],
+      ]),
     );
     expect(counts.get(1)).toEqual({ solveCount: 2, upsolveCount: 0 });
   });
 
-  it("counts practice submissions after the contest as upsolves", () => {
+  it("counts practice submissions after the contest as upsolves", async () => {
     const counts = computePerformance(
       [EVENT],
-      [
+      await solvesFor([
         submission("A", "CONTESTANT", CONTEST_START + 100),
         submission("C", "PRACTICE", CONTEST_END + 86_400),
-      ],
+      ]),
     );
     expect(counts.get(1)).toEqual({ solveCount: 1, upsolveCount: 1 });
   });
 
-  it("does not count a re-solve in practice of an in-contest solve", () => {
+  it("does not count a re-solve in practice of an in-contest solve", async () => {
     const counts = computePerformance(
       [EVENT],
-      [
+      await solvesFor([
         submission("A", "CONTESTANT", CONTEST_START + 100),
         submission("A", "PRACTICE", CONTEST_END + 86_400),
-      ],
+      ]),
     );
     expect(counts.get(1)).toEqual({ solveCount: 1, upsolveCount: 0 });
   });
 
-  it("dedupes repeated accepted submissions on the same problem", () => {
+  it("dedupes repeated accepted submissions on the same problem", async () => {
     const counts = computePerformance(
       [EVENT],
-      [
+      await solvesFor([
         submission("A", "PRACTICE", CONTEST_END + 10),
         submission("A", "PRACTICE", CONTEST_END + 20),
-      ],
+      ]),
     );
     expect(counts.get(1)).toEqual({ solveCount: 0, upsolveCount: 1 });
   });
 
-  it("treats a submission inside the event window as a solve whatever Codeforces calls it", () => {
+  it("treats a submission inside the event window as a solve whatever Codeforces calls it", async () => {
     // Club replays: members participate virtually during the scheduled session.
     const counts = computePerformance(
       [EVENT],
-      [submission("A", "VIRTUAL", CONTEST_START + 500)],
+      await solvesFor([submission("A", "VIRTUAL", CONTEST_START + 500)]),
     );
     expect(counts.get(1)).toEqual({ solveCount: 1, upsolveCount: 0 });
   });
 
-  it("splits the same contest differently for two events with different windows", () => {
+  it("splits the same contest differently for two events with different windows", async () => {
     const replay: SyncEvent = {
       eventId: 2,
       contestId: "1900",
@@ -110,22 +126,22 @@ describe("computePerformance", () => {
     };
     const counts = computePerformance(
       [EVENT, replay],
-      [submission("A", "PRACTICE", CONTEST_END + 87_000)],
+      await solvesFor([submission("A", "PRACTICE", CONTEST_END + 87_000)]),
     );
     expect(counts.get(1)).toEqual({ solveCount: 0, upsolveCount: 1 });
     expect(counts.get(2)).toEqual({ solveCount: 1, upsolveCount: 0 });
   });
 
-  it("ignores rejected verdicts and other contests", () => {
+  it("ignores rejected verdicts and other contests", async () => {
     const counts = computePerformance(
       [EVENT],
-      [
+      await solvesFor([
         submission("A", "CONTESTANT", CONTEST_START + 100, { verdict: "WRONG_ANSWER" }),
         submission("B", "PRACTICE", CONTEST_END + 10, {
           contestId: 1901,
           problem: { contestId: 1901, index: "B" },
         }),
-      ],
+      ]),
     );
     expect(counts.has(1)).toBe(false);
   });
@@ -204,7 +220,7 @@ const NOW = CONTEST_END + 200_000;
  * pass for the wrong reason (nothing due rather than nothing changed).
  */
 const run = (db: Database.Database, fetcher: typeof fetch, limit = 10) =>
-  runCodeforcesSync(d1Shim(db), {
+  runSync(d1Shim(db), codeforcesPlatform, {
     fetcher,
     now: NOW,
     limit,
@@ -212,7 +228,7 @@ const run = (db: Database.Database, fetcher: typeof fetch, limit = 10) =>
     minResyncSeconds: 0,
   });
 
-describe("runCodeforcesSync", () => {
+describe("runSync — Codeforces", () => {
   let db: Database.Database;
 
   beforeEach(() => {
@@ -297,7 +313,7 @@ describe("runCodeforcesSync", () => {
     const fetcher = fetcherFor({}, calls);
 
     const tick = (now: number) =>
-      runCodeforcesSync(d1Shim(db), {
+      runSync(d1Shim(db), codeforcesPlatform, {
         fetcher,
         now,
         limit: 2,
@@ -396,7 +412,7 @@ describe("runCodeforcesSync", () => {
       },
     } as unknown as D1Database;
 
-    const summary = await runCodeforcesSync(failing, {
+    const summary = await runSync(failing, codeforcesPlatform, {
       fetcher: fetcherFor({ alice: [submission("A", "CONTESTANT", CONTEST_START + 1)] }),
       now: NOW,
       requestDelayMs: 0,
@@ -415,7 +431,7 @@ describe("runCodeforcesSync", () => {
 
     /** The real default — no `minResyncSeconds` override. */
     const tick = (now: number, calls: string[]) =>
-      runCodeforcesSync(d1Shim(db), {
+      runSync(d1Shim(db), codeforcesPlatform, {
         fetcher: fetcherFor({ alice: [submission("A", "CONTESTANT", CONTEST_START + 1)] }, calls),
         now,
         limit: 10,

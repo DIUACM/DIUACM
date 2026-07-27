@@ -14,7 +14,9 @@
       // Codeforces — one batch of handles per tick (see src/sync/codeforces.ts).
       // Must stay under an hour: Cloudflare gives sub-hourly crons 30s of CPU,
       // hourly and slower ones 15 min. This job needs seconds, not minutes.
-      "*/15 * * * *"
+      "*/15 * * * *",
+      // AtCoder, offset to :05/:20/:35/:50 so the two never start together.
+      "5-59/15 * * * *"
     ]
   },
   "d1_databases": [

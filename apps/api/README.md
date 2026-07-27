@@ -70,36 +70,66 @@ covers the public surface — browse `/docs` (Scalar) for the complete, always-c
 
 ## Scheduled solve/upsolve sync
 
-A Cron Trigger keeps `event_performance` current from the judges, so ranklist scores no
-longer depend on an admin typing numbers in. `src/sync/index.ts` dispatches on the cron
-expression, giving each platform its own cadence; only **Codeforces** is implemented so
-far (`*/15 * * * *`, see `src/sync/codeforces.ts`).
+Cron Triggers keep `event_performance` current from the judges, so ranklist scores no
+longer depend on an admin typing numbers in. `src/sync/runner.ts` owns everything
+platform-neutral — batching, throttling, the cursor, the writes — and each judge plugs in a
+`SyncPlatform` adapter. `src/sync/index.ts` dispatches on the cron expression, so every
+platform gets its own cadence:
 
-Per tick it takes the next 100 Codeforces handles, least recently synced first and
-skipping any read within the last **2 hours** (`user_handles.last_synced_at`, stamped even
-on failure so a dead handle can't wedge the queue). It reads each user's submissions with
-one `user.status` call — the only endpoint that exposes practice submissions, and hence
-upsolves.
+| Platform | Cron | Adapter | Source |
+|---|---|---|---|
+| Codeforces | `*/15 * * * *` | `src/sync/codeforces.ts` | `codeforces.com/api/user.status` |
+| AtCoder | `5-59/15 * * * *` | `src/sync/atcoder.ts` | AtCoder Problems (kenkoooo) |
 
-The queue therefore drains in ~45 min and then idles until the oldest handle ages past the
-window, so each account is re-read roughly every 2 hours.
+The two are offset so they never start in the same minute. VJudge is not implemented yet;
+it becomes a third adapter, not a third copy of the runner.
 
-- **In scope**: published, finished events whose `event_link` is a public Codeforces
-  contest and which belong to at least one ranklist with `is_locked = 0`. Locking a
-  ranklist at the end of a semester is what stops its events being re-synced.
-- **Solved** = accepted as `CONTESTANT`/`OUT_OF_COMPETITION`, or accepted inside the
-  event's own `starting_at`…`ending_at` (which is how club-run replays are counted).
+Per tick a platform takes its next 100 handles, least recently synced first and skipping
+any read within the last **2 hours** (`user_handles.last_synced_at`, stamped even on
+failure so a dead handle can't wedge the queue). One API call covers a user across *every*
+tracked contest, so the unit of work is a handle, not an (event, user) pair. A queue of
+~275 handles drains in ~45 min and then idles until the oldest ages past the window, so
+each account is re-read roughly every 2 hours.
+
+- **In scope**: published, finished events whose `event_link` the platform claims, and
+  which belong to at least one ranklist with `is_locked = 0`. Locking a ranklist at the end
+  of a semester is what stops its events being re-synced.
+- **Solved** = accepted during the contest — either the judge says so, or it landed inside
+  the event's own `starting_at`…`ending_at` (which is how club-run replays are counted).
   **Upsolved** = accepted at any other time, on a problem not already solved in-contest.
 - Admin-entered `position` values survive a sync, and an unchanged row is not rewritten,
   so the score/rank triggers stay quiet on a steady system.
-- Gym and group contests are **not** synced — the Codeforces API keeps them private
-  ("You have to be authenticated to use this method").
 
-There is no HTTP trigger — the cron is the only entry point. Locally, `pnpm dev` passes
+### Per-platform notes
+
+**Codeforces.** `user.status` is the only endpoint that exposes practice submissions, and
+hence upsolves — `contest.standings` rejects every extra parameter for non-admin callers
+and returns official contestant rows alone. In-contest comes straight off the submission
+(`CONTESTANT`/`OUT_OF_COMPETITION`). Gym and group contests are **not** synced: the API
+keeps them private ("You have to be authenticated to use this method").
+
+**AtCoder.** There is no official API, and `atcoder.jp/contests/<slug>/standings/json`
+redirects to a login page, so the community AtCoder Problems service is the source. Its
+submissions carry no equivalent of Codeforces' participant type, so the contest window
+comes from one `contests.json` fetch per run (~80 KB for all ~6k contests) and a solve
+counts as in-contest when it lands inside the contest's real start + duration. Paging runs
+**forward** (oldest first, 500 per page), the opposite of Codeforces. Requests are spaced
+1.5 s per the service's policy: *"Please sleep for more than 1 second between accesses."*
+
+> **Known limitation.** A mistyped AtCoder handle returns HTTP 200 and an empty list —
+> indistinguishable from a real account with no submissions. It will sync "successfully"
+> forever and never set `last_sync_error`, and unlike Codeforces there is no validation
+> when the handle is entered either.
+
+There is no HTTP trigger — the crons are the only entry point. Locally, `pnpm dev` passes
 `--test-scheduled`, so a tick can be fired by hand:
 
 ```bash
 curl "http://localhost:8787/__scheduled?cron=*/15+*+*+*+*"
+```
+
+```bash
+curl "http://localhost:8787/__scheduled?cron=5-59/15+*+*+*+*"
 ```
 
 ### Platform budget
@@ -107,9 +137,12 @@ curl "http://localhost:8787/__scheduled?cron=*/15+*+*+*+*"
 The job **requires Workers Paid** — Free gives cron triggers 10 ms of CPU and 50
 subrequests, and parsing one page of submissions alone exceeds that. On Paid, a full
 100-handle tick costs roughly 600 subrequests of 10,000, a couple of seconds of CPU of
-30 s (only sub-hourly crons get 30 s; hourly and slower get 15 min), and ~3.5 min of wall
-clock of 15 min. `TIME_BUDGET_MS` stops a run at 10 min regardless; whatever is left is
-picked up next tick.
+30 s (only sub-hourly crons get 30 s; hourly and slower get 15 min), and 2.5–4.5 min of
+wall clock of 15 min. `TIME_BUDGET_MS` stops a run at 10 min regardless; whatever is left
+is picked up next tick.
+
+Measured per handle: Codeforces ~2.9 ms of parse CPU (1.5 calls, ~0.5 MB), AtCoder ~0.3 ms
+(1 call, ~30 KB). Across both platforms that is roughly 1% of the included monthly CPU.
 
 Writes are chunked (`WRITE_CHUNK_SIZE`) because the score triggers amplify one upsert into
 a whole-ranklist re-rank, and an unbounded transaction can approach D1's 30 s query limit.
