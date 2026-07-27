@@ -1,5 +1,5 @@
 import { CodeforcesApiError, getUserSubmissions } from "../lib/codeforces";
-import type { Solve, SyncPlatform } from "./runner";
+import type { Solve, SolvePage, SyncPlatform } from "./runner";
 
 // ---------------------------------------------------------------------------
 // Codeforces adapter for the shared sync runner.
@@ -28,8 +28,8 @@ export const codeforcesPlatform: SyncPlatform = {
   // Nothing to load up front: every signal needed to classify a submission is
   // on the submission itself.
   start: async ({ since, fetcher }) => ({
-    fetchSolves: async (handle: string): Promise<Solve[]> => {
-      const submissions = await getUserSubmissions(handle, { since, fetcher });
+    fetchSolves: async (handle: string): Promise<SolvePage> => {
+      const { submissions, truncated } = await getUserSubmissions(handle, { since, fetcher });
       const solves: Solve[] = [];
       for (const submission of submissions) {
         if (submission.verdict !== "OK") continue;
@@ -42,7 +42,7 @@ export const codeforcesPlatform: SyncPlatform = {
           inContest: IN_CONTEST_PARTICIPANT_TYPES.has(submission.author.participantType),
         });
       }
-      return solves;
+      return { solves, truncated };
     },
   }),
 };

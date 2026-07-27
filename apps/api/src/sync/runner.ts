@@ -82,6 +82,16 @@ export type Solve = {
   inContest: boolean;
 };
 
+export type SolvePage = {
+  solves: Solve[];
+  /**
+   * The judge's paging cap was reached with history still to read, so these
+   * solves are incomplete and the counts derived from them are too low. The
+   * runner collects these handles and the dispatcher alerts on them.
+   */
+  truncated: boolean;
+};
+
 /** What one judge has to supply for the runner to sync it. */
 export type SyncPlatform = {
   /** Which `user_handles.type` rows this platform owns. */
@@ -101,7 +111,7 @@ export type SyncPlatform = {
     events: SyncEvent[];
     since: number;
     fetcher: typeof fetch;
-  }) => Promise<{ fetchSolves: (handle: string) => Promise<Solve[]> }>;
+  }) => Promise<{ fetchSolves: (handle: string) => Promise<SolvePage> }>;
 };
 
 /**
@@ -214,6 +224,13 @@ type EventRow = {
 
 type HandleRow = { id: number; user_id: number; handle: string };
 
+/**
+ * Why a batch ended before its last handle. `time-budget` is routine — the
+ * leftovers go on the next tick. `rate-limit` means the judge pushed back and
+ * is worth telling someone about, so the two are kept apart.
+ */
+export type StopReason = "time-budget" | "rate-limit" | null;
+
 export type SyncSummary = {
   events: number;
   handlesProcessed: number;
@@ -221,6 +238,9 @@ export type SyncSummary = {
   errors: number;
   /** True when the batch stopped early (time budget or the judge's rate limit). */
   stoppedEarly: boolean;
+  stoppedReason: StopReason;
+  /** Handles whose submission history hit the judge's paging cap. */
+  truncatedHandles: string[];
 };
 
 export type SyncOptions = {
@@ -285,6 +305,8 @@ export const runSync = async (
     rowsWritten: 0,
     errors: 0,
     stoppedEarly: false,
+    stoppedReason: null,
+    truncatedHandles: [],
   };
 
   const eventRows = await d1.prepare(SYNC_EVENTS_SQL).bind(now).all<EventRow>();
@@ -313,6 +335,7 @@ export const runSync = async (
   for (const row of handles) {
     if (Date.now() - startedAt > timeBudgetMs) {
       summary.stoppedEarly = true;
+      summary.stoppedReason = "time-budget";
       break;
     }
 
@@ -321,7 +344,11 @@ export const runSync = async (
     let upserts: D1PreparedStatement[] = [];
 
     try {
-      const counts = computePerformance(events, await reader.fetchSolves(row.handle));
+      const page = await reader.fetchSolves(row.handle);
+      // Recorded but not treated as an error: the partial counts are still
+      // better than none, and the alert is what gets it looked at.
+      if (page.truncated) summary.truncatedHandles.push(row.handle);
+      const counts = computePerformance(events, page.solves);
       const upsert = d1.prepare(PERFORMANCE_UPSERT_SQL);
       for (const [eventId, { solveCount, upsolveCount }] of counts) {
         // A 0/0 row carries no information and would pull the user into every
@@ -362,6 +389,7 @@ export const runSync = async (
     if (error) summary.errors += 1;
     if (rateLimited) {
       summary.stoppedEarly = true;
+      summary.stoppedReason = "rate-limit";
       break;
     }
   }

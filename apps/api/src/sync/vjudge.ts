@@ -6,6 +6,7 @@ import {
   toSyncEvent,
   WRITE_CHUNK_SIZE,
   type Solve,
+  type StopReason,
   type SyncEvent,
 } from "./runner";
 
@@ -86,10 +87,12 @@ export type VjudgeSyncSummary = {
   /** In-scope VJudge events, before the freshness window is applied. */
   events: number;
   contestsFetched: number;
+  contestsAttempted: number;
   rowsWritten: number;
   errors: number;
   /** True when the batch stopped early (time budget or VJudge pushing back). */
   stoppedEarly: boolean;
+  stoppedReason: StopReason;
 };
 
 export type VjudgeSyncOptions = {
@@ -172,9 +175,11 @@ export const runVjudgeSync = async (
   const summary: VjudgeSyncSummary = {
     events: 0,
     contestsFetched: 0,
+    contestsAttempted: 0,
     rowsWritten: 0,
     errors: 0,
     stoppedEarly: false,
+    stoppedReason: null,
   };
 
   const eventRows = await d1.prepare(DUE_CONTESTS_SQL).bind(now).all<EventRow>();
@@ -211,8 +216,10 @@ export const runVjudgeSync = async (
   for (const [contestId, events] of groupByContest(due)) {
     if (Date.now() - startedAt > timeBudgetMs) {
       summary.stoppedEarly = true;
+      summary.stoppedReason = "time-budget";
       break;
     }
+    summary.contestsAttempted += 1;
 
     let error: string | null = null;
     let rateLimited = false;
@@ -263,6 +270,7 @@ export const runVjudgeSync = async (
     if (error) summary.errors += 1;
     if (rateLimited) {
       summary.stoppedEarly = true;
+      summary.stoppedReason = "rate-limit";
       break;
     }
   }

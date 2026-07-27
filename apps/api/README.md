@@ -79,8 +79,10 @@ expression, so every platform gets its own cadence:
 | Codeforces | `*/15 * * * *` | handle | `codeforces.com/api/user.status` |
 | AtCoder | `5,20,35,50 * * * *` | handle | AtCoder Problems (kenkoooo) |
 | VJudge | `10,25,40,55 * * * *` | contest | `vjudge.net/contest/rank/single/<id>` |
+| Health digest | `12 1 * * *` | — | the database (see [Alerting](#alerting)) |
 
-The three are offset by 5 minutes so no two start in the same minute.
+The three syncs are offset by 5 minutes so no two start in the same minute; the digest sits
+on a minute none of them uses.
 
 **Codeforces and AtCoder are handle-driven.** One API call covers a user across *every*
 tracked contest, so the unit of work is a handle, not an (event, user) pair.
@@ -164,6 +166,53 @@ curl "http://localhost:8787/__scheduled?cron=5,20,35,50+*+*+*+*"
 ```bash
 curl "http://localhost:8787/__scheduled?cron=10,25,40,55+*+*+*+*"
 ```
+
+```bash
+curl "http://localhost:8787/__scheduled?cron=12+1+*+*+*"   # health digest
+```
+
+## Alerting
+
+The syncs are unattended, and a wrong count looks exactly like a healthy system from the
+outside. `src/lib/notify.ts` mails `SUPER_ADMIN_EMAIL` when that is no longer true, and
+`src/sync/digest.ts` mails once a day regardless — so **silence can be read as health
+rather than as a dead job**.
+
+`src/sync/faults.ts` decides what qualifies, and the bar is deliberately high: only the
+numbers being silently wrong, or the sync having stopped working. Individual failures do
+not qualify; they live in `last_sync_error` and are summarised in the digest.
+
+| Notice key | Raised when | Why it matters |
+| --- | --- | --- |
+| `<platform>:paging-truncated` | A handle's history hit `MAX_PAGES` with more to read | Counts are **silently too low** and nothing else would ever show it |
+| `<platform>:blocked` | A run stopped on a rate limit or VJudge's Cloudflare challenge | That platform stops updating entirely until it clears |
+| `<platform>:error-rate` | More than ⅓ of a batch of ≥5 failed | A handful of dead handles is normal; this many means the API moved |
+| `<platform>:run-failed` | The run threw before finishing | Nothing synced on that tick |
+
+A time-budget stop is **not** a fault — leftovers are picked up next tick by design.
+
+**Volume is the hard constraint**: four crons fire 289 times a day, so a persistent fault
+would otherwise mail every 15 minutes. Every occurrence is recorded in `admin_notices`, but
+a given key only sends once per **24 h**, and the mail says how many times it fired in
+between. Sending never breaks a sync — an unset sender or a rejection is logged and the run
+continues, so this ships fine before the domain is onboarded.
+
+### Setup
+
+Sending is **off until both are done**:
+
+1. Onboard a domain that is a zone in this Cloudflare account:
+
+   ```bash
+   pnpm exec wrangler email sending enable <yourdomain>
+   ```
+
+2. Point `vars.ALERT_FROM_EMAIL` in `wrangler.jsonc` at an address on it (e.g.
+   `alerts@<yourdomain>`) and run `pnpm cf-typegen`.
+
+Until then the faults are still recorded in `admin_notices` and logged; only the mail is
+skipped. `SUPER_ADMIN_EMAIL` is the recipient and must be a **verified destination address**
+(`wrangler email routing addresses list`).
 
 ### Platform budget
 

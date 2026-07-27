@@ -60,7 +60,7 @@ const solvesFor = async (submissions: CodeforcesSubmission[]): Promise<Solve[]> 
     fetcher: (async () =>
       Response.json({ status: "OK", result: submissions })) as unknown as typeof fetch,
   });
-  return reader.fetchSolves("alice");
+  return (await reader.fetchSolves("alice")).solves;
 };
 
 describe("computePerformance — Codeforces submissions", () => {

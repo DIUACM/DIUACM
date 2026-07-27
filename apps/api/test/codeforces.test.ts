@@ -77,6 +77,8 @@ describe("getCodeforcesUser", () => {
 
 describe("getUserSubmissions", () => {
   const PAGE_SIZE = 1000;
+  /** Mirrors the runaway guard in src/lib/codeforces.ts. */
+  const MAX_PAGES = 15;
 
   /** Newest-first, one second apart, exactly like the real endpoint. */
   const page = (newest: number, count: number): CodeforcesSubmission[] =>
@@ -93,7 +95,10 @@ describe("getUserSubmissions", () => {
       .fn<typeof fetch>()
       .mockResolvedValue(Response.json({ status: "OK", result: page(5000, 3) }));
 
-    await expect(getUserSubmissions("alice", { since: 0, fetcher })).resolves.toHaveLength(3);
+    await expect(getUserSubmissions("alice", { since: 0, fetcher })).resolves.toMatchObject({
+      submissions: expect.objectContaining({ length: 3 }),
+      truncated: false,
+    });
     expect(fetcher).toHaveBeenCalledOnce();
     const url = new URL(String(fetcher.mock.calls[0][0]));
     expect(url.searchParams.get("handle")).toBe("alice");
@@ -107,9 +112,10 @@ describe("getUserSubmissions", () => {
       .mockResolvedValueOnce(Response.json({ status: "OK", result: page(8_000, PAGE_SIZE) }))
       .mockResolvedValueOnce(Response.json({ status: "OK", result: page(7_000, 10) }));
 
-    const submissions = await getUserSubmissions("alice", { since: 0, fetcher });
+    const { submissions, truncated } = await getUserSubmissions("alice", { since: 0, fetcher });
 
     expect(submissions).toHaveLength(2 * PAGE_SIZE + 10);
+    expect(truncated).toBe(false);
     expect(fetcher).toHaveBeenCalledTimes(3);
     expect(new URL(String(fetcher.mock.calls[1][0])).searchParams.get("from")).toBe("1001");
   });
@@ -120,10 +126,28 @@ describe("getUserSubmissions", () => {
       .fn<typeof fetch>()
       .mockResolvedValue(Response.json({ status: "OK", result: page(9_000, PAGE_SIZE) }));
 
-    const submissions = await getUserSubmissions("alice", { since: 8_500, fetcher });
+    const { submissions, truncated } = await getUserSubmissions("alice", { since: 8_500, fetcher });
 
     expect(submissions).toHaveLength(501);
+    expect(truncated).toBe(false);
     expect(fetcher).toHaveBeenCalledOnce();
+  });
+
+  it("reports truncation when the paging cap runs out mid-history", async () => {
+    // Every page is full and every entry is inside the cutoff, so paging can
+    // only end by exhausting MAX_PAGES — and the oldest submissions are lost.
+    // A fresh Response per call: a body can only be read once, and this is the
+    // only case that reads more than one page of the same fixture.
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockImplementation(async () =>
+        Response.json({ status: "OK", result: page(9_000, PAGE_SIZE) }),
+      );
+
+    const { truncated } = await getUserSubmissions("alice", { since: 0, fetcher });
+
+    expect(truncated).toBe(true);
+    expect(fetcher).toHaveBeenCalledTimes(MAX_PAGES);
   });
 
   it("distinguishes the call limit from a bad handle", async () => {

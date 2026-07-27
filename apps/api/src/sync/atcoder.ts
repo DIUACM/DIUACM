@@ -1,5 +1,5 @@
 import { AtcoderApiError, getContests, getUserSubmissions } from "../lib/atcoder";
-import type { Solve, SyncPlatform } from "./runner";
+import type { Solve, SolvePage, SyncPlatform } from "./runner";
 
 // ---------------------------------------------------------------------------
 // AtCoder adapter for the shared sync runner.
@@ -32,8 +32,8 @@ export const atcoderPlatform: SyncPlatform = {
     }
 
     return {
-      fetchSolves: async (handle: string): Promise<Solve[]> => {
-        const submissions = await getUserSubmissions(handle, { since, fetcher });
+      fetchSolves: async (handle: string): Promise<SolvePage> => {
+        const { submissions, truncated } = await getUserSubmissions(handle, { since, fetcher });
         const solves: Solve[] = [];
         for (const submission of submissions) {
           if (submission.result !== "AC") continue;
@@ -50,7 +50,7 @@ export const atcoderPlatform: SyncPlatform = {
               submission.epoch_second <= window.end,
           });
         }
-        return solves;
+        return { solves, truncated };
       },
     };
   },

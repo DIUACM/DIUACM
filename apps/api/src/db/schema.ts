@@ -199,6 +199,23 @@ export const eventSyncState = sqliteTable("event_sync_state", {
   lastSyncError: text("last_sync_error"),
 });
 
+/**
+ * Cooldown ledger for super-admin alerts (src/lib/notify.ts). The crons fire 288
+ * times a day, so a persistent fault would otherwise mail the admin every 15
+ * minutes; a notice is recorded on every occurrence but only sent when its
+ * cooldown has expired, and the mail says how many times it fired meanwhile.
+ */
+export const adminNotices = sqliteTable("admin_notices", {
+  /** Stable, one per distinct fault, e.g. "codeforces:paging-truncated". */
+  key: text("key").primaryKey(),
+  firstSeenAt: integer("first_seen_at").notNull(),
+  lastSeenAt: integer("last_seen_at").notNull(),
+  lastSentAt: integer("last_sent_at"),
+  /** Occurrences since the last email; reset to 0 when one goes out. */
+  occurrences: integer("occurrences").notNull().default(0),
+  lastDetail: text("last_detail"),
+});
+
 export const trackers = sqliteTable(
   "trackers",
   {
@@ -429,7 +446,10 @@ export const userHandles = sqliteTable(
       .on(t.userId, t.type)
       .where(sql`${t.type} <> 'vjudge'`),
     // A handle value is unique within its platform (no two users share it).
-    uniqueIndex("user_handles_type_handle_unique").on(t.type, t.handle),
+    // NOCASE because Codeforces, VJudge and AtCoder all treat usernames
+    // case-insensitively: "Alice" and "alice" are one account, so they must not
+    // be claimable as two. The sync's handle lookup lowercases to match.
+    uniqueIndex("user_handles_type_handle_unique").on(t.type, sql`${t.handle} COLLATE NOCASE`),
     index("user_handles_user_id_idx").on(t.userId),
   ],
 );
@@ -516,6 +536,7 @@ export type EventMedia = typeof eventMedia.$inferSelect;
 export type EventAttendance = typeof eventAttendance.$inferSelect;
 export type EventPerformance = typeof eventPerformance.$inferSelect;
 export type EventSyncState = typeof eventSyncState.$inferSelect;
+export type AdminNotice = typeof adminNotices.$inferSelect;
 export type Tracker = typeof trackers.$inferSelect;
 export type NewTracker = typeof trackers.$inferInsert;
 export type Ranklist = typeof ranklists.$inferSelect;

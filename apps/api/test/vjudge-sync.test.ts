@@ -364,6 +364,8 @@ describe("runVjudgeSync", () => {
     const summary = await run(db, fetcherFor({}, undefined, { status: 403 }));
 
     expect(summary.stoppedEarly).toBe(true);
+    // Distinct from a time-budget stop: only this one is worth an alert.
+    expect(summary.stoppedReason).toBe("rate-limit");
     expect(summary.errors).toBe(1);
     expect(eventState(db, 2)).toBeUndefined();
   });

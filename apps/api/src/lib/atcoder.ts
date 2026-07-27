@@ -91,6 +91,16 @@ const isContest = (value: unknown): value is AtcoderContest => {
   );
 };
 
+export type SubmissionPage = {
+  submissions: AtcoderSubmission[];
+  /**
+   * MAX_PAGES ran out before the history was exhausted, so the newest
+   * submissions were dropped and any counts derived from this are too low.
+   * Silent data loss, hence surfaced rather than swallowed.
+   */
+  truncated: boolean;
+};
+
 /**
  * Every submission the user made at or after `since`.
  *
@@ -104,10 +114,11 @@ const isContest = (value: unknown): value is AtcoderContest => {
 export const getUserSubmissions = async (
   handle: string,
   options: { since: number; fetcher?: typeof fetch },
-): Promise<AtcoderSubmission[]> => {
+): Promise<SubmissionPage> => {
   const fetcher = options.fetcher ?? fetch;
   const collected: AtcoderSubmission[] = [];
   let from = options.since;
+  let truncated = true;
 
   for (let page = 0; page < MAX_PAGES; page += 1) {
     const url = new URL(SUBMISSIONS_URL);
@@ -122,15 +133,23 @@ export const getUserSubmissions = async (
     const submissions = body.filter(isSubmission);
     collected.push(...submissions);
 
-    if (body.length < PAGE_SIZE) break;
+    // A short page is the end of the account's history; running out of pages
+    // is not, and means the newest submissions never arrived.
+    if (body.length < PAGE_SIZE) {
+      truncated = false;
+      break;
+    }
     const last = submissions.at(-1);
-    if (!last) break;
+    if (!last) {
+      truncated = false;
+      break;
+    }
     // +1 guarantees forward progress. The pathological case — more than a full
     // page sharing one second — would skip the remainder rather than loop.
     from = last.epoch_second + 1;
   }
 
-  return collected;
+  return { submissions: collected, truncated };
 };
 
 /** Start time and duration for every AtCoder contest (~6k rows, ~80 KB gzipped). */

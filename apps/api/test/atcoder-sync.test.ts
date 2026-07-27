@@ -245,7 +245,32 @@ describe("runSync — AtCoder", () => {
 
     expect(calls.submissions).toHaveLength(0); // 429 short-circuits before recording
     expect(summary.stoppedEarly).toBe(true);
+    // Distinct from a time-budget stop: only this one is worth an alert.
+    expect(summary.stoppedReason).toBe("rate-limit");
     expect(summary.handlesProcessed).toBe(1);
+  });
+
+  it("reports a handle whose history outran the paging cap", async () => {
+    // MAX_PAGES full pages in a row: paging can only end by running out, so
+    // the newest submissions were never read and the counts are too low.
+    const MAX_PAGES = 20;
+    const full = Array.from({ length: 500 }, (_, i) =>
+      submission(`p${i}`, CONTEST_START + 100 + i),
+    );
+    const pages = Array.from({ length: MAX_PAGES }, () => full);
+
+    const summary = await run(db, fetcherFor(pages));
+
+    expect(summary.truncatedHandles).toEqual(["alice"]);
+    // Not an error: the partial counts still get written, the alert is what
+    // gets it looked at.
+    expect(summary.errors).toBe(0);
+  });
+
+  it("reports no truncation on a history that ends normally", async () => {
+    const summary = await run(db, fetcherFor([[submission("a", CONTEST_START + 100)]]));
+
+    expect(summary.truncatedHandles).toEqual([]);
   });
 
   it("skips Codeforces events — those belong to the other platform", async () => {

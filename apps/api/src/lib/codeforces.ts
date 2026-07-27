@@ -135,6 +135,16 @@ const isValidSubmission = (value: unknown): value is CodeforcesSubmission => {
   );
 };
 
+export type SubmissionPage = {
+  submissions: CodeforcesSubmission[];
+  /**
+   * MAX_PAGES ran out before the history reached `since`, so older submissions
+   * were dropped and any counts derived from this are too low. Silent data
+   * loss, hence surfaced rather than swallowed.
+   */
+  truncated: boolean;
+};
+
 /**
  * Every submission the user made at or after `since`, newest first. Paging stops
  * as soon as a page reaches past the cutoff, so a typical user costs one call.
@@ -142,9 +152,10 @@ const isValidSubmission = (value: unknown): value is CodeforcesSubmission => {
 export const getUserSubmissions = async (
   handle: string,
   options: { since: number; fetcher?: typeof fetch },
-): Promise<CodeforcesSubmission[]> => {
+): Promise<SubmissionPage> => {
   const fetcher = options.fetcher ?? fetch;
   const collected: CodeforcesSubmission[] = [];
+  let truncated = true;
 
   for (let page = 0; page < MAX_PAGES; page += 1) {
     const url = new URL("https://codeforces.com/api/user.status");
@@ -190,10 +201,17 @@ export const getUserSubmissions = async (
 
     // A short page means we reached the end of the account's history; a page
     // whose oldest entry predates the cutoff means everything older is too old.
+    // Either way the history is complete — only running out of pages is not.
     const oldest = body.result.at(-1);
-    if (body.result.length < PAGE_SIZE) break;
-    if (oldest && oldest.creationTimeSeconds < options.since) break;
+    if (body.result.length < PAGE_SIZE) {
+      truncated = false;
+      break;
+    }
+    if (oldest && oldest.creationTimeSeconds < options.since) {
+      truncated = false;
+      break;
+    }
   }
 
-  return collected;
+  return { submissions: collected, truncated };
 };
