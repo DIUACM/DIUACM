@@ -52,7 +52,8 @@ adminRanklistRoutes.get("/:id", manageTrackers, async (c) => {
       .from(ranklistEvents)
       .innerJoin(events, eq(ranklistEvents.eventId, events.id))
       .where(eq(ranklistEvents.ranklistId, id))
-      .orderBy(asc(events.startingAt)),
+      // Most recent contest first; id breaks ties so the order is stable.
+      .orderBy(desc(events.startingAt), desc(events.id)),
     db
       .select({
         userId: users.id,

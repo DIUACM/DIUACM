@@ -1462,7 +1462,12 @@ export const openApiDoc = {
       get: {
         tags: ["trackers"],
         summary: "Ranklist standings — events (with weight) and users with per-event performance",
-        ...access("public"),
+        ...access(
+          "public",
+          "`events` is ordered by `startingAt` descending (most recent contest first); " +
+            "`users` by rank. Each user's `performance` entries carry their own `eventId`, " +
+            "so they can be matched without relying on array position.",
+        ),
         parameters: [
           { name: "slug", in: "path", required: true, schema: { type: "string" } },
           { name: "keyword", in: "path", required: true, schema: { type: "string" } },
@@ -2084,7 +2089,10 @@ export const openApiDoc = {
       get: {
         tags: ["admin-ranklists"],
         summary: "Get a ranklist with its events (weights) and users (scores, ranks)",
-        ...access("manage_trackers"),
+        ...access(
+          "manage_trackers",
+          "`events` is ordered by `startingAt` descending (most recent contest first).",
+        ),
         parameters: [idParam("id")],
         responses: {
           "200": { description: "The ranklist", content: jsonBody(ref("AdminRanklistDetail")) },

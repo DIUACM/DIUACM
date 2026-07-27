@@ -130,7 +130,8 @@ trackerRoutes.get("/:slug/:keyword", async (c) => {
     .from(ranklistEvents)
     .innerJoin(events, eq(ranklistEvents.eventId, events.id))
     .where(eq(ranklistEvents.ranklistId, ranklist.id))
-    .orderBy(asc(events.startingAt));
+    // Most recent contest first; id breaks ties so the order is stable.
+    .orderBy(desc(events.startingAt), desc(events.id));
 
   const userRows = await db
     .select({
