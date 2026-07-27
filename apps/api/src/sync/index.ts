@@ -6,7 +6,7 @@ import { runCodeforcesSync } from "./codeforces";
 // can run on its own cadence; `controller.cron` says which one fired.
 // ---------------------------------------------------------------------------
 
-export const CODEFORCES_CRON = "*/5 * * * *";
+export const CODEFORCES_CRON = "*/15 * * * *";
 
 export const handleScheduled = async (
   controller: ScheduledController,

@@ -73,9 +73,9 @@ covers the public surface — browse `/docs` (Scalar) for the complete, always-c
 A Cron Trigger keeps `event_performance` current from the judges, so ranklist scores no
 longer depend on an admin typing numbers in. `src/sync/index.ts` dispatches on the cron
 expression, giving each platform its own cadence; only **Codeforces** is implemented so
-far (`*/5 * * * *`, see `src/sync/codeforces.ts`).
+far (`*/15 * * * *`, see `src/sync/codeforces.ts`).
 
-Per tick it takes the next batch of Codeforces handles, least recently synced first
+Per tick it takes the next 100 Codeforces handles, least recently synced first
 (`user_handles.last_synced_at`, stamped even on failure so a dead handle can't wedge the
 queue), and reads each user's submissions with one `user.status` call — the only endpoint
 that exposes practice submissions, and hence upsolves.
@@ -95,8 +95,22 @@ that exposes practice submissions, and hence upsolves.
 `pnpm dev` passes `--test-scheduled`, so the trigger can be fired by hand:
 
 ```bash
-curl "http://localhost:8787/__scheduled?cron=*/5+*+*+*+*"
+curl "http://localhost:8787/__scheduled?cron=*/15+*+*+*+*"
 ```
+
+### Platform budget
+
+The job **requires Workers Paid** — Free gives cron triggers 10 ms of CPU and 50
+subrequests, and parsing one page of submissions alone exceeds that. On Paid, a full
+100-handle tick costs roughly 600 subrequests of 10,000, a couple of seconds of CPU of
+30 s (only sub-hourly crons get 30 s; hourly and slower get 15 min), and ~3.5 min of wall
+clock of 15 min. `TIME_BUDGET_MS` stops a run at 10 min regardless; whatever is left is
+picked up next tick.
+
+Writes are chunked (`WRITE_CHUNK_SIZE`) because the score triggers amplify one upsert into
+a whole-ranklist re-rank, and an unbounded transaction can approach D1's 30 s query limit.
+The one-time backfill costs roughly 800k rows written of the 50M/month included; steady
+state is near zero, because an unchanged row is never rewritten.
 
 ## Local development
 

@@ -2,7 +2,12 @@ import type Database from "better-sqlite3";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import type { CodeforcesSubmission } from "../src/lib/codeforces";
-import { computePerformance, runCodeforcesSync, type SyncEvent } from "../src/sync/codeforces";
+import {
+  computePerformance,
+  runCodeforcesSync,
+  WRITE_CHUNK_SIZE,
+  type SyncEvent,
+} from "../src/sync/codeforces";
 import { d1Shim } from "./d1";
 import {
   addMember,
@@ -335,6 +340,54 @@ describe("runCodeforcesSync", () => {
     expect(summary.events).toBe(0);
     expect(summary.handlesProcessed).toBe(0);
     expect(performance(db, 1, 1)).toBeUndefined();
+  });
+
+  it("writes every row when a handle spans more events than fit in one transaction", async () => {
+    // Events 100.. each map to their own contest, so one handle produces more
+    // upserts than WRITE_CHUNK_SIZE and the write loop has to chunk.
+    const eventCount = WRITE_CHUNK_SIZE + 5;
+    const submissions: CodeforcesSubmission[] = [];
+    for (let i = 0; i < eventCount; i += 1) {
+      const id = 100 + i;
+      const contestId = 3000 + i;
+      insertContestEvent(db, id, `https://codeforces.com/contest/${contestId}`);
+      attachEvent(db, 1, id, 1);
+      submissions.push(
+        submission("A", "CONTESTANT", CONTEST_START + 1, {
+          contestId,
+          problem: { contestId, index: "A" },
+        }),
+      );
+    }
+
+    const summary = await run(db, fetcherFor({ alice: submissions }));
+
+    expect(summary.rowsWritten).toBe(eventCount);
+    expect(performance(db, 100, 1)).toMatchObject({ solve_count: 1 });
+    expect(performance(db, 100 + eventCount - 1, 1)).toMatchObject({ solve_count: 1 });
+  });
+
+  it("records a write failure and still advances the cursor", async () => {
+    const d1 = d1Shim(db);
+    const failing = {
+      ...d1,
+      prepare: d1.prepare.bind(d1),
+      batch: async () => {
+        throw new Error("D1_ERROR: statement timed out");
+      },
+    } as unknown as D1Database;
+
+    const summary = await runCodeforcesSync(failing, {
+      fetcher: fetcherFor({ alice: [submission("A", "CONTESTANT", CONTEST_START + 1)] }),
+      now: NOW,
+      requestDelayMs: 0,
+    });
+
+    expect(summary).toMatchObject({ handlesProcessed: 1, rowsWritten: 0, errors: 1 });
+    expect(performance(db, 1, 1)).toBeUndefined();
+    // Without this the next tick would retry the same handle forever.
+    expect(handleState(db, 1)).toMatchObject({ last_synced_at: NOW });
+    expect(handleState(db, 1).last_sync_error).toMatch(/timed out/);
   });
 
   it("auto-adds a non-member to an auto-add ranklist through the existing trigger", async () => {

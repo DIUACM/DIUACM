@@ -20,20 +20,35 @@ import {
 // table and start over.
 // ---------------------------------------------------------------------------
 
-/** Handles per run. 20 × REQUEST_DELAY_MS keeps a tick well inside its budget. */
-const BATCH_SIZE = 20;
+/**
+ * Handles per run. A full batch costs about BATCH_SIZE × REQUEST_DELAY_MS of
+ * wall clock — ~3.5 min here, against Cloudflare's 15 min ceiling for a
+ * scheduled invocation.
+ */
+const BATCH_SIZE = 100;
 /** Codeforces documents roughly one request per two seconds. Stay there. */
 const REQUEST_DELAY_MS = 2000;
 /**
- * Wall-clock ceiling for a single run; leftovers are picked up next tick. A
- * full batch costs roughly BATCH_SIZE × REQUEST_DELAY_MS, so this is a safety
- * net for a slow Codeforces, not the normal stopping point.
+ * Wall-clock ceiling for a single run; leftovers are picked up next tick. Set
+ * well under the platform's 15 min so even a slow Codeforces leaves room for
+ * the in-flight handle to finish and its cursor to land.
  */
-const TIME_BUDGET_MS = 120_000;
+const TIME_BUDGET_MS = 600_000;
+/**
+ * Upserts per D1 transaction. Bounds how much trigger cascade one statement
+ * batch can set off (see the write loop) against D1's 30s query limit.
+ */
+export const WRITE_CHUNK_SIZE = 50;
 
 // Kept as module constants rather than wrangler `vars`: vars are typed as
 // string literals in worker-configuration.d.ts, so every tweak would force a
 // `pnpm cf-typegen`.
+//
+// Budget for one run, against the Workers Paid limits: ~600 subrequests of
+// 10,000 (one fetch plus a few batches per handle), a couple of seconds of CPU
+// of 30s (JSON parsing dominates; waiting on the network does not count), and
+// ~3.5 min of wall clock of 15 min. Free-plan crons get 10ms CPU and 50
+// subrequests, which this cannot fit under at any batch size.
 
 export type SyncEvent = {
   eventId: number;
@@ -254,7 +269,8 @@ export const runCodeforcesSync = async (
     }
 
     let error: string | null = null;
-    let statements: D1PreparedStatement[] = [];
+    let callLimited = false;
+    let upserts: D1PreparedStatement[] = [];
 
     try {
       const submissions = await getUserSubmissions(row.handle, { since, fetcher });
@@ -264,37 +280,42 @@ export const runCodeforcesSync = async (
         // A 0/0 row carries no information and would pull the user into every
         // auto-add ranklist attached to the event.
         if (solveCount + upsolveCount === 0) continue;
-        statements.push(upsert.bind(eventId, row.user_id, solveCount, upsolveCount));
+        upserts.push(upsert.bind(eventId, row.user_id, solveCount, upsolveCount));
       }
     } catch (cause) {
-      statements = [];
-      if (cause instanceof CodeforcesApiError) {
-        error = cause.message;
-        if (cause.kind === "call-limit") {
-          // Backing off is the only useful response; the rest of the batch
-          // would fail the same way.
-          summary.errors += 1;
-          summary.stoppedEarly = true;
-          await d1.prepare(HANDLE_CURSOR_SQL).bind(now, error, row.id).run();
-          break;
-        }
-      } else {
-        error = cause instanceof Error ? cause.message : String(cause);
-      }
-      summary.errors += 1;
+      upserts = [];
+      error = cause instanceof Error ? cause.message : String(cause);
+      // Backing off is the only useful response; the rest of the batch would
+      // fail the same way.
+      callLimited = cause instanceof CodeforcesApiError && cause.kind === "call-limit";
     }
 
-    // The cursor advances even on failure, so one dead handle cannot wedge the
-    // queue behind it.
-    const upsertCount = statements.length;
-    statements.push(d1.prepare(HANDLE_CURSOR_SQL).bind(now, error, row.id));
-    const results = await d1.batch(statements);
+    // Chunked rather than one transaction per handle: the score triggers turn a
+    // single upsert into a whole-ranklist re-rank, and a first-pass user can
+    // touch every in-scope event at once — enough to approach D1's 30s query
+    // ceiling. Each chunk is independently idempotent, so a partial write just
+    // converges on the next tick.
+    try {
+      for (let i = 0; i < upserts.length; i += WRITE_CHUNK_SIZE) {
+        const results = await d1.batch(upserts.slice(i, i + WRITE_CHUNK_SIZE));
+        // Not the statement count: the upsert's trailing WHERE makes an
+        // unchanged row a no-op, and those are the majority on a steady system.
+        for (const result of results) summary.rowsWritten += result.results?.length ?? 0;
+      }
+    } catch (cause) {
+      error = cause instanceof Error ? cause.message : String(cause);
+    }
+
+    // Always last, always on its own statement: the cursor has to advance even
+    // when the fetch or the writes failed, or a poison handle wedges the queue
+    // behind it forever.
+    await d1.prepare(HANDLE_CURSOR_SQL).bind(now, error, row.id).run();
 
     summary.handlesProcessed += 1;
-    // Not the statement count: the upsert's trailing WHERE makes an unchanged
-    // row a no-op, and those are the majority on a steady system.
-    for (const result of results.slice(0, upsertCount)) {
-      summary.rowsWritten += result.results?.length ?? 0;
+    if (error) summary.errors += 1;
+    if (callLimited) {
+      summary.stoppedEarly = true;
+      break;
     }
   }
 
