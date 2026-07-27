@@ -1,5 +1,5 @@
 import type { EventType, HandleType, ParticipationScope, Permission, User } from '@/api/types'
-import type { ContestPlatform } from '@/lib/contest-link'
+import type { ContestKind, ContestPlatform } from '@diuacm/contest-link'
 
 export const PERMISSION_LABELS: Record<Permission, string> = {
   manage_users: 'Manage users',
@@ -46,6 +46,12 @@ export const CONTEST_PLATFORM_LABELS: Record<ContestPlatform, string> = {
   codeforces: 'Codeforces',
   vjudge: 'VJudge',
   atcoder: 'AtCoder',
+}
+
+export const CONTEST_KIND_LABELS: Record<ContestKind, string> = {
+  contest: 'Contest',
+  gym: 'Gym',
+  group: 'Group contest',
 }
 
 export function handleProfileUrl(type: HandleType, handle: string): string {

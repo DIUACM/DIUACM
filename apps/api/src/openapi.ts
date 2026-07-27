@@ -617,6 +617,24 @@ const okSchema = {
   required: ["ok"],
 };
 
+const syncSummarySchema = {
+  type: "object",
+  properties: {
+    events: { type: "integer", description: "Events in scope for this run." },
+    handlesProcessed: { type: "integer", description: "Handles the run got through." },
+    rowsWritten: {
+      type: "integer",
+      description: "Performance rows actually inserted or changed (unchanged rows are skipped).",
+    },
+    errors: { type: "integer", description: "Handles whose fetch failed." },
+    stoppedEarly: {
+      type: "boolean",
+      description: "The batch ended on its time budget or a Codeforces rate limit.",
+    },
+  },
+  required: ["events", "handlesProcessed", "rowsWritten", "errors", "stoppedEarly"],
+};
+
 const userListSchema = {
   type: "object",
   properties: { data: { type: "array", items: ref("User") }, meta: ref("PaginationMeta") },
@@ -1024,6 +1042,10 @@ export const openApiDoc = {
     },
     { name: "admin-gallery", description: "Admin: manage gallery albums and images (`manage_gallery`)." },
     { name: "admin-blog", description: "Admin: manage blog posts (`manage_blog`)." },
+    {
+      name: "admin-sync",
+      description: "Admin: run the scheduled platform performance syncs on demand (`manage_events`).",
+    },
   ],
   "x-tagGroups": [
     {
@@ -1039,6 +1061,7 @@ export const openApiDoc = {
         "admin-ranklists",
         "admin-gallery",
         "admin-blog",
+        "admin-sync",
       ],
     },
   ],
@@ -1099,6 +1122,7 @@ export const openApiDoc = {
       AttendanceRequest: toSchema(attendanceGiveSchema),
       HandleSetRequest: toSchema(handleSetSchema),
       Ok: okSchema,
+      SyncSummary: syncSummarySchema,
       UserList: userListSchema,
       AdminUserDetail: adminUserDetailSchema,
       AdminEvent: adminEventSchema,
@@ -2457,6 +2481,26 @@ export const openApiDoc = {
           "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
           ...adminAuthResponses,
           "404": { description: "Asset not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/sync/codeforces": {
+      post: {
+        tags: ["admin-sync"],
+        summary: "Run one batch of the Codeforces performance sync",
+        ...access(
+          "manage_events",
+          "Same work the cron trigger does every few minutes: reads Codeforces " +
+            "submissions for the next batch of handles and refreshes their " +
+            "`solve_count` / `upsolve_count` on every published, finished event " +
+            "whose link is a public Codeforces contest and which belongs to an " +
+            "unlocked ranklist. Admin-entered `position` values are preserved, and " +
+            "ranklist scores recalculate automatically. Gym and group contests are " +
+            "not synced — the Codeforces API keeps them private.",
+        ),
+        responses: {
+          "200": { description: "Run summary", content: jsonBody(ref("SyncSummary")) },
+          ...adminAuthResponses,
         },
       },
     },

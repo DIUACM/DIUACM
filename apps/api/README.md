@@ -68,6 +68,36 @@ blog). Admin routes require a Bearer token plus per-area permissions; the super 
 (`vars.SUPER_ADMIN_EMAIL`) implicitly holds every permission. The endpoint table above
 covers the public surface — browse `/docs` (Scalar) for the complete, always-current list.
 
+## Scheduled solve/upsolve sync
+
+A Cron Trigger keeps `event_performance` current from the judges, so ranklist scores no
+longer depend on an admin typing numbers in. `src/sync/index.ts` dispatches on the cron
+expression, giving each platform its own cadence; only **Codeforces** is implemented so
+far (`*/5 * * * *`, see `src/sync/codeforces.ts`).
+
+Per tick it takes the next batch of Codeforces handles, least recently synced first
+(`user_handles.last_synced_at`, stamped even on failure so a dead handle can't wedge the
+queue), and reads each user's submissions with one `user.status` call — the only endpoint
+that exposes practice submissions, and hence upsolves.
+
+- **In scope**: published, finished events whose `event_link` is a public Codeforces
+  contest and which belong to at least one ranklist with `is_locked = 0`. Locking a
+  ranklist at the end of a semester is what stops its events being re-synced.
+- **Solved** = accepted as `CONTESTANT`/`OUT_OF_COMPETITION`, or accepted inside the
+  event's own `starting_at`…`ending_at` (which is how club-run replays are counted).
+  **Upsolved** = accepted at any other time, on a problem not already solved in-contest.
+- Admin-entered `position` values survive a sync, and an unchanged row is not rewritten,
+  so the score/rank triggers stay quiet on a steady system.
+- Gym and group contests are **not** synced — the Codeforces API keeps them private
+  ("You have to be authenticated to use this method").
+
+`POST /admin/sync/codeforces` (`manage_events`) runs one batch on demand. Locally,
+`pnpm dev` passes `--test-scheduled`, so the trigger can be fired by hand:
+
+```bash
+curl "http://localhost:8787/__scheduled?cron=*/5+*+*+*+*"
+```
+
 ## Local development
 
 ```bash

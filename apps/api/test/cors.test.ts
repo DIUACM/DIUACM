@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import app from "../src/index";
+import { app } from "../src/index";
 
 const WEB_ORIGIN = "https://diuacm-web.sourovcodes.workers.dev";
 

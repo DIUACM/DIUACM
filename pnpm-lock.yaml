@@ -10,6 +10,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@diuacm/contest-link':
+        specifier: workspace:*
+        version: link:../../packages/contest-link
       '@hono/zod-validator':
         specifier: ^0.8.0
         version: 0.8.0(hono@4.12.30)(zod@4.4.3)
@@ -47,6 +50,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@diuacm/contest-link':
+        specifier: workspace:*
+        version: link:../../packages/contest-link
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -204,6 +210,8 @@ importers:
       wrangler:
         specifier: ^4.112.0
         version: 4.112.0
+
+  packages/contest-link: {}
 
 packages:
 

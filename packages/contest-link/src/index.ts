@@ -1,10 +1,19 @@
 export type ContestPlatform = 'codeforces' | 'vjudge' | 'atcoder'
 
+/**
+ * `gym` and `group` are kept distinct from `contest` because the Codeforces API
+ * refuses both to anonymous callers ("You have to be authenticated to use this
+ * method"), so the performance sync can only handle plain `contest` links.
+ */
+export type ContestKind = 'contest' | 'gym' | 'group'
+
 export interface DetectedContest {
   platform: ContestPlatform
   /** Codeforces gyms live in their own numbering, so keep them distinguishable. */
-  kind: 'contest' | 'gym'
+  kind: ContestKind
   contestId: string
+  /** Only set for `kind: 'group'` — the Codeforces group the contest belongs to. */
+  groupCode?: string
 }
 
 const NUMERIC = /^\d+$/
@@ -49,6 +58,17 @@ export function detectContestLink(link: string): DetectedContest | null {
     }
     const index = segmentAfter(segments, ['contest', 'contests', 'contestregistration'])
     if (index !== null && NUMERIC.test(segments[index])) {
+      const groupIndex = segmentAfter(segments, ['group'])
+      // A group contest reuses the /contest/<id> shape, but its standings and
+      // submissions are private to the group — never treat it as a public contest.
+      if (groupIndex !== null && groupIndex < index) {
+        return {
+          platform: 'codeforces',
+          kind: 'group',
+          contestId: segments[index],
+          groupCode: segments[groupIndex],
+        }
+      }
       return { platform: 'codeforces', kind: 'contest', contestId: segments[index] }
     }
     return null

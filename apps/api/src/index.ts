@@ -13,7 +13,8 @@ import files from "./routes/files";
 import gallery from "./routes/gallery";
 import programmers from "./routes/programmers";
 import trackers from "./routes/trackers";
-import type { AppEnv } from "./types";
+import { handleScheduled } from "./sync";
+import type { AppEnv, Bindings } from "./types";
 
 const app = new Hono<AppEnv>();
 
@@ -129,4 +130,9 @@ app.onError((err, c) => {
 
 app.notFound((c) => c.json({ error: "Not found" }, 404));
 
-export default app;
+export { app };
+
+export default {
+  fetch: app.fetch,
+  scheduled: handleScheduled,
+} satisfies ExportedHandler<Bindings>;

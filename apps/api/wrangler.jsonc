@@ -7,6 +7,14 @@
   "observability": {
     "enabled": true
   },
+  // Background solve/upsolve sync. One expression per platform so each can run
+  // on its own cadence; src/sync/index.ts dispatches on the expression.
+  "triggers": {
+    "crons": [
+      // Codeforces — one batch of handles per tick (see src/sync/codeforces.ts).
+      "*/5 * * * *"
+    ]
+  },
   "d1_databases": [
     {
       "binding": "DB",

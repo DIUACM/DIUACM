@@ -393,6 +393,11 @@ export const userHandles = sqliteTable(
       .references(() => users.id, { onDelete: "cascade" }),
     type: text("type", { enum: ["codeforces", "vjudge", "atcoder"] }).notNull(),
     handle: text("handle").notNull(),
+    // Cursor for the scheduled performance sync (src/sync). Stamped on every
+    // attempt, successful or not, so a broken handle can't block the queue;
+    // `last_sync_error` holds the last failure reason and is cleared on success.
+    lastSyncedAt: integer("last_synced_at"),
+    lastSyncError: text("last_sync_error"),
     createdAt: integer("created_at")
       .notNull()
       .default(sql`(unixepoch())`),

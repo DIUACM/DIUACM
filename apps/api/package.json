@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --test-scheduled",
     "deploy": "wrangler deploy --minify",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply diuacm-db --local",
@@ -15,6 +15,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@diuacm/contest-link": "workspace:*",
     "@hono/zod-validator": "^0.8.0",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.12.26",

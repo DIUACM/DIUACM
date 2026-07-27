@@ -1,0 +1,350 @@
+import type Database from "better-sqlite3";
+import { beforeEach, describe, expect, it } from "vitest";
+
+import type { CodeforcesSubmission } from "../src/lib/codeforces";
+import { computePerformance, runCodeforcesSync, type SyncEvent } from "../src/sync/codeforces";
+import { d1Shim } from "./d1";
+import {
+  addMember,
+  attachEvent,
+  insertRanklist,
+  insertTracker,
+  insertUser,
+  member,
+  openTestDb,
+} from "./db";
+
+// ---------------------------------------------------------------------------
+// Fixtures
+// ---------------------------------------------------------------------------
+
+const CONTEST_START = 1_700_000_000;
+const CONTEST_END = CONTEST_START + 7200;
+
+const submission = (
+  index: string,
+  participantType: string,
+  creationTimeSeconds: number,
+  overrides: Partial<CodeforcesSubmission> = {},
+): CodeforcesSubmission => ({
+  contestId: 1900,
+  creationTimeSeconds,
+  problem: { contestId: 1900, index },
+  author: { participantType },
+  verdict: "OK",
+  ...overrides,
+});
+
+const EVENT: SyncEvent = {
+  eventId: 1,
+  contestId: "1900",
+  startingAt: CONTEST_START,
+  endingAt: CONTEST_END,
+};
+
+describe("computePerformance", () => {
+  it("counts in-contest accepted submissions as solves", () => {
+    const counts = computePerformance(
+      [EVENT],
+      [
+        submission("A", "CONTESTANT", CONTEST_START + 100),
+        submission("B", "CONTESTANT", CONTEST_START + 900),
+      ],
+    );
+    expect(counts.get(1)).toEqual({ solveCount: 2, upsolveCount: 0 });
+  });
+
+  it("counts practice submissions after the contest as upsolves", () => {
+    const counts = computePerformance(
+      [EVENT],
+      [
+        submission("A", "CONTESTANT", CONTEST_START + 100),
+        submission("C", "PRACTICE", CONTEST_END + 86_400),
+      ],
+    );
+    expect(counts.get(1)).toEqual({ solveCount: 1, upsolveCount: 1 });
+  });
+
+  it("does not count a re-solve in practice of an in-contest solve", () => {
+    const counts = computePerformance(
+      [EVENT],
+      [
+        submission("A", "CONTESTANT", CONTEST_START + 100),
+        submission("A", "PRACTICE", CONTEST_END + 86_400),
+      ],
+    );
+    expect(counts.get(1)).toEqual({ solveCount: 1, upsolveCount: 0 });
+  });
+
+  it("dedupes repeated accepted submissions on the same problem", () => {
+    const counts = computePerformance(
+      [EVENT],
+      [
+        submission("A", "PRACTICE", CONTEST_END + 10),
+        submission("A", "PRACTICE", CONTEST_END + 20),
+      ],
+    );
+    expect(counts.get(1)).toEqual({ solveCount: 0, upsolveCount: 1 });
+  });
+
+  it("treats a submission inside the event window as a solve whatever Codeforces calls it", () => {
+    // Club replays: members participate virtually during the scheduled session.
+    const counts = computePerformance(
+      [EVENT],
+      [submission("A", "VIRTUAL", CONTEST_START + 500)],
+    );
+    expect(counts.get(1)).toEqual({ solveCount: 1, upsolveCount: 0 });
+  });
+
+  it("splits the same contest differently for two events with different windows", () => {
+    const replay: SyncEvent = {
+      eventId: 2,
+      contestId: "1900",
+      startingAt: CONTEST_END + 86_400,
+      endingAt: CONTEST_END + 93_600,
+    };
+    const counts = computePerformance(
+      [EVENT, replay],
+      [submission("A", "PRACTICE", CONTEST_END + 87_000)],
+    );
+    expect(counts.get(1)).toEqual({ solveCount: 0, upsolveCount: 1 });
+    expect(counts.get(2)).toEqual({ solveCount: 1, upsolveCount: 0 });
+  });
+
+  it("ignores rejected verdicts and other contests", () => {
+    const counts = computePerformance(
+      [EVENT],
+      [
+        submission("A", "CONTESTANT", CONTEST_START + 100, { verdict: "WRONG_ANSWER" }),
+        submission("B", "PRACTICE", CONTEST_END + 10, {
+          contestId: 1901,
+          problem: { contestId: 1901, index: "B" },
+        }),
+      ],
+    );
+    expect(counts.has(1)).toBe(false);
+  });
+
+  it("returns nothing for an event with no matching submissions", () => {
+    expect(computePerformance([EVENT], []).size).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// End-to-end over the real schema, real SQL and real triggers.
+// ---------------------------------------------------------------------------
+
+const insertContestEvent = (
+  db: Database.Database,
+  id: number,
+  link: string | null,
+  opts: { status?: string; startingAt?: number; endingAt?: number } = {},
+) =>
+  db
+    .prepare(
+      "INSERT INTO events (id, title, status, starting_at, ending_at, event_link) VALUES (?, ?, ?, ?, ?, ?)",
+    )
+    .run(
+      id,
+      `Event ${id}`,
+      opts.status ?? "published",
+      opts.startingAt ?? CONTEST_START,
+      opts.endingAt ?? CONTEST_END,
+      link,
+    );
+
+const insertHandle = (db: Database.Database, id: number, userId: number, handle: string) =>
+  db
+    .prepare("INSERT INTO user_handles (id, user_id, type, handle) VALUES (?, ?, 'codeforces', ?)")
+    .run(id, userId, handle);
+
+const performance = (db: Database.Database, eventId: number, userId: number) =>
+  db
+    .prepare(
+      "SELECT solve_count, upsolve_count, position FROM event_performance WHERE event_id = ? AND user_id = ?",
+    )
+    .get(eventId, userId) as
+    | { solve_count: number; upsolve_count: number; position: number | null }
+    | undefined;
+
+const handleState = (db: Database.Database, id: number) =>
+  db.prepare("SELECT last_synced_at, last_sync_error FROM user_handles WHERE id = ?").get(id) as {
+    last_synced_at: number | null;
+    last_sync_error: string | null;
+  };
+
+/** A fetcher that answers user.status from a per-handle fixture. */
+const fetcherFor = (
+  byHandle: Record<string, CodeforcesSubmission[] | { failure: string }>,
+  calls: string[] = [],
+): typeof fetch =>
+  (async (input: RequestInfo | URL) => {
+    const url = new URL(input.toString());
+    const handle = url.searchParams.get("handle") ?? "";
+    calls.push(handle);
+    const entry = byHandle[handle];
+    if (entry && "failure" in entry) {
+      return new Response(JSON.stringify({ status: "FAILED", comment: entry.failure }), {
+        status: 400,
+      });
+    }
+    return new Response(JSON.stringify({ status: "OK", result: entry ?? [] }), { status: 200 });
+  }) as unknown as typeof fetch;
+
+const NOW = CONTEST_END + 200_000;
+
+/** No sleeping and no clock dependence — the batch logic is what is under test. */
+const run = (db: Database.Database, fetcher: typeof fetch, limit = 10) =>
+  runCodeforcesSync(d1Shim(db), { fetcher, now: NOW, limit, requestDelayMs: 0 });
+
+describe("runCodeforcesSync", () => {
+  let db: Database.Database;
+
+  beforeEach(() => {
+    db = openTestDb();
+    insertTracker(db, 1);
+    insertRanklist(db, 1, 1, { upsolveWeight: 0.25 });
+    insertUser(db, 1);
+    insertHandle(db, 1, 1, "alice");
+    insertContestEvent(db, 1, "https://codeforces.com/contest/1900");
+    attachEvent(db, 1, 1, 1);
+    addMember(db, 1, 1);
+  });
+
+  it("writes solve and upsolve counts and moves the ranklist score", () => {
+    const fetcher = fetcherFor({
+      alice: [
+        submission("A", "CONTESTANT", CONTEST_START + 100),
+        submission("B", "CONTESTANT", CONTEST_START + 200),
+        submission("C", "PRACTICE", CONTEST_END + 5000),
+      ],
+    });
+
+    return run(db, fetcher).then((summary) => {
+      // rowsWritten counts performance rows only — the score and count triggers
+      // touch many more rows downstream and must not be folded in.
+      expect(summary).toMatchObject({
+        events: 1,
+        handlesProcessed: 1,
+        rowsWritten: 1,
+        errors: 0,
+      });
+      expect(performance(db, 1, 1)).toMatchObject({ solve_count: 2, upsolve_count: 1 });
+      // 2 solves × weight 1 + 1 upsolve × weight 1 × upsolveWeight 0.25
+      expect(member(db, 1, 1)?.score).toBeCloseTo(2.25);
+    });
+  });
+
+  it("preserves an admin-entered position across a sync", async () => {
+    db.prepare(
+      "INSERT INTO event_performance (event_id, user_id, position, solve_count, upsolve_count) VALUES (1, 1, 7, 0, 0)",
+    ).run();
+
+    await run(db, fetcherFor({ alice: [submission("A", "CONTESTANT", CONTEST_START + 1)] }));
+
+    expect(performance(db, 1, 1)).toEqual({ solve_count: 1, upsolve_count: 0, position: 7 });
+  });
+
+  it("writes nothing on a second identical run", async () => {
+    const fetcher = fetcherFor({ alice: [submission("A", "CONTESTANT", CONTEST_START + 1)] });
+    await run(db, fetcher);
+    const second = await run(db, fetcher);
+    expect(second.rowsWritten).toBe(0);
+  });
+
+  it("skips users with no solves rather than writing an empty row", async () => {
+    await run(db, fetcherFor({ alice: [] }));
+    expect(performance(db, 1, 1)).toBeUndefined();
+  });
+
+  it("records the failure and still advances the cursor for a dead handle", async () => {
+    await run(db, fetcherFor({ alice: { failure: "handles: User with handle alice not found" } }));
+
+    const state = handleState(db, 1);
+    expect(state.last_synced_at).toBe(NOW);
+    expect(state.last_sync_error).toMatch(/Invalid Codeforces handle/);
+  });
+
+  it("clears a stale error once the handle works again", async () => {
+    await run(db, fetcherFor({ alice: { failure: "handles: User with handle alice not found" } }));
+    await run(db, fetcherFor({ alice: [submission("A", "CONTESTANT", CONTEST_START + 1)] }));
+
+    expect(handleState(db, 1).last_sync_error).toBeNull();
+  });
+
+  it("walks the handle table oldest-cursor-first across ticks", async () => {
+    insertUser(db, 2);
+    insertHandle(db, 2, 2, "bob");
+    insertUser(db, 3);
+    insertHandle(db, 3, 3, "carol");
+
+    const calls: string[] = [];
+    const fetcher = fetcherFor({}, calls);
+
+    await runCodeforcesSync(d1Shim(db), { fetcher, now: NOW, limit: 2, requestDelayMs: 0 });
+    expect(calls).toEqual(["alice", "bob"]);
+
+    await runCodeforcesSync(d1Shim(db), { fetcher, now: NOW + 1, limit: 2, requestDelayMs: 0 });
+    expect(calls.slice(2)).toEqual(["carol", "alice"]);
+  });
+
+  it("stops the whole batch when Codeforces reports the call limit", async () => {
+    insertUser(db, 2);
+    insertHandle(db, 2, 2, "bob");
+
+    const calls: string[] = [];
+    const summary = await run(
+      db,
+      fetcherFor({ alice: { failure: "Call limit exceeded" } }, calls),
+    );
+
+    expect(calls).toEqual(["alice"]);
+    expect(summary.stoppedEarly).toBe(true);
+    expect(handleState(db, 1).last_synced_at).toBe(NOW);
+  });
+
+  it("ignores events that are not in scope", async () => {
+    // Gym, group, draft, still running, and detached from every ranklist.
+    insertContestEvent(db, 2, "https://codeforces.com/gym/104000");
+    insertContestEvent(db, 3, "https://codeforces.com/group/ABC/contest/1900");
+    insertContestEvent(db, 4, "https://codeforces.com/contest/1900", { status: "draft" });
+    insertContestEvent(db, 5, "https://codeforces.com/contest/1900", {
+      startingAt: NOW + 1000,
+      endingAt: NOW + 8000,
+    });
+    insertContestEvent(db, 6, "https://codeforces.com/contest/1900");
+    for (const id of [2, 3, 4, 5]) attachEvent(db, 1, id, 1);
+
+    const summary = await run(
+      db,
+      fetcherFor({ alice: [submission("A", "CONTESTANT", CONTEST_START + 1)] }),
+    );
+
+    expect(summary.events).toBe(1);
+    for (const id of [2, 3, 4, 5, 6]) expect(performance(db, id, 1)).toBeUndefined();
+  });
+
+  it("stops syncing events once their only ranklist is locked", async () => {
+    db.prepare("UPDATE ranklists SET is_locked = 1 WHERE id = 1").run();
+
+    const summary = await run(
+      db,
+      fetcherFor({ alice: [submission("A", "CONTESTANT", CONTEST_START + 1)] }),
+    );
+
+    expect(summary.events).toBe(0);
+    expect(summary.handlesProcessed).toBe(0);
+    expect(performance(db, 1, 1)).toBeUndefined();
+  });
+
+  it("auto-adds a non-member to an auto-add ranklist through the existing trigger", async () => {
+    insertRanklist(db, 2, 1, { autoAddUsers: true, upsolveWeight: 0.5 });
+    attachEvent(db, 2, 1, 1);
+    insertUser(db, 2);
+    insertHandle(db, 2, 2, "bob");
+
+    await run(db, fetcherFor({ bob: [submission("A", "CONTESTANT", CONTEST_START + 1)] }));
+
+    expect(member(db, 2, 2)).toMatchObject({ auto_added: 1 });
+  });
+});

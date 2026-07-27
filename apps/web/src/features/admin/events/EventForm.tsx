@@ -12,8 +12,13 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { CONTEST_PLATFORM_LABELS, EVENT_TYPE_LABELS, SCOPE_LABELS } from '@/lib/constants'
-import { detectContestLink } from '@/lib/contest-link'
+import {
+  CONTEST_KIND_LABELS,
+  CONTEST_PLATFORM_LABELS,
+  EVENT_TYPE_LABELS,
+  SCOPE_LABELS,
+} from '@/lib/constants'
+import { detectContestLink } from '@diuacm/contest-link'
 import { epochToLocalInput, localInputToEpoch } from '@/lib/datetime'
 import type { AdminEventDetail, AdminEventInput } from '@/api/queries/admin-events'
 import type { EventType, ParticipationScope } from '@/api/types'
@@ -177,10 +182,13 @@ export function EventForm({ initial, submitLabel, isPending, onSubmit }: EventFo
                 <Badge variant="secondary">
                   {CONTEST_PLATFORM_LABELS[contest.platform]}
                 </Badge>
-                <span>{contest.kind === 'gym' ? 'Gym' : 'Contest'} ID</span>
+                <span>{CONTEST_KIND_LABELS[contest.kind]} ID</span>
                 <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">
                   {contest.contestId}
                 </span>
+                {contest.platform === 'codeforces' && contest.kind !== 'contest' && (
+                  <span>— private to Codeforces, solve counts are not synced automatically.</span>
+                )}
               </p>
             ) : (
               <p className="text-xs text-muted-foreground">
