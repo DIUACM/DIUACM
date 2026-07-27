@@ -79,10 +79,38 @@ expression, so every platform gets its own cadence:
 | Codeforces | `*/15 * * * *` | handle | `codeforces.com/api/user.status` |
 | AtCoder | `5,20,35,50 * * * *` | handle | AtCoder Problems (kenkoooo) |
 | VJudge | `10,25,40,55 * * * *` | contest | `vjudge.net/contest/rank/single/<id>` |
+| CF rating/handles | `42 0 * * *` | batch of 100 handles | `codeforces.com/api/user.info` |
 | Health digest | `12 1 * * *` | — | the database (see [Alerting](#alerting)) |
 
-The three syncs are offset by 5 minutes so no two start in the same minute; the digest sits
-on a minute none of them uses.
+The three solve syncs are offset by 5 minutes so no two start in the same minute; the two
+daily jobs sit on minutes none of them uses.
+
+**The rating refresh is the odd one out.** `src/sync/cf-rating.ts` keeps
+`users.max_cf_rating` current, which is otherwise only written when a person saves a handle
+and so is stale from the moment it lands. It runs daily rather than every 15 minutes because
+`user.info` takes every handle in a single call — a few hundred handles is three requests,
+not three hundred — which is also why it has no cursor and no outage breaker: there is not
+enough work in one run for either to pay for itself.
+
+It earns its keep twice over, because it also rewrites renamed handles.
+`checkHistoricHandles=true` resolves an old handle to its current one, and `user.info` is the
+only endpoint that does — `user.status`, which the solve sync uses, does not. So when a member
+renames on Codeforces their stored handle starts returning `invalid-handle` and **their solve
+counts freeze silently and permanently**. Writing the canonical handle back is what un-wedges
+that, and a real rename also nulls `last_synced_at` so the repaired handle goes to the front of
+the solve sync's queue rather than waiting out the 2-hour window. A case-only correction does
+not, because Codeforces is case-insensitive and nothing was ever broken.
+
+> **Watch out.** Codeforces fails the **whole** `user.info` call if a single handle in the
+> list is unknown — `status: "FAILED"`, `result: null`, no partial answer. So a clean response
+> proves every handle in it is good, and a failure says nothing about which one is not. Dead
+> handles are isolated by **halving** the chunk and recursing into the halves that still fail:
+> about 2k·log₂(n) calls for k bad handles, against n for asking one at a time. Only
+> `invalid-handle` splits; anything else is the judge's fault and applies to the whole chunk.
+
+A handle Codeforces does not recognise is **reported and nothing else** — the handle, the
+rating, and the sync cursor are all left exactly as they were. A Codeforces outage misread as
+a bad handle must never be able to unlink a real account, so detection never mutates.
 
 **Codeforces and AtCoder are handle-driven.** One API call covers a user across *every*
 tracked contest, so the unit of work is a handle, not an (event, user) pair.
@@ -168,6 +196,10 @@ curl "http://localhost:8787/__scheduled?cron=10,25,40,55+*+*+*+*"
 ```
 
 ```bash
+curl "http://localhost:8787/__scheduled?cron=42+0+*+*+*"   # CF rating + handle refresh
+```
+
+```bash
 curl "http://localhost:8787/__scheduled?cron=12+1+*+*+*"   # health digest
 ```
 
@@ -188,8 +220,20 @@ not qualify; they live in `last_sync_error` and are summarised in the digest.
 | `<platform>:blocked` | A run stopped on a rate limit or VJudge's Cloudflare challenge | That platform stops updating entirely until it clears |
 | `<platform>:error-rate` | More than ⅓ of a batch of ≥5 failed | A handful of dead handles is normal; this many means the API moved |
 | `<platform>:run-failed` | The run threw before finishing | Nothing synced on that tick |
+| `codeforces-rating:invalid-handles` | Codeforces does not recognise a stored handle | That member's rating **and** solve counts are frozen; only a human can fix it |
+| `codeforces-rating:rename-conflict` | A rename collided with another row's handle | Two rows point at one account, so the rename cannot land |
+| `codeforces-rating:unreachable` | A batch went unanswered, or the run stopped early | Some handles were never checked, so the dead-handle list above is partial |
 
-A time-budget stop is **not** a fault — leftovers are picked up next tick by design.
+A time-budget stop is **not** a fault for the solve syncs — leftovers are picked up next tick
+by design. It *is* one for the daily rating refresh, whose next tick is 24 hours away.
+
+The rating refresh keys are prefixed `codeforces-rating:` rather than `codeforces:` so its
+cooldowns and the solve sync's never suppress each other. It gets its own fault rules
+(`collectCfRatingFaults`) because its unit of work is a batch of a hundred handles — a whole
+run is three units, far under the `MIN_SAMPLE` of 5 that makes an error *rate* mean anything —
+and because it has a fault the syncs do not: a handle that no longer exists is a data problem,
+not an outage. Since it runs daily, that alert repeats every morning until someone fixes the
+handle, which is the intent.
 
 **The outage breaker.** Every unit stamps its cursor even when it failed, so a poison handle
 can never wedge the queue — but that also means a batch spent on a judge that is down pushes
@@ -206,7 +250,7 @@ Codeforces.` — not just a count. The per-row copies in `last_sync_error` are o
 the next successful sync, roughly two hours later, so on a transient outage the mail is
 usually the only surviving evidence of what went wrong.
 
-**Volume is the hard constraint**: four crons fire 289 times a day, so a persistent fault
+**Volume is the hard constraint**: five crons fire 290 times a day, so a persistent fault
 would otherwise mail every 15 minutes. Every occurrence is recorded in `admin_notices`, but
 a given key only sends once per **hour**, and the mail says how many times it fired in
 between. Sending never breaks a sync — an unset sender or a rejection is logged and the run

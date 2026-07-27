@@ -3,7 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { NOTICE_COOLDOWN_SECONDS, reportNotice, sendMail } from "../src/lib/notify";
 import { buildDigest } from "../src/sync/digest";
-import { collectFaults, runFailedFault, type RunOutcome } from "../src/sync/faults";
+import type { CfRatingSummary } from "../src/sync/cf-rating";
+import {
+  collectCfRatingFaults,
+  collectFaults,
+  runFailedFault,
+  type RunOutcome,
+} from "../src/sync/faults";
 import { OUTAGE_STREAK, tallyError, type ErrorTally } from "../src/sync/runner";
 import type { Bindings } from "../src/types";
 import { d1Shim } from "./d1";
@@ -273,6 +279,99 @@ describe("collectFaults", () => {
       "codeforces:blocked",
       "codeforces:error-rate",
     ]);
+  });
+});
+
+describe("collectCfRatingFaults", () => {
+  const healthy: CfRatingSummary = {
+    handles: 100,
+    checked: 100,
+    ratingsUpdated: 3,
+    handlesRenamed: 1,
+    handlesRecased: 0,
+    invalid: [],
+    renameConflicts: [],
+    chunksFailed: 0,
+    errorReasons: {},
+    stoppedReason: null,
+  };
+
+  const dead = (id: number) => ({
+    handleId: id,
+    handle: `ghost${id}`,
+    userId: id,
+    userName: `User ${id}`,
+    userEmail: `user${id}@example.com`,
+  });
+
+  it("says nothing about a healthy run", () => {
+    expect(collectCfRatingFaults(healthy)).toEqual([]);
+  });
+
+  it("names the owner of every dead handle", () => {
+    const faults = collectCfRatingFaults({
+      ...healthy,
+      checked: 98,
+      invalid: [dead(1), dead(2)],
+    });
+
+    expect(faults).toHaveLength(1);
+    expect(faults[0].key).toBe("codeforces-rating:invalid-handles");
+    expect(faults[0].subject).toContain("2 Codeforces handle(s)");
+    expect(faults[0].detail).toContain("ghost1 — User 1 <user1@example.com> (user 1)");
+    // The rule the whole feature hangs on: detection never mutates.
+    expect(faults[0].detail).toContain("Nothing was changed");
+  });
+
+  it("stops listing dead handles past the cap", () => {
+    const invalid = Array.from({ length: 25 }, (_, i) => dead(i));
+    const [fault] = collectCfRatingFaults({ ...healthy, invalid });
+
+    expect(fault.detail).toContain("...and 5 more");
+  });
+
+  it("reports a rename that could not be applied, and who is blocking it", () => {
+    const faults = collectCfRatingFaults({
+      ...healthy,
+      renameConflicts: [
+        { from: "oldalice", to: "newalice", userId: 1, userName: "Alice", heldBy: "Bob <b@x.io>" },
+      ],
+    });
+
+    expect(faults).toHaveLength(1);
+    expect(faults[0].key).toBe("codeforces-rating:rename-conflict");
+    expect(faults[0].detail).toContain("oldalice → newalice");
+    expect(faults[0].detail).toContain("already held by Bob <b@x.io>");
+  });
+
+  it("counts the handles a failed batch left unchecked, with the reasons", () => {
+    const faults = collectCfRatingFaults({
+      ...healthy,
+      checked: 60,
+      chunksFailed: 1,
+      errorReasons: { "Could not reach Codeforces. Please try again.": 1 },
+    });
+
+    expect(faults).toHaveLength(1);
+    expect(faults[0].key).toBe("codeforces-rating:unreachable");
+    expect(faults[0].detail).toContain("40 of 100 handle(s) were not checked");
+    expect(faults[0].detail).toContain("1× Could not reach Codeforces.");
+  });
+
+  it("warns that the dead-handle list is partial when the run stopped early", () => {
+    const faults = collectCfRatingFaults({
+      ...healthy,
+      checked: 50,
+      stoppedReason: "rate-limit",
+      invalid: [dead(1)],
+    });
+
+    expect(faults.map((f) => f.key)).toEqual([
+      "codeforces-rating:invalid-handles",
+      "codeforces-rating:unreachable",
+    ]);
+    expect(faults[1].detail).toContain("call limit");
+    expect(faults[1].detail).toContain("partial");
   });
 });
 

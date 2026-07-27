@@ -25,16 +25,33 @@ const isInvalidHandleComment = (comment: string | undefined): boolean => {
   );
 };
 
+const isCallLimitComment = (comment: string | undefined): boolean =>
+  !!comment && /call limit exceeded/i.test(comment);
+
+export type ResolvedCodeforcesUser = { handle: string; maxRating: number | null };
+
 /**
- * Validate a current or historic Codeforces handle and return the account's
- * current canonical handle/rating.
+ * Resolve a batch of current or historic handles to their accounts' canonical
+ * handle and highest rating, in the order they were asked for.
+ *
+ * One call covers up to 10,000 handles, which is what makes the daily rating
+ * refresh (see src/sync/cf-rating.ts) three requests rather than three hundred.
+ *
+ * The catch, and the reason callers need a recovery strategy: Codeforces fails
+ * the *whole* request if any single handle is unknown — `status: "FAILED"` with
+ * a null result, not a partial list. So a clean response proves every handle in
+ * it is good, and an `invalid-handle` throw says nothing about which one is not.
  */
-export const getCodeforcesUser = async (
-  handle: string,
+export const getCodeforcesUsers = async (
+  handles: string[],
   fetcher: typeof fetch = fetch,
-): Promise<{ handle: string; maxRating: number | null }> => {
+): Promise<ResolvedCodeforcesUser[]> => {
+  if (handles.length === 0) return [];
+
   const url = new URL("https://codeforces.com/api/user.info");
-  url.searchParams.set("handles", handle);
+  // Semicolons are the documented separator. URLSearchParams percent-encodes
+  // them, which Codeforces decodes back — verified against the live API.
+  url.searchParams.set("handles", handles.join(";"));
   url.searchParams.set("checkHistoricHandles", "true");
 
   let response: Response;
@@ -63,6 +80,11 @@ export const getCodeforcesUser = async (
     if (isInvalidHandleComment(body.comment)) {
       throw new CodeforcesApiError("Invalid Codeforces handle.", "invalid-handle");
     }
+    // Distinguished from a plain outage because a caller working through a queue
+    // has to stop rather than retry — the next call would be refused too.
+    if (isCallLimitComment(body.comment)) {
+      throw new CodeforcesApiError("Codeforces call limit exceeded.", "call-limit");
+    }
     throw new CodeforcesApiError(
       "Codeforces is temporarily unavailable. Please try again.",
       "unavailable",
@@ -76,22 +98,42 @@ export const getCodeforcesUser = async (
     );
   }
 
-  const user = body.result?.[0];
-  if (
-    !user ||
-    typeof user.handle !== "string" ||
-    (user.maxRating !== undefined && !Number.isInteger(user.maxRating))
-  ) {
+  // One user per requested handle, positionally. A different length means the
+  // response cannot be mapped back at all, so it is a bad response, not a bad
+  // handle — callers must not bisect on this.
+  const users = body.result;
+  if (!Array.isArray(users) || users.length !== handles.length) {
     throw new CodeforcesApiError(
       "Codeforces returned an invalid response. Please try again.",
       "unavailable",
     );
   }
 
-  return {
-    handle: user.handle,
-    maxRating: user.maxRating ?? null,
-  };
+  return users.map((user) => {
+    if (
+      !user ||
+      typeof user.handle !== "string" ||
+      (user.maxRating !== undefined && !Number.isInteger(user.maxRating))
+    ) {
+      throw new CodeforcesApiError(
+        "Codeforces returned an invalid response. Please try again.",
+        "unavailable",
+      );
+    }
+    return { handle: user.handle, maxRating: user.maxRating ?? null };
+  });
+};
+
+/**
+ * Validate a current or historic Codeforces handle and return the account's
+ * current canonical handle/rating.
+ */
+export const getCodeforcesUser = async (
+  handle: string,
+  fetcher: typeof fetch = fetch,
+): Promise<ResolvedCodeforcesUser> => {
+  const [user] = await getCodeforcesUsers([handle], fetcher);
+  return user;
 };
 
 // ---------------------------------------------------------------------------
@@ -119,9 +161,6 @@ type SubmissionsResponse =
 const PAGE_SIZE = 1000;
 /** Runaway guard only — paging normally stops at the cutoff long before this. */
 const MAX_PAGES = 15;
-
-const isCallLimitComment = (comment: string | undefined): boolean =>
-  !!comment && /call limit exceeded/i.test(comment);
 
 const isValidSubmission = (value: unknown): value is CodeforcesSubmission => {
   const s = value as CodeforcesSubmission | undefined;

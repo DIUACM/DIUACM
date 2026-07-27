@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   getCodeforcesUser,
+  getCodeforcesUsers,
   getUserSubmissions,
   type CodeforcesSubmission,
 } from "../src/lib/codeforces";
@@ -56,8 +57,8 @@ describe("getCodeforcesUser", () => {
   it("does not mislabel other Codeforces failures as invalid handles", async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
       Response.json(
-        { status: "FAILED", comment: "Call limit exceeded" },
-        { status: 429 },
+        { status: "FAILED", comment: "Codeforces is temporarily unavailable" },
+        { status: 503 },
       ),
     );
 
@@ -66,10 +67,96 @@ describe("getCodeforcesUser", () => {
     });
   });
 
+  it("separates the call limit from a plain outage", async () => {
+    // The route maps both to 502, but a caller working through a queue has to
+    // stop on this one rather than retry — see src/sync/cf-rating.ts.
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json(
+        { status: "FAILED", comment: "Call limit exceeded" },
+        { status: 429 },
+      ),
+    );
+
+    await expect(getCodeforcesUser("tourist", fetcher)).rejects.toMatchObject({
+      kind: "call-limit",
+    });
+  });
+
   it("reports upstream failures as unavailable", async () => {
     const fetcher = vi.fn<typeof fetch>().mockRejectedValue(new Error("network"));
 
     await expect(getCodeforcesUser("tourist", fetcher)).rejects.toMatchObject({
+      kind: "unavailable",
+    });
+  });
+});
+
+describe("getCodeforcesUsers", () => {
+  it("asks for the whole batch in one call and answers in request order", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json({
+        status: "OK",
+        result: [
+          { handle: "tourist", maxRating: 4009 },
+          { handle: "Petr", maxRating: 3597 },
+          { handle: "new_user" },
+        ],
+      }),
+    );
+
+    await expect(getCodeforcesUsers(["tourist", "Petr", "new_user"], fetcher)).resolves.toEqual([
+      { handle: "tourist", maxRating: 4009 },
+      { handle: "Petr", maxRating: 3597 },
+      { handle: "new_user", maxRating: null },
+    ]);
+    expect(fetcher).toHaveBeenCalledOnce();
+    const url = new URL(String(fetcher.mock.calls[0][0]));
+    expect(url.searchParams.get("handles")).toBe("tourist;Petr;new_user");
+  });
+
+  it("makes no call for an empty batch", async () => {
+    const fetcher = vi.fn<typeof fetch>();
+
+    await expect(getCodeforcesUsers([], fetcher)).resolves.toEqual([]);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("fails the whole batch when one handle is unknown", async () => {
+    // Codeforces' own behaviour: no partial result, so the caller cannot tell
+    // which handle was to blame without splitting the batch.
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json(
+        { status: "FAILED", comment: "handles: User with handle missing not found", result: null },
+        { status: 400 },
+      ),
+    );
+
+    await expect(getCodeforcesUsers(["tourist", "missing"], fetcher)).rejects.toMatchObject({
+      kind: "invalid-handle",
+    });
+  });
+
+  it("treats a short response as unavailable, never as a bad handle", async () => {
+    // A result that cannot be mapped back to the request is a broken response.
+    // Calling it `invalid-handle` would send the caller bisecting a healthy batch.
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json({ status: "OK", result: [{ handle: "tourist", maxRating: 4009 }] }),
+    );
+
+    await expect(getCodeforcesUsers(["tourist", "Petr"], fetcher)).rejects.toMatchObject({
+      kind: "unavailable",
+    });
+  });
+
+  it("rejects a malformed entry anywhere in the batch", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json({
+        status: "OK",
+        result: [{ handle: "tourist", maxRating: 4009 }, { handle: 42 }],
+      }),
+    );
+
+    await expect(getCodeforcesUsers(["tourist", "Petr"], fetcher)).rejects.toMatchObject({
       kind: "unavailable",
     });
   });

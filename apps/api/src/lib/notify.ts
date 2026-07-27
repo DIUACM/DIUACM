@@ -9,7 +9,7 @@ import type { Bindings } from "../types";
 // actually matter — the numbers are wrong, or the sync has stopped working —
 // plus one daily digest so "no mail" can be trusted to mean "no news".
 //
-// The hard constraint is volume. Four crons fire 289 times a day, so a fault
+// The hard constraint is volume. Five crons fire 290 times a day, so a fault
 // that persists would mail on every tick. Every occurrence is recorded, but a
 // given `key` only sends once per cooldown, and the mail carries the count of
 // everything suppressed in between.

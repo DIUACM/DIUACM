@@ -312,7 +312,7 @@ export type SyncOptions = {
   minResyncSeconds?: number;
 };
 
-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+export const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /**
  * Spaces out every call to the judge, paging included. Wrapping the fetcher

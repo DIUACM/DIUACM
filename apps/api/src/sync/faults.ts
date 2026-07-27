@@ -1,4 +1,5 @@
 import type { Notice } from "../lib/notify";
+import type { CfRatingSummary } from "./cf-rating";
 import type { ErrorTally, StopReason } from "./runner";
 
 // ---------------------------------------------------------------------------
@@ -44,6 +45,13 @@ export type RunOutcome = {
 const list = (values: string[]): string => {
   const shown = values.slice(0, MAX_LISTED).join(", ");
   return values.length > MAX_LISTED ? `${shown}, and ${values.length - MAX_LISTED} more` : shown;
+};
+
+/** Same truncation as `list`, one entry per line — for rows too wide to comma-join. */
+const block = (values: string[]): string => {
+  const lines = values.slice(0, MAX_LISTED).map((value) => `  ${value}`);
+  if (values.length > MAX_LISTED) lines.push(`  ...and ${values.length - MAX_LISTED} more`);
+  return lines.join("\n");
 };
 
 /**
@@ -123,6 +131,89 @@ export const collectFaults = (outcome: RunOutcome): Notice[] => {
         `Which ${unit}s: ${unit === "handle" ? "user_handles.last_sync_error" : "event_sync_state.last_sync_error"}, ` +
         `until the next successful sync clears them (~2h).` +
         aborted,
+    });
+  }
+
+  return faults;
+};
+
+// ---------------------------------------------------------------------------
+// The daily rating refresh (see cf-rating.ts) needs its own rules rather than
+// `collectFaults`. Its unit of work is a chunk of a hundred handles, so a whole
+// run is three units — far under `MIN_SAMPLE`, which makes the error-rate test
+// meaningless — and it never pages, so `paging-truncated` can never fire.
+//
+// What it does have is a fault the syncs do not: a handle that no longer exists.
+// That is a data problem, not an outage. It is reported and nothing else, per
+// the deliberate rule that a Codeforces failure misread as `invalid-handle` must
+// never be able to delete anything.
+//
+// The `codeforces-rating:` prefix keeps these keys distinct from the solve
+// sync's `codeforces:` ones, so their cooldowns never suppress each other.
+// ---------------------------------------------------------------------------
+
+export const collectCfRatingFaults = (summary: CfRatingSummary): Notice[] => {
+  const faults: Notice[] = [];
+
+  if (summary.invalid.length > 0) {
+    const entries = summary.invalid.map(
+      (row) => `${row.handle} — ${row.userName} <${row.userEmail}> (user ${row.userId})`,
+    );
+    faults.push({
+      key: "codeforces-rating:invalid-handles",
+      subject: `[DIU ACM] ${summary.invalid.length} Codeforces handle(s) no longer exist`,
+      detail:
+        `Codeforces does not recognise these handles, not even as historic ones, so the ` +
+        `accounts were deleted or the handles were entered wrong:\n\n` +
+        `${block(entries)}\n\n` +
+        `Nothing was changed — the handles and their ratings are stored exactly as they were, ` +
+        `because a Codeforces outage misread as a bad handle must never be able to unlink a ` +
+        `real account. Check one at https://codeforces.com/profile/<handle> and fix or remove ` +
+        `it from Admin → Users → Handles.\n\n` +
+        `These handles also fail the solve sync, which cannot resolve historic handles at all, ` +
+        `so their solve and upsolve counts are frozen until this is fixed.`,
+    });
+  }
+
+  if (summary.renameConflicts.length > 0) {
+    const entries = summary.renameConflicts.map(
+      (conflict) =>
+        `${conflict.from} → ${conflict.to} (${conflict.userName}, user ${conflict.userId})` +
+        (conflict.heldBy ? `, already held by ${conflict.heldBy}` : ""),
+    );
+    faults.push({
+      key: "codeforces-rating:rename-conflict",
+      subject: `[DIU ACM] Codeforces rename could not be applied`,
+      detail:
+        `These handles were renamed on Codeforces, but the new handle is already stored ` +
+        `against another row, so the update was refused by unique(type, handle):\n\n` +
+        `${block(entries)}\n\n` +
+        `Two of our rows now point at one Codeforces account. Usually the other row is stale — ` +
+        `a member who left, or a handle typed in before it was claimed. Remove whichever is ` +
+        `wrong in Admin → Users → Handles and the rename lands on the next run.\n\n` +
+        `Until then the stale row keeps winning and the renamed member's solve counts stay frozen.`,
+    });
+  }
+
+  if (summary.chunksFailed > 0 || summary.stoppedReason !== null) {
+    const unchecked = summary.handles - summary.checked - summary.invalid.length;
+    const why =
+      summary.stoppedReason === "rate-limit"
+        ? `The run stopped early: Codeforces refused a request with its call limit.`
+        : summary.stoppedReason === "time-budget"
+          ? `The run stopped early: it ran out of its wall-clock budget.`
+          : `${summary.chunksFailed} batch(es) went unanswered.`;
+    faults.push({
+      key: "codeforces-rating:unreachable",
+      subject: `[DIU ACM] Codeforces rating refresh could not check every handle`,
+      detail:
+        `${why} ${unchecked} of ${summary.handles} handle(s) were not checked on this run.\n\n` +
+        reasonBlock(summary.errorReasons) +
+        `Their ratings keep yesterday's values, which is harmless for a day. What is not ` +
+        `carried over is the missing-handle report: any dead handle among the unchecked ones ` +
+        `has not been found yet, so treat the list in any accompanying alert as partial.\n\n` +
+        `The next run is in 24 hours. If this repeats, Codeforces is rejecting us rather than ` +
+        `having a bad minute.`,
     });
   }
 

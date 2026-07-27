@@ -23,7 +23,10 @@ export const users = sqliteTable("users", {
   passwordHash: text("password_hash"),
   // R2 object key for the profile image (null if none). Served via GET /files/:key.
   imageKey: text("image_key"),
-  // Highest Codeforces rating reached. Null until populated (by a future CF sync).
+  // Highest Codeforces rating reached; null until a Codeforces handle is saved,
+  // and for accounts that are still unrated. Set on handle save and refreshed
+  // nightly by src/sync/cf-rating.ts, which writes this column alone — it
+  // deliberately leaves `updated_at` untouched.
   maxCfRating: integer("max_cf_rating"),
   // Unix epoch seconds (UTC). `updatedAt` is bumped by the profile-update handler.
   createdAt: integer("created_at")
@@ -200,7 +203,7 @@ export const eventSyncState = sqliteTable("event_sync_state", {
 });
 
 /**
- * Cooldown ledger for super-admin alerts (src/lib/notify.ts). The crons fire 288
+ * Cooldown ledger for super-admin alerts (src/lib/notify.ts). The crons fire 290
  * times a day, so a persistent fault would otherwise mail the admin every 15
  * minutes; a notice is recorded on every occurrence but only sent when its
  * cooldown has expired, and the mail says how many times it fired meanwhile.

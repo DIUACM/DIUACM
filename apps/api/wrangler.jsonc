@@ -20,8 +20,15 @@
       // VJudge at :10/:25/:40/:55 — a batch of contests, not handles (see
       // src/sync/vjudge.ts), completing the 5-minute stagger.
       "10,25,40,55 * * * *",
-      // Daily health digest to the super admin, 01:12 UTC (07:12 Dhaka). The
-      // odd minute is deliberate: :00/:15/:30/:45, :05/:20/:35/:50 and
+      // Codeforces rating and handle refresh, 00:42 UTC (06:42 Dhaka). Daily
+      // rather than sub-hourly because `user.info` takes every handle in one
+      // call, so a whole run is a handful of requests — and because a slower
+      // cron gets 15 min of CPU rather than 30s, which leaves room as the table
+      // grows. See src/sync/cf-rating.ts.
+      "42 0 * * *",
+      // Daily health digest to the super admin, 01:12 UTC (07:12 Dhaka), half an
+      // hour after the refresh so it can report what that raised. The odd
+      // minutes are deliberate: :00/:15/:30/:45, :05/:20/:35/:50 and
       // :10/:25/:40/:55 all belong to a sync.
       "12 1 * * *"
     ]
@@ -32,7 +39,7 @@
   // `remote: true` only affects `wrangler dev`, where it proxies sends to the
   // real service. Without it a local send silently no-ops, which is the one
   // failure mode this whole feature exists to avoid — so local runs really do
-  // mail the super admin. The 24h per-key cooldown keeps that bearable.
+  // mail the super admin. The 1h per-key cooldown keeps that bearable.
   "send_email": [
     {
       "name": "EMAIL",
