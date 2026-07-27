@@ -72,7 +72,7 @@ const insertVjudgeEvent = (
 ) =>
   db
     .prepare(
-      "INSERT INTO events (id, title, status, starting_at, ending_at, event_link) VALUES (?, ?, 'published', ?, ?, ?)",
+      "INSERT INTO events (id, title, type, status, starting_at, ending_at, event_link) VALUES (?, ?, 'contest', 'published', ?, ?, ?)",
     )
     .run(
       id,

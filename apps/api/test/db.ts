@@ -58,13 +58,24 @@ export const insertUser = (db: Database.Database, id: number) =>
 export const insertEvent = (
   db: Database.Database,
   id: number,
-  opts: { strictAttendance?: boolean } = {},
+  opts: {
+    strictAttendance?: boolean;
+    startingAt?: number;
+    type?: "contest" | "class" | "other";
+  } = {},
 ) =>
   db
     .prepare(
-      "INSERT INTO events (id, title, starting_at, ending_at, strict_attendance) VALUES (?, ?, 1000, 2000, ?)",
+      "INSERT INTO events (id, title, type, starting_at, ending_at, strict_attendance) VALUES (?, ?, ?, ?, ?, ?)",
     )
-    .run(id, `Event ${id}`, opts.strictAttendance ? 1 : 0);
+    .run(
+      id,
+      `Event ${id}`,
+      opts.type ?? "contest",
+      opts.startingAt ?? 1000,
+      (opts.startingAt ?? 1000) + 1000,
+      opts.strictAttendance ? 1 : 0,
+    );
 
 export const insertTracker = (db: Database.Database, id: number) =>
   db

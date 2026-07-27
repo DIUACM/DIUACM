@@ -163,7 +163,7 @@ const insertContestEvent = (
 ) =>
   db
     .prepare(
-      "INSERT INTO events (id, title, status, starting_at, ending_at, event_link) VALUES (?, ?, ?, ?, ?, ?)",
+      "INSERT INTO events (id, title, type, status, starting_at, ending_at, event_link) VALUES (?, ?, 'contest', ?, ?, ?, ?)",
     )
     .run(
       id,

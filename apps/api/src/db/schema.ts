@@ -255,9 +255,10 @@ export const ranklists = sqliteTable(
     considerStrictAttendance: integer("consider_strict_attendance", { mode: "boolean" })
       .notNull()
       .default(false),
-    // When true, SQLite triggers keep membership in sync with participation: any user
-    // with performance/attendance on an attached event is auto-added (auto_added = 1)
-    // and auto-removed when their participation disappears.
+    // When true, SQLite triggers keep membership in sync with performance in the 15
+    // latest attached contest events (by starting_at). Attendance does not affect
+    // membership. Trigger-added rows have auto_added = 1 and are removed when no
+    // qualifying performance remains.
     autoAddUsers: integer("auto_add_users", { mode: "boolean" }).notNull().default(false),
     // Display order within the tracker (0 = first = latest). Admin-controlled
     // via the reorder endpoint.
