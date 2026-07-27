@@ -11,7 +11,7 @@
     "typecheck": "pnpm --filter @diuacm/api typecheck && pnpm --filter @diuacm/web exec tsc -b",
     "lint": "pnpm --filter @diuacm/web lint",
     "test": "pnpm --filter @diuacm/api test",
-    "deploy:api": "pnpm --filter @diuacm/api deploy",
-    "deploy:web": "pnpm --filter @diuacm/web deploy"
+    "deploy:api": "pnpm --filter @diuacm/api run deploy",
+    "deploy:web": "pnpm --filter @diuacm/web run deploy"
   }
 }
