@@ -378,6 +378,17 @@ and set a `JWT_SECRET`.
 
 Migrations are applied with `wrangler d1 migrations apply`, **not** the Drizzle client.
 
+### Importing the legacy structure
+
+`pnpm import:structure -- --remote` reads the protected migration export, copies each
+unique user image into `diuacm-files-stage`, and then imports the mapped rows into remote
+D1. Set `MIGRATION_EXPORT_KEY` in `.dev.vars` before running it. Use `--dry-run` to
+generate and validate the SQL without changing D1 or R2; `--bucket <name>` overrides the
+destination bucket.
+
+The source ranklist `is_active` flag has inverse semantics to this API's `is_locked`
+column: active ranklists import unlocked, and inactive ranklists import locked.
+
 ## Deploying to Cloudflare
 
 ```bash

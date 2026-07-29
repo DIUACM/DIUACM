@@ -1,11 +1,22 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 
 const DEFAULT_EXPORT_URL = "https://diuacm.com/api/migration/export";
 const DEFAULT_DATABASE = "DB";
+const DEFAULT_BUCKET = "diuacm-files-stage";
+const IMAGE_DOWNLOAD_CONCURRENCY = 20;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const IMAGE_TYPES = {
+  gif: "image/gif",
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+};
 const VALID_EVENT_TYPES = new Set(["contest", "class", "other"]);
 const VALID_EVENT_SCOPES = new Set([
   "open_for_all",
@@ -51,12 +62,14 @@ Options:
   --dry-run           Generate SQL only; do not run wrangler.
   --out <file>        Write generated SQL to this path.
   --database <name>   D1 database name or binding. Defaults to ${DEFAULT_DATABASE}.
+  --bucket <name>     R2 bucket for imported user images. Defaults to ${DEFAULT_BUCKET}.
   --help              Show this help text.
 
 URL mode requires MIGRATION_EXPORT_KEY or MIGRATION_EXPORT_API_KEY. The key is sent as X-Migration-Export-Key.`;
 
 const parseArgs = (argv) => {
   const options = {
+    bucket: DEFAULT_BUCKET,
     database: DEFAULT_DATABASE,
     dryRun: false,
     input: null,
@@ -83,7 +96,13 @@ const parseArgs = (argv) => {
       options.dryRun = true;
       continue;
     }
-    if (arg === "--input" || arg === "--out" || arg === "--url" || arg === "--database") {
+    if (
+      arg === "--input" ||
+      arg === "--out" ||
+      arg === "--url" ||
+      arg === "--database" ||
+      arg === "--bucket"
+    ) {
       const value = argv[++i];
       if (!value) fail(`${arg} requires a value`);
       options[arg.slice(2)] = value;
@@ -254,14 +273,18 @@ const slugify = (value, fallback) => {
   return slug || fallback;
 };
 
-const normalizeStatus = (row, defaultStatus = "published") => {
+const normalizeStatus = (
+  row,
+  defaultStatus = "published",
+  publishedKeys = ["published", "is_published", "isPublished", "active", "is_active"],
+) => {
   const status = textOrNull(direct(row, ["status"]));
   if (status) {
     const normalized = status.toLowerCase();
     if (["published", "publish", "active", "public", "1"].includes(normalized)) return "published";
     if (["draft", "hidden", "private", "inactive", "0"].includes(normalized)) return "draft";
   }
-  const published = direct(row, ["published", "is_published", "isPublished", "active", "is_active"]);
+  const published = direct(row, publishedKeys);
   if (published !== undefined) return toBoolInt(published) ? "published" : "draft";
   return defaultStatus;
 };
@@ -288,6 +311,41 @@ const normalizeImageKey = (value) => {
   const key = textOrNull(value);
   if (!key) return null;
   if (/^(https?:|data:|\/|storage\/|public\/)/i.test(key)) return null;
+  return key;
+};
+
+const normalizeUserImage = (value, userId, imageAssets, warnings) => {
+  const image = textOrNull(value);
+  if (!image) return null;
+
+  if (!/^https?:\/\//i.test(image)) return normalizeImageKey(image);
+
+  let url;
+  try {
+    url = new URL(image);
+  } catch {
+    warn(warnings, "users", userId, "image URL is invalid; using NULL");
+    return null;
+  }
+
+  if (url.protocol !== "https:") {
+    warn(warnings, "users", userId, "image URL must use HTTPS; using NULL");
+    return null;
+  }
+
+  const extension = url.pathname.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
+  const contentType = extension ? IMAGE_TYPES[extension] : null;
+  if (!extension || !contentType) {
+    warn(warnings, "users", userId, "image URL has an unsupported extension; using NULL");
+    return null;
+  }
+
+  const canonicalExtension = extension === "jpg" ? "jpeg" : extension;
+  const digest = createHash("sha256").update(image).digest("hex").slice(0, 32);
+  const key = `users/imported/${digest}.${canonicalExtension}`;
+  if (!imageAssets.has(key)) {
+    imageAssets.set(key, { contentType, key, url: image });
+  }
   return key;
 };
 
@@ -346,7 +404,7 @@ const addUnique = (rows, keyFn) => {
   return out;
 };
 
-const mapUsers = (rows, warnings) => {
+const mapUsers = (rows, warnings, imageAssets) => {
   const usedUsernames = new Set();
   const usedEmails = new Set();
   const usedStudentIds = new Set();
@@ -389,8 +447,11 @@ const mapUsers = (rows, warnings) => {
       username,
       student_id: studentId,
       password_hash: null,
-      image_key: normalizeImageKey(
+      image_key: normalizeUserImage(
         direct(row, ["image_key", "imageKey", "image", "avatar", "profile_photo", "profile_photo_path"]),
+        id,
+        imageAssets,
+        warnings,
       ),
       max_cf_rating: toInt(direct(row, ["max_cf_rating", "maxCfRating", "cf_rating", "rating"])),
       created_at: toEpochSeconds(direct(row, ["created_at", "createdAt"])) ?? now,
@@ -571,7 +632,9 @@ const mapRanklists = (rows, warnings) => {
       tracker_id: trackerId,
       keyword,
       description: textOrNull(direct(row, ["description", "details"])) ?? "",
-      status: normalizeStatus(row),
+      // In the current migration API, ranklist is_active describes whether
+      // scoring is still open. It is not the publication status.
+      status: normalizeStatus(row, "published", ["published", "is_published", "isPublished"]),
       upsolve_weight: normalizeWeight(
         direct(row, [
           "upsolve_weight",
@@ -584,7 +647,12 @@ const mapRanklists = (rows, warnings) => {
         "ranklists",
         id,
       ),
-      is_locked: toBoolInt(direct(row, ["is_locked", "isLocked", "locked"])),
+      is_locked:
+        direct(row, ["is_active", "isActive"]) !== undefined
+          ? toBoolInt(direct(row, ["is_active", "isActive"]))
+            ? 0
+            : 1
+          : toBoolInt(direct(row, ["is_locked", "isLocked", "locked"])),
       consider_strict_attendance: toBoolInt(
         direct(row, ["consider_strict_attendance", "considerStrictAttendance"]),
       ),
@@ -691,6 +759,7 @@ const mapAttendance = (rows, eventRows, warnings) => {
 
 const buildImport = (payload, options) => {
   const warnings = [];
+  const imageAssets = new Map();
   const raw = {
     users: findRows(payload, aliases.users),
     userHandles: findRows(payload, aliases.userHandles),
@@ -704,7 +773,7 @@ const buildImport = (payload, options) => {
   const ranklistSources = collectRanklistSources(raw.ranklists, raw.trackers);
 
   const rows = {
-    users: mapUsers(raw.users, warnings),
+    users: mapUsers(raw.users, warnings, imageAssets),
     userHandles: null,
     events: mapEvents(raw.events, warnings),
     trackers: mapTrackers(raw.trackers, warnings),
@@ -837,6 +906,7 @@ const buildImport = (payload, options) => {
   return {
     rawCounts: Object.fromEntries(Object.entries(raw).map(([key, value]) => [key, value.length])),
     rowCounts: Object.fromEntries(Object.entries(rows).map(([key, value]) => [key, value.length])),
+    imageAssets: [...imageAssets.values()],
     sql: lines.join("\n"),
     warnings,
   };
@@ -859,8 +929,98 @@ const runWrangler = (sqlPath, options) => {
     sqlPath,
   ];
   const result = spawnSync("wrangler", args, { stdio: "inherit" });
-  if (result.error) fail(`could not run wrangler: ${result.error.message}`);
-  if (result.status !== 0) fail(`wrangler exited with status ${result.status}`);
+  if (result.error) throw new Error(`could not run wrangler: ${result.error.message}`);
+  if (result.status !== 0) throw new Error(`wrangler exited with status ${result.status}`);
+};
+
+const mapConcurrent = async (items, concurrency, fn) => {
+  const results = new Array(items.length);
+  let nextIndex = 0;
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (nextIndex < items.length) {
+      const index = nextIndex++;
+      results[index] = await fn(items[index], index);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+};
+
+const downloadImages = async (assets, directory) => {
+  mkdirSync(directory, { recursive: true });
+  return mapConcurrent(assets, IMAGE_DOWNLOAD_CONCURRENCY, async (asset) => {
+    const response = await fetch(asset.url, {
+      headers: { Accept: asset.contentType },
+      redirect: "follow",
+    });
+    if (!response.ok) {
+      throw new Error(`image download returned HTTP ${response.status}: ${asset.url}`);
+    }
+
+    const claimedBytes = Number(response.headers.get("content-length"));
+    if (Number.isFinite(claimedBytes) && claimedBytes > MAX_IMAGE_BYTES) {
+      throw new Error(`image exceeds ${MAX_IMAGE_BYTES} bytes: ${asset.url}`);
+    }
+
+    const responseType = response.headers.get("content-type")?.split(";", 1)[0]?.trim();
+    if (responseType && !responseType.startsWith("image/")) {
+      throw new Error(`image URL returned ${responseType}: ${asset.url}`);
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    if (buffer.length === 0 || buffer.length > MAX_IMAGE_BYTES) {
+      throw new Error(
+        buffer.length === 0
+          ? `image is empty: ${asset.url}`
+          : `image exceeds ${MAX_IMAGE_BYTES} bytes: ${asset.url}`,
+      );
+    }
+
+    const path = resolve(directory, asset.key.replaceAll("/", "_"));
+    writeFileSync(path, buffer);
+    return { ...asset, path };
+  });
+};
+
+const uploadImages = (assets, tempDir, options) => {
+  const byContentType = new Map();
+  for (const asset of assets) {
+    const group = byContentType.get(asset.contentType) ?? [];
+    group.push(asset);
+    byContentType.set(asset.contentType, group);
+  }
+  for (const [contentType, group] of byContentType) {
+    const manifestPath = resolve(
+      tempDir,
+      `r2-${contentType.replaceAll("/", "-")}-manifest.json`,
+    );
+    writeFileSync(
+      manifestPath,
+      JSON.stringify(group.map(({ key, path }) => ({ key, file: path }))),
+    );
+
+    const args = [
+      "r2",
+      "bulk",
+      "put",
+      options.bucket,
+      "--filename",
+      manifestPath,
+      "--content-type",
+      contentType,
+      "--cache-control",
+      "public, max-age=31536000, immutable",
+      "--concurrency",
+      String(IMAGE_DOWNLOAD_CONCURRENCY),
+      "--force",
+      options.local ? "--local" : "--remote",
+    ];
+    const result = spawnSync("wrangler", args, { stdio: "inherit" });
+    if (result.error) throw new Error(`could not run wrangler: ${result.error.message}`);
+    if (result.status !== 0) {
+      throw new Error(`wrangler R2 upload exited with status ${result.status}`);
+    }
+  }
 };
 
 const printSummary = (result, sqlPath, options) => {
@@ -869,6 +1029,7 @@ const printSummary = (result, sqlPath, options) => {
   for (const [key, count] of Object.entries(result.rowCounts)) {
     console.log(`  ${key}: ${count}`);
   }
+  console.log(`  userImages: ${result.imageAssets.length} unique object(s)`);
   if (result.warnings.length > 0) {
     console.log("Warnings:");
     for (const item of result.warnings.slice(0, 100)) {
@@ -880,7 +1041,7 @@ const printSummary = (result, sqlPath, options) => {
   }
 
   if (options.dryRun) {
-    console.log("Dry run complete. No D1 changes were made.");
+    console.log("Dry run complete. No D1 or R2 changes were made.");
   }
 };
 
@@ -889,16 +1050,28 @@ const main = async () => {
   const payload = await loadJson(options);
   const result = buildImport(payload, options);
 
-  const tempDir = options.out ? null : mkdtempSync(resolve(tmpdir(), "diuacm-import-"));
-  const sqlPath = writeSql(result.sql, options.out ?? `${tempDir}/import.sql`);
-  printSummary(result, sqlPath, options);
+  const tempDir = mkdtempSync(resolve(tmpdir(), "diuacm-import-"));
+  try {
+    const sqlPath = writeSql(result.sql, options.out ?? `${tempDir}/import.sql`);
+    printSummary(result, sqlPath, options);
 
-  if (!options.dryRun) {
-    runWrangler(sqlPath, options);
-    console.log(`Imported into ${options.local ? "local" : "remote"} D1 database ${options.database}.`);
+    if (!options.dryRun) {
+      if (result.imageAssets.length > 0) {
+        console.log(`Downloading ${result.imageAssets.length} unique user image(s)...`);
+        const images = await downloadImages(result.imageAssets, resolve(tempDir, "images"));
+        console.log(
+          `Uploading user images to ${options.local ? "local" : "remote"} R2 bucket ${options.bucket}...`,
+        );
+        uploadImages(images, tempDir, options);
+      }
+      runWrangler(sqlPath, options);
+      console.log(
+        `Imported into ${options.local ? "local" : "remote"} D1 database ${options.database}.`,
+      );
+    }
+  } finally {
+    rmSync(tempDir, { force: true, recursive: true });
   }
-
-  if (!options.out && tempDir) rmSync(tempDir, { force: true, recursive: true });
 };
 
 main().catch((error) => fail(error?.message ?? String(error)));
