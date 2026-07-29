@@ -5,6 +5,7 @@ use App\Models\EventUserStat;
 use App\Models\RankList;
 use App\Models\Tracker;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 
 it('fails closed when the migration export api key is not configured', function () {
     config(['services.migration_export.api_key' => null]);
@@ -45,6 +46,9 @@ it('exports users events trackers rank lists and relationship tables without pag
         'email' => 'tracked@example.com',
         'username' => 'tracked-user',
     ]);
+    $trackedUser->addMedia(UploadedFile::fake()->image('profile-picture.jpg'))
+        ->toMediaCollection('profile_picture');
+    $originalImageUrl = $trackedUser->getFirstMediaUrl('profile_picture');
     $event = Event::factory()->create(['title' => 'Migration Contest']);
     $tracker = Tracker::factory()->create(['slug' => 'migration-tracker']);
     $rankList = RankList::factory()->create([
@@ -85,9 +89,11 @@ it('exports users events trackers rank lists and relationship tables without pag
         ]);
 
     $payload = $response->json('data');
+    $exportedUser = collect($payload['users'])->firstWhere('id', $trackedUser->id);
 
     expect($payload)->not->toHaveKeys(['links', 'meta'])
         ->and(collect($payload['users'])->pluck('email'))->toContain('tracked@example.com')
+        ->and($exportedUser['image'])->toBe($originalImageUrl)
         ->and(collect($payload['events'])->pluck('title'))->toContain('Migration Contest')
         ->and(collect($payload['trackers'])->pluck('slug'))->toContain('migration-tracker')
         ->and(collect($payload['rank_lists'])->pluck('keyword'))->toContain('migration-ranklist')
@@ -183,7 +189,8 @@ it('returns the export api structure and generated examples', function () {
         'event_user_stats',
         'rank_list_user',
     ])
-        ->and($userColumns)->toContain('id', 'email', 'username')
-        ->and($payload['example']['data']['users'][0])->toHaveKeys(['id', 'email', 'username'])
+        ->and($userColumns)->toContain('id', 'email', 'username', 'image')
+        ->and($payload['example']['data']['users'][0])->toHaveKeys(['id', 'email', 'username', 'image'])
+        ->and($payload['example']['data']['users'][0]['image'])->toBe('https://example.com/profile-picture.jpg')
         ->and($payload['example']['data']['event_rank_list'][0])->toHaveKeys(['event_id', 'rank_list_id', 'weight']);
 });

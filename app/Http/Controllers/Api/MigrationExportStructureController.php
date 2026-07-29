@@ -59,7 +59,7 @@ class MigrationExportStructureController extends Controller
         $structure = [];
 
         foreach (self::EXPORT_TABLES as $table) {
-            $structure[$table] = collect(Schema::getColumns($table))
+            $columns = collect(Schema::getColumns($table))
                 ->map(fn (array $column): array => [
                     'name' => (string) $column['name'],
                     'type' => (string) ($column['type'] ?? $column['type_name'] ?? 'unknown'),
@@ -68,6 +68,17 @@ class MigrationExportStructureController extends Controller
                 ])
                 ->values()
                 ->all();
+
+            if ($table === 'users') {
+                $columns[] = [
+                    'name' => 'image',
+                    'type' => 'string',
+                    'nullable' => true,
+                    'default' => null,
+                ];
+            }
+
+            $structure[$table] = $columns;
         }
 
         return $structure;
@@ -92,11 +103,17 @@ class MigrationExportStructureController extends Controller
      */
     private function exampleRow(string $table): array
     {
-        return collect(Schema::getColumns($table))
+        $row = collect(Schema::getColumns($table))
             ->mapWithKeys(fn (array $column): array => [
                 (string) $column['name'] => $this->exampleValue((string) $column['name'], (string) ($column['type'] ?? $column['type_name'] ?? '')),
             ])
             ->all();
+
+        if ($table === 'users') {
+            $row['image'] = 'https://example.com/profile-picture.jpg';
+        }
+
+        return $row;
     }
 
     private function exampleValue(string $column, string $type): mixed

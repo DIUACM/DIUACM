@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +17,7 @@ class MigrationExportController extends Controller
     {
         return response()->json([
             'data' => [
-                'users' => $this->tableRows('users'),
+                'users' => $this->userRows(),
                 'events' => $this->tableRows('events'),
                 'trackers' => $this->tableRows('trackers'),
                 'rank_lists' => $this->tableRows('rank_lists'),
@@ -26,6 +27,21 @@ class MigrationExportController extends Controller
                 'rank_list_user' => $this->tableRows('rank_list_user', ['rank_list_id', 'user_id']),
             ],
         ]);
+    }
+
+    /**
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function userRows(): Collection
+    {
+        return User::query()
+            ->with('media')
+            ->orderBy('id')
+            ->get()
+            ->map(fn (User $user): array => [
+                ...$user->getAttributes(),
+                'image' => $user->avatar_url,
+            ]);
     }
 
     /**
