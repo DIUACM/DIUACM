@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import { Layout } from '@/components/layout/Layout'
+import { RouteError } from '@/components/layout/RouteError'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { RequireAuth } from '@/features/auth/RequireAuth'
 import { BlogPage } from '@/features/blog/BlogPage'
@@ -28,110 +29,119 @@ const router = createBrowserRouter([
   {
     element: <Layout />,
     children: [
-      { path: '/', element: <HomePage /> },
-      { path: '/events', element: <EventsPage /> },
-      { path: '/events/:id', element: <EventDetailPage /> },
-      { path: '/trackers', element: <TrackersPage /> },
-      { path: '/trackers/:slug', element: <TrackerDetailPage /> },
-      { path: '/programmers', element: <ProgrammersPage /> },
-      { path: '/programmers/:username', element: <ProgrammerDetailPage /> },
-      { path: '/gallery', element: <GalleryPage /> },
-      { path: '/gallery/:slug', element: <GalleryAlbumPage /> },
-      { path: '/blog', element: <BlogPage /> },
       {
-        path: '/blog/:slug',
-        lazy: lazily(() => import('@/features/blog/BlogPostPage'), 'BlogPostPage'),
-      },
-      { path: '/login', element: <LoginPage /> },
-      {
-        element: <RequireAuth />,
-        children: [{ path: '/profile', element: <ProfilePage /> }],
-      },
-      {
-        path: '/admin',
-        lazy: lazily(() => import('@/features/admin/AdminLayout'), 'AdminLayout'),
+        // Pathless wrapper so a throw from any page below — including a failed
+        // `lazy` chunk download — renders inside the Layout's outlet. Putting
+        // `errorElement` on the root route instead would replace the whole
+        // shell, taking the nav and footer down with the page.
+        errorElement: <RouteError />,
         children: [
+          { path: '/', element: <HomePage /> },
+          { path: '/events', element: <EventsPage /> },
+          { path: '/events/:id', element: <EventDetailPage /> },
+          { path: '/trackers', element: <TrackersPage /> },
+          { path: '/trackers/:slug', element: <TrackerDetailPage /> },
+          { path: '/programmers', element: <ProgrammersPage /> },
+          { path: '/programmers/:username', element: <ProgrammerDetailPage /> },
+          { path: '/gallery', element: <GalleryPage /> },
+          { path: '/gallery/:slug', element: <GalleryAlbumPage /> },
+          { path: '/blog', element: <BlogPage /> },
           {
-            path: 'users',
-            lazy: lazily(() => import('@/features/admin/users/AdminUsersPage'), 'AdminUsersPage'),
+            path: '/blog/:slug',
+            lazy: lazily(() => import('@/features/blog/BlogPostPage'), 'BlogPostPage'),
+          },
+          { path: '/login', element: <LoginPage /> },
+          {
+            element: <RequireAuth />,
+            children: [{ path: '/profile', element: <ProfilePage /> }],
           },
           {
-            path: 'users/:id',
-            lazy: lazily(
-              () => import('@/features/admin/users/AdminUserDetailPage'),
-              'AdminUserDetailPage',
-            ),
+            path: '/admin',
+            lazy: lazily(() => import('@/features/admin/AdminLayout'), 'AdminLayout'),
+            children: [
+              {
+                path: 'users',
+                lazy: lazily(() => import('@/features/admin/users/AdminUsersPage'), 'AdminUsersPage'),
+              },
+              {
+                path: 'users/:id',
+                lazy: lazily(
+                  () => import('@/features/admin/users/AdminUserDetailPage'),
+                  'AdminUserDetailPage',
+                ),
+              },
+              {
+                path: 'events',
+                lazy: lazily(
+                  () => import('@/features/admin/events/AdminEventsPage'),
+                  'AdminEventsPage',
+                ),
+              },
+              {
+                path: 'events/:id',
+                lazy: lazily(
+                  () => import('@/features/admin/events/AdminEventDetailPage'),
+                  'AdminEventDetailPage',
+                ),
+              },
+              {
+                path: 'trackers',
+                lazy: lazily(
+                  () => import('@/features/admin/trackers/AdminTrackersPage'),
+                  'AdminTrackersPage',
+                ),
+              },
+              {
+                path: 'trackers/:id',
+                lazy: lazily(
+                  () => import('@/features/admin/trackers/AdminTrackerDetailPage'),
+                  'AdminTrackerDetailPage',
+                ),
+              },
+              {
+                path: 'ranklists/:id',
+                lazy: lazily(
+                  () => import('@/features/admin/trackers/AdminRanklistDetailPage'),
+                  'AdminRanklistDetailPage',
+                ),
+              },
+              {
+                path: 'gallery',
+                lazy: lazily(
+                  () => import('@/features/admin/gallery/AdminGalleryPage'),
+                  'AdminGalleryPage',
+                ),
+              },
+              {
+                path: 'gallery/:id',
+                lazy: lazily(
+                  () => import('@/features/admin/gallery/AdminGalleryAlbumDetailPage'),
+                  'AdminGalleryAlbumDetailPage',
+                ),
+              },
+              {
+                path: 'blog',
+                lazy: lazily(() => import('@/features/admin/blog/AdminBlogPage'), 'AdminBlogPage'),
+              },
+              {
+                path: 'blog/:id',
+                lazy: lazily(
+                  () => import('@/features/admin/blog/AdminBlogPostDetailPage'),
+                  'AdminBlogPostDetailPage',
+                ),
+              },
+              {
+                path: 'system',
+                lazy: lazily(
+                  () => import('@/features/admin/system/AdminSystemPage'),
+                  'AdminSystemPage',
+                ),
+              },
+            ],
           },
-          {
-            path: 'events',
-            lazy: lazily(
-              () => import('@/features/admin/events/AdminEventsPage'),
-              'AdminEventsPage',
-            ),
-          },
-          {
-            path: 'events/:id',
-            lazy: lazily(
-              () => import('@/features/admin/events/AdminEventDetailPage'),
-              'AdminEventDetailPage',
-            ),
-          },
-          {
-            path: 'trackers',
-            lazy: lazily(
-              () => import('@/features/admin/trackers/AdminTrackersPage'),
-              'AdminTrackersPage',
-            ),
-          },
-          {
-            path: 'trackers/:id',
-            lazy: lazily(
-              () => import('@/features/admin/trackers/AdminTrackerDetailPage'),
-              'AdminTrackerDetailPage',
-            ),
-          },
-          {
-            path: 'ranklists/:id',
-            lazy: lazily(
-              () => import('@/features/admin/trackers/AdminRanklistDetailPage'),
-              'AdminRanklistDetailPage',
-            ),
-          },
-          {
-            path: 'gallery',
-            lazy: lazily(
-              () => import('@/features/admin/gallery/AdminGalleryPage'),
-              'AdminGalleryPage',
-            ),
-          },
-          {
-            path: 'gallery/:id',
-            lazy: lazily(
-              () => import('@/features/admin/gallery/AdminGalleryAlbumDetailPage'),
-              'AdminGalleryAlbumDetailPage',
-            ),
-          },
-          {
-            path: 'blog',
-            lazy: lazily(() => import('@/features/admin/blog/AdminBlogPage'), 'AdminBlogPage'),
-          },
-          {
-            path: 'blog/:id',
-            lazy: lazily(
-              () => import('@/features/admin/blog/AdminBlogPostDetailPage'),
-              'AdminBlogPostDetailPage',
-            ),
-          },
-          {
-            path: 'system',
-            lazy: lazily(
-              () => import('@/features/admin/system/AdminSystemPage'),
-              'AdminSystemPage',
-            ),
-          },
+          { path: '*', element: <NotFoundPage /> },
         ],
       },
-      { path: '*', element: <NotFoundPage /> },
     ],
   },
 ])

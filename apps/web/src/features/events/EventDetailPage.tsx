@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/features/auth/auth-context'
+import { NotFoundPage } from '@/features/home/NotFoundPage'
 import { formatDateTime, formatDuration, eventTiming } from '@/lib/datetime'
 import type { EventDetail } from '@/api/types'
 import { AttendanceDialog } from './AttendanceDialog'
@@ -244,8 +245,14 @@ function EventDetailContent({ event }: { event: EventDetail }) {
 export function EventDetailPage() {
   const params = useParams()
   const id = Number(params.id)
-  const eventQuery = useEvent(id)
+  // `/events/abc` gives NaN, which would otherwise be sent to the API as a
+  // literal "NaN" and come back 404 as an error state. It's a bad URL, not a
+  // failed request, so short-circuit to the 404 page without the round trip.
+  const hasValidId = Number.isInteger(id) && id > 0
+  const eventQuery = useEvent(id, hasValidId)
   useDocumentTitle(eventQuery.data?.title)
+
+  if (!hasValidId) return <NotFoundPage />
 
   if (eventQuery.isPending) {
     return (

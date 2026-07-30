@@ -2,7 +2,6 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
-@import "katex/dist/katex.min.css";
 
 @plugin "@tailwindcss/typography";
 

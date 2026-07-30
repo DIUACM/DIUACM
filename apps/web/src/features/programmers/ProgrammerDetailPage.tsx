@@ -112,8 +112,12 @@ export function ProgrammerDetailPage() {
                         key={ranklist.keyword}
                         className="flex items-center justify-between gap-3"
                       >
+                        {/* TrackerDetailPage selects the ranklist from the
+                            `keyword` search param — there is no
+                            `/trackers/:slug/:keyword` route, so a path segment
+                            here falls through to the 404. */}
                         <Link
-                          to={`/trackers/${entry.tracker.slug}/${ranklist.keyword}`}
+                          to={`/trackers/${entry.tracker.slug}?keyword=${encodeURIComponent(ranklist.keyword)}`}
                           className="truncate text-sm font-medium hover:underline"
                         >
                           {ranklist.keyword}

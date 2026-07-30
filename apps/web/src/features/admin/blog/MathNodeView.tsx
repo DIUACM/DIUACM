@@ -1,5 +1,9 @@
 import { NodeViewWrapper, type ReactNodeViewProps } from '@tiptap/react'
 import katex from 'katex'
+// KaTeX's stylesheet ships with whichever chunk renders maths, rather than
+// eagerly from index.css — this view and MarkdownContent are its only two
+// consumers and both are code-split.
+import 'katex/dist/katex.min.css'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 

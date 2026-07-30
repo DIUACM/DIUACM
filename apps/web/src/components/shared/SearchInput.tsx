@@ -1,5 +1,5 @@
 import { Search } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Input } from '@/components/ui/input'
 
 interface SearchInputProps {
@@ -18,15 +18,25 @@ export function SearchInput({
 }: SearchInputProps) {
   const [text, setText] = useState(value)
 
+  // Callers pass an inline arrow, so `onChange` is a new function on every
+  // parent render. Holding it in a ref keeps it out of the timer effect's
+  // deps — otherwise any unrelated re-render (a background refetch flipping
+  // `isFetching`, say) would clear the pending timer and restart the 300ms,
+  // and a user typing steadily could keep pushing the search out.
+  const onChangeRef = useRef(onChange)
+  useEffect(() => {
+    onChangeRef.current = onChange
+  })
+
   useEffect(() => {
     setText(value)
   }, [value])
 
   useEffect(() => {
     if (text === value) return
-    const timer = setTimeout(() => onChange(text), 300)
+    const timer = setTimeout(() => onChangeRef.current(text), 300)
     return () => clearTimeout(timer)
-  }, [text, value, onChange])
+  }, [text, value])
 
   return (
     <div className={className}>
