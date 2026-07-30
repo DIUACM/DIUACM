@@ -175,10 +175,10 @@ export function ProfilePage() {
   if (!user) return null
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div>
       <PageHeader title="Your profile" />
 
-      <div className="space-y-6">
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(22rem,1fr)]">
         <Card>
           <CardHeader>
             <CardTitle>Profile</CardTitle>
