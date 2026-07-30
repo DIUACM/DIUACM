@@ -31,12 +31,12 @@ export function SearchInput({
   return (
     <div className={className}>
       <div className="relative">
-        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={text}
           onChange={(event) => setText(event.target.value)}
           placeholder={placeholder}
-          className="pl-9"
+          className="pl-10"
         />
       </div>
     </div>

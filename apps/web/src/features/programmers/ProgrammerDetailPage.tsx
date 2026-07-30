@@ -56,11 +56,11 @@ export function ProgrammerDetailPage() {
           <UserAvatar
             name={programmer.name}
             image={programmer.image}
-            className="size-20 text-xl"
+            className="size-20 text-xl shadow-clay"
           />
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight">
+              <h1 className="text-3xl font-bold text-balance sm:text-4xl">
                 {programmer.name}
               </h1>
               <CfRatingBadge rating={programmer.maxCfRating} className="text-lg" />
@@ -92,7 +92,7 @@ export function ProgrammerDetailPage() {
         {programmer.trackerPerformance.length === 0 ? (
           <EmptyState message="Not part of any tracker ranklist yet." />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
             {programmer.trackerPerformance.map((entry) => (
               <Card key={entry.tracker.slug}>
                 <CardHeader>

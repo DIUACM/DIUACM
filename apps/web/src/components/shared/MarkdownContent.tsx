@@ -79,10 +79,10 @@ export function MarkdownContent({
     <div
       className={cn(
         'prose prose-neutral max-w-none dark:prose-invert',
-        'prose-headings:scroll-mt-20 prose-pre:bg-muted prose-pre:text-foreground',
+        'prose-headings:scroll-mt-24 prose-pre:rounded-2xl prose-pre:bg-muted prose-pre:text-foreground prose-pre:shadow-clay-inset',
         // Tailwind Typography wraps inline code in literal backticks by default.
         'prose-code:before:content-none prose-code:after:content-none',
-        '[&_img]:rounded-lg [&_video]:w-full [&_video]:rounded-lg [&_iframe]:aspect-video [&_iframe]:w-full [&_iframe]:rounded-lg',
+        '[&_img]:rounded-2xl [&_video]:w-full [&_video]:rounded-2xl [&_iframe]:aspect-video [&_iframe]:w-full [&_iframe]:rounded-2xl',
         className,
       )}
     >

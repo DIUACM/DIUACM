@@ -42,7 +42,7 @@ export function GalleryAlbumPage() {
             <ArrowLeft className="size-4" /> All albums
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold tracking-tight">{album.title}</h1>
+        <h1 className="text-3xl font-bold text-balance sm:text-4xl">{album.title}</h1>
         {album.description && (
           <p className="mt-1.5 max-w-2xl whitespace-pre-line text-muted-foreground">
             {stripHtml(album.description)}
@@ -62,7 +62,7 @@ export function GalleryAlbumPage() {
                   href={media.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="overflow-hidden rounded-lg border"
+                  className="clay-lift overflow-hidden rounded-2xl shadow-clay ring-1 ring-foreground/5"
                 >
                   <img
                     src={media.url}

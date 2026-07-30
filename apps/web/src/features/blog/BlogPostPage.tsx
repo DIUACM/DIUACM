@@ -37,14 +37,14 @@ export function BlogPostPage() {
   const post = postQuery.data
 
   return (
-    <article className="space-y-6">
+    <article className="mx-auto max-w-3xl space-y-6">
       <div>
         <Button variant="ghost" size="sm" asChild className="-ml-2 mb-3">
           <Link to="/blog">
             <ArrowLeft className="size-4" /> All posts
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold tracking-tight">{post.title}</h1>
+        <h1 className="text-3xl font-bold text-balance sm:text-4xl">{post.title}</h1>
         <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted-foreground">
           {post.author && (
             <Link
@@ -54,7 +54,7 @@ export function BlogPostPage() {
               <UserAvatar
                 name={post.author.name}
                 image={post.author.image}
-                className="size-6"
+                className="size-6 shadow-clay-sm"
               />
               <span className="font-medium text-foreground">{post.author.name}</span>
             </Link>
@@ -72,7 +72,7 @@ export function BlogPostPage() {
         <img
           src={post.featuredImageUrl}
           alt=""
-          className="aspect-video w-full rounded-xl border object-cover"
+          className="aspect-video w-full rounded-3xl object-cover shadow-clay ring-1 ring-foreground/5"
         />
       )}
 

@@ -31,11 +31,14 @@ export function Pagination({ meta, onPageChange }: PaginationProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <p className="text-sm text-muted-foreground">{meta.total} total</p>
-      <nav aria-label="Pagination" className="flex items-center gap-1">
+      <nav
+        aria-label="Pagination"
+        className="flex items-center gap-1 rounded-full bg-card/60 p-1.5 shadow-clay-inset"
+      >
         <Button
           variant="ghost"
           size="icon"
-          className="size-9"
+          className="size-9 rounded-full"
           disabled={meta.page <= 1}
           onClick={() => onPageChange(meta.page - 1)}
           aria-label="Previous page"
@@ -48,7 +51,7 @@ export function Pagination({ meta, onPageChange }: PaginationProps) {
               key={item}
               variant={item === meta.page ? 'default' : 'ghost'}
               size="icon"
-              className="size-9"
+              className="size-9 rounded-full"
               onClick={() => onPageChange(item)}
               aria-current={item === meta.page ? 'page' : undefined}
               aria-label={`Page ${item}`}
@@ -68,7 +71,7 @@ export function Pagination({ meta, onPageChange }: PaginationProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="size-9"
+          className="size-9 rounded-full"
           disabled={meta.page >= meta.totalPages}
           onClick={() => onPageChange(meta.page + 1)}
           aria-label="Next page"

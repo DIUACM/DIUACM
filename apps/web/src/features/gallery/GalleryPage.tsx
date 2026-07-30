@@ -23,9 +23,9 @@ export function GalleryPage() {
       />
 
       {albumsQuery.isPending ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton key={index} className="h-56 rounded-xl" />
+            <Skeleton key={index} className="h-56 rounded-2xl" />
           ))}
         </div>
       ) : albumsQuery.isError ? (
@@ -37,10 +37,10 @@ export function GalleryPage() {
         <EmptyState message="No albums published yet." />
       ) : (
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {albumsQuery.data.data.map((album) => (
               <Link key={album.slug} to={`/gallery/${album.slug}`} className="group block">
-                <Card className="h-full overflow-hidden py-0 transition-colors group-hover:border-primary/40">
+                <Card className="clay-lift h-full overflow-hidden py-0">
                   {album.coverUrl ? (
                     <img
                       src={album.coverUrl}
@@ -54,7 +54,7 @@ export function GalleryPage() {
                     </div>
                   )}
                   <CardContent className="flex flex-col gap-1 pb-5">
-                    <h3 className="text-lg font-semibold group-hover:underline">
+                    <h3 className="text-lg font-semibold transition-colors group-hover:text-primary">
                       {album.title}
                     </h3>
                     {album.description && (

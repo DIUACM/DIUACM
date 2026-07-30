@@ -40,10 +40,10 @@ export function LoginPage() {
   })
 
   return (
-    <div className="mx-auto max-w-md py-8">
-      <Card>
+    <div className="mx-auto max-w-md py-6 sm:py-10">
+      <Card className="[--card-spacing:--spacing(6)]">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome back</CardTitle>
+          <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
           <CardDescription>
             Log in with your email or username
           </CardDescription>

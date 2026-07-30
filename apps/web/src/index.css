@@ -8,13 +8,26 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Tailwind v4 containers aren't centered or padded by default. */
+/* Tailwind v4 containers aren't centered or padded by default. The max-width
+   caps line length on ultrawide screens; the widest content (standings tables)
+   scrolls inside its own container rather than stretching the whole page. */
 @utility container {
     margin-inline: auto;
     padding-inline: 1rem;
+    max-width: 80rem;
 }
 
+/* Clay surfaces sit *on* the page rather than being cut out of it: a soft
+   coloured drop shadow lifts them off the background, a bright inset along the
+   top edge reads as a highlight, and a dimmer inset along the bottom rounds the
+   form off. `--clay-*` are redefined per colour scheme below; the `@theme`
+   aliases below expose them as `shadow-clay`, `shadow-clay-sm`, etc. */
 @theme inline {
+    --shadow-clay-sm: var(--clay-sm);
+    --shadow-clay: var(--clay);
+    --shadow-clay-lg: var(--clay-lg);
+    --shadow-clay-inset: var(--clay-inset);
+
     --font-heading: var(--font-sans);
     --font-sans: 'Geist Variable', sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
@@ -58,72 +71,121 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+    /* Nothing is pure white: clay reads as a moulded material, which needs the
+       "paper" to be slightly tinted so the highlights have something to sit
+       against. Everything is pulled towards the violet primary hue (288). */
+    --background: oklch(0.967 0.014 288);
+    --foreground: oklch(0.27 0.032 285);
+    --card: oklch(0.995 0.005 288);
+    --card-foreground: oklch(0.27 0.032 285);
+    --popover: oklch(0.995 0.005 288);
+    --popover-foreground: oklch(0.27 0.032 285);
+    /* Held at L 0.55 so `--primary-foreground` clears 4.5:1 on filled buttons
+       and `text-primary` clears it on `--card`. */
+    --primary: oklch(0.55 0.2 288);
+    --primary-foreground: oklch(0.99 0.005 288);
+    --secondary: oklch(0.93 0.026 288);
+    --secondary-foreground: oklch(0.35 0.08 288);
+    --muted: oklch(0.945 0.015 288);
+    --muted-foreground: oklch(0.52 0.032 288);
+    --accent: oklch(0.925 0.036 292);
+    --accent-foreground: oklch(0.33 0.09 288);
+    --destructive: oklch(0.585 0.21 22);
+    --border: oklch(0.9 0.018 288);
+    --input: oklch(0.9 0.018 288);
+    --ring: oklch(0.65 0.15 288);
+    --chart-1: oklch(0.55 0.2 288);
+    --chart-2: oklch(0.65 0.16 200);
+    --chart-3: oklch(0.7 0.15 145);
+    --chart-4: oklch(0.75 0.15 70);
+    --chart-5: oklch(0.62 0.19 15);
+    --radius: 1rem;
+    --sidebar: oklch(0.985 0.008 288);
+    --sidebar-foreground: oklch(0.27 0.032 285);
+    --sidebar-primary: oklch(0.55 0.2 288);
+    --sidebar-primary-foreground: oklch(0.99 0.005 288);
+    --sidebar-accent: oklch(0.925 0.036 292);
+    --sidebar-accent-foreground: oklch(0.33 0.09 288);
+    --sidebar-border: oklch(0.9 0.018 288);
+    --sidebar-ring: oklch(0.65 0.15 288);
+
+    /* The drop shadows are tinted with the background hue rather than neutral
+       black, which is what keeps clay from looking like a plain drop shadow. */
+    --clay-sm:
+        0 2px 4px -2px oklch(0.42 0.09 288 / 0.14),
+        0 6px 14px -6px oklch(0.42 0.09 288 / 0.16),
+        inset 0 -2px 4px 0 oklch(0.45 0.09 288 / 0.08),
+        inset 0 2px 3px 0 oklch(1 0 0 / 0.7);
+    --clay:
+        0 4px 8px -4px oklch(0.42 0.09 288 / 0.14),
+        0 16px 32px -12px oklch(0.42 0.09 288 / 0.22),
+        inset 0 -5px 10px -2px oklch(0.45 0.09 288 / 0.1),
+        inset 0 4px 8px -2px oklch(1 0 0 / 0.9);
+    --clay-lg:
+        0 8px 16px -8px oklch(0.42 0.09 288 / 0.16),
+        0 28px 56px -20px oklch(0.42 0.09 288 / 0.28),
+        inset 0 -7px 14px -4px oklch(0.45 0.09 288 / 0.12),
+        inset 0 6px 12px -3px oklch(1 0 0 / 0.95);
+    /* Pressed/carved: the highlight and shadow swap edges. */
+    --clay-inset:
+        inset 0 3px 7px -2px oklch(0.42 0.09 288 / 0.18),
+        inset 0 -2px 4px -1px oklch(1 0 0 / 0.75);
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    --background: oklch(0.205 0.022 285);
+    --foreground: oklch(0.955 0.008 288);
+    --card: oklch(0.255 0.026 286);
+    --card-foreground: oklch(0.955 0.008 288);
+    --popover: oklch(0.255 0.026 286);
+    --popover-foreground: oklch(0.955 0.008 288);
+    --primary: oklch(0.72 0.16 290);
+    --primary-foreground: oklch(0.2 0.04 288);
+    --secondary: oklch(0.32 0.03 287);
+    --secondary-foreground: oklch(0.95 0.012 288);
+    --muted: oklch(0.3 0.026 286);
+    --muted-foreground: oklch(0.72 0.026 288);
+    --accent: oklch(0.34 0.045 288);
+    --accent-foreground: oklch(0.96 0.012 288);
+    --destructive: oklch(0.7 0.19 22);
+    --border: oklch(1 0 0 / 9%);
+    --input: oklch(1 0 0 / 13%);
+    --ring: oklch(0.6 0.13 288);
+    --chart-1: oklch(0.72 0.16 290);
+    --chart-2: oklch(0.72 0.14 200);
+    --chart-3: oklch(0.78 0.14 145);
+    --chart-4: oklch(0.82 0.13 70);
+    --chart-5: oklch(0.7 0.17 15);
+    --sidebar: oklch(0.255 0.026 286);
+    --sidebar-foreground: oklch(0.955 0.008 288);
+    --sidebar-primary: oklch(0.72 0.16 290);
+    --sidebar-primary-foreground: oklch(0.2 0.04 288);
+    --sidebar-accent: oklch(0.34 0.045 288);
+    --sidebar-accent-foreground: oklch(0.96 0.012 288);
+    --sidebar-border: oklch(1 0 0 / 9%);
+    --sidebar-ring: oklch(0.6 0.13 288);
+
+    /* Dark clay can't lean on a bright highlight — a near-white inset at 90%
+       would blow out. The lift comes from deeper drop shadows instead, with the
+       highlight dropped to a faint rim. */
+    --clay-sm:
+        0 2px 4px -2px oklch(0 0 0 / 0.5),
+        0 6px 14px -6px oklch(0 0 0 / 0.45),
+        inset 0 -2px 4px 0 oklch(0 0 0 / 0.28),
+        inset 0 2px 3px 0 oklch(1 0 0 / 0.07);
+    --clay:
+        0 4px 8px -4px oklch(0 0 0 / 0.5),
+        0 16px 32px -12px oklch(0 0 0 / 0.55),
+        inset 0 -5px 10px -2px oklch(0 0 0 / 0.3),
+        inset 0 4px 8px -2px oklch(1 0 0 / 0.09);
+    --clay-lg:
+        0 8px 16px -8px oklch(0 0 0 / 0.55),
+        0 28px 56px -20px oklch(0 0 0 / 0.65),
+        inset 0 -7px 14px -4px oklch(0 0 0 / 0.32),
+        inset 0 6px 12px -3px oklch(1 0 0 / 0.11);
+    --clay-inset:
+        inset 0 3px 7px -2px oklch(0 0 0 / 0.55),
+        inset 0 -2px 4px -1px oklch(1 0 0 / 0.06);
 }
 
 @layer base {
@@ -132,10 +194,63 @@
     }
   body {
     @apply bg-background text-foreground;
+    /* Two wide, very diffuse washes of colour so the "paper" behind the clay
+       isn't flat. `fixed` keeps them put while the page scrolls. */
+    background-image:
+      radial-gradient(
+        60rem 40rem at 12% -10%,
+        oklch(0.7 0.13 288 / 0.22),
+        transparent 60%
+      ),
+      radial-gradient(
+        50rem 36rem at 92% 4%,
+        oklch(0.75 0.12 200 / 0.18),
+        transparent 62%
+      );
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    }
+  .dark body {
+    background-image:
+      radial-gradient(
+        60rem 40rem at 12% -10%,
+        oklch(0.6 0.16 288 / 0.2),
+        transparent 60%
+      ),
+      radial-gradient(
+        50rem 36rem at 92% 4%,
+        oklch(0.6 0.14 200 / 0.14),
+        transparent 62%
+      );
     }
   html {
     @apply font-sans;
     }
+  /* Clay is a soft, rounded material — the type should feel the same way. */
+  h1, h2, h3 {
+    letter-spacing: -0.02em;
+    }
+}
+
+@layer components {
+  /* Applied to cards and tiles that are links. The lift on hover is what sells
+     clay as a physical object; `active` presses it back down. */
+  .clay-lift {
+    @apply transition-[transform,box-shadow] duration-200 ease-out;
+  }
+  .clay-lift:hover {
+    @apply -translate-y-1 shadow-clay-lg;
+  }
+  .clay-lift:active {
+    @apply -translate-y-0 shadow-clay-sm;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .clay-lift,
+    .clay-lift:hover,
+    .clay-lift:active {
+      @apply translate-y-0 transition-none;
+    }
+  }
 }
 
 /* Syntax highlighting tokens. highlight.js emits the same `hljs-*` classes from

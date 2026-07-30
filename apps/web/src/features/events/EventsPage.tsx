@@ -26,7 +26,7 @@ const ALL = 'all'
 export function EventCard({ event }: { event: EventListItem }) {
   return (
     <Link to={`/events/${event.id}`} className="group block">
-      <Card className="transition-colors group-hover:border-primary/40">
+      <Card className="clay-lift">
         <CardContent className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <EventTypeBadge type={event.type} />
@@ -36,7 +36,7 @@ export function EventCard({ event }: { event: EventListItem }) {
               endingAt={event.endingAt}
             />
           </div>
-          <h3 className="text-lg font-semibold group-hover:underline">
+          <h3 className="text-lg font-semibold transition-colors group-hover:text-primary">
             {event.title}
           </h3>
           {event.description && (
@@ -62,9 +62,9 @@ export function EventCard({ event }: { event: EventListItem }) {
 
 export function EventListSkeleton({ count = 6 }: { count?: number }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-5 sm:grid-cols-2">
       {Array.from({ length: count }, (_, index) => (
-        <Skeleton key={index} className="h-40 rounded-xl" />
+        <Skeleton key={index} className="h-40 rounded-2xl" />
       ))}
     </div>
   )
@@ -151,7 +151,7 @@ export function EventsPage() {
         <EmptyState message="No events match your filters." />
       ) : (
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
             {eventsQuery.data.data.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}

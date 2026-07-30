@@ -23,9 +23,9 @@ export function TrackersPage() {
       />
 
       {trackersQuery.isPending ? (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2">
           {Array.from({ length: 4 }, (_, index) => (
-            <Skeleton key={index} className="h-32 rounded-xl" />
+            <Skeleton key={index} className="h-32 rounded-2xl" />
           ))}
         </div>
       ) : trackersQuery.isError ? (
@@ -37,19 +37,19 @@ export function TrackersPage() {
         <EmptyState message="No trackers published yet." />
       ) : (
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
             {trackersQuery.data.data.map((tracker) => (
               <Link
                 key={tracker.slug}
                 to={`/trackers/${tracker.slug}`}
                 className="group block"
               >
-                <Card className="h-full transition-colors group-hover:border-primary/40">
+                <Card className="clay-lift h-full">
                   <CardContent className="flex flex-col gap-2">
-                    <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <ChartNoAxesColumn className="size-5" />
+                    <span className="flex size-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-600 shadow-clay-sm dark:bg-violet-500/20 dark:text-violet-300">
+                      <ChartNoAxesColumn className="size-6" />
                     </span>
-                    <h3 className="text-lg font-semibold group-hover:underline">
+                    <h3 className="text-lg font-semibold transition-colors group-hover:text-primary">
                       {tracker.title}
                     </h3>
                     {tracker.description && (

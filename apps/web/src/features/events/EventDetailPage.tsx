@@ -167,7 +167,7 @@ function EventDetailContent({ event }: { event: EventDetail }) {
           />
         </div>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
-          <h1 className="text-3xl font-bold tracking-tight">{event.title}</h1>
+          <h1 className="text-3xl font-bold text-balance sm:text-4xl">{event.title}</h1>
           <div className="flex items-center gap-2">
             {event.eventLink && (
               <Button variant="outline" asChild>
@@ -207,7 +207,7 @@ function EventDetailContent({ event }: { event: EventDetail }) {
                   href={media.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="overflow-hidden rounded-lg border"
+                  className="clay-lift overflow-hidden rounded-2xl shadow-clay ring-1 ring-foreground/5"
                 >
                   <img
                     src={media.url}

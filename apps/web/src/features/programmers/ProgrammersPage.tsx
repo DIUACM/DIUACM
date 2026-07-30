@@ -18,16 +18,16 @@ function ProgrammerCard({ programmer }: { programmer: ProgrammerListItem }) {
   )
   return (
     <Link to={`/programmers/${programmer.username}`} className="group block">
-      <Card className="h-full transition-colors group-hover:border-primary/40">
+      <Card className="clay-lift h-full">
         <CardContent className="flex items-center gap-4">
           <UserAvatar
             name={programmer.name}
             image={programmer.image}
-            className="size-12"
+            className="size-12 shadow-clay-sm"
           />
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="truncate font-semibold group-hover:underline">
+              <h3 className="truncate font-semibold transition-colors group-hover:text-primary">
                 {programmer.name}
               </h3>
               <CfRatingBadge rating={programmer.maxCfRating} className="text-sm" />
@@ -81,9 +81,9 @@ export function ProgrammersPage() {
       />
 
       {programmersQuery.isPending ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton key={index} className="h-24 rounded-xl" />
+            <Skeleton key={index} className="h-24 rounded-2xl" />
           ))}
         </div>
       ) : programmersQuery.isError ? (
@@ -95,7 +95,7 @@ export function ProgrammersPage() {
         <EmptyState message="No programmers found." />
       ) : (
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {programmersQuery.data.data.map((programmer) => (
               <ProgrammerCard key={programmer.id} programmer={programmer} />
             ))}

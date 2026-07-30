@@ -15,7 +15,7 @@ import type { BlogPostListItem } from '@/api/types'
 function BlogPostCard({ post }: { post: BlogPostListItem }) {
   return (
     <Link to={`/blog/${post.slug}`} className="group block">
-      <Card className="h-full overflow-hidden py-0 transition-colors group-hover:border-primary/40">
+      <Card className="clay-lift h-full overflow-hidden py-0">
         {post.featuredImageUrl ? (
           <img
             src={post.featuredImageUrl}
@@ -29,7 +29,7 @@ function BlogPostCard({ post }: { post: BlogPostListItem }) {
           </div>
         )}
         <CardContent className="flex flex-col gap-2 pb-5">
-          <h3 className="text-lg font-semibold group-hover:underline">{post.title}</h3>
+          <h3 className="text-lg font-semibold transition-colors group-hover:text-primary">{post.title}</h3>
           {post.excerpt && (
             <p className="line-clamp-3 text-sm text-muted-foreground">{post.excerpt}</p>
           )}
@@ -92,9 +92,9 @@ export function BlogPage() {
       </div>
 
       {postsQuery.isPending ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton key={index} className="h-64 rounded-xl" />
+            <Skeleton key={index} className="h-64 rounded-2xl" />
           ))}
         </div>
       ) : postsQuery.isError ? (
@@ -108,7 +108,7 @@ export function BlogPage() {
         />
       ) : (
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {postsQuery.data.data.map((post) => (
               <BlogPostCard key={post.slug} post={post} />
             ))}

@@ -95,7 +95,7 @@ export function GoogleSignInButton() {
         ? 'filled_black'
         : 'outline',
       size: 'large',
-      shape: 'rectangular',
+      shape: 'pill',
       width: 320,
       text: 'continue_with',
     })
@@ -104,7 +104,7 @@ export function GoogleSignInButton() {
   }, [scriptReady, clientId, theme])
 
   if (!clientId || !scriptReady) {
-    return <Skeleton className="mx-auto h-10 w-80 max-w-full" />
+    return <Skeleton className="mx-auto h-10 w-80 max-w-full rounded-full" />
   }
 
   return <div ref={containerRef} className="flex justify-center" />

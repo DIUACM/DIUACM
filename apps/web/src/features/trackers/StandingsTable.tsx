@@ -37,14 +37,14 @@ export function StandingsTable({
   standings: { events: { id: number; title: string; startingAt: number; weight: number }[]; users: RanklistStanding[] }
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border">
+    <div className="overflow-x-auto rounded-3xl bg-card shadow-clay ring-1 ring-foreground/5">
       <table className="w-full min-w-max border-collapse text-sm">
         <thead>
-          <tr className="border-b bg-muted/50 text-left text-muted-foreground">
-            <th className="sticky left-0 z-10 w-12 bg-muted/50 px-3 py-3 text-center font-medium backdrop-blur">
+          <tr className="border-b bg-muted/60 text-left text-muted-foreground">
+            <th className="sticky left-0 z-10 w-12 bg-muted/60 px-3 py-3 text-center font-medium backdrop-blur">
               #
             </th>
-            <th className="sticky left-12 z-10 min-w-44 bg-muted/50 px-3 py-3 font-medium backdrop-blur">
+            <th className="sticky left-12 z-10 min-w-44 bg-muted/60 px-3 py-3 font-medium backdrop-blur">
               Participant
             </th>
             <th className="px-3 py-3 text-right font-medium">Score</th>
@@ -72,17 +72,17 @@ export function StandingsTable({
             return (
               <tr
                 key={standing.user.id}
-                className="border-b transition-colors last:border-0 hover:bg-muted/30"
+                className="border-b transition-colors last:border-0 hover:bg-muted/40"
               >
                 <td
                   className={cn(
-                    'sticky left-0 z-10 bg-background px-3 py-2.5 text-center font-bold',
+                    'sticky left-0 z-10 bg-card px-3 py-2.5 text-center font-bold tabular-nums',
                     rankStyle(standing.rank),
                   )}
                 >
                   {standing.rank}
                 </td>
-                <td className="sticky left-12 z-10 bg-background px-3 py-2.5">
+                <td className="sticky left-12 z-10 bg-card px-3 py-2.5">
                   <Link
                     to={`/programmers/${standing.user.username}`}
                     className="flex items-center gap-2.5 hover:underline"
@@ -90,7 +90,7 @@ export function StandingsTable({
                     <UserAvatar
                       name={standing.user.name}
                       image={standing.user.image}
-                      className="size-7"
+                      className="size-7 shadow-clay-sm"
                     />
                     <span className="max-w-40 truncate font-medium">
                       {standing.user.name}

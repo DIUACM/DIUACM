@@ -60,7 +60,7 @@ export function TrackerDetailPage() {
             <ArrowLeft className="size-4" /> All trackers
           </Link>
         </Button>
-        <h1 className="text-3xl font-bold tracking-tight">{tracker.title}</h1>
+        <h1 className="text-3xl font-bold text-balance sm:text-4xl">{tracker.title}</h1>
         {tracker.description && (
           <p className="mt-1.5 max-w-2xl text-muted-foreground">
             {stripHtml(tracker.description)}

@@ -56,7 +56,7 @@ function AvatarUploader({ user }: { user: User }) {
   return (
     <div className="flex items-center gap-4">
       <div className="relative">
-        <UserAvatar name={user.name} image={user.image} className="size-20 text-xl" />
+        <UserAvatar name={user.name} image={user.image} className="size-20 text-xl shadow-clay" />
         {uploadImage.isPending && (
           <div className="absolute inset-0 flex items-center justify-center rounded-full bg-background/60">
             <span className="size-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />

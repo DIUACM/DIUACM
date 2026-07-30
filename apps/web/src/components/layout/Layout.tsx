@@ -7,7 +7,7 @@ export function Layout() {
   return (
     <div className="flex min-h-svh flex-col">
       <Navbar />
-      <main className="container flex-1 py-8">
+      <main className="container flex-1 py-8 sm:py-10">
         <Outlet />
       </main>
       <Footer />

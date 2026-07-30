@@ -7,12 +7,17 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router'
 import { useEvents } from '@/api/queries/events'
+import { EmptyState } from '@/components/shared/states'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/features/auth/auth-context'
 import { EventCard, EventListSkeleton } from '@/features/events/EventsPage'
 import { useDocumentTitle } from '@/lib/use-document-title'
+import { cn } from '@/lib/utils'
 
+// `tint` colours the icon pebble on each tile. They're deliberately drawn from
+// three different hues so the row scans as three destinations rather than one
+// repeated block.
 const FEATURES = [
   {
     icon: CalendarDays,
@@ -20,6 +25,7 @@ const FEATURES = [
     description:
       'Onsite and online contests, take-home classes, and community meetups — all in one calendar.',
     to: '/events',
+    tint: 'bg-violet-100 text-violet-600 dark:bg-violet-500/20 dark:text-violet-300',
   },
   {
     icon: ChartNoAxesColumn,
@@ -27,6 +33,7 @@ const FEATURES = [
     description:
       'Season-long ranklists that score every contest with weights, solves, and upsolves.',
     to: '/trackers',
+    tint: 'bg-cyan-100 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-300',
   },
   {
     icon: Users,
@@ -34,6 +41,7 @@ const FEATURES = [
     description:
       'Browse member profiles with Codeforces, VJudge, and AtCoder handles and ratings.',
     to: '/programmers',
+    tint: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300',
   },
 ]
 
@@ -44,31 +52,35 @@ export function HomePage() {
   const recentEvents = eventsQuery.data?.data.slice(0, 4) ?? []
 
   return (
-    <div className="space-y-16">
-      <section className="pt-8 text-center sm:pt-16">
-        <p className="mb-3 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-sm text-muted-foreground">
+    <div className="space-y-16 sm:space-y-20">
+      <section className="pt-6 text-center sm:pt-12">
+        <p className="mb-5 inline-flex items-center gap-2 rounded-full bg-card px-4 py-2 text-sm font-medium text-muted-foreground shadow-clay-sm ring-1 ring-foreground/5">
           <Trophy className="size-4 text-amber-500" />
           Daffodil International University
         </p>
-        <h1 className="mx-auto max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl">
-          The competitive programming community of DIU
+        <h1 className="mx-auto max-w-3xl text-4xl font-bold text-balance sm:text-6xl">
+          The{' '}
+          <span className="bg-gradient-to-br from-primary to-chart-2 bg-clip-text text-transparent">
+            competitive programming
+          </span>{' '}
+          community of DIU
         </h1>
-        <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
+        <p className="mx-auto mt-5 max-w-xl text-lg text-pretty text-muted-foreground">
           Compete in contests, climb the ranklists, and grow with programmers
           who love solving problems as much as you do.
         </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
           {isAuthenticated ? (
             <Button size="lg" asChild>
               <Link to="/events">
-                Browse events <ArrowRight className="size-4" />
+                Browse events <ArrowRight />
               </Link>
             </Button>
           ) : (
             <>
               <Button size="lg" asChild>
                 <Link to="/login">
-                  Join the community <ArrowRight className="size-4" />
+                  Join the community <ArrowRight />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
@@ -79,20 +91,29 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="grid gap-5 sm:grid-cols-3">
         {FEATURES.map((feature) => (
           <Link key={feature.to} to={feature.to} className="group block">
-            <Card className="h-full transition-colors group-hover:border-primary/40">
-              <CardContent className="flex flex-col gap-3">
-                <span className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <feature.icon className="size-5" />
+            <Card className="clay-lift h-full">
+              {/* `flex-1` lets the "Explore" row sit on the baseline of every
+                  tile regardless of how long the description runs. */}
+              <CardContent className="flex flex-1 flex-col gap-3">
+                <span
+                  className={cn(
+                    'flex size-12 items-center justify-center rounded-2xl shadow-clay-sm transition-transform duration-200 group-hover:scale-105',
+                    feature.tint,
+                  )}
+                >
+                  <feature.icon className="size-6" />
                 </span>
-                <h2 className="text-lg font-semibold group-hover:underline">
-                  {feature.title}
-                </h2>
+                <h2 className="text-lg font-semibold">{feature.title}</h2>
                 <p className="text-sm text-muted-foreground">
                   {feature.description}
                 </p>
+                <span className="mt-auto inline-flex items-center gap-1.5 pt-1 text-sm font-medium text-primary">
+                  Explore
+                  <ArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-1" />
+                </span>
               </CardContent>
             </Card>
           </Link>
@@ -100,9 +121,9 @@ export function HomePage() {
       </section>
 
       <section>
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold tracking-tight">Recent events</h2>
-          <Button variant="ghost" size="sm" asChild>
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <h2 className="text-2xl font-bold sm:text-3xl">Recent events</h2>
+          <Button variant="outline" size="sm" asChild>
             <Link to="/events">
               View all <ArrowRight className="size-4" />
             </Link>
@@ -111,13 +132,13 @@ export function HomePage() {
         {eventsQuery.isPending ? (
           <EventListSkeleton count={4} />
         ) : recentEvents.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
             {recentEvents.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}
           </div>
         ) : (
-          <p className="text-muted-foreground">No events yet — check back soon.</p>
+          <EmptyState message="No events yet — check back soon." />
         )}
       </section>
     </div>
