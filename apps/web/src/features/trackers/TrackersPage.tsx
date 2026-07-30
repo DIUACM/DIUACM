@@ -42,7 +42,7 @@ export function TrackersPage() {
               <Link
                 key={tracker.slug}
                 to={`/trackers/${tracker.slug}`}
-                className="group block"
+                className="group clay-lift-trigger block"
               >
                 <Card className="clay-lift h-full">
                   <CardContent className="flex flex-col gap-2">

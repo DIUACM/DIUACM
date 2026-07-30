@@ -62,14 +62,16 @@ export function GalleryAlbumPage() {
                   href={media.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="clay-lift overflow-hidden rounded-2xl shadow-clay ring-1 ring-foreground/5"
+                  className="group clay-lift-trigger block"
                 >
-                  <img
-                    src={media.url}
-                    alt=""
-                    loading="lazy"
-                    className="aspect-square w-full object-cover transition-transform hover:scale-105"
-                  />
+                  <div className="clay-lift overflow-hidden rounded-2xl shadow-clay ring-1 ring-foreground/5">
+                    <img
+                      src={media.url}
+                      alt=""
+                      loading="lazy"
+                      className="aspect-square w-full object-cover transition-transform group-hover:scale-105"
+                    />
+                  </div>
                 </a>
               ),
           )}

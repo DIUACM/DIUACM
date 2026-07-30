@@ -14,7 +14,7 @@ import type { BlogPostListItem } from '@/api/types'
 
 function BlogPostCard({ post }: { post: BlogPostListItem }) {
   return (
-    <Link to={`/blog/${post.slug}`} className="group block">
+    <Link to={`/blog/${post.slug}`} className="group clay-lift-trigger block">
       <Card className="clay-lift h-full overflow-hidden py-0">
         {post.featuredImageUrl ? (
           <img

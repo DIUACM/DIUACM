@@ -17,7 +17,10 @@ function ProgrammerCard({ programmer }: { programmer: ProgrammerListItem }) {
     (type) => programmer.handles[type].length > 0,
   )
   return (
-    <Link to={`/programmers/${programmer.username}`} className="group block">
+    <Link
+      to={`/programmers/${programmer.username}`}
+      className="group clay-lift-trigger block"
+    >
       <Card className="clay-lift h-full">
         <CardContent className="flex items-center gap-4">
           <UserAvatar

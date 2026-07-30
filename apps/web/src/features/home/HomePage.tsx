@@ -93,7 +93,11 @@ export function HomePage() {
 
       <section className="grid gap-5 sm:grid-cols-3">
         {FEATURES.map((feature) => (
-          <Link key={feature.to} to={feature.to} className="group block">
+          <Link
+            key={feature.to}
+            to={feature.to}
+            className="group clay-lift-trigger block"
+          >
             <Card className="clay-lift h-full">
               {/* `flex-1` lets the "Explore" row sit on the baseline of every
                   tile regardless of how long the description runs. */}

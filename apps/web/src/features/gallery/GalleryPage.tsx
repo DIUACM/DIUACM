@@ -39,7 +39,11 @@ export function GalleryPage() {
         <div className="space-y-6">
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {albumsQuery.data.data.map((album) => (
-              <Link key={album.slug} to={`/gallery/${album.slug}`} className="group block">
+              <Link
+                key={album.slug}
+                to={`/gallery/${album.slug}`}
+                className="group clay-lift-trigger block"
+              >
                 <Card className="clay-lift h-full overflow-hidden py-0">
                   {album.coverUrl ? (
                     <img

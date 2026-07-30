@@ -232,21 +232,22 @@
 }
 
 @layer components {
-  /* Applied to cards and tiles that are links. The lift on hover is what sells
-     clay as a physical object; `active` presses it back down. */
+  /* Keep the hover target stationary while its direct visual child lifts.
+     Moving the hover target itself can make it repeatedly leave and re-enter
+     the cursor near an edge, causing the tile to flicker. */
   .clay-lift {
     @apply transition-[transform,box-shadow] duration-200 ease-out;
   }
-  .clay-lift:hover {
+  .clay-lift-trigger:hover > .clay-lift {
     @apply -translate-y-1 shadow-clay-lg;
   }
-  .clay-lift:active {
+  .clay-lift-trigger:active > .clay-lift {
     @apply -translate-y-0 shadow-clay-sm;
   }
   @media (prefers-reduced-motion: reduce) {
     .clay-lift,
-    .clay-lift:hover,
-    .clay-lift:active {
+    .clay-lift-trigger:hover > .clay-lift,
+    .clay-lift-trigger:active > .clay-lift {
       @apply translate-y-0 transition-none;
     }
   }

@@ -25,7 +25,7 @@ const ALL = 'all'
 
 export function EventCard({ event }: { event: EventListItem }) {
   return (
-    <Link to={`/events/${event.id}`} className="group block">
+    <Link to={`/events/${event.id}`} className="group clay-lift-trigger block">
       <Card className="clay-lift">
         <CardContent className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">
