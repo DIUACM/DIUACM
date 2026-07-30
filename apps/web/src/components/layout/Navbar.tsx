@@ -44,12 +44,9 @@ export function Navbar() {
   }
 
   return (
-    // The bar floats as a clay lozenge rather than spanning the viewport. The
-    // header strip around it stays translucent and blurred so page content
-    // scrolling underneath softens out instead of cutting hard at the pill.
-    <header className="sticky top-0 z-40 bg-background/40 py-3 backdrop-blur-md">
+    <header className="sticky top-0 z-40 py-3">
       <div className="container">
-        <div className="flex h-14 items-center gap-4 rounded-full bg-card/85 px-3 shadow-clay ring-1 ring-foreground/5 sm:px-4">
+        <div className="flex h-14 items-center gap-4 rounded-full bg-card px-3 shadow-clay ring-1 ring-foreground/5 sm:px-4">
           <Link
             to="/"
             className="flex items-center gap-2.5 font-semibold tracking-tight"

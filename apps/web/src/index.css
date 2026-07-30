@@ -191,6 +191,10 @@
   * {
     @apply border-border outline-ring/50;
     }
+  html {
+    scrollbar-gutter: stable;
+    @apply font-sans;
+    }
   body {
     @apply bg-background text-foreground;
     /* Two wide, very diffuse washes of colour so the "paper" behind the clay
@@ -221,9 +225,6 @@
         oklch(0.6 0.14 200 / 0.14),
         transparent 62%
       );
-    }
-  html {
-    @apply font-sans;
     }
   /* Clay is a soft, rounded material — the type should feel the same way. */
   h1, h2, h3 {
