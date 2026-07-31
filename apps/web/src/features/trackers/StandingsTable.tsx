@@ -12,25 +12,21 @@ import {
   ArrowUpRight,
   CalendarDays,
   ChevronDown,
-  Clock3,
   MoveHorizontal,
   Scale,
 } from 'lucide-react'
 import { Link } from 'react-router'
-import { useEvent } from '@/api/queries/events'
 import { UserAvatar } from '@/components/shared/UserAvatar'
-import { EventTimingBadge, EventTypeBadge, ScopeBadge } from '@/features/events/EventBadges'
 import { Button } from '@/components/ui/button'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
-import { Skeleton } from '@/components/ui/skeleton'
-import { formatDate, formatDateTime, formatDuration } from '@/lib/datetime'
+import { formatDate, formatDateTime } from '@/lib/datetime'
 import type {
   RanklistEventEntry,
   RanklistStandings,
   RanklistStanding,
   RanklistUserPerformance,
 } from '@/api/types'
-import { cn, stripHtml } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 
 const INITIAL_USER_COUNT = 30
 const USER_BATCH_SIZE = 30
@@ -217,13 +213,8 @@ const EventOverview = memo(function EventOverview({
 }: {
   event: RanklistEventEntry
 }) {
-  const [open, setOpen] = useState(false)
-  const eventQuery = useEvent(event.id, open)
-  const detail = eventQuery.data
-  const description = detail ? stripHtml(detail.description) : ''
-
   return (
-    <HoverCard open={open} onOpenChange={setOpen}>
+    <HoverCard>
       <HoverCardTrigger asChild>
         <Link
           to={`/events/${event.id}`}
@@ -233,44 +224,15 @@ const EventOverview = memo(function EventOverview({
         </Link>
       </HoverCardTrigger>
       <HoverCardContent align="start" className="space-y-3">
-        {detail && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            <EventTypeBadge type={detail.type} />
-            <ScopeBadge scope={detail.participationScope} />
-            <EventTimingBadge
-              startingAt={detail.startingAt}
-              endingAt={detail.endingAt}
-            />
-          </div>
-        )}
-
-        <div>
-          <h3 className="font-heading text-base leading-snug font-semibold text-balance">
-            {event.title}
-          </h3>
-          {eventQuery.isPending ? (
-            <div className="mt-2 space-y-1.5" aria-label="Loading event overview">
-              <Skeleton className="h-3 w-full" />
-              <Skeleton className="h-3 w-4/5" />
-            </div>
-          ) : description ? (
-            <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
-              {description}
-            </p>
-          ) : null}
-        </div>
+        <h3 className="font-heading text-base leading-snug font-semibold text-balance">
+          {event.title}
+        </h3>
 
         <div className="grid gap-1.5 border-t pt-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-2">
             <CalendarDays className="size-3.5" />
             {formatDateTime(event.startingAt)}
           </span>
-          {detail && (
-            <span className="flex items-center gap-2">
-              <Clock3 className="size-3.5" />
-              Duration: {formatDuration(detail.startingAt, detail.endingAt)}
-            </span>
-          )}
           <span className="flex items-center gap-2">
             <Scale className="size-3.5" />
             Ranklist weight: {event.weight}
