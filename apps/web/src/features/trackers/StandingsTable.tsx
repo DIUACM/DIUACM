@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type PointerEvent,
   type UIEvent,
 } from 'react'
 import {
@@ -111,6 +112,79 @@ function useEventColumnWindow(eventCount: number) {
   return { scrollerRef, columnWindow, handleScroll }
 }
 
+function useMouseDragScroll() {
+  const dragState = useRef<{
+    pointerId: number
+    startX: number
+    startScrollLeft: number
+    moved: boolean
+  } | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+
+  const handlePointerDown = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== 'mouse' || event.button !== 0) return
+
+    const target = event.target
+    if (
+      target instanceof Element &&
+      target.closest('a, button, input, textarea, select, [role="button"]')
+    ) {
+      return
+    }
+
+    event.preventDefault()
+    event.currentTarget.setPointerCapture(event.pointerId)
+    dragState.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startScrollLeft: event.currentTarget.scrollLeft,
+      moved: false,
+    }
+  }, [])
+
+  const handlePointerMove = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    const drag = dragState.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+
+    const delta = event.clientX - drag.startX
+    if (!drag.moved && Math.abs(delta) < 5) return
+    if (!drag.moved) {
+      drag.moved = true
+      setIsDragging(true)
+    }
+
+    event.preventDefault()
+    event.currentTarget.scrollLeft = drag.startScrollLeft - delta
+  }, [])
+
+  const finishDrag = useCallback((event: PointerEvent<HTMLDivElement>) => {
+    const drag = dragState.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
+    dragState.current = null
+    setIsDragging(false)
+  }, [])
+
+  const handleLostPointerCapture = useCallback(() => {
+    dragState.current = null
+    setIsDragging(false)
+  }, [])
+
+  return {
+    isDragging,
+    dragHandlers: {
+      onPointerDown: handlePointerDown,
+      onPointerMove: handlePointerMove,
+      onPointerUp: finishDrag,
+      onPointerCancel: finishDrag,
+      onLostPointerCapture: handleLostPointerCapture,
+    },
+  }
+}
+
 function rankStyle(rank: number): string {
   if (rank === 1) return 'text-amber-500 dark:text-amber-400'
   if (rank === 2) return 'text-zinc-400'
@@ -214,6 +288,72 @@ const EventOverview = memo(function EventOverview({
   )
 })
 
+const ParticipantOverview = memo(function ParticipantOverview({
+  standing,
+}: {
+  standing: RanklistStanding
+}) {
+  return (
+    <HoverCard>
+      <HoverCardTrigger asChild>
+        <Link
+          to={`/programmers/${standing.user.username}`}
+          aria-label={standing.user.name}
+          className="flex min-w-0 items-center gap-2.5 rounded-sm hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          <UserAvatar
+            name={standing.user.name}
+            image={standing.user.image}
+            className="size-7 shrink-0 shadow-clay-sm"
+          />
+          <span className="min-w-0 flex-1 truncate font-medium">
+            {standing.user.name}
+          </span>
+        </Link>
+      </HoverCardTrigger>
+      <HoverCardContent align="start" className="w-72 space-y-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <UserAvatar
+            name={standing.user.name}
+            image={standing.user.image}
+            className="size-11 shrink-0 shadow-clay-sm"
+          />
+          <div className="min-w-0">
+            <h3 className="font-heading leading-snug font-semibold text-balance">
+              {standing.user.name}
+            </h3>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
+              @{standing.user.username}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 border-t pt-3 text-xs">
+          <div className="rounded-xl bg-muted/60 px-3 py-2">
+            <span className="block text-muted-foreground">Rank</span>
+            <span className={cn('mt-0.5 block font-semibold', rankStyle(standing.rank))}>
+              #{standing.rank}
+            </span>
+          </div>
+          <div className="rounded-xl bg-muted/60 px-3 py-2">
+            <span className="block text-muted-foreground">Score</span>
+            <span className="mt-0.5 block font-semibold text-foreground tabular-nums">
+              {standing.score.toFixed(2)}
+            </span>
+          </div>
+        </div>
+
+        <Link
+          to={`/programmers/${standing.user.username}`}
+          className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+        >
+          View profile <ArrowUpRight className="size-3.5" />
+        </Link>
+      </HoverCardContent>
+    </HoverCard>
+  )
+})
+
 interface StandingRowProps {
   standing: RanklistStanding
   visibleEvents: RanklistEventEntry[]
@@ -243,19 +383,7 @@ const StandingRow = memo(function StandingRow({
         {standing.rank}
       </td>
       <td className="sticky left-12 z-10 w-44 bg-card px-3 py-2.5 transition-colors group-hover:bg-muted">
-        <Link
-          to={`/programmers/${standing.user.username}`}
-          className="flex items-center gap-2.5 hover:underline"
-        >
-          <UserAvatar
-            name={standing.user.name}
-            image={standing.user.image}
-            className="size-7 shadow-clay-sm"
-          />
-          <span className="max-w-36 truncate font-medium sm:max-w-40">
-            {standing.user.name}
-          </span>
-        </Link>
+        <ParticipantOverview standing={standing} />
       </td>
       <td className="w-20 px-3 py-2.5 text-right font-semibold tabular-nums">
         {standing.score.toFixed(2)}
@@ -292,6 +420,7 @@ export function StandingsTable({
   const { scrollerRef, columnWindow, handleScroll } = useEventColumnWindow(
     standings.events.length,
   )
+  const { isDragging, dragHandlers } = useMouseDragScroll()
   const visibleUsers = useMemo(
     () => standings.users.slice(0, visibleUserCount),
     [standings.users, visibleUserCount],
@@ -310,9 +439,12 @@ export function StandingsTable({
 
   return (
     <div className="space-y-2.5">
-      <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground sm:hidden">
+      <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
         <MoveHorizontal className="size-4 shrink-0" />
-        Swipe horizontally to view event results
+        <span className="sm:hidden">Swipe horizontally to view event results</span>
+        <span className="hidden sm:inline">
+          Drag or scroll horizontally to view event results
+        </span>
       </div>
 
       <div
@@ -321,7 +453,11 @@ export function StandingsTable({
         role="region"
         aria-label="Ranklist standings. Scroll horizontally to view event results."
         tabIndex={0}
-        className="ranklist-scrollbar overflow-x-auto overscroll-x-contain rounded-3xl bg-card shadow-clay ring-1 ring-foreground/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        className={cn(
+          'ranklist-scrollbar overflow-x-auto overscroll-x-contain rounded-3xl bg-card shadow-clay ring-1 ring-foreground/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:cursor-grab',
+          isDragging && 'cursor-grabbing select-none',
+        )}
+        {...dragHandlers}
       >
         <table
           className="w-full table-fixed border-collapse text-sm"
