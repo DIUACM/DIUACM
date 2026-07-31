@@ -184,7 +184,7 @@ export function EventForm({ initial, submitLabel, isPending, onSubmit }: EventFo
                   {CONTEST_PLATFORM_LABELS[contest.platform]}
                 </Badge>
                 <span>{CONTEST_KIND_LABELS[contest.kind]} ID</span>
-                <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-foreground">
+                <span className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-foreground">
                   {contest.contestId}
                 </span>
                 {contest.platform === 'codeforces' && contest.kind !== 'contest' && (

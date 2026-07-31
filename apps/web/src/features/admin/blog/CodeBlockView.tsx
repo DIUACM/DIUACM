@@ -19,7 +19,7 @@ export function CodeBlockView({ node, updateAttributes, editor }: ReactNodeViewP
           contentEditable={false}
           value={language}
           onChange={(event) => updateAttributes({ language: event.target.value })}
-          className="absolute top-2 right-2 z-10 rounded border bg-background px-1 py-0.5 text-xs text-muted-foreground"
+          className="absolute top-2 right-2 z-10 rounded-full bg-card px-2 py-0.5 text-xs text-muted-foreground shadow-clay-sm"
           aria-label="Code language"
         >
           {LANGUAGE_OPTIONS.map((option) => (

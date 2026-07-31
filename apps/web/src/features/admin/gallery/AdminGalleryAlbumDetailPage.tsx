@@ -288,7 +288,7 @@ function PhotoManager({ album }: { album: AdminGalleryAlbumDetail }) {
                     key={item.id}
                     id={item.id}
                     disabled={reorderMedia.isPending}
-                    className="group relative overflow-hidden rounded-lg border"
+                    className="group relative overflow-hidden rounded-2xl shadow-clay-sm ring-1 ring-foreground/5"
                   >
                     <img
                       src={item.url}
@@ -301,7 +301,7 @@ function PhotoManager({ album }: { album: AdminGalleryAlbumDetail }) {
                       <GripVertical className="size-4" />
                     </span>
                     <span
-                      className="absolute bottom-1.5 left-1.5 rounded bg-background/90 p-1"
+                      className="absolute bottom-1.5 left-1.5 rounded-xl bg-background/90 p-1 shadow-clay-sm"
                       onPointerDown={(event) => event.stopPropagation()}
                     >
                       <RowCheckbox

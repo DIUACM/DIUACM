@@ -252,7 +252,7 @@ function AdminHandles({
         const isAdding = editing?.type === type && editing.handleId === null
 
         return (
-          <div key={type} className="rounded-md border p-3">
+          <div key={type} className="rounded-2xl bg-muted/50 p-3.5 shadow-clay-inset">
             <div className="mb-2 flex items-center justify-between gap-3">
               <span className="text-sm font-medium">{HANDLE_LABELS[type]}</span>
               {canAdd && !isAdding && (

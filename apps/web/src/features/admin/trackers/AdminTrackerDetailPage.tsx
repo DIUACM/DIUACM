@@ -18,6 +18,7 @@ import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
 import { SortableRow, SortableRows } from '@/features/admin/shared/SortableRows'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
 import { useRowSelection } from '@/features/admin/shared/use-row-selection'
+import { DataPanel } from '@/components/shared/DataPanel'
 import { ErrorState } from '@/components/shared/states'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -440,11 +441,11 @@ export function AdminTrackerDetailPage() {
                   onConfirm={() => runBulk('delete', 'deleted')}
                 />
               </BulkBar>
-              <div className="overflow-x-auto rounded-lg border">
+              <DataPanel>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12 pl-4">Order</TableHead>
+                      <TableHead className="w-12">Order</TableHead>
                       <SelectAllHead
                         selection={selection}
                         label="Select all ranklists"
@@ -455,7 +456,7 @@ export function AdminTrackerDetailPage() {
                       <TableHead>Lock</TableHead>
                       <TableHead className="text-center">Users</TableHead>
                       <TableHead className="text-center">Events</TableHead>
-                      <TableHead className="pr-4 text-center">Upsolve wt.</TableHead>
+                      <TableHead className="text-center">Upsolve wt.</TableHead>
                     </TableRow>
                   </TableHeader>
                   <SortableRows
@@ -492,14 +493,14 @@ export function AdminTrackerDetailPage() {
                         <TableCell className="text-center">
                           {ranklist.eventCount}
                         </TableCell>
-                        <TableCell className="pr-4 text-center">
+                        <TableCell className="text-center">
                           {ranklist.upsolveWeight}
                         </TableCell>
                       </SortableRow>
                     ))}
                   </SortableRows>
                 </Table>
-              </div>
+              </DataPanel>
             </div>
           )}
         </CardContent>

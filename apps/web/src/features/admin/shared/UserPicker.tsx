@@ -42,7 +42,7 @@ function UserResults({
     <button
       key={user.id}
       type="button"
-      className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm hover:bg-accent"
+      className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
       onClick={() =>
         onSelect({
           id: user.id,

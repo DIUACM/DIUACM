@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
 import { useAdminCreateUser, useAdminUsers } from '@/api/queries/admin-users'
 import { CfRatingBadge } from '@/components/shared/CfRatingBadge'
+import { DataPanel } from '@/components/shared/DataPanel'
 import { Pagination } from '@/components/shared/Pagination'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { SearchInput } from '@/components/shared/SearchInput'
@@ -179,7 +180,7 @@ export function AdminUsersPage() {
         <CreateUserDialog />
       </PageHeader>
 
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row">
         <SearchInput
           value={q}
           onChange={(value) => updateParams({ q: value, page: undefined })}
@@ -207,7 +208,7 @@ export function AdminUsersPage() {
       </div>
 
       {usersQuery.isPending ? (
-        <Skeleton className="h-96 w-full rounded-xl" />
+        <Skeleton className="h-96 w-full rounded-3xl" />
       ) : usersQuery.isError ? (
         <ErrorState
           error={usersQuery.error}
@@ -216,22 +217,22 @@ export function AdminUsersPage() {
       ) : usersQuery.data.data.length === 0 ? (
         <EmptyState message="No users match your filters." />
       ) : (
-        <div className="space-y-4">
-          <div className="overflow-x-auto rounded-xl border">
+        <div className="space-y-6">
+          <DataPanel>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="pl-4">User</TableHead>
+                  <TableHead>User</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Student ID</TableHead>
                   <TableHead className="text-center">CF rating</TableHead>
-                  <TableHead className="pr-4">Permissions</TableHead>
+                  <TableHead>Permissions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {usersQuery.data.data.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell className="pl-4">
+                    <TableCell>
                       <Link
                         to={`/admin/users/${user.id}`}
                         className="flex items-center gap-2.5 hover:underline"
@@ -256,7 +257,7 @@ export function AdminUsersPage() {
                     <TableCell className="text-center">
                       <CfRatingBadge rating={user.maxCfRating} className="text-sm" />
                     </TableCell>
-                    <TableCell className="pr-4">
+                    <TableCell>
                       <div className="flex flex-wrap gap-1">
                         {user.isSuperAdmin ? (
                           <Badge>Super admin</Badge>
@@ -273,7 +274,7 @@ export function AdminUsersPage() {
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </DataPanel>
           <Pagination
             meta={usersQuery.data.meta}
             onPageChange={(nextPage) => updateParams({ page: String(nextPage) })}

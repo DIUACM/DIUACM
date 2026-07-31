@@ -10,6 +10,7 @@ import {
 } from '@/api/queries/admin-blog'
 import type { PublishStatus } from '@/api/queries/admin-events'
 import type { BulkPublishAction } from '@/api/types'
+import { DataPanel } from '@/components/shared/DataPanel'
 import { Pagination } from '@/components/shared/Pagination'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { SearchInput } from '@/components/shared/SearchInput'
@@ -187,7 +188,7 @@ export function AdminBlogPage() {
         <CreatePostDialog />
       </PageHeader>
 
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row">
         <SearchInput
           value={q}
           onChange={(value) => updateParams({ q: value, page: undefined })}
@@ -210,7 +211,7 @@ export function AdminBlogPage() {
       </div>
 
       {postsQuery.isPending ? (
-        <Skeleton className="h-80 w-full rounded-xl" />
+        <Skeleton className="h-80 w-full rounded-3xl" />
       ) : postsQuery.isError ? (
         <ErrorState
           error={postsQuery.error}
@@ -226,7 +227,7 @@ export function AdminBlogPage() {
             isPending={bulkPosts.isPending}
             onAction={runBulk}
           />
-          <div className="overflow-x-auto rounded-xl border">
+          <DataPanel>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -238,13 +239,13 @@ export function AdminBlogPage() {
                   <TableHead>Slug</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Published</TableHead>
-                  <TableHead className="pr-4">Updated</TableHead>
+                  <TableHead>Updated</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {postsQuery.data.data.map((post) => (
                   <TableRow key={post.id}>
-                    <TableCell className="pl-4">
+                    <TableCell>
                       <RowCheckbox
                         selection={selection}
                         id={post.id}
@@ -266,14 +267,14 @@ export function AdminBlogPage() {
                     <TableCell className="text-muted-foreground">
                       {post.publishedAt !== null ? formatDate(post.publishedAt) : '—'}
                     </TableCell>
-                    <TableCell className="pr-4 text-muted-foreground">
+                    <TableCell className="text-muted-foreground">
                       {formatDate(post.updatedAt)}
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </DataPanel>
           <Pagination
             meta={postsQuery.data.meta}
             onPageChange={(nextPage) => updateParams({ page: String(nextPage) })}

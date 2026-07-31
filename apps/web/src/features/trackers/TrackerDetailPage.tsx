@@ -110,7 +110,7 @@ export function TrackerDetailPage() {
           )}
 
           {ranklistQuery.isPending ? (
-            <Skeleton className="h-96 w-full" />
+            <Skeleton className="h-96 w-full rounded-3xl" />
           ) : ranklistQuery.isError ? (
             <ErrorState
               error={ranklistQuery.error}

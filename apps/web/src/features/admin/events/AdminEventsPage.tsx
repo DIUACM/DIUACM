@@ -10,6 +10,7 @@ import {
   type PublishStatus,
 } from '@/api/queries/admin-events'
 import { useEvents } from '@/api/queries/events'
+import { DataPanel } from '@/components/shared/DataPanel'
 import { Pagination } from '@/components/shared/Pagination'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { SearchInput } from '@/components/shared/SearchInput'
@@ -159,7 +160,7 @@ export function AdminEventsPage() {
         {canManageEvents && <CreateEventDialog />}
       </PageHeader>
 
-      <div className="mb-4 flex flex-col gap-3 lg:flex-row">
+      <div className="mb-6 flex flex-col gap-3 lg:flex-row">
         <SearchInput
           value={q}
           onChange={(value) => updateParams({ q: value, page: undefined })}
@@ -204,7 +205,7 @@ export function AdminEventsPage() {
       </div>
 
       {eventsQuery.isPending ? (
-        <Skeleton className="h-96 w-full rounded-xl" />
+        <Skeleton className="h-96 w-full rounded-3xl" />
       ) : eventsQuery.isError ? (
         <ErrorState
           error={eventsQuery.error}
@@ -222,7 +223,7 @@ export function AdminEventsPage() {
               onAction={runBulk}
             />
           )}
-          <div className="overflow-x-auto rounded-xl border">
+          <DataPanel>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -232,20 +233,20 @@ export function AdminEventsPage() {
                       label="Select all events"
                     />
                   )}
-                  <TableHead className={canManageEvents ? undefined : 'pl-4'}>
+                  <TableHead>
                     Title
                   </TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Starts</TableHead>
-                  <TableHead className="pr-4">Scope</TableHead>
+                  <TableHead>Scope</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {eventsQuery.data.data.map((event) => (
                   <TableRow key={event.id}>
                     {canManageEvents && (
-                      <TableCell className="pl-4">
+                      <TableCell>
                         <RowCheckbox
                           selection={selection}
                           id={event.id}
@@ -253,7 +254,7 @@ export function AdminEventsPage() {
                         />
                       </TableCell>
                     )}
-                    <TableCell className={canManageEvents ? undefined : 'pl-4'}>
+                    <TableCell>
                       <Link
                         to={`/admin/events/${event.id}`}
                         className="font-medium hover:underline"
@@ -270,14 +271,14 @@ export function AdminEventsPage() {
                     <TableCell className="text-muted-foreground">
                       {formatDateTime(event.startingAt)}
                     </TableCell>
-                    <TableCell className="pr-4 text-muted-foreground">
+                    <TableCell className="text-muted-foreground">
                       {SCOPE_LABELS[event.participationScope]}
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </DataPanel>
           <Pagination
             meta={eventsQuery.data.meta}
             onPageChange={(nextPage) => updateParams({ page: String(nextPage) })}

@@ -28,6 +28,7 @@ import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
 import { UserPicker } from '@/features/admin/shared/UserPicker'
 import { useRowSelection } from '@/features/admin/shared/use-row-selection'
+import { DataPanel } from '@/components/shared/DataPanel'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { ErrorState } from '@/components/shared/states'
 import { Button } from '@/components/ui/button'
@@ -136,7 +137,7 @@ function MediaManager({ eventId }: { eventId: number }) {
                 item.url && (
                   <div
                     key={item.id}
-                    className="group relative overflow-hidden rounded-lg border"
+                    className="group relative overflow-hidden rounded-2xl shadow-clay-sm ring-1 ring-foreground/5"
                   >
                     <img
                       src={item.url}
@@ -144,7 +145,7 @@ function MediaManager({ eventId }: { eventId: number }) {
                       loading="lazy"
                       className="aspect-video w-full object-cover"
                     />
-                    <span className="absolute bottom-1.5 left-1.5 rounded bg-background/90 p-1">
+                    <span className="absolute bottom-1.5 left-1.5 rounded-xl bg-background/90 p-1 shadow-clay-sm">
                       <RowCheckbox
                         selection={selection}
                         id={item.id}
@@ -248,7 +249,7 @@ function AttendanceManager({ eventId }: { eventId: number }) {
               }
             />
           </BulkBar>
-          <div className="overflow-x-auto rounded-lg border">
+          <DataPanel>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -258,7 +259,7 @@ function AttendanceManager({ eventId }: { eventId: number }) {
                   />
                   <TableHead>Attendee</TableHead>
                   <TableHead>Marked present</TableHead>
-                  <TableHead className="w-12 pr-4" />
+                  <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -266,7 +267,7 @@ function AttendanceManager({ eventId }: { eventId: number }) {
                   (attendance) =>
                     attendance.user && (
                       <TableRow key={attendance.user.id}>
-                        <TableCell className="pl-4">
+                        <TableCell>
                           <RowCheckbox
                             selection={selection}
                             id={attendance.user.id}
@@ -288,7 +289,7 @@ function AttendanceManager({ eventId }: { eventId: number }) {
                         <TableCell className="text-muted-foreground">
                           {formatDateTime(attendance.attendedAt)}
                         </TableCell>
-                        <TableCell className="pr-4">
+                        <TableCell>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -311,7 +312,7 @@ function AttendanceManager({ eventId }: { eventId: number }) {
                 )}
               </TableBody>
             </Table>
-          </div>
+          </DataPanel>
         </div>
       )}
     </div>
@@ -360,7 +361,7 @@ function PerformanceManager({ eventId }: { eventId: number }) {
       {selectedUser ? (
         <form
           onSubmit={submitRow}
-          className="flex flex-wrap items-end gap-3 rounded-lg border p-3"
+          className="flex flex-wrap items-end gap-3 rounded-2xl bg-muted/50 p-3.5 shadow-clay-inset"
         >
           <div className="flex items-center gap-2">
             <UserAvatar
@@ -470,7 +471,7 @@ function PerformanceManager({ eventId }: { eventId: number }) {
               }
             />
           </BulkBar>
-          <div className="overflow-x-auto rounded-lg border">
+          <DataPanel>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -482,13 +483,13 @@ function PerformanceManager({ eventId }: { eventId: number }) {
                   <TableHead>Participant</TableHead>
                   <TableHead className="text-center">Solves</TableHead>
                   <TableHead className="text-center">Upsolves</TableHead>
-                  <TableHead className="w-12 pr-4" />
+                  <TableHead className="w-12" />
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {performanceQuery.data.data.map((row) => (
                   <TableRow key={row.user.id}>
-                    <TableCell className="pl-4">
+                    <TableCell>
                       <RowCheckbox
                         selection={selection}
                         id={row.user.id}
@@ -519,7 +520,7 @@ function PerformanceManager({ eventId }: { eventId: number }) {
                     </TableCell>
                     <TableCell className="text-center">{row.solveCount}</TableCell>
                     <TableCell className="text-center">{row.upsolveCount}</TableCell>
-                    <TableCell className="pr-4">
+                    <TableCell>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -539,7 +540,7 @@ function PerformanceManager({ eventId }: { eventId: number }) {
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </DataPanel>
         </div>
       )}
     </div>

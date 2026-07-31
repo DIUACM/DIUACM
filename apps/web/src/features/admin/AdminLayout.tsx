@@ -59,10 +59,13 @@ export function AdminLayout() {
 
   if (!isAdmin(user)) {
     return (
-      <div className="flex flex-col items-center gap-3 py-24 text-center">
-        <ShieldAlert className="size-10 text-muted-foreground" />
+      // Same panel as the not-found and route-error pages.
+      <div className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-3xl bg-card px-6 py-20 text-center shadow-clay ring-1 ring-foreground/5">
+        <span className="flex size-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground shadow-clay-sm">
+          <ShieldAlert className="size-6" />
+        </span>
         <h1 className="text-2xl font-semibold">No admin access</h1>
-        <p className="max-w-md text-muted-foreground">
+        <p className="text-muted-foreground">
           Your account doesn&apos;t hold any admin permissions. Ask the super
           admin if you believe this is a mistake.
         </p>
@@ -80,18 +83,20 @@ export function AdminLayout() {
   return (
     <div className="flex flex-col gap-6 md:flex-row md:gap-8">
       <aside className="shrink-0 md:w-44">
-        <p className="mb-2 px-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        <p className="mb-2.5 px-4 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
           Admin
         </p>
-        <nav className="flex gap-1 overflow-x-auto md:flex-col">
+        {/* A grooved rail with the active section raised out of it, matching the
+            tab strip and pagination. */}
+        <nav className="flex gap-1 overflow-x-auto rounded-3xl bg-card/60 p-1.5 shadow-clay-inset md:flex-col">
           {sections.map((section) => (
             <NavLink
               key={section.to}
               to={section.to}
               className={({ isActive }) =>
                 cn(
-                  'flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
-                  isActive && 'bg-accent text-foreground',
+                  'flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-sm font-medium text-muted-foreground transition-all hover:text-foreground',
+                  isActive && 'bg-card text-foreground shadow-clay-sm',
                 )
               }
             >

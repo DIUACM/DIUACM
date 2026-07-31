@@ -11,6 +11,7 @@ import {
 } from '@/api/queries/admin-gallery'
 import type { PublishStatus } from '@/api/queries/admin-events'
 import type { BulkPublishAction } from '@/api/types'
+import { DataPanel } from '@/components/shared/DataPanel'
 import { Pagination } from '@/components/shared/Pagination'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { SearchInput } from '@/components/shared/SearchInput'
@@ -243,7 +244,7 @@ export function AdminGalleryPage() {
         <CreateAlbumDialog />
       </PageHeader>
 
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row">
         <SearchInput
           value={q}
           onChange={(value) => updateParams({ q: value, page: undefined })}
@@ -266,7 +267,7 @@ export function AdminGalleryPage() {
       </div>
 
       {albumsQuery.isPending ? (
-        <Skeleton className="h-80 w-full rounded-xl" />
+        <Skeleton className="h-80 w-full rounded-3xl" />
       ) : albumsQuery.isError ? (
         <ErrorState
           error={albumsQuery.error}
@@ -282,11 +283,11 @@ export function AdminGalleryPage() {
             isPending={bulkAlbums.isPending}
             onAction={runBulk}
           />
-          <div className="overflow-x-auto rounded-xl border">
+          <DataPanel>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12 pl-4">Order</TableHead>
+                  <TableHead className="w-12">Order</TableHead>
                   <SelectAllHead
                     selection={selection}
                     label="Select all albums"
@@ -296,7 +297,7 @@ export function AdminGalleryPage() {
                   <TableHead>Slug</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-center">Photos</TableHead>
-                  <TableHead className="pr-4">Updated</TableHead>
+                  <TableHead>Updated</TableHead>
                 </TableRow>
               </TableHeader>
               <SortableRows
@@ -328,14 +329,14 @@ export function AdminGalleryPage() {
                       <StatusBadge status={album.status} />
                     </TableCell>
                     <TableCell className="text-center">{album.mediaCount}</TableCell>
-                    <TableCell className="pr-4 text-muted-foreground">
+                    <TableCell className="text-muted-foreground">
                       {formatDate(album.updatedAt)}
                     </TableCell>
                   </SortableRow>
                 ))}
               </SortableRows>
             </Table>
-          </div>
+          </DataPanel>
           <Pagination
             meta={albumsQuery.data.meta}
             onPageChange={(nextPage) => updateParams({ page: String(nextPage) })}

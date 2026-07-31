@@ -19,6 +19,7 @@ import {
   type SystemJob,
   type SystemNotice,
 } from '@/api/queries/admin-system'
+import { DataPanel } from '@/components/shared/DataPanel'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Pagination } from '@/components/shared/Pagination'
 import { EmptyState, ErrorState } from '@/components/shared/states'
@@ -132,7 +133,7 @@ function RunStrip({ job, now }: { job: SystemJob; now: number }) {
         {job.recent.map((run) => (
           <span
             key={run.startedAt}
-            className={cn('h-7 flex-1 rounded-sm', STATUS_META[run.status].dot)}
+            className={cn('h-7 flex-1 rounded-full', STATUS_META[run.status].dot)}
             title={
               `${formatDateTime(run.startedAt)}\n` +
               `${STATUS_META[run.status].label} · ${duration(run.durationMs)}` +
@@ -219,7 +220,7 @@ function JobCard({ job, now, ready }: { job: SystemJob; now: number; ready: bool
             {job.lastFaults.map((fault) => (
               <code
                 key={fault}
-                className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-900 dark:bg-amber-950 dark:text-amber-300"
+                className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900 dark:bg-amber-950 dark:text-amber-300"
               >
                 {fault}
               </code>
@@ -255,7 +256,9 @@ function NoticeCard({ notice, now }: { notice: SystemNotice; now: number }) {
   const resolve = useResolveNotice()
 
   return (
-    <Card className="border-amber-300 dark:border-amber-900">
+    // Card outlines itself with a ring, not a border, so the fault highlight
+    // has to override the ring or it renders invisibly.
+    <Card className="ring-2 ring-amber-400/70 dark:ring-amber-500/40">
       <CardHeader className="pb-2">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -292,7 +295,7 @@ function NoticeCard({ notice, now }: { notice: SystemNotice; now: number }) {
       </CardHeader>
       {notice.lastDetail && (
         <CardContent>
-          <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-md bg-muted p-3 text-xs">
+          <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-2xl bg-muted/60 p-3.5 text-xs shadow-clay-inset">
             {notice.lastDetail}
           </pre>
         </CardContent>
@@ -374,14 +377,14 @@ function RunHistory({ jobNames }: { jobNames: string[] }) {
       </div>
 
       {runs.isPending ? (
-        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full rounded-3xl" />
       ) : runs.isError ? (
         <ErrorState error={runs.error} onRetry={() => void runs.refetch()} />
       ) : runs.data.data.length === 0 ? (
         <EmptyState message="No runs match these filters." />
       ) : (
         <>
-          <div className="overflow-x-auto rounded-lg border">
+          <DataPanel>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -423,7 +426,7 @@ function RunHistory({ jobNames }: { jobNames: string[] }) {
                 ))}
               </TableBody>
             </Table>
-          </div>
+          </DataPanel>
           <Pagination meta={runs.data.meta} onPageChange={setPage} />
         </>
       )}
@@ -479,7 +482,7 @@ export function AdminSystemPage() {
       </PageHeader>
 
       {!livenessReady && (
-        <div className="flex items-start gap-3 rounded-lg border border-dashed p-4 text-sm">
+        <div className="flex items-start gap-3 rounded-2xl bg-muted/60 p-4 text-sm shadow-clay-inset">
           <Activity className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
           <p className="text-muted-foreground">
             Tick counts are still filling up. Until a full day of history exists they measure how

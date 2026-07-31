@@ -11,6 +11,7 @@ import {
 } from '@/api/queries/admin-trackers'
 import type { PublishStatus } from '@/api/queries/admin-events'
 import type { BulkPublishAction } from '@/api/types'
+import { DataPanel } from '@/components/shared/DataPanel'
 import { Pagination } from '@/components/shared/Pagination'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { SearchInput } from '@/components/shared/SearchInput'
@@ -243,7 +244,7 @@ export function AdminTrackersPage() {
         <CreateTrackerDialog />
       </PageHeader>
 
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row">
         <SearchInput
           value={q}
           onChange={(value) => updateParams({ q: value, page: undefined })}
@@ -266,7 +267,7 @@ export function AdminTrackersPage() {
       </div>
 
       {trackersQuery.isPending ? (
-        <Skeleton className="h-80 w-full rounded-xl" />
+        <Skeleton className="h-80 w-full rounded-3xl" />
       ) : trackersQuery.isError ? (
         <ErrorState
           error={trackersQuery.error}
@@ -282,11 +283,11 @@ export function AdminTrackersPage() {
             isPending={bulkTrackers.isPending}
             onAction={runBulk}
           />
-          <div className="overflow-x-auto rounded-xl border">
+          <DataPanel>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12 pl-4">Order</TableHead>
+                  <TableHead className="w-12">Order</TableHead>
                   <SelectAllHead
                     selection={selection}
                     label="Select all trackers"
@@ -295,7 +296,7 @@ export function AdminTrackersPage() {
                   <TableHead>Title</TableHead>
                   <TableHead>Slug</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="pr-4">Updated</TableHead>
+                  <TableHead>Updated</TableHead>
                 </TableRow>
               </TableHeader>
               <SortableRows
@@ -326,14 +327,14 @@ export function AdminTrackersPage() {
                     <TableCell>
                       <StatusBadge status={tracker.status} />
                     </TableCell>
-                    <TableCell className="pr-4 text-muted-foreground">
+                    <TableCell className="text-muted-foreground">
                       {formatDate(tracker.updatedAt)}
                     </TableCell>
                   </SortableRow>
                 ))}
               </SortableRows>
             </Table>
-          </div>
+          </DataPanel>
           <Pagination
             meta={trackersQuery.data.meta}
             onPageChange={(nextPage) => updateParams({ page: String(nextPage) })}

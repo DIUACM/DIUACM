@@ -153,7 +153,9 @@ function ProfileForm({ user }: { user: User }) {
         </div>
         <div className="space-y-2">
           <Label>Max Codeforces rating</Label>
-          <div className="flex h-9 items-center rounded-md border bg-muted/40 px-3 text-sm">
+          {/* Read-only, but sits in a column of Inputs — it takes the same
+              grooved field shape so the form doesn't break rhythm. */}
+          <div className="flex h-9 items-center rounded-full bg-muted/60 px-3.5 text-sm shadow-clay-inset dark:bg-input/40">
             {user.maxCfRating === null ? (
               <span className="text-muted-foreground">Unrated</span>
             ) : (

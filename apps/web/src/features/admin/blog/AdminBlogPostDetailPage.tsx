@@ -210,7 +210,7 @@ function FeaturedImageManager({ post }: { post: AdminBlogPostDetail }) {
   return (
     <div className="space-y-4">
       {post.featuredImageUrl ? (
-        <div className="group relative max-w-md overflow-hidden rounded-lg border">
+        <div className="group relative max-w-md overflow-hidden rounded-2xl shadow-clay-sm ring-1 ring-foreground/5">
           <img
             src={post.featuredImageUrl}
             alt=""

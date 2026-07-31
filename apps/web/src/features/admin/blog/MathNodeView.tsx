@@ -88,7 +88,7 @@ export function MathNodeView({ node, updateAttributes, editor, deleteNode }: Rea
   }
 
   const fieldClass = cn(
-    'rounded border border-primary bg-background px-1 font-mono text-sm text-foreground',
+    'rounded-lg bg-card px-1.5 font-mono text-sm text-foreground shadow-clay-sm ring-1 ring-primary/40',
     'focus:outline-none focus:ring-1 focus:ring-primary',
   )
 
@@ -134,7 +134,7 @@ export function MathNodeView({ node, updateAttributes, editor, deleteNode }: Rea
         tabIndex={0}
         title="Click to edit LaTeX"
         className={cn(
-          'cursor-pointer rounded px-0.5 hover:bg-primary/10',
+          'cursor-pointer rounded-md px-0.5 hover:bg-primary/10',
           error && 'text-destructive underline decoration-wavy',
         )}
         // Must be mousedown, not click: ProseMirror turns a mousedown on an

@@ -108,13 +108,13 @@ export function SortableRow({
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(isDragging && 'relative z-10 bg-muted')}
     >
-      <TableCell className="pl-4">
+      <TableCell>
         <button
           type="button"
           aria-label="Drag to reorder"
           disabled={disabled}
           className={cn(
-            'flex touch-none items-center rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground',
+            'flex touch-none items-center rounded-full p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
             disabled
               ? 'cursor-default opacity-40'
               : isDragging

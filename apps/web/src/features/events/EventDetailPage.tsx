@@ -8,10 +8,10 @@ import {
 } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import { useEvent, useEventAttendance, useEventPerformance } from '@/api/queries/events'
+import { DataPanel } from '@/components/shared/DataPanel'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { EmptyState, ErrorState } from '@/components/shared/states'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -34,7 +34,7 @@ import { stripHtml } from '@/lib/utils'
 function AttendanceTab({ eventId }: { eventId: number }) {
   const attendanceQuery = useEventAttendance(eventId)
 
-  if (attendanceQuery.isPending) return <Skeleton className="h-48 w-full" />
+  if (attendanceQuery.isPending) return <Skeleton className="h-48 w-full rounded-3xl" />
   if (attendanceQuery.isError) {
     return (
       <ErrorState
@@ -50,45 +50,45 @@ function AttendanceTab({ eventId }: { eventId: number }) {
   }
 
   return (
-    <Card>
-      <CardContent>
-        <ul className="divide-y">
-          {attendees.map((attendance, index) => (
-            <li
-              key={attendance.user?.id ?? index}
-              className="flex items-center gap-3 py-2.5"
-            >
-              {attendance.user ? (
-                <>
-                  <UserAvatar
-                    name={attendance.user.name}
-                    image={attendance.user.image}
-                  />
-                  <Link
-                    to={`/programmers/${attendance.user.username}`}
-                    className="font-medium hover:underline"
-                  >
-                    {attendance.user.name}
-                  </Link>
-                </>
-              ) : (
-                <span className="text-muted-foreground">Deleted user</span>
-              )}
-              <span className="ml-auto text-sm text-muted-foreground">
-                {formatDateTime(attendance.attendedAt)}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </CardContent>
-    </Card>
+    // Same surface as the performance table in the sibling tab, so switching
+    // between them doesn't reshape the panel.
+    <DataPanel>
+      <ul className="divide-y">
+        {attendees.map((attendance, index) => (
+          <li
+            key={attendance.user?.id ?? index}
+            className="flex items-center gap-3 px-(--panel-inset) py-3"
+          >
+            {attendance.user ? (
+              <>
+                <UserAvatar
+                  name={attendance.user.name}
+                  image={attendance.user.image}
+                />
+                <Link
+                  to={`/programmers/${attendance.user.username}`}
+                  className="font-medium hover:underline"
+                >
+                  {attendance.user.name}
+                </Link>
+              </>
+            ) : (
+              <span className="text-muted-foreground">Deleted user</span>
+            )}
+            <span className="ml-auto text-sm text-muted-foreground">
+              {formatDateTime(attendance.attendedAt)}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </DataPanel>
   )
 }
 
 function PerformanceTab({ eventId }: { eventId: number }) {
   const performanceQuery = useEventPerformance(eventId)
 
-  if (performanceQuery.isPending) return <Skeleton className="h-48 w-full" />
+  if (performanceQuery.isPending) return <Skeleton className="h-48 w-full rounded-3xl" />
   if (performanceQuery.isError) {
     return (
       <ErrorState
@@ -104,40 +104,38 @@ function PerformanceTab({ eventId }: { eventId: number }) {
   }
 
   return (
-    <Card className="py-0">
-      <CardContent className="px-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-16 pl-6 text-center">#</TableHead>
-              <TableHead>Participant</TableHead>
-              <TableHead className="text-center">Solved</TableHead>
-              <TableHead className="pr-6 text-center">Upsolved</TableHead>
+    <DataPanel>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-16 text-center">#</TableHead>
+            <TableHead>Participant</TableHead>
+            <TableHead className="text-center">Solved</TableHead>
+            <TableHead className="text-center">Upsolved</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row, index) => (
+            <TableRow key={row.user.id}>
+              <TableCell className="text-center font-medium text-muted-foreground">
+                {row.position ?? index + 1}
+              </TableCell>
+              <TableCell>
+                <Link
+                  to={`/programmers/${row.user.username}`}
+                  className="flex items-center gap-2.5 hover:underline"
+                >
+                  <UserAvatar name={row.user.name} image={row.user.image} className="size-7" />
+                  <span className="font-medium">{row.user.name}</span>
+                </Link>
+              </TableCell>
+              <TableCell className="text-center">{row.solveCount}</TableCell>
+              <TableCell className="text-center">{row.upsolveCount}</TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.map((row, index) => (
-              <TableRow key={row.user.id}>
-                <TableCell className="pl-6 text-center font-medium text-muted-foreground">
-                  {row.position ?? index + 1}
-                </TableCell>
-                <TableCell>
-                  <Link
-                    to={`/programmers/${row.user.username}`}
-                    className="flex items-center gap-2.5 hover:underline"
-                  >
-                    <UserAvatar name={row.user.name} image={row.user.image} className="size-7" />
-                    <span className="font-medium">{row.user.name}</span>
-                  </Link>
-                </TableCell>
-                <TableCell className="text-center">{row.solveCount}</TableCell>
-                <TableCell className="pr-6 text-center">{row.upsolveCount}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+          ))}
+        </TableBody>
+      </Table>
+    </DataPanel>
   )
 }
 

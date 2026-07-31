@@ -304,7 +304,7 @@ function Toolbar({
   // Shown only while the caret sits inside a table. There is deliberately no
   // "toggle header row" control: `AlwaysTableHeader` would undo it immediately.
   const tableControls = state.inTable && (
-    <div className="flex flex-wrap items-center gap-0.5 border border-t-0 border-b-0 bg-accent/40 px-2 py-1">
+    <div className="flex flex-wrap items-center gap-0.5 border-b bg-accent/40 px-2 py-1.5">
       <span className="mr-1 text-xs font-medium text-muted-foreground">Table</span>
       <ToolButton
         icon={BetweenHorizontalStart}
@@ -357,7 +357,7 @@ function Toolbar({
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-0.5 rounded-t-lg border border-b-0 bg-muted/40 px-2 py-1">
+      <div className="flex flex-wrap items-center gap-0.5 border-b bg-muted/60 px-2 py-1.5">
         <ToolButton
           icon={Bold}
           label="Bold (Ctrl+B)"
@@ -536,11 +536,14 @@ export function BlogEditor({
       attributes: {
         class: cn(
           'prose prose-neutral max-w-none dark:prose-invert',
-          'min-h-[24rem] rounded-b-lg border p-4 focus:outline-none',
-          'prose-pre:bg-muted prose-pre:text-foreground',
-          // Match MarkdownContent: no literal backticks around inline code.
+          // The surrounding panel supplies the border and radius.
+          'min-h-[24rem] p-5 focus:outline-none',
+          // Kept in step with MarkdownContent so what you type matches what
+          // the published post renders as — including no literal backticks
+          // around inline code.
+          'prose-pre:rounded-2xl prose-pre:bg-muted prose-pre:text-foreground prose-pre:shadow-clay-inset',
           'prose-code:before:content-none prose-code:after:content-none',
-          '[&_img]:rounded-lg',
+          '[&_img]:rounded-2xl [&_video]:rounded-2xl [&_iframe]:rounded-2xl',
         ),
       },
       // Paste a screenshot straight in. Only claims the event when the
@@ -618,7 +621,8 @@ export function BlogEditor({
 
   return (
     <div className="space-y-3">
-      <div>
+      {/* One clay panel holding the toolbar band and the writing surface. */}
+      <div className="overflow-hidden rounded-2xl bg-card shadow-clay ring-1 ring-foreground/5">
         {editor && (
           <Toolbar
             editor={editor}
@@ -632,8 +636,8 @@ export function BlogEditor({
       <input ref={fileInputRef} type="file" className="hidden" onChange={handleUpload} />
 
       {assets.length > 0 && (
-        <div className="rounded-lg border">
-          <div className="border-b px-3 py-2 text-xs font-medium text-muted-foreground uppercase">
+        <div className="overflow-hidden rounded-2xl bg-card shadow-clay-sm ring-1 ring-foreground/5">
+          <div className="border-b bg-muted/60 px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase">
             Uploaded media ({assets.length})
           </div>
           <ul className="divide-y">
@@ -676,7 +680,7 @@ export function BlogEditor({
 function AssetIcon({ kind }: { kind: AdminBlogAsset['kind'] }) {
   const Icon = kind === 'image' ? ImageIcon : kind === 'video' ? Film : FileUp
   return (
-    <span className={cn('flex size-8 items-center justify-center rounded bg-muted text-muted-foreground')}>
+    <span className={cn('flex size-8 items-center justify-center rounded-xl bg-muted text-muted-foreground shadow-clay-inset')}>
       <Icon className="size-4" />
     </span>
   )

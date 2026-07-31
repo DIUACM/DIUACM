@@ -47,14 +47,15 @@ export function SearchDropdown({
         <PopoverPrimitive.Content
           side="bottom"
           align="start"
-          sideOffset={4}
+          sideOffset={6}
           onOpenAutoFocus={(event) => event.preventDefault()}
           onEscapeKeyDown={close}
           onPointerDownOutside={(event) => {
             // Clicking back into the input shouldn't clear the search.
             if (!anchorRef.current?.contains(event.target as Node)) close()
           }}
-          className="z-50 max-h-64 overflow-y-auto rounded-md border bg-popover text-popover-foreground shadow-md"
+          // Matches SelectContent, the other portaled list in the app.
+          className="z-50 max-h-64 overflow-y-auto rounded-2xl bg-popover p-1.5 text-popover-foreground shadow-clay-lg ring-1 ring-foreground/10"
           style={{ width: 'var(--radix-popover-trigger-width)' }}
         >
           {open && children(debounced, close)}

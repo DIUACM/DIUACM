@@ -22,6 +22,7 @@ import { EventPicker } from '@/features/admin/shared/EventPicker'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
 import { UserPicker } from '@/features/admin/shared/UserPicker'
 import { useRowSelection } from '@/features/admin/shared/use-row-selection'
+import { DataPanel } from '@/components/shared/DataPanel'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { ErrorState } from '@/components/shared/states'
 import { Badge } from '@/components/ui/badge'
@@ -442,7 +443,7 @@ export function AdminRanklistDetailPage() {
                       onConfirm={() => runEventBulk('detach')}
                     />
                   </BulkBar>
-                  <div className="overflow-x-auto rounded-lg border">
+                  <DataPanel>
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -454,13 +455,13 @@ export function AdminRanklistDetailPage() {
                           <TableHead>Date</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead className="text-center">Weight</TableHead>
-                          <TableHead className="w-12 pr-4" />
+                          <TableHead className="w-12" />
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {ranklist.events.map((event) => (
                           <TableRow key={event.id}>
-                            <TableCell className="pl-4">
+                            <TableCell>
                               <RowCheckbox
                                 selection={eventSelection}
                                 id={event.id}
@@ -489,7 +490,7 @@ export function AdminRanklistDetailPage() {
                                 weight={event.weight}
                               />
                             </TableCell>
-                            <TableCell className="pr-4">
+                            <TableCell>
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -510,7 +511,7 @@ export function AdminRanklistDetailPage() {
                         ))}
                       </TableBody>
                     </Table>
-                  </div>
+                  </DataPanel>
                 </div>
               )}
             </TabsContent>
@@ -560,7 +561,7 @@ export function AdminRanklistDetailPage() {
                       }
                     />
                   </BulkBar>
-                  <div className="overflow-x-auto rounded-lg border">
+                  <DataPanel>
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -571,13 +572,13 @@ export function AdminRanklistDetailPage() {
                           <TableHead className="w-16 text-center">Rank</TableHead>
                           <TableHead>Participant</TableHead>
                           <TableHead className="text-right">Score</TableHead>
-                          <TableHead className="w-12 pr-4" />
+                          <TableHead className="w-12" />
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {ranklist.users.map((standing) => (
                           <TableRow key={standing.user.id}>
-                            <TableCell className="pl-4">
+                            <TableCell>
                               <RowCheckbox
                                 selection={userSelection}
                                 id={standing.user.id}
@@ -608,7 +609,7 @@ export function AdminRanklistDetailPage() {
                             <TableCell className="text-right font-medium tabular-nums">
                               {standing.score.toFixed(2)}
                             </TableCell>
-                            <TableCell className="pr-4">
+                            <TableCell>
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -630,7 +631,7 @@ export function AdminRanklistDetailPage() {
                         ))}
                       </TableBody>
                     </Table>
-                  </div>
+                  </DataPanel>
                 </div>
               )}
             </TabsContent>
