@@ -70,9 +70,14 @@ export function Lightbox({
           </DialogPrimitive.Title>
 
           <div className="flex items-center justify-between gap-2 p-3 text-white">
-            <span className="rounded-full bg-white/10 px-3 py-1 text-sm tabular-nums">
-              {(index ?? 0) + 1} / {count}
-            </span>
+            {/* A lone image needs no "1 / 1". */}
+            {count > 1 ? (
+              <span className="rounded-full bg-white/10 px-3 py-1 text-sm tabular-nums">
+                {(index ?? 0) + 1} / {count}
+              </span>
+            ) : (
+              <span />
+            )}
             <div className="flex items-center gap-1">
               <Button
                 variant="ghost"

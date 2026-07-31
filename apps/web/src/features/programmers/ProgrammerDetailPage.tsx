@@ -1,7 +1,9 @@
 import { ArrowLeft, ExternalLink, Trophy } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useProgrammer } from '@/api/queries/programmers'
 import { CfRatingBadge } from '@/components/shared/CfRatingBadge'
+import { Lightbox } from '@/components/shared/Lightbox'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { EmptyState, ErrorState } from '@/components/shared/states'
 import { Badge } from '@/components/ui/badge'
@@ -19,6 +21,7 @@ import { useDocumentTitle } from '@/lib/use-document-title'
 export function ProgrammerDetailPage() {
   const { username = '' } = useParams()
   const programmerQuery = useProgrammer(username)
+  const [viewingPhoto, setViewingPhoto] = useState(false)
   useDocumentTitle(programmerQuery.data?.name)
 
   if (programmerQuery.isPending) {
@@ -53,11 +56,28 @@ export function ProgrammerDetailPage() {
           </Link>
         </Button>
         <div className="flex flex-wrap items-center gap-4">
-          <UserAvatar
-            name={programmer.name}
-            image={programmer.image}
-            className="size-20 text-xl shadow-clay"
-          />
+          {/* Only worth opening when there's a real photo behind it — the
+              initials fallback has nothing more to show at full size. */}
+          {programmer.image ? (
+            <button
+              type="button"
+              onClick={() => setViewingPhoto(true)}
+              aria-label={`View ${programmer.name}'s photo`}
+              className="cursor-zoom-in rounded-full focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            >
+              <UserAvatar
+                name={programmer.name}
+                image={programmer.image}
+                className="size-20 text-xl shadow-clay transition-transform hover:scale-105"
+              />
+            </button>
+          ) : (
+            <UserAvatar
+              name={programmer.name}
+              image={programmer.image}
+              className="size-20 text-xl shadow-clay"
+            />
+          )}
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold text-balance sm:text-4xl">
@@ -69,6 +89,15 @@ export function ProgrammerDetailPage() {
           </div>
         </div>
       </div>
+
+      {programmer.image && (
+        <Lightbox
+          items={[{ url: programmer.image, caption: programmer.name }]}
+          index={viewingPhoto ? 0 : null}
+          onIndexChange={() => {}}
+          onClose={() => setViewingPhoto(false)}
+        />
+      )}
 
       {handles.length > 0 && (
         <div className="flex flex-wrap gap-2">
