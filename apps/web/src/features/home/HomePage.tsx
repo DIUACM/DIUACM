@@ -64,7 +64,8 @@ const FEATURES = [
   {
     icon: FileSpreadsheet,
     title: 'Green Sheet Practice Tracker',
-    description: 'Track practice progress across the Green Sheet problem set.',
+    description:
+      'Build the beginner programming foundation needed before DIU ACM’s advanced training.',
     to: '/green-sheet',
     tint: 'bg-lime-100 text-lime-700 dark:bg-lime-500/20 dark:text-lime-300',
   },
