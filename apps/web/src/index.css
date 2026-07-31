@@ -195,6 +195,17 @@
     scrollbar-gutter: stable;
     @apply font-sans;
     }
+  /* Every Radix overlay (dialog, select, dropdown, sheet) locks the body via
+     react-remove-scroll, which pads the body by the scrollbar width to make up
+     for the bar it just hid. `scrollbar-gutter: stable` above already keeps
+     that space reserved, so the compensation double-counts it and slides the
+     whole page sideways as the overlay opens. Important declarations in a
+     layer outrank the library's unlayered `!important`, and the extra `html`
+     keeps it winning even if that ever changes. */
+  html body[data-scroll-locked] {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+    }
   body {
     @apply bg-background text-foreground;
     /* Two wide, very diffuse washes of colour so the "paper" behind the clay
