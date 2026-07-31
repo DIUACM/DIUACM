@@ -16,6 +16,38 @@
     max-width: 80rem;
 }
 
+/* The standings table has an explicit swipe hint on narrow screens, where a
+   native scrollbar costs valuable vertical space. Keep a subtle, usable thumb
+   for mouse users once the desktop layout has room for it. */
+.ranklist-scrollbar {
+    scrollbar-width: none;
+}
+
+.ranklist-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+@media (min-width: 40rem) {
+    .ranklist-scrollbar {
+        scrollbar-color: color-mix(in oklab, var(--muted-foreground) 40%, transparent) transparent;
+        scrollbar-width: thin;
+    }
+
+    .ranklist-scrollbar::-webkit-scrollbar {
+        display: block;
+        height: 0.5rem;
+    }
+
+    .ranklist-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .ranklist-scrollbar::-webkit-scrollbar-thumb {
+        border-radius: 9999px;
+        background: color-mix(in oklab, var(--muted-foreground) 40%, transparent);
+    }
+}
+
 /* Clay surfaces sit *on* the page rather than being cut out of it: a soft
    coloured drop shadow lifts them off the background, a bright inset along the
    top edge reads as a highlight, and a dimmer inset along the bottom rounds the

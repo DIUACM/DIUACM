@@ -76,10 +76,14 @@ export function TrackerDetailPage() {
             value={activeKeyword}
             onValueChange={(keyword) => setSearchParams({ keyword })}
           >
-            <div className="overflow-x-auto pb-1">
+            <div className="snap-x overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               <TabsList>
                 {ranklists.map((ranklist) => (
-                  <TabsTrigger key={ranklist.keyword} value={ranklist.keyword}>
+                  <TabsTrigger
+                    key={ranklist.keyword}
+                    value={ranklist.keyword}
+                    className="shrink-0 snap-start"
+                  >
                     {ranklist.keyword}
                   </TabsTrigger>
                 ))}
@@ -119,7 +123,10 @@ export function TrackerDetailPage() {
           ) : ranklistQuery.data.users.length === 0 ? (
             <EmptyState message="No participants in this ranklist yet." />
           ) : (
-            <StandingsTable standings={ranklistQuery.data} />
+            <StandingsTable
+              key={ranklistQuery.data.keyword}
+              standings={ranklistQuery.data}
+            />
           )}
         </div>
       )}
