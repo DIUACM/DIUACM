@@ -160,7 +160,7 @@ function ContestArchivePage({ series }: ContestArchivePageProps) {
     <div>
       <PageHeader
         title={archive.name}
-        description={`Browse all ${archive.contests.length} previous ${shortName} contests, grouped by semester and round.`}
+        description={`Browse all ${archive.contests.length} previous ${shortName} contests across ${editions.length} semesters, each linking to its original page on Toph.`}
       >
         <Button variant="outline" asChild>
           <a href={contestData.source.listingUrl} target="_blank" rel="noreferrer">
@@ -168,31 +168,6 @@ function ContestArchivePage({ series }: ContestArchivePageProps) {
           </a>
         </Button>
       </PageHeader>
-
-      <Card className="mb-8 gap-4 bg-card/80">
-        <CardContent className="grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-          <div>
-            <p className="text-xs font-semibold tracking-widest text-primary uppercase">
-              DIU ACM contest archive
-            </p>
-            <h2 className="mt-1 text-xl font-semibold">Every round, one directory</h2>
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-              Mock, preliminary, final, and replay contests link directly to their
-              original pages on Toph.
-            </p>
-          </div>
-          <dl className="grid grid-cols-2 gap-3 text-center">
-            <div className="min-w-24 rounded-2xl bg-muted/70 px-4 py-3 shadow-clay-inset">
-              <dt className="text-xs text-muted-foreground">Editions</dt>
-              <dd className="mt-0.5 text-xl font-bold">{editions.length}</dd>
-            </div>
-            <div className="min-w-24 rounded-2xl bg-muted/70 px-4 py-3 shadow-clay-inset">
-              <dt className="text-xs text-muted-foreground">Contests</dt>
-              <dd className="mt-0.5 text-xl font-bold">{archive.contests.length}</dd>
-            </div>
-          </dl>
-        </CardContent>
-      </Card>
 
       <div className="grid items-start gap-6 lg:grid-cols-2">
         {editions.map((edition) => (
