@@ -9,7 +9,7 @@ import { afterEach, describe, expect, it } from "vitest";
 const SCRIPT = resolve(import.meta.dirname, "../scripts/import-structure.mjs");
 const tempDirectories: string[] = [];
 
-const runDryImport = (payload: unknown) => {
+const runDryImport = (payload: unknown, args: string[] = []) => {
   const directory = mkdtempSync(resolve(tmpdir(), "diuacm-import-test-"));
   tempDirectories.push(directory);
   const inputPath = resolve(directory, "export.json");
@@ -18,7 +18,7 @@ const runDryImport = (payload: unknown) => {
 
   const result = spawnSync(
     process.execPath,
-    [SCRIPT, "--input", inputPath, "--dry-run", "--out", outputPath],
+    [SCRIPT, "--input", inputPath, ...args, "--dry-run", "--out", outputPath],
     { encoding: "utf8" },
   );
   expect(result.status, result.stderr).toBe(0);
@@ -67,5 +67,31 @@ describe("structure importer", () => {
     expect(ranklistInserts[0]).toMatch(/VALUES \(1, 1, 'active'.*, 0, 0,/);
     expect(ranklistInserts[1]).toMatch(/VALUES \(2, 1, 'inactive'.*, 0, 1,/);
     expect(ranklistInserts[2]).toMatch(/VALUES \(3, 1, 'legacy'.*, 0, 1,/);
+  });
+
+  it("imports event performance only when explicitly requested", () => {
+    const payload = {
+      users: [{ id: 1, name: "Example User", email: "user@example.com" }],
+      event_user_stats: [
+        {
+          id: 7,
+          event_id: 11,
+          user_id: 1,
+          position: 2,
+          solve_count: 3,
+          upsolve_count: 4,
+          created_at: "2026-07-01 12:00:00",
+          updated_at: "2026-07-02 12:00:00",
+        },
+      ],
+    };
+
+    expect(runDryImport(payload)).not.toContain("INSERT INTO `event_performance`");
+
+    const sql = runDryImport(payload, ["--performance-only"]);
+    expect(sql).toContain(
+      "INSERT INTO `event_performance` (`event_id`, `user_id`, `position`, `solve_count`, `upsolve_count`, `created_at`, `updated_at`) VALUES (11, 1, 2, 3, 4, 1782907200, 1782993600)",
+    );
+    expect(sql).not.toContain("INSERT INTO `users`");
   });
 });
