@@ -1,4 +1,25 @@
 import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  restrictToParentElement,
+  restrictToVerticalAxis,
+} from '@dnd-kit/modifiers'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import {
   memo,
   useCallback,
   useLayoutEffect,
@@ -12,7 +33,9 @@ import {
   ArrowUpRight,
   CalendarDays,
   ChevronDown,
+  GripVertical,
   MoveHorizontal,
+  RotateCcw,
   Scale,
 } from 'lucide-react'
 import { Link } from 'react-router'
@@ -30,7 +53,7 @@ import { cn } from '@/lib/utils'
 
 const INITIAL_USER_COUNT = 30
 const USER_BATCH_SIZE = 30
-const RANK_COLUMN_WIDTH = 48
+const RANK_COLUMN_WIDTH = 56
 const PARTICIPANT_COLUMN_WIDTH = 176
 const SCORE_COLUMN_WIDTH = 80
 const EVENT_COLUMN_WIDTH = 144
@@ -329,22 +352,58 @@ const StandingRow = memo(function StandingRow({
   leftSpacerWidth,
   rightSpacerWidth,
 }: StandingRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: standing.user.id })
   const byEvent = useMemo(
     () => new Map(standing.performance.map((entry) => [entry.eventId, entry])),
     [standing.performance],
   )
 
   return (
-    <tr className="group border-b transition-colors last:border-0 hover:bg-muted/40">
+    <tr
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={cn(
+        'group border-b transition-colors last:border-0 hover:bg-muted/40',
+        isDragging && 'relative z-20 bg-muted/95 shadow-clay-sm',
+      )}
+    >
       <td
         className={cn(
-          'sticky left-0 z-10 w-12 bg-card px-3 py-2.5 text-center font-bold tabular-nums transition-colors group-hover:bg-muted',
+          'sticky left-0 z-10 w-14 px-1 py-2.5 text-center font-bold tabular-nums transition-colors',
+          isDragging ? 'bg-muted' : 'bg-card group-hover:bg-muted',
           rankStyle(standing.rank),
         )}
       >
-        {standing.rank}
+        <div className="flex items-center justify-center gap-1">
+          <button
+            type="button"
+            aria-label={`Move ${standing.user.name}; original rank ${standing.rank}`}
+            title="Drag to reorder for comparison"
+            className={cn(
+              'flex size-5 touch-none items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring',
+              isDragging ? 'cursor-grabbing' : 'cursor-grab',
+            )}
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="size-3.5" />
+          </button>
+          <span>{standing.rank}</span>
+        </div>
       </td>
-      <td className="sticky left-12 z-10 w-44 bg-card px-3 py-2.5 transition-colors group-hover:bg-muted">
+      <td
+        className={cn(
+          'sticky left-14 z-10 w-44 px-3 py-2.5 transition-colors',
+          isDragging ? 'bg-muted' : 'bg-card group-hover:bg-muted',
+        )}
+      >
         <ParticipantOverview standing={standing} />
       </td>
       <td className="w-20 px-3 py-2.5 text-right font-semibold tabular-nums">
@@ -379,13 +438,34 @@ export function StandingsTable({
   standings: RanklistStandings
 }) {
   const [visibleUserCount, setVisibleUserCount] = useState(INITIAL_USER_COUNT)
+  const originalUserIds = useMemo(
+    () => standings.users.map((standing) => standing.user.id),
+    [standings.users],
+  )
+  const [orderedUserIds, setOrderedUserIds] = useState(() => originalUserIds)
   const { scrollerRef, columnWindow, handleScroll } = useEventColumnWindow(
     standings.events.length,
   )
   const { isDragging, dragHandlers } = useMouseDragScroll()
+  const rowSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
+  const usersById = useMemo(
+    () =>
+      new Map(standings.users.map((standing) => [standing.user.id, standing])),
+    [standings.users],
+  )
+  const orderedUsers = useMemo(
+    () =>
+      orderedUserIds
+        .map((id) => usersById.get(id))
+        .filter((standing): standing is RanklistStanding => standing !== undefined),
+    [orderedUserIds, usersById],
+  )
   const visibleUsers = useMemo(
-    () => standings.users.slice(0, visibleUserCount),
-    [standings.users, visibleUserCount],
+    () => orderedUsers.slice(0, visibleUserCount),
+    [orderedUsers, visibleUserCount],
   )
   const visibleEvents = useMemo(
     () => standings.events.slice(columnWindow.start, columnWindow.end),
@@ -398,14 +478,47 @@ export function StandingsTable({
     NON_EVENT_COLUMNS_WIDTH + standings.events.length * EVENT_COLUMN_WIDTH
   const remainingUsers = standings.users.length - visibleUsers.length
   const nextUserBatchSize = Math.min(USER_BATCH_SIZE, remainingUsers)
+  const isCustomOrder =
+    orderedUserIds.length !== originalUserIds.length ||
+    orderedUserIds.some((id, index) => id !== originalUserIds[index])
+
+  const handleRowDragEnd = useCallback(({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return
+
+    setOrderedUserIds((current) => {
+      const from = current.indexOf(active.id as number)
+      const to = current.indexOf(over.id as number)
+      return from === -1 || to === -1 ? current : arrayMove(current, from, to)
+    })
+  }, [])
 
   return (
     <div className="space-y-2.5">
-      <div className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
-        <MoveHorizontal className="size-4 shrink-0" />
-        <span className="sm:hidden">Swipe horizontally to view event results</span>
-        <span className="hidden sm:inline">
-          Drag or scroll horizontally to view event results
+      <div className="flex flex-col gap-1.5 px-1 text-xs text-muted-foreground lg:flex-row lg:items-center lg:justify-between">
+        <span className="flex items-center gap-2">
+          <MoveHorizontal className="size-4 shrink-0" />
+          <span className="sm:hidden">Swipe horizontally to view event results</span>
+          <span className="hidden sm:inline">
+            Drag or scroll horizontally to view event results
+          </span>
+        </span>
+        <span className="flex min-w-0 items-center gap-2">
+          <GripVertical className="size-4 shrink-0" />
+          <span className="min-w-0">
+            Drag a rank handle to compare participants; ranks stay unchanged
+          </span>
+          {isCustomOrder && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 shrink-0 px-2 text-xs"
+              onClick={() => setOrderedUserIds(originalUserIds)}
+            >
+              <RotateCcw className="size-3.5" />
+              Reset order
+            </Button>
+          )}
         </span>
       </div>
 
@@ -427,10 +540,13 @@ export function StandingsTable({
         >
           <thead>
             <tr className="border-b bg-muted/60 text-left text-muted-foreground">
-              <th className="sticky left-0 z-20 w-12 bg-muted px-3 py-3 text-center font-medium">
+              <th
+                aria-label="Original rank and reorder handle"
+                className="sticky left-0 z-20 w-14 bg-muted px-1 py-3 text-center font-medium"
+              >
                 #
               </th>
-              <th className="sticky left-12 z-20 w-44 bg-muted px-3 py-3 font-medium">
+              <th className="sticky left-14 z-20 w-44 bg-muted px-3 py-3 font-medium">
                 Participant
               </th>
               <th className="w-20 px-3 py-3 text-right font-medium">Score</th>
@@ -458,17 +574,30 @@ export function StandingsTable({
               )}
             </tr>
           </thead>
-          <tbody>
-            {visibleUsers.map((standing) => (
-              <StandingRow
-                key={standing.user.id}
-                standing={standing}
-                visibleEvents={visibleEvents}
-                leftSpacerWidth={leftSpacerWidth}
-                rightSpacerWidth={rightSpacerWidth}
-              />
-            ))}
-          </tbody>
+          <DndContext
+            sensors={rowSensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+            onDragEnd={handleRowDragEnd}
+            accessibility={{ container: document.body }}
+          >
+            <SortableContext
+              items={visibleUsers.map((standing) => standing.user.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <tbody>
+                {visibleUsers.map((standing) => (
+                  <StandingRow
+                    key={standing.user.id}
+                    standing={standing}
+                    visibleEvents={visibleEvents}
+                    leftSpacerWidth={leftSpacerWidth}
+                    rightSpacerWidth={rightSpacerWidth}
+                  />
+                ))}
+              </tbody>
+            </SortableContext>
+          </DndContext>
         </table>
       </div>
 
