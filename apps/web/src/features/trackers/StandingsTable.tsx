@@ -36,7 +36,7 @@ const USER_BATCH_SIZE = 30
 const RANK_COLUMN_WIDTH = 48
 const PARTICIPANT_COLUMN_WIDTH = 176
 const SCORE_COLUMN_WIDTH = 80
-const EVENT_COLUMN_WIDTH = 128
+const EVENT_COLUMN_WIDTH = 144
 const NON_EVENT_COLUMNS_WIDTH =
   RANK_COLUMN_WIDTH + PARTICIPANT_COLUMN_WIDTH + SCORE_COLUMN_WIDTH
 const STICKY_COLUMNS_WIDTH = RANK_COLUMN_WIDTH + PARTICIPANT_COLUMN_WIDTH
@@ -268,7 +268,7 @@ const StandingRow = memo(function StandingRow({
         />
       )}
       {visibleEvents.map((event) => (
-        <td key={event.id} className="w-32 px-3 py-2.5">
+        <td key={event.id} className="w-36 px-3 py-2.5">
           <PerformanceCell entry={byEvent.get(event.id)} />
         </td>
       ))}
@@ -329,10 +329,10 @@ export function StandingsTable({
         >
           <thead>
             <tr className="border-b bg-muted/60 text-left text-muted-foreground">
-              <th className="sticky left-0 z-20 w-12 bg-muted/90 px-3 py-3 text-center font-medium backdrop-blur">
+              <th className="sticky left-0 z-20 w-12 bg-muted px-3 py-3 text-center font-medium">
                 #
               </th>
-              <th className="sticky left-12 z-20 w-44 bg-muted/90 px-3 py-3 font-medium backdrop-blur">
+              <th className="sticky left-12 z-20 w-44 bg-muted px-3 py-3 font-medium">
                 Participant
               </th>
               <th className="w-20 px-3 py-3 text-right font-medium">Score</th>
@@ -344,9 +344,9 @@ export function StandingsTable({
                 />
               )}
               {visibleEvents.map((event) => (
-                <th key={event.id} className="w-32 px-3 py-2 align-top font-medium">
+                <th key={event.id} className="w-36 px-3 py-2 align-top font-medium">
                   <EventOverview event={event} />
-                  <div className="mt-0.5 text-[11px] font-normal">
+                  <div className="mt-0.5 whitespace-nowrap text-[11px] font-normal">
                     {formatDate(event.startingAt)} · w {event.weight}
                   </div>
                 </th>
