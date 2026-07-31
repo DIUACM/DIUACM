@@ -2,6 +2,9 @@ import {
   ArrowRight,
   CalendarDays,
   ChartNoAxesColumn,
+  FileSpreadsheet,
+  Puzzle,
+  Rocket,
   Trophy,
   Users,
 } from 'lucide-react'
@@ -15,9 +18,8 @@ import { EventCard, EventListSkeleton } from '@/features/events/EventsPage'
 import { useDocumentTitle } from '@/lib/use-document-title'
 import { cn } from '@/lib/utils'
 
-// `tint` colours the icon pebble on each tile. They're deliberately drawn from
-// three different hues so the row scans as three destinations rather than one
-// repeated block.
+// `tint` colours the icon pebble on each tile. The varied hues let the six-card
+// grid scan as distinct destinations rather than one repeated block.
 const FEATURES = [
   {
     icon: CalendarDays,
@@ -42,6 +44,29 @@ const FEATURES = [
       'Browse member profiles with Codeforces, VJudge, and AtCoder handles and ratings.',
     to: '/programmers',
     tint: 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-amber-300',
+  },
+  {
+    icon: Puzzle,
+    title: 'Unlock the Algorithm',
+    description:
+      'Browse every previous UTA mock, preliminary slot, final, and replay on Toph.',
+    to: '/contests/uta',
+    tint: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300',
+  },
+  {
+    icon: Rocket,
+    title: 'Take-OFF',
+    description:
+      'Explore the complete Take-OFF Programming Contest archive, organized by semester.',
+    to: '/contests/topc',
+    tint: 'bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300',
+  },
+  {
+    icon: FileSpreadsheet,
+    title: 'Green Sheet Practice Tracker',
+    description: 'Track practice progress across the Green Sheet problem set.',
+    to: '/green-sheet',
+    tint: 'bg-lime-100 text-lime-700 dark:bg-lime-500/20 dark:text-lime-300',
   },
 ]
 
@@ -91,7 +116,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="grid gap-5 sm:grid-cols-3">
+      <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {FEATURES.map((feature) => (
           <Link
             key={feature.to}

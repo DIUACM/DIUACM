@@ -47,6 +47,27 @@ const router = createBrowserRouter([
           { path: '/gallery/:slug', element: <GalleryAlbumPage /> },
           { path: '/blog', element: <BlogPage /> },
           {
+            path: '/contests/uta',
+            lazy: lazily(
+              () => import('@/features/contests/ContestArchivePage'),
+              'UtaContestArchivePage',
+            ),
+          },
+          {
+            path: '/contests/topc',
+            lazy: lazily(
+              () => import('@/features/contests/ContestArchivePage'),
+              'TopcContestArchivePage',
+            ),
+          },
+          {
+            path: '/green-sheet',
+            lazy: lazily(
+              () => import('@/features/green-sheet/GreenSheetPage'),
+              'GreenSheetPage',
+            ),
+          },
+          {
             path: '/blog/:slug',
             lazy: lazily(() => import('@/features/blog/BlogPostPage'), 'BlogPostPage'),
           },
