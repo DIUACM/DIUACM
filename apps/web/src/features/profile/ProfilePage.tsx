@@ -22,10 +22,8 @@ import { useAuth } from '@/features/auth/auth-context'
 import type { User } from '@/api/types'
 import { HandlesManager } from './HandlesManager'
 import { useDocumentTitle } from '@/lib/use-document-title'
+import { IMAGE_ACCEPT, imageRejection } from '@/lib/image-file'
 import { CfRatingBadge } from '@/components/shared/CfRatingBadge'
-
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024
-const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
 
 function AvatarUploader({ user }: { user: User }) {
   const { setUser } = useAuth()
@@ -36,12 +34,9 @@ function AvatarUploader({ user }: { user: User }) {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
-    if (!IMAGE_TYPES.includes(file.type)) {
-      toast.error('Use a PNG, JPEG, GIF, or WebP image.')
-      return
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
-      toast.error('Image must be 5 MB or smaller.')
+    const rejection = imageRejection(file)
+    if (rejection) {
+      toast.error(rejection)
       return
     }
     uploadImage.mutate(file, {
@@ -78,7 +73,7 @@ function AvatarUploader({ user }: { user: User }) {
         <input
           ref={inputRef}
           type="file"
-          accept={IMAGE_TYPES.join(',')}
+          accept={IMAGE_ACCEPT}
           className="hidden"
           onChange={handleFile}
         />

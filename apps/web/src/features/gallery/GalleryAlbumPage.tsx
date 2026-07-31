@@ -1,6 +1,8 @@
 import { ArrowLeft } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useGalleryAlbum } from '@/api/queries/gallery'
+import { Lightbox } from '@/components/shared/Lightbox'
 import { EmptyState, ErrorState } from '@/components/shared/states'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -11,6 +13,7 @@ export function GalleryAlbumPage() {
   const params = useParams()
   const slug = params.slug ?? ''
   const albumQuery = useGalleryAlbum(slug)
+  const [viewing, setViewing] = useState<number | null>(null)
   useDocumentTitle(albumQuery.data?.title)
 
   if (albumQuery.isPending) {
@@ -33,6 +36,11 @@ export function GalleryAlbumPage() {
   }
 
   const album = albumQuery.data
+  // The lightbox indexes into this list, so drop the media rows with no URL
+  // rather than rendering holes the arrow keys would land on.
+  const photos = album.media.flatMap((media) =>
+    media.url ? [{ id: media.id, url: media.url }] : [],
+  )
 
   return (
     <div className="space-y-6">
@@ -50,33 +58,37 @@ export function GalleryAlbumPage() {
         )}
       </div>
 
-      {album.media.length === 0 ? (
+      {photos.length === 0 ? (
         <EmptyState message="This album has no photos yet." />
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {album.media.map(
-            (media) =>
-              media.url && (
-                <a
-                  key={media.id}
-                  href={media.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group clay-lift-trigger block"
-                >
-                  <div className="clay-lift overflow-hidden rounded-2xl shadow-clay ring-1 ring-foreground/5">
-                    <img
-                      src={media.url}
-                      alt=""
-                      loading="lazy"
-                      className="aspect-square w-full object-cover transition-transform group-hover:scale-105"
-                    />
-                  </div>
-                </a>
-              ),
-          )}
+          {photos.map((photo, index) => (
+            <button
+              key={photo.id}
+              type="button"
+              onClick={() => setViewing(index)}
+              aria-label={`View photo ${index + 1} of ${photos.length}`}
+              className="group clay-lift-trigger block cursor-zoom-in rounded-2xl focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            >
+              <div className="clay-lift overflow-hidden rounded-2xl shadow-clay ring-1 ring-foreground/5">
+                <img
+                  src={photo.url}
+                  alt=""
+                  loading="lazy"
+                  className="aspect-square w-full object-cover transition-transform group-hover:scale-105"
+                />
+              </div>
+            </button>
+          ))}
         </div>
       )}
+
+      <Lightbox
+        items={photos}
+        index={viewing}
+        onIndexChange={setViewing}
+        onClose={() => setViewing(null)}
+      />
     </div>
   )
 }

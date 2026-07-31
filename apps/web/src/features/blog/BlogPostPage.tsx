@@ -37,7 +37,7 @@ export function BlogPostPage() {
   const post = postQuery.data
 
   return (
-    <article className="mx-auto max-w-3xl space-y-6">
+    <article className="space-y-6">
       <div>
         <Button variant="ghost" size="sm" asChild className="-ml-2 mb-3">
           <Link to="/blog">

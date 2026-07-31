@@ -1,5 +1,5 @@
-import { ArrowLeft, ImagePlus, Trash2, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { ArrowLeft, Trash2, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link, useBlocker, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
@@ -44,11 +44,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ImageDropzone } from '@/components/shared/ImageDropzone'
 import { formatDate } from '@/lib/datetime'
 import { useDocumentTitle } from '@/lib/use-document-title'
-
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024
-const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
 
 function PostEditForm({ post }: { post: AdminBlogPostDetail }) {
   const updatePost = useAdminUpdateBlogPost(post.id)
@@ -191,20 +189,8 @@ function PostEditForm({ post }: { post: AdminBlogPostDetail }) {
 function FeaturedImageManager({ post }: { post: AdminBlogPostDetail }) {
   const setImage = useAdminSetBlogFeaturedImage(post.id)
   const removeImage = useAdminRemoveBlogFeaturedImage(post.id)
-  const inputRef = useRef<HTMLInputElement>(null)
 
-  const handleFile = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-    if (!IMAGE_TYPES.includes(file.type)) {
-      toast.error('Use a PNG, JPEG, GIF, or WebP image.')
-      return
-    }
-    if (file.size > MAX_IMAGE_BYTES) {
-      toast.error('Image must be 5 MB or smaller.')
-      return
-    }
+  const handleFiles = ([file]: File[]) => {
     setImage.mutate(file, {
       onSuccess: () => toast.success('Featured image set.'),
       onError: (error) => toast.error(errorMessage(error)),
@@ -237,24 +223,11 @@ function FeaturedImageManager({ post }: { post: AdminBlogPostDetail }) {
       ) : (
         <p className="text-sm text-muted-foreground">No featured image yet.</p>
       )}
-      <Button
-        variant="outline"
-        onClick={() => inputRef.current?.click()}
-        disabled={setImage.isPending}
-      >
-        <ImagePlus className="size-4" />
-        {setImage.isPending
-          ? 'Uploading…'
-          : post.featuredImageUrl
-            ? 'Replace image'
-            : 'Add image'}
-      </Button>
-      <input
-        ref={inputRef}
-        type="file"
-        accept={IMAGE_TYPES.join(',')}
-        className="hidden"
-        onChange={handleFile}
+      <ImageDropzone
+        className="max-w-md"
+        label={post.featuredImageUrl ? 'Replace image' : 'Add image'}
+        busy={setImage.isPending}
+        onFiles={handleFiles}
       />
     </div>
   )

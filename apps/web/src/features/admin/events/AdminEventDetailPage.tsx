@@ -1,5 +1,5 @@
-import { ArrowLeft, ImagePlus, Trash2, X } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { ArrowLeft, Trash2, X } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
@@ -53,37 +53,32 @@ import {
 } from '@/components/ui/table'
 import { useAuth } from '@/features/auth/auth-context'
 import { hasPermission } from '@/lib/constants'
+import { ImageDropzone } from '@/components/shared/ImageDropzone'
 import { formatDateTime } from '@/lib/datetime'
 import { useDocumentTitle } from '@/lib/use-document-title'
 import type { UserSummary } from '@/api/types'
 import { EventForm } from './EventForm'
-
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024
-const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
 
 function MediaManager({ eventId }: { eventId: number }) {
   const eventQuery = useAdminEvent(eventId)
   const addMedia = useAdminAddEventMedia(eventId)
   const removeMedia = useAdminRemoveEventMedia(eventId)
   const bulkRemoveMedia = useAdminBulkRemoveEventMedia(eventId)
-  const inputRef = useRef<HTMLInputElement>(null)
 
-  const handleFile = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-    if (!IMAGE_TYPES.includes(file.type)) {
-      toast.error('Use a PNG, JPEG, GIF, or WebP image.')
-      return
+  // Sequential rather than parallel: each upload invalidates the event, so a
+  // batch dropped together lands in the order it was dropped.
+  const handleFiles = async (files: File[]) => {
+    let added = 0
+    for (const file of files) {
+      try {
+        await addMedia.mutateAsync(file)
+        added += 1
+      } catch (error) {
+        toast.error(errorMessage(error))
+        break
+      }
     }
-    if (file.size > MAX_IMAGE_BYTES) {
-      toast.error('Image must be 5 MB or smaller.')
-      return
-    }
-    addMedia.mutate(file, {
-      onSuccess: () => toast.success('Image added.'),
-      onError: (error) => toast.error(errorMessage(error)),
-    })
+    if (added > 0) toast.success(`${added} image${added === 1 ? '' : 's'} added.`)
   }
 
   const media = eventQuery.data?.media ?? []
@@ -171,20 +166,11 @@ function MediaManager({ eventId }: { eventId: number }) {
           </div>
         </div>
       )}
-      <Button
-        variant="outline"
-        onClick={() => inputRef.current?.click()}
-        disabled={addMedia.isPending}
-      >
-        <ImagePlus className="size-4" />
-        {addMedia.isPending ? 'Uploading…' : 'Add image'}
-      </Button>
-      <input
-        ref={inputRef}
-        type="file"
-        accept={IMAGE_TYPES.join(',')}
-        className="hidden"
-        onChange={handleFile}
+      <ImageDropzone
+        multiple
+        label="Add images"
+        busy={addMedia.isPending}
+        onFiles={(files) => void handleFiles(files)}
       />
     </div>
   )

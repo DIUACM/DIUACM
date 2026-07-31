@@ -6,9 +6,11 @@ import {
   Trophy,
   Users,
 } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useEvent, useEventAttendance, useEventPerformance } from '@/api/queries/events'
 import { DataPanel } from '@/components/shared/DataPanel'
+import { Lightbox } from '@/components/shared/Lightbox'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { EmptyState, ErrorState } from '@/components/shared/states'
 import { Button } from '@/components/ui/button'
@@ -140,10 +142,16 @@ function PerformanceTab({ eventId }: { eventId: number }) {
 }
 
 function EventDetailContent({ event }: { event: EventDetail }) {
+  const [viewing, setViewing] = useState<number | null>(null)
   const defaultTab =
     event.performanceCount === 0 && event.attendanceCount > 0
       ? 'attendance'
       : 'performance'
+  // The lightbox indexes into this list, so drop the media rows with no URL
+  // rather than rendering holes the arrow keys would land on.
+  const photos = event.media.flatMap((media) =>
+    media.url ? [{ id: media.id, url: media.url }] : [],
+  )
 
   return (
     <div className="space-y-6">
@@ -194,31 +202,35 @@ function EventDetailContent({ event }: { event: EventDetail }) {
         </p>
       )}
 
-      {event.media.length > 0 && (
+      {photos.length > 0 && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {event.media.map(
-            (media) =>
-              media.url && (
-                <a
-                  key={media.id}
-                  href={media.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group clay-lift-trigger block"
-                >
-                  <div className="clay-lift overflow-hidden rounded-2xl shadow-clay ring-1 ring-foreground/5">
-                    <img
-                      src={media.url}
-                      alt=""
-                      loading="lazy"
-                      className="aspect-video w-full object-cover transition-transform group-hover:scale-105"
-                    />
-                  </div>
-                </a>
-              ),
-          )}
+          {photos.map((photo, index) => (
+            <button
+              key={photo.id}
+              type="button"
+              onClick={() => setViewing(index)}
+              aria-label={`View image ${index + 1} of ${photos.length}`}
+              className="group clay-lift-trigger block cursor-zoom-in rounded-2xl focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+            >
+              <div className="clay-lift overflow-hidden rounded-2xl shadow-clay ring-1 ring-foreground/5">
+                <img
+                  src={photo.url}
+                  alt=""
+                  loading="lazy"
+                  className="aspect-video w-full object-cover transition-transform group-hover:scale-105"
+                />
+              </div>
+            </button>
+          ))}
         </div>
       )}
+
+      <Lightbox
+        items={photos}
+        index={viewing}
+        onIndexChange={setViewing}
+        onClose={() => setViewing(null)}
+      />
 
       <Tabs defaultValue={defaultTab}>
         <TabsList>

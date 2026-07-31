@@ -1,5 +1,5 @@
-import { ArrowLeft, GripVertical, ImagePlus, Trash2, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { ArrowLeft, GripVertical, Trash2, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Link, useBlocker, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
@@ -53,10 +53,8 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
+import { ImageDropzone } from '@/components/shared/ImageDropzone'
 import { useDocumentTitle } from '@/lib/use-document-title'
-
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024
-const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
 
 function AlbumEditForm({ album }: { album: AdminGalleryAlbumDetail }) {
   const updateAlbum = useAdminUpdateGalleryAlbum(album.id)
@@ -200,24 +198,22 @@ function PhotoManager({ album }: { album: AdminGalleryAlbumDetail }) {
   const bulkRemoveMedia = useAdminBulkRemoveGalleryMedia(album.id)
   const reorderMedia = useAdminReorderGalleryMedia(album.id)
   const selection = useRowSelection(album.media.map((item) => item.id))
-  const inputRef = useRef<HTMLInputElement>(null)
 
-  const handleFile = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-    if (!IMAGE_TYPES.includes(file.type)) {
-      toast.error('Use a PNG, JPEG, GIF, or WebP image.')
-      return
+  // Sequential rather than parallel: each upload invalidates the album, and the
+  // server assigns `order` on insert, so a batch dropped together keeps the
+  // order it was dropped in.
+  const handleFiles = async (files: File[]) => {
+    let added = 0
+    for (const file of files) {
+      try {
+        await addMedia.mutateAsync(file)
+        added += 1
+      } catch (error) {
+        toast.error(errorMessage(error))
+        break
+      }
     }
-    if (file.size > MAX_IMAGE_BYTES) {
-      toast.error('Image must be 5 MB or smaller.')
-      return
-    }
-    addMedia.mutate(file, {
-      onSuccess: () => toast.success('Photo added.'),
-      onError: (error) => toast.error(errorMessage(error)),
-    })
+    if (added > 0) toast.success(`${added} photo${added === 1 ? '' : 's'} added.`)
   }
 
   const movePhoto = (from: number, to: number) => {
@@ -331,20 +327,11 @@ function PhotoManager({ album }: { album: AdminGalleryAlbumDetail }) {
           </SortableGrid>
         </>
       )}
-      <Button
-        variant="outline"
-        onClick={() => inputRef.current?.click()}
-        disabled={addMedia.isPending}
-      >
-        <ImagePlus className="size-4" />
-        {addMedia.isPending ? 'Uploading…' : 'Add photo'}
-      </Button>
-      <input
-        ref={inputRef}
-        type="file"
-        accept={IMAGE_TYPES.join(',')}
-        className="hidden"
-        onChange={handleFile}
+      <ImageDropzone
+        multiple
+        label="Add photos"
+        busy={addMedia.isPending}
+        onFiles={(files) => void handleFiles(files)}
       />
     </div>
   )
