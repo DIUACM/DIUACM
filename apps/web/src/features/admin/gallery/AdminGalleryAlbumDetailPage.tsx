@@ -144,14 +144,14 @@ function AlbumEditForm({ album }: { album: AdminGalleryAlbumDetail }) {
         />
       </div>
       <div className="space-y-2">
-        <Label>Status</Label>
+        <Label htmlFor="ga-status">Status</Label>
         <Select
           value={form.status}
           onValueChange={(value) =>
             setForm((prev) => ({ ...prev, status: value as PublishStatus }))
           }
         >
-          <SelectTrigger className="w-full sm:w-48">
+          <SelectTrigger id="ga-status" className="w-full sm:w-48">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

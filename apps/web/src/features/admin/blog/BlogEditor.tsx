@@ -534,6 +534,10 @@ export function BlogEditor({
     },
     editorProps: {
       attributes: {
+        // ProseMirror's contenteditable isn't a labelable element, so the
+        // visible "Body" caption can't reach it with `htmlFor` — without this
+        // the editor is announced as an unnamed text box.
+        'aria-label': 'Post body',
         class: cn(
           'prose prose-neutral max-w-none dark:prose-invert',
           // The surrounding panel supplies the border and radius.

@@ -125,7 +125,11 @@ function PostEditForm({ post }: { post: AdminBlogPostDetail }) {
         </div>
       </div>
       <div className="space-y-2">
-        <Label>Body</Label>
+        {/* A caption, not a <label>: the editor is a contenteditable, which
+            `htmlFor` can't target. It carries its own aria-label instead. */}
+        <span className="flex items-center text-sm leading-none font-medium select-none">
+          Body
+        </span>
         <BlogEditor
           postId={post.id}
           value={form.content}
@@ -134,14 +138,14 @@ function PostEditForm({ post }: { post: AdminBlogPostDetail }) {
         />
       </div>
       <div className="space-y-2">
-        <Label>Status</Label>
+        <Label htmlFor="bp-status">Status</Label>
         <Select
           value={form.status}
           onValueChange={(value) =>
             setForm((prev) => ({ ...prev, status: value as PublishStatus }))
           }
         >
-          <SelectTrigger className="w-full sm:w-48">
+          <SelectTrigger id="bp-status" className="w-full sm:w-48">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

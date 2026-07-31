@@ -152,10 +152,21 @@ function ProfileForm({ user }: { user: User }) {
           <Input id="email" value={user.email} disabled />
         </div>
         <div className="space-y-2">
-          <Label>Max Codeforces rating</Label>
+          {/* A caption, not a <label> — there's no control here to label, and
+              an orphan <label> is announced as a broken form field. */}
+          <span
+            id="cf-rating-label"
+            className="flex items-center text-sm leading-none font-medium select-none"
+          >
+            Max Codeforces rating
+          </span>
           {/* Read-only, but sits in a column of Inputs — it takes the same
               grooved field shape so the form doesn't break rhythm. */}
-          <div className="flex h-9 items-center rounded-full bg-muted/60 px-3.5 text-sm shadow-clay-inset dark:bg-input/40">
+          <div
+            aria-labelledby="cf-rating-label"
+            role="group"
+            className="flex h-9 items-center rounded-full bg-muted/60 px-3.5 text-sm shadow-clay-inset dark:bg-input/40"
+          >
             {user.maxCfRating === null ? (
               <span className="text-muted-foreground">Unrated</span>
             ) : (

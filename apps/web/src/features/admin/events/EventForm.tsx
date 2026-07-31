@@ -94,12 +94,12 @@ export function EventForm({ initial, submitLabel, isPending, onSubmit }: EventFo
       </div>
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2">
-          <Label>Type</Label>
+          <Label htmlFor="e-type">Type</Label>
           <Select
             value={form.type}
             onValueChange={(value) => set('type', value as EventType)}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger id="e-type" className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -112,12 +112,12 @@ export function EventForm({ initial, submitLabel, isPending, onSubmit }: EventFo
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>Status</Label>
+          <Label htmlFor="e-status">Status</Label>
           <Select
             value={form.status}
             onValueChange={(value) => set('status', value as 'draft' | 'published')}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger id="e-status" className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -127,14 +127,14 @@ export function EventForm({ initial, submitLabel, isPending, onSubmit }: EventFo
           </Select>
         </div>
         <div className="space-y-2">
-          <Label>Participation</Label>
+          <Label htmlFor="e-scope">Participation</Label>
           <Select
             value={form.participationScope}
             onValueChange={(value) =>
               set('participationScope', value as ParticipationScope)
             }
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger id="e-scope" className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

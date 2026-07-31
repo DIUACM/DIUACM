@@ -152,14 +152,14 @@ function CreateTrackerDialog() {
             />
           </div>
           <div className="space-y-2">
-            <Label>Status</Label>
+            <Label htmlFor="t-status">Status</Label>
             <Select
               value={form.status}
               onValueChange={(value) =>
                 setForm((prev) => ({ ...prev, status: value as PublishStatus }))
               }
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger id="t-status" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

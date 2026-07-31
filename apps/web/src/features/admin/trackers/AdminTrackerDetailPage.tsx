@@ -123,14 +123,14 @@ function TrackerEditForm({ tracker }: { tracker: AdminTrackerDetail }) {
         />
       </div>
       <div className="space-y-2">
-        <Label>Status</Label>
+        <Label htmlFor="tr-status">Status</Label>
         <Select
           value={form.status}
           onValueChange={(value) =>
             setForm((prev) => ({ ...prev, status: value as PublishStatus }))
           }
         >
-          <SelectTrigger className="w-full sm:w-48">
+          <SelectTrigger id="tr-status" className="w-full sm:w-48">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -232,14 +232,14 @@ function CreateRanklistDialog({ trackerId }: { trackerId: number }) {
             />
           </div>
           <div className="space-y-2">
-            <Label>Status</Label>
+            <Label htmlFor="r-status">Status</Label>
             <Select
               value={form.status}
               onValueChange={(value) =>
                 setForm((prev) => ({ ...prev, status: value as PublishStatus }))
               }
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger id="r-status" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
