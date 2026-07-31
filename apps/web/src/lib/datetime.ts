@@ -28,6 +28,19 @@ export function formatDuration(startSeconds: number, endSeconds: number): string
   return `${hours}h ${minutes}m`
 }
 
+/**
+ * Countdown for a live event. Seconds are only shown under an hour — above
+ * that they're noise, and dropping them keeps the label from twitching.
+ */
+export function formatCountdown(seconds: number): string {
+  const total = Math.max(0, Math.floor(seconds))
+  const hours = Math.floor(total / 3600)
+  const minutes = Math.floor((total % 3600) / 60)
+  if (hours > 0) return `${hours}h ${minutes}m`
+  if (minutes > 0) return `${minutes}m ${String(total % 60).padStart(2, '0')}s`
+  return `${total}s`
+}
+
 /** Epoch seconds → value for an <input type="datetime-local"> in the local timezone. */
 export function epochToLocalInput(epochSeconds: number): string {
   const date = new Date(epochSeconds * 1000)

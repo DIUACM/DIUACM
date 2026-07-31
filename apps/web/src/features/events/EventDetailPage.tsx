@@ -22,12 +22,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useAuth } from '@/features/auth/auth-context'
 import { NotFoundPage } from '@/features/home/NotFoundPage'
-import { formatDateTime, formatDuration, eventTiming } from '@/lib/datetime'
+import { formatDateTime, formatDuration } from '@/lib/datetime'
 import type { EventDetail } from '@/api/types'
-import { AttendanceDialog } from './AttendanceDialog'
+import { AttendanceAction } from './AttendanceAction'
 import { EventTimingBadge, EventTypeBadge, ScopeBadge } from './EventBadges'
+import { EventLiveProgress } from './EventLiveProgress'
 import { useDocumentTitle } from '@/lib/use-document-title'
 import { stripHtml } from '@/lib/utils'
 
@@ -140,10 +140,6 @@ function PerformanceTab({ eventId }: { eventId: number }) {
 }
 
 function EventDetailContent({ event }: { event: EventDetail }) {
-  const { isAuthenticated } = useAuth()
-  const timing = eventTiming(event.startingAt, event.endingAt)
-  const canMarkAttendance =
-    isAuthenticated && event.openForAttendance && timing !== 'ended'
   const defaultTab =
     event.performanceCount === 0 && event.attendanceCount > 0
       ? 'attendance'
@@ -167,16 +163,13 @@ function EventDetailContent({ event }: { event: EventDetail }) {
         </div>
         <div className="mt-2 flex flex-wrap items-start justify-between gap-4">
           <h1 className="text-3xl font-bold text-balance sm:text-4xl">{event.title}</h1>
-          <div className="flex items-center gap-2">
-            {event.eventLink && (
-              <Button variant="outline" asChild>
-                <a href={event.eventLink} target="_blank" rel="noreferrer">
-                  Event link <ExternalLink className="size-4" />
-                </a>
-              </Button>
-            )}
-            {canMarkAttendance && <AttendanceDialog eventId={event.id} />}
-          </div>
+          {event.eventLink && (
+            <Button variant="outline" asChild>
+              <a href={event.eventLink} target="_blank" rel="noreferrer">
+                Event link <ExternalLink className="size-4" />
+              </a>
+            </Button>
+          )}
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
@@ -188,7 +181,12 @@ function EventDetailContent({ event }: { event: EventDetail }) {
             {formatDuration(event.startingAt, event.endingAt)}
           </span>
         </div>
+        <div className="mt-4 empty:mt-0">
+          <AttendanceAction event={event} />
+        </div>
       </div>
+
+      <EventLiveProgress startingAt={event.startingAt} endingAt={event.endingAt} />
 
       {event.description && (
         <p className="max-w-3xl whitespace-pre-line text-muted-foreground">

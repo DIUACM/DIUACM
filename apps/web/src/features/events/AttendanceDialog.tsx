@@ -35,11 +35,11 @@ export function AttendanceDialog({ eventId }: { eventId: number }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Mark attendance</Button>
+        <Button size="lg">Give attendance</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Mark attendance</DialogTitle>
+          <DialogTitle>Give attendance</DialogTitle>
           <DialogDescription>
             Enter the event password shared by the organizers.
           </DialogDescription>
