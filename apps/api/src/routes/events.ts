@@ -10,6 +10,7 @@ import { parseId } from "../lib/parse-id";
 import { fileUrlFor, toUserSummary } from "../lib/user-shape";
 import { validate } from "../lib/validator";
 import { requireAuth } from "../middleware/auth";
+import { enforceRateLimit } from "../middleware/rate-limit";
 import { attendanceGiveSchema, eventsListQuery } from "../schemas/events";
 import type { AppEnv } from "../types";
 
@@ -141,6 +142,15 @@ eventRoutes.post(
           "Attendance window is closed (opens 15 min before start, closes 15 min after end)",
       });
     }
+
+    // The password is intentionally recoverable by event managers. Limit
+    // guesses per authenticated user and event so shared campus IPs never
+    // throttle one another.
+    await enforceRateLimit(
+      c,
+      `attendance:${id}:${payload.sub}`,
+      "Too many attendance attempts — please wait a minute and try again",
+    );
 
     // 403, not 401: the client treats 401 on an authenticated request as an
     // expired session and logs the user out.

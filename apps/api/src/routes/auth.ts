@@ -8,7 +8,7 @@ import { CodeforcesApiError, getCodeforcesUser } from "../lib/codeforces";
 import { GoogleAuthError, verifyGoogleIdToken } from "../lib/google-oauth";
 import { parseImageUpload } from "../lib/image-upload";
 import { signAuthToken } from "../lib/jwt";
-import { verifyPassword } from "../lib/password";
+import { hashPassword, needsPasswordRehash, verifyPassword } from "../lib/password";
 import { isSuperAdminEmail, loadPermissions } from "../lib/permissions";
 import { toAuthUser, toHandlesMap } from "../lib/user-shape";
 import { setSelfVjudgeHandle } from "../lib/vjudge-handles";
@@ -60,7 +60,7 @@ const MAX_USERNAME_ATTEMPTS = 5;
 // login response time doesn't reveal which accounts exist. Random bytes — no
 // password hashes to this.
 const DUMMY_PASSWORD_HASH =
-  "pbkdf2:100000:0ff513e3ffa428aa68c413ef893e989f:92ceb9e253443292d9022b2e012fc4a2f0b8b8a3092667a7ca809fdf1fa33348";
+  "pbkdf2:600000:0ff513e3ffa428aa68c413ef893e989f:92ceb9e253443292d9022b2e012fc4a2f0b8b8a3092667a7ca809fdf1fa33348";
 
 // 24-bit hex; ~16.7M space, collision odds vanishingly small. We still retry on
 // the unique constraint below to be defensive.
@@ -96,6 +96,15 @@ auth.post("/login", authRateLimit, validate("json", loginSchema), async (c) => {
   const passwordOk = await verifyPassword(password, row?.passwordHash ?? DUMMY_PASSWORD_HASH);
   if (!row || !row.passwordHash || !passwordOk) {
     throw new HTTPException(401, { message: "Invalid email/username or password" });
+  }
+
+  // Existing hashes remain valid and are upgraded opportunistically only after
+  // the password has been proven, avoiding a forced reset or migration window.
+  if (needsPasswordRehash(row.passwordHash)) {
+    await db
+      .update(users)
+      .set({ passwordHash: await hashPassword(password) })
+      .where(eq(users.id, row.id));
   }
 
   const token = await signAuthToken(
@@ -192,7 +201,9 @@ auth.get("/me", requireAuth, async (c) => {
     .limit(1);
 
   if (!me) {
-    throw new HTTPException(404, { message: "User not found" });
+    // The bearer token is structurally valid but no longer represents an
+    // account. Treat it as an invalid session so clients clear it immediately.
+    throw new HTTPException(401, { message: "Account no longer exists" });
   }
   return c.json({ user: await shapeAuthUser(c, me) });
 });

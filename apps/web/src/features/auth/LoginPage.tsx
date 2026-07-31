@@ -13,9 +13,11 @@ import {
 } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Separator } from '@/components/ui/separator'
 import { GoogleSignInButton } from './GoogleSignInButton'
 import { useAuth } from './auth-context'
+import { resolveLoginReturnPath } from './return-path'
 import { useDocumentTitle } from '@/lib/use-document-title'
 
 export function LoginPage() {
@@ -23,7 +25,7 @@ export function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as { from?: string } | null)?.from ?? '/'
+  const from = resolveLoginReturnPath(location.state)
 
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
@@ -68,9 +70,8 @@ export function LoginPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
+              <PasswordInput
                 id="password"
-                type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 autoComplete="current-password"
@@ -92,7 +93,7 @@ export function LoginPage() {
             <Separator className="flex-1" />
           </div>
 
-          <GoogleSignInButton />
+          <GoogleSignInButton returnTo={from} />
 
           <p className="text-center text-sm text-muted-foreground">
             New here? Sign in with your DIU Google account to create your

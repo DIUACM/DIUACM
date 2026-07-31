@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PasswordInput } from '@/components/ui/password-input'
 import {
   Select,
   SelectContent,
@@ -198,11 +199,12 @@ export function EventForm({ initial, submitLabel, isPending, onSubmit }: EventFo
         </div>
         <div className="space-y-2">
           <Label htmlFor="e-password">Event password</Label>
-          <Input
+          <PasswordInput
             id="e-password"
             value={form.eventPassword}
             onChange={(event) => set('eventPassword', event.target.value)}
             placeholder="For attendance"
+            autoComplete="off"
           />
         </div>
       </div>

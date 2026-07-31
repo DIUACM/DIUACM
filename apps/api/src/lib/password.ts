@@ -2,7 +2,7 @@
 // Cloudflare Workers, so no `nodejs_compat` or third-party dependency is needed.
 // Stored format: `pbkdf2:<iterations>:<saltHex>:<hashHex>`.
 
-const PBKDF2_ITERATIONS = 100_000;
+const PBKDF2_ITERATIONS = 600_000;
 const SALT_BYTES = 16;
 const DERIVED_BITS = 256;
 
@@ -51,7 +51,10 @@ export const verifyPassword = async (
   const [scheme, iterStr, saltHex, hashHex] = stored.split(":");
   if (scheme !== "pbkdf2" || !iterStr || !saltHex || !hashHex) return false;
 
-  const computed = await pbkdf2(password, hexToBytes(saltHex), parseInt(iterStr, 10));
+  const iterations = Number.parseInt(iterStr, 10);
+  if (!Number.isSafeInteger(iterations) || iterations <= 0) return false;
+
+  const computed = await pbkdf2(password, hexToBytes(saltHex), iterations);
   const expected = hexToBytes(hashHex);
   if (computed.length !== expected.length) return false;
 
@@ -59,4 +62,12 @@ export const verifyPassword = async (
   let diff = 0;
   for (let i = 0; i < computed.length; i++) diff |= computed[i] ^ expected[i];
   return diff === 0;
+};
+
+/** True when a valid stored PBKDF2 hash predates the current work factor. */
+export const needsPasswordRehash = (stored: string): boolean => {
+  const [scheme, iterStr] = stored.split(":");
+  if (scheme !== "pbkdf2" || !iterStr) return false;
+  const iterations = Number.parseInt(iterStr, 10);
+  return Number.isSafeInteger(iterations) && iterations > 0 && iterations < PBKDF2_ITERATIONS;
 };

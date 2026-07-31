@@ -12,8 +12,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PasswordInput } from '@/components/ui/password-input'
 
 export function AttendanceDialog({ eventId }: { eventId: number }) {
   const [open, setOpen] = useState(false)
@@ -47,10 +47,11 @@ export function AttendanceDialog({ eventId }: { eventId: number }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="event-password">Event password</Label>
-            <Input
+            <PasswordInput
               id="event-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
+              autoComplete="off"
               autoFocus
               required
             />

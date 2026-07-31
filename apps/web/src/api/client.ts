@@ -37,7 +37,10 @@ const authMiddleware: Middleware = {
     // the login endpoints, where it just means wrong credentials (the
     // middleware attaches the stored token to those requests too).
     const isLoginRequest = /\/auth\/(login|google)$/.test(new URL(request.url).pathname)
-    if (response.status === 401 && request.headers.has('Authorization') && !isLoginRequest) {
+    const isIdentityRequest = new URL(request.url).pathname === '/auth/me'
+    const invalidSession =
+      response.status === 401 || (response.status === 404 && isIdentityRequest)
+    if (invalidSession && request.headers.has('Authorization') && !isLoginRequest) {
       onUnauthorized?.()
     }
     return response

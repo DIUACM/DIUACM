@@ -7,7 +7,7 @@ import { z } from "zod";
 // Accept either the email or the username in a single `identifier` field.
 export const loginSchema = z.object({
   identifier: z.string().trim().min(1),
-  password: z.string().min(1),
+  password: z.string().min(1).max(128),
 });
 
 export const googleSignInSchema = z.object({
