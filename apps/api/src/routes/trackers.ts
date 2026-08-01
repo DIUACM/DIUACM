@@ -4,6 +4,7 @@ import { HTTPException } from "hono/http-exception";
 
 import { getDb } from "../db/client";
 import {
+  eventAttendance,
   eventPerformance,
   events,
   ranklistEvents,
@@ -108,7 +109,11 @@ trackerRoutes.get("/:slug/:keyword", async (c) => {
   if (!tracker) throw new HTTPException(404, { message: "Ranklist not found" });
 
   const [ranklist] = await db
-    .select({ id: ranklists.id, keyword: ranklists.keyword })
+    .select({
+      id: ranklists.id,
+      keyword: ranklists.keyword,
+      considerStrictAttendance: ranklists.considerStrictAttendance,
+    })
     .from(ranklists)
     .where(
       and(
@@ -125,6 +130,7 @@ trackerRoutes.get("/:slug/:keyword", async (c) => {
       id: events.id,
       title: events.title,
       startingAt: events.startingAt,
+      strictAttendance: events.strictAttendance,
       weight: ranklistEvents.weight,
     })
     .from(ranklistEvents)
@@ -148,6 +154,9 @@ trackerRoutes.get("/:slug/:keyword", async (c) => {
     .orderBy(asc(ranklistUsers.rank), desc(ranklistUsers.score));
 
   const eventIds = eventRows.map((e) => e.id);
+  const strictEventIds = new Set(
+    eventRows.filter((event) => event.strictAttendance).map((event) => event.id),
+  );
   const userIds = userRows.map((u) => u.userId);
 
   type PerfEntry = {
@@ -175,8 +184,16 @@ trackerRoutes.get("/:slug/:keyword", async (c) => {
               position: eventPerformance.position,
               solveCount: eventPerformance.solveCount,
               upsolveCount: eventPerformance.upsolveCount,
+              attendedUserId: eventAttendance.userId,
             })
             .from(eventPerformance)
+            .leftJoin(
+              eventAttendance,
+              and(
+                eq(eventAttendance.eventId, eventPerformance.eventId),
+                eq(eventAttendance.userId, eventPerformance.userId),
+              ),
+            )
             .where(
               and(
                 inArray(eventPerformance.eventId, eventChunk),
@@ -187,12 +204,16 @@ trackerRoutes.get("/:slug/:keyword", async (c) => {
       ),
     );
     for (const p of perfRowGroups.flat()) {
+      const strictAbsence =
+        ranklist.considerStrictAttendance &&
+        strictEventIds.has(p.eventId) &&
+        p.attendedUserId === null;
       const list = perfByUser.get(p.userId) ?? [];
       list.push({
         eventId: p.eventId,
         position: p.position,
-        solveCount: p.solveCount,
-        upsolveCount: p.upsolveCount,
+        solveCount: strictAbsence ? 0 : p.solveCount,
+        upsolveCount: strictAbsence ? p.upsolveCount + p.solveCount : p.upsolveCount,
       });
       perfByUser.set(p.userId, list);
     }
@@ -200,7 +221,12 @@ trackerRoutes.get("/:slug/:keyword", async (c) => {
 
   return c.json({
     keyword: ranklist.keyword,
-    events: eventRows,
+    events: eventRows.map((event) => ({
+      id: event.id,
+      title: event.title,
+      startingAt: event.startingAt,
+      weight: event.weight,
+    })),
     users: userRows.map((u) => ({
       user: toUserSummary(
         { id: u.userId, name: u.name, username: u.username, imageKey: u.imageKey },
