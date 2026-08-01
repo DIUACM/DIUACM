@@ -4,6 +4,16 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-06-20",
   "compatibility_flags": ["nodejs_compat"],
+  // Production traffic is served only through the managed Custom Domain.
+  // Cloudflare creates the DNS record and edge certificate during deployment.
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "api.diuacm.com",
+      "custom_domain": true
+    }
+  ],
   "observability": {
     "enabled": true
   },
@@ -72,7 +82,7 @@
   "vars": {
     // Browser origins allowed to call the API (comma-separated). Localhost is
     // always allowed in addition; an empty value allows every origin.
-    "CORS_ORIGINS": "https://diuacm-web-prod.sourov-cse.workers.dev",
+    "CORS_ORIGINS": "https://diuacm.com",
     // Google OAuth client id (public value — fine to commit). The ID token's
     // `aud` claim must match this. Replace with your own from the Google Cloud
     // console (OAuth 2.0 Client IDs).

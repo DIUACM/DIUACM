@@ -10,7 +10,8 @@
     "lint": "oxlint",
     "test": "vitest run",
     "preview": "vite preview",
-    "api:types": "openapi-typescript https://diuacm-api-prod.sourov-cse.workers.dev/openapi.json -o src/api/schema.d.ts",
+    "cf-typegen": "wrangler types src/worker-configuration.d.ts",
+    "api:types": "openapi-typescript https://api.diuacm.com/openapi.json -o src/api/schema.d.ts",
     "deploy": "pnpm build && wrangler deploy"
   },
   "dependencies": {
@@ -69,6 +70,6 @@
     "typescript": "~5.9.0",
     "vite": "^8.1.1",
     "vitest": "^4.1.10",
-    "wrangler": "^4.112.0"
+    "wrangler": "^4.118.0"
   }
 }

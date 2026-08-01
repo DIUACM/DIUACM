@@ -2,9 +2,9 @@
 
 Frontend for **DIU ACM** — the competitive programming community of Daffodil
 International University. A React SPA served as Cloudflare Workers static
-assets, backed by the [diuacm API](https://diuacm-api-prod.sourov-cse.workers.dev/openapi.json).
+assets, backed by the [diuacm API](https://api.diuacm.com/openapi.json).
 
-**Live:** https://diuacm-web-prod.sourov-cse.workers.dev
+**Live:** https://diuacm.com
 
 ## Stack
 
@@ -37,7 +37,7 @@ pnpm api:types       # regenerate src/api/schema.d.ts from the live OpenAPI spec
 
 The API base URL is selected automatically: the Vite development server uses
 the local `wrangler dev` API at http://localhost:8787, while production builds
-use the deployed backend. To point either mode elsewhere, copy `.env.example`
+use https://api.diuacm.com. To point either mode elsewhere, copy `.env.example`
 to `.env.local` and set `VITE_API_BASE_URL`.
 
 The admin area and the blog post reader are code-split (`lazy` routes in
@@ -49,3 +49,7 @@ Static assets are served with the security/caching headers in `public/_headers`.
 ```sh
 pnpm run deploy      # build + wrangler deploy (needs `wrangler login`)
 ```
+
+The production Worker is attached to `diuacm.com` as a Cloudflare Custom
+Domain. Its public `workers.dev` and version-preview URLs are disabled. The
+Worker permanently redirects HTTP to HTTPS and serves HSTS on HTTPS responses.

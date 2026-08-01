@@ -34,7 +34,7 @@ CI (`.github/workflows/ci.yml`) runs typecheck, lint, both API runtimes, the web
 build and bundle budget, and browser smoke tests on every push to `main` and
 every pull request.
 
-## Stage deployment
+## Production deployment
 
 One-time setup (see [`apps/api/README.md`](apps/api/README.md) for details):
 
@@ -52,3 +52,8 @@ pnpm --filter @diuacm/api db:migrate:remote   # apply pending D1 migrations
 pnpm deploy:api
 pnpm deploy:web
 ```
+
+Production traffic uses Cloudflare-managed Custom Domains: `api.diuacm.com`
+for the API and `diuacm.com` for the web app. Wrangler provisions their DNS
+records and edge certificates from the committed app configurations; the
+temporary `workers.dev` and version-preview URLs are disabled.

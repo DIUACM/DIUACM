@@ -20,6 +20,18 @@ const app = new Hono<AppEnv>();
 
 app.use("*", logger());
 
+// The Cloudflare zone does not currently enforce Always Use HTTPS globally.
+// Keep this scoped to the production API hostname so local HTTP development
+// remains usable while public credentials and responses never travel in clear.
+app.use("*", async (c, next) => {
+  const url = new URL(c.req.url);
+  if (url.hostname === "api.diuacm.com" && url.protocol === "http:") {
+    url.protocol = "https:";
+    return c.redirect(url.toString(), 308);
+  }
+  await next();
+});
+
 // Public R2-backed files are embedded by the separately hosted web app. This
 // middleware must be registered before secureHeaders() so its response header
 // is applied last and overrides the default CORP value of "same-origin".
