@@ -87,6 +87,7 @@ export function EventForm({ initial, submitLabel, isPending, onSubmit }: EventFo
                 title: details.title,
                 description: details.description || prev.description,
                 type: 'contest',
+                status: 'published',
                 startingAt: epochToLocalInput(details.startingAt),
                 endingAt: epochToLocalInput(details.endingAt),
                 eventLink: link,
