@@ -24,11 +24,11 @@ const legacyHash = async (password: string): Promise<string> => {
     ["deriveBits"],
   );
   const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", hash: "SHA-256", salt, iterations: 100_000 },
+    { name: "PBKDF2", hash: "SHA-256", salt, iterations: 50_000 },
     key,
     256,
   );
-  return `pbkdf2:100000:${bytesToHex(salt)}:${bytesToHex(new Uint8Array(bits))}`;
+  return `pbkdf2:50000:${bytesToHex(salt)}:${bytesToHex(new Uint8Array(bits))}`;
 };
 
 describe("authentication routes", () => {
@@ -89,7 +89,7 @@ describe("authentication routes", () => {
     const row = db
       .prepare("SELECT password_hash FROM users WHERE id = 1")
       .get() as { password_hash: string };
-    expect(row.password_hash).toMatch(/^pbkdf2:600000:/);
+    expect(row.password_hash).toMatch(/^pbkdf2:100000:/);
   });
 
   it("accepts and upgrades an imported Laravel bcrypt hash", async () => {
@@ -102,7 +102,7 @@ describe("authentication routes", () => {
     const row = db
       .prepare("SELECT password_hash FROM users WHERE id = 1")
       .get() as { password_hash: string };
-    expect(row.password_hash).toMatch(/^pbkdf2:600000:/);
+    expect(row.password_hash).toMatch(/^pbkdf2:100000:/);
   });
 
   it("returns 401 when a valid token points to a deleted account", async () => {

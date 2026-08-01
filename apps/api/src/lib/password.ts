@@ -1,10 +1,12 @@
 import { compare as compareBcrypt } from "bcryptjs";
 
-// New passwords use PBKDF2 over the Web Crypto API, available globally on
-// Cloudflare Workers without `nodejs_compat`. Stored format:
+// New passwords use PBKDF2 over the Web Crypto API. Cloudflare Workers caps
+// PBKDF2 at 100,000 iterations, so both hashing and verification enforce that
+// platform limit. Stored format:
 // `pbkdf2:<iterations>:<saltHex>:<hashHex>`.
 
-const PBKDF2_ITERATIONS = 600_000;
+const PBKDF2_ITERATIONS = 100_000;
+const MAX_PBKDF2_ITERATIONS = 100_000;
 const SALT_BYTES = 16;
 const DERIVED_BITS = 256;
 const BCRYPT_HASH = /^\$2[aby]\$(?:0[4-9]|1[0-5])\$[./A-Za-z0-9]{53}$/;
@@ -65,7 +67,13 @@ export const verifyPassword = async (
   if (scheme !== "pbkdf2" || !iterStr || !saltHex || !hashHex) return false;
 
   const iterations = Number.parseInt(iterStr, 10);
-  if (!Number.isSafeInteger(iterations) || iterations <= 0) return false;
+  if (
+    !Number.isSafeInteger(iterations) ||
+    iterations <= 0 ||
+    iterations > MAX_PBKDF2_ITERATIONS
+  ) {
+    return false;
+  }
 
   const computed = await pbkdf2(password, hexToBytes(saltHex), iterations);
   const expected = hexToBytes(hashHex);

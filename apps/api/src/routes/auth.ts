@@ -62,7 +62,7 @@ const MAX_USERNAME_ATTEMPTS = 5;
 // login response time doesn't reveal which accounts exist. Random bytes — no
 // password hashes to this.
 const DUMMY_PASSWORD_HASH =
-  "pbkdf2:600000:0ff513e3ffa428aa68c413ef893e989f:92ceb9e253443292d9022b2e012fc4a2f0b8b8a3092667a7ca809fdf1fa33348";
+  "pbkdf2:100000:0ff513e3ffa428aa68c413ef893e989f:92ceb9e253443292d9022b2e012fc4a2f0b8b8a3092667a7ca809fdf1fa33348";
 
 // 24-bit hex; ~16.7M space, collision odds vanishingly small. We still retry on
 // the unique constraint below to be defensive.

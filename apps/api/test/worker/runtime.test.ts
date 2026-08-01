@@ -3,6 +3,7 @@ import { applyD1Migrations } from "cloudflare:test";
 import { beforeAll, describe, expect, it } from "vitest";
 
 import "../../src";
+import { hashPassword, verifyPassword } from "../../src/lib/password";
 
 beforeAll(async () => {
   await applyD1Migrations(env.DB, env.TEST_MIGRATIONS);
@@ -49,5 +50,13 @@ describe("Worker runtime integration", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers.get("access-control-allow-origin")).toBe(env.CORS_ORIGINS);
+  });
+
+  it("supports the production PBKDF2 work factor inside workerd", async () => {
+    const hash = await hashPassword("worker-runtime-password");
+
+    expect(hash).toMatch(/^pbkdf2:100000:/);
+    await expect(verifyPassword("worker-runtime-password", hash)).resolves.toBe(true);
+    await expect(verifyPassword("wrong-password", hash)).resolves.toBe(false);
   });
 });
