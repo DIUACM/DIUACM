@@ -36,6 +36,8 @@ const authUserColumns = {
   studentId: users.studentId,
   imageKey: users.imageKey,
   maxCfRating: users.maxCfRating,
+  isBanned: users.isBanned,
+  banReason: users.banReason,
   createdAt: users.createdAt,
   updatedAt: users.updatedAt,
 };
@@ -96,6 +98,11 @@ auth.post("/login", authRateLimit, validate("json", loginSchema), async (c) => {
   const passwordOk = await verifyPassword(password, row?.passwordHash ?? DUMMY_PASSWORD_HASH);
   if (!row || !row.passwordHash || !passwordOk) {
     throw new HTTPException(401, { message: "Invalid email/username or password" });
+  }
+  if (row.isBanned) {
+    throw new HTTPException(403, {
+      message: row.banReason ? `Account banned: ${row.banReason}` : "Account banned",
+    });
   }
 
   // Existing hashes remain valid and are upgraded opportunistically only after
@@ -181,6 +188,12 @@ auth.post("/google", authRateLimit, validate("json", googleSignInSchema), async 
         message: "Could not create user from Google sign-in",
       });
     }
+  }
+
+  if (user.isBanned) {
+    throw new HTTPException(403, {
+      message: user.banReason ? `Account banned: ${user.banReason}` : "Account banned",
+    });
   }
 
   const token = await signAuthToken(

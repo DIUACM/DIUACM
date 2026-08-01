@@ -48,6 +48,10 @@ export const adminUserUpdateSchema = z.object({
   password: passwordField.nullable().optional(),
   studentId: studentIdField.nullable().optional(),
   maxCfRating: z.number().int().nullable().optional(),
+  isBanned: z.boolean().optional(),
+  // Publicly visible in the banned badge hover card. Route-level validation
+  // requires it together with isBanned so partial updates cannot drift.
+  banReason: z.string().trim().min(1).max(500).nullable().optional(),
 });
 
 // Path param for the toggle endpoint (PUT /admin/users/:id/permissions/:permission).

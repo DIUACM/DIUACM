@@ -112,6 +112,11 @@ const userSchema = {
       type: ["integer", "null"],
       description: "Highest Codeforces rating reached, or null if not set.",
     },
+    isBanned: { type: "boolean", description: "Whether this account is banned." },
+    banReason: {
+      type: ["string", "null"],
+      description: "Public ban reason, or null when the account is not banned.",
+    },
     permissions: {
       type: "array",
       items: ref("Permission"),
@@ -133,6 +138,8 @@ const userSchema = {
     "studentId",
     "image",
     "maxCfRating",
+    "isBanned",
+    "banReason",
     "permissions",
     "isSuperAdmin",
     "createdAt",
@@ -153,8 +160,10 @@ const userSummarySchema = {
     name: { type: "string" },
     username: { type: "string" },
     image: { type: ["string", "null"], format: "uri" },
+    isBanned: { type: "boolean" },
+    banReason: { type: ["string", "null"], description: "Public ban reason." },
   },
-  required: ["id", "name", "username", "image"],
+  required: ["id", "name", "username", "image", "isBanned", "banReason"],
 };
 
 const authResponseSchema = {
@@ -470,9 +479,20 @@ const programmerListItemSchema = {
     username: { type: "string" },
     image: { type: ["string", "null"], format: "uri" },
     maxCfRating: { type: ["integer", "null"] },
+    isBanned: { type: "boolean" },
+    banReason: { type: ["string", "null"] },
     handles: ref("HandlesMap"),
   },
-  required: ["id", "name", "username", "image", "maxCfRating", "handles"],
+  required: [
+    "id",
+    "name",
+    "username",
+    "image",
+    "maxCfRating",
+    "isBanned",
+    "banReason",
+    "handles",
+  ],
 };
 
 const programmerListSchema = {
@@ -517,10 +537,22 @@ const programmerDetailSchema = {
     username: { type: "string" },
     image: { type: ["string", "null"], format: "uri" },
     maxCfRating: { type: ["integer", "null"] },
+    isBanned: { type: "boolean" },
+    banReason: { type: ["string", "null"] },
     handles: ref("HandlesMap"),
     trackerPerformance: { type: "array", items: ref("TrackerPerformanceEntry") },
   },
-  required: ["id", "name", "username", "image", "maxCfRating", "handles", "trackerPerformance"],
+  required: [
+    "id",
+    "name",
+    "username",
+    "image",
+    "maxCfRating",
+    "isBanned",
+    "banReason",
+    "handles",
+    "trackerPerformance",
+  ],
 };
 
 const galleryAlbumListItemSchema = {
@@ -1148,7 +1180,8 @@ accounts only — the super admin's email is exempt from the domain restriction)
 new accounts are created on first Google sign-in. \`POST /auth/login\` (email or
 username + password) works for accounts an admin gave a password to.
 
-Every successful auth response includes a JWT — pass it on authenticated requests:
+Every successful auth response includes a JWT — pass it on authenticated requests.
+Bans immediately reject both new sign-ins and existing JWTs:
 
 \`\`\`
 Authorization: Bearer <token>
@@ -1860,7 +1893,7 @@ export const openApiDoc = {
       },
       patch: {
         tags: ["admin-users"],
-        summary: "Update a user (including password)",
+        summary: "Update a user, password, or ban state",
         ...access("manage_users"),
         parameters: [idParam("id")],
         requestBody: { required: true, content: jsonBody(ref("AdminUserUpdateRequest")) },

@@ -244,6 +244,33 @@ describe("rank triggers", () => {
     expect(member(db, 1, 2)?.rank).toBe(1);
     expect(member(db, 1, 3)?.rank).toBe(2);
   });
+
+  it("keeps banned members at score -1 and last until they are unbanned", () => {
+    insertEvent(db, 1);
+    insertRanklist(db, 1, 1);
+    attachEvent(db, 1, 1, 1);
+    for (const [id, solve] of [
+      [1, 10],
+      [2, 5],
+      [3, 1],
+    ] as const) {
+      insertUser(db, id);
+      addMember(db, 1, id);
+      setPerformance(db, 1, id, solve, 0);
+    }
+
+    db.prepare("UPDATE users SET is_banned = 1, ban_reason = 'Abuse' WHERE id = 2").run();
+    expect(member(db, 1, 2)).toMatchObject({ score: -1, rank: 3 });
+    expect(member(db, 1, 3)?.rank).toBe(2);
+
+    // Future sync writes must not restore the computed score while banned.
+    setPerformance(db, 1, 2, 20, 0);
+    expect(member(db, 1, 2)).toMatchObject({ score: -1, rank: 3 });
+
+    db.prepare("UPDATE users SET is_banned = 0, ban_reason = NULL WHERE id = 2").run();
+    expect(member(db, 1, 2)).toMatchObject({ score: 20, rank: 1 });
+    expect(member(db, 1, 1)?.rank).toBe(2);
+  });
 });
 
 describe("auto-add triggers", () => {

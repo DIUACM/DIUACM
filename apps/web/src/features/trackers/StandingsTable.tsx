@@ -40,6 +40,7 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router'
 import { UserAvatar } from '@/components/shared/UserAvatar'
+import { BannedBadge } from '@/components/shared/BannedBadge'
 import { Button } from '@/components/ui/button'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { formatDate, formatDateTime } from '@/lib/datetime'
@@ -54,7 +55,7 @@ import { cn } from '@/lib/utils'
 const INITIAL_USER_COUNT = 30
 const USER_BATCH_SIZE = 30
 const RANK_COLUMN_WIDTH = 56
-const PARTICIPANT_COLUMN_WIDTH = 176
+const PARTICIPANT_COLUMN_WIDTH = 224
 const SCORE_COLUMN_WIDTH = 80
 const EVENT_COLUMN_WIDTH = 144
 const NON_EVENT_COLUMNS_WIDTH =
@@ -400,11 +401,18 @@ const StandingRow = memo(function StandingRow({
       </td>
       <td
         className={cn(
-          'sticky left-14 z-10 w-44 px-3 py-2.5 transition-colors',
+          'sticky left-14 z-10 w-56 px-3 py-2.5 transition-colors',
           isDragging ? 'bg-muted' : 'bg-card group-hover:bg-muted',
         )}
       >
-        <ParticipantOverview standing={standing} />
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <ParticipantOverview standing={standing} />
+          </div>
+          {standing.user.isBanned && (
+            <BannedBadge reason={standing.user.banReason} className="h-5 px-2" />
+          )}
+        </div>
       </td>
       <td className="w-20 px-3 py-2.5 text-right font-semibold tabular-nums">
         {standing.score.toFixed(2)}
@@ -546,7 +554,7 @@ export function StandingsTable({
               >
                 #
               </th>
-              <th className="sticky left-14 z-20 w-44 bg-muted px-3 py-3 font-medium">
+              <th className="sticky left-14 z-20 w-56 bg-muted px-3 py-3 font-medium">
                 Participant
               </th>
               <th className="w-20 px-3 py-3 text-right font-medium">Score</th>

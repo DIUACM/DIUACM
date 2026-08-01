@@ -62,6 +62,8 @@ adminRanklistRoutes.get("/:id", manageTrackers, async (c) => {
         name: users.name,
         username: users.username,
         imageKey: users.imageKey,
+        isBanned: users.isBanned,
+        banReason: users.banReason,
         score: ranklistUsers.score,
         rank: ranklistUsers.rank,
         autoAdded: ranklistUsers.autoAdded,
@@ -77,7 +79,14 @@ adminRanklistRoutes.get("/:id", manageTrackers, async (c) => {
     events: eventRows,
     users: userRows.map((u) => ({
       user: toUserSummary(
-        { id: u.userId, name: u.name, username: u.username, imageKey: u.imageKey },
+        {
+          id: u.userId,
+          name: u.name,
+          username: u.username,
+          imageKey: u.imageKey,
+          isBanned: u.isBanned,
+          banReason: u.banReason,
+        },
         origin,
       ),
       score: u.score,

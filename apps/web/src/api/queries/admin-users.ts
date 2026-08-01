@@ -63,6 +63,8 @@ export interface AdminUserUpdateInput {
   password?: string | null
   studentId?: string | null
   maxCfRating?: number | null
+  isBanned?: boolean
+  banReason?: string | null
 }
 
 export function useAdminUpdateUser(id: number) {

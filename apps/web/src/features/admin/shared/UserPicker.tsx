@@ -3,6 +3,7 @@ import { useAdminUsers } from '@/api/queries/admin-users'
 import { errorMessage } from '@/api/client'
 import { SearchDropdown } from '@/features/admin/shared/SearchDropdown'
 import { UserAvatar } from '@/components/shared/UserAvatar'
+import { BannedBadge } from '@/components/shared/BannedBadge'
 import type { UserSummary } from '@/api/types'
 
 interface UserPickerProps {
@@ -49,12 +50,15 @@ function UserResults({
           name: user.name,
           username: user.username,
           image: user.image,
+          isBanned: user.isBanned,
+          banReason: user.banReason,
         })
       }
     >
       <UserAvatar name={user.name} image={user.image} className="size-6" />
       <span className="font-medium">{user.name}</span>
       <span className="text-muted-foreground">@{user.username}</span>
+      {user.isBanned && <BannedBadge reason={user.banReason} className="h-5 px-2" />}
     </button>
   ))
 }

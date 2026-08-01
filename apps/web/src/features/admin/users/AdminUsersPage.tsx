@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
 import { useAdminCreateUser, useAdminUsers } from '@/api/queries/admin-users'
 import { CfRatingBadge } from '@/components/shared/CfRatingBadge'
+import { BannedBadge } from '@/components/shared/BannedBadge'
 import { DataPanel } from '@/components/shared/DataPanel'
 import { Pagination } from '@/components/shared/Pagination'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -243,6 +244,9 @@ export function AdminUsersPage() {
                           className="size-7"
                         />
                         <span className="font-medium">{user.name}</span>
+                        {user.isBanned && (
+                          <BannedBadge reason={user.banReason} className="h-5 px-2" />
+                        )}
                         <span className="text-muted-foreground">
                           @{user.username}
                         </span>

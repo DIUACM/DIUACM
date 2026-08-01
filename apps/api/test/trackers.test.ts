@@ -96,4 +96,33 @@ describe("ranklist standings", () => {
       ),
     ).toEqual({ eventId: 1, position: null, solveCount: 3, upsolveCount: 2 });
   });
+
+  it("returns banned users last with their public reason and score -1", async () => {
+    insertUser(db, 1);
+    insertUser(db, 2);
+    insertEvent(db, 1);
+    insertRanklist(db, 1, 1);
+    db.prepare("UPDATE ranklists SET status = 'published' WHERE id = 1").run();
+    attachEvent(db, 1, 1, 1);
+    addMember(db, 1, 1);
+    addMember(db, 1, 2);
+    setPerformance(db, 1, 1, 1, 0);
+    setPerformance(db, 1, 2, 10, 0);
+    db.prepare("UPDATE users SET is_banned = 1, ban_reason = 'Public reason' WHERE id = 2").run();
+
+    const response = await app.request(
+      "/trackers/tracker-1/keyword-1",
+      {},
+      { DB: d1Shim(db), CORS_ORIGINS: "" },
+    );
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(body.users.map((row: { user: { id: number } }) => row.user.id)).toEqual([1, 2]);
+    expect(body.users[1]).toMatchObject({
+      score: -1,
+      rank: 2,
+      user: { isBanned: true, banReason: "Public reason" },
+    });
+  });
 });

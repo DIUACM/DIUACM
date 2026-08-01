@@ -41,6 +41,8 @@ const userColumns = {
   studentId: users.studentId,
   imageKey: users.imageKey,
   maxCfRating: users.maxCfRating,
+  isBanned: users.isBanned,
+  banReason: users.banReason,
   createdAt: users.createdAt,
   updatedAt: users.updatedAt,
 };
@@ -315,8 +317,21 @@ adminUserRoutes.patch("/:id", manageUsers, validate("json", adminUserUpdateSchem
   const id = parseId(c.req.param("id"));
   if (id === null) throw new HTTPException(404, { message: "User not found" });
 
-  const { password, ...input } = c.req.valid("json");
-  if (password === undefined && Object.keys(input).length === 0) {
+  const { password, isBanned, banReason, ...input } = c.req.valid("json");
+  if (
+    isBanned === undefined !== (banReason === undefined) ||
+    (isBanned === true && banReason === null) ||
+    (isBanned === false && banReason !== null)
+  ) {
+    throw new HTTPException(400, {
+      message: "isBanned and banReason must be updated together",
+    });
+  }
+  if (
+    password === undefined &&
+    isBanned === undefined &&
+    Object.keys(input).length === 0
+  ) {
     throw new HTTPException(400, { message: "No fields to update" });
   }
 
@@ -332,6 +347,12 @@ adminUserRoutes.patch("/:id", manageUsers, validate("json", adminUserUpdateSchem
     .limit(1);
   if (!target) throw new HTTPException(404, { message: "User not found" });
   const targetIsSuperAdmin = isSuperAdminEmail(target.email, c.env.SUPER_ADMIN_EMAIL);
+  if (isBanned && id === c.get("user").sub) {
+    throw new HTTPException(400, { message: "You cannot ban yourself" });
+  }
+  if (isBanned && targetIsSuperAdmin) {
+    throw new HTTPException(400, { message: "The super admin cannot be banned" });
+  }
   if (targetIsSuperAdmin && !c.get("callerIsSuperAdmin")) {
     throw new HTTPException(403, {
       message: "Only the super admin can modify the super admin account",
@@ -348,10 +369,19 @@ adminUserRoutes.patch("/:id", manageUsers, validate("json", adminUserUpdateSchem
   const passwordHash =
     password === undefined ? undefined : password === null ? null : await hashPassword(password);
   const email = input.email === undefined ? undefined : input.email.trim().toLowerCase();
+  const normalizedBanReason =
+    isBanned === undefined ? undefined : isBanned ? banReason : null;
 
   const [updated] = await db
     .update(users)
-    .set({ ...input, email, passwordHash, updatedAt: Math.floor(Date.now() / 1000) })
+    .set({
+      ...input,
+      email,
+      passwordHash,
+      isBanned,
+      banReason: normalizedBanReason,
+      updatedAt: Math.floor(Date.now() / 1000),
+    })
     .where(eq(users.id, id))
     .returning(userColumns);
   if (!updated) throw new HTTPException(404, { message: "User not found" });

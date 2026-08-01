@@ -400,7 +400,14 @@ adminEventRoutes.put(
     await loadEvent(db, id);
 
     const [user] = await db
-      .select({ id: users.id, name: users.name, username: users.username, imageKey: users.imageKey })
+      .select({
+        id: users.id,
+        name: users.name,
+        username: users.username,
+        imageKey: users.imageKey,
+        isBanned: users.isBanned,
+        banReason: users.banReason,
+      })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);

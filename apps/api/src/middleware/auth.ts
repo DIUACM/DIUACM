@@ -26,23 +26,31 @@ const authenticate = async (c: Context<AppEnv>): Promise<AuthPayload> => {
 // blanket requireAuth on /admin) instead of verifying the token twice.
 const ensureAuthenticated = async (c: Context<AppEnv>): Promise<AuthPayload> => {
   const existing = c.var.user as AuthPayload | undefined;
-  if (existing) return existing;
-  const payload = await authenticate(c);
-  c.set("user", payload);
-  return payload;
-};
+  const existingAccount = c.var.authAccount as AppEnv["Variables"]["authAccount"] | undefined;
+  if (existing && existingAccount) return existing;
 
-// The caller's email, read from the database (not the token) so account
-// changes take effect immediately.
-const loadEmail = async (c: Context<AppEnv>, userId: number): Promise<string> => {
+  const payload = existing ?? (await authenticate(c));
   const db = getDb(c.env.DB);
-  const [row] = await db
-    .select({ email: users.email })
+  const [account] = await db
+    .select({
+      id: users.id,
+      email: users.email,
+      isBanned: users.isBanned,
+      banReason: users.banReason,
+    })
     .from(users)
-    .where(eq(users.id, userId))
+    .where(eq(users.id, payload.sub))
     .limit(1);
-  if (!row) throw new HTTPException(401, { message: "Account no longer exists" });
-  return row.email;
+  if (!account) throw new HTTPException(401, { message: "Account no longer exists" });
+  if (account.isBanned) {
+    throw new HTTPException(401, {
+      message: account.banReason ? `Account banned: ${account.banReason}` : "Account banned",
+    });
+  }
+
+  c.set("user", payload);
+  c.set("authAccount", account);
+  return payload;
 };
 
 /** Require a valid `Authorization: Bearer <jwt>`; populates `c.var.user`. */
@@ -60,7 +68,7 @@ export const requireAuth = createMiddleware<AppEnv>(async (c, next) => {
 export const requirePermission = (permission: Permission) =>
   createMiddleware<AppEnv>(async (c, next) => {
     const payload = await ensureAuthenticated(c);
-    const email = await loadEmail(c, payload.sub);
+    const email = c.get("authAccount").email;
     const isSuper = isSuperAdminEmail(email, c.env.SUPER_ADMIN_EMAIL);
     c.set("callerIsSuperAdmin", isSuper);
     if (!isSuper) {
@@ -84,8 +92,8 @@ export const requirePermission = (permission: Permission) =>
 
 /** Require the super admin (email matches SUPER_ADMIN_EMAIL). */
 export const requireSuperAdmin = createMiddleware<AppEnv>(async (c, next) => {
-  const payload = await ensureAuthenticated(c);
-  const email = await loadEmail(c, payload.sub);
+  await ensureAuthenticated(c);
+  const email = c.get("authAccount").email;
   if (!isSuperAdminEmail(email, c.env.SUPER_ADMIN_EMAIL)) {
     throw new HTTPException(403, { message: "Super admin access required" });
   }

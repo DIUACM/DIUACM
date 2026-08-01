@@ -199,7 +199,16 @@ eventRoutes.get("/:id/attendance", async (c) => {
     where: eq(eventAttendance.eventId, id),
     columns: { createdAt: true },
     with: {
-      user: { columns: { id: true, name: true, username: true, imageKey: true } },
+      user: {
+        columns: {
+          id: true,
+          name: true,
+          username: true,
+          imageKey: true,
+          isBanned: true,
+          banReason: true,
+        },
+      },
     },
     orderBy: desc(eventAttendance.createdAt),
   });
@@ -239,6 +248,8 @@ eventRoutes.get("/:id/performance", async (c) => {
       userName: users.name,
       userUsername: users.username,
       userImageKey: users.imageKey,
+      userIsBanned: users.isBanned,
+      userBanReason: users.banReason,
     })
     .from(eventPerformance)
     .innerJoin(users, eq(eventPerformance.userId, users.id))
@@ -252,7 +263,14 @@ eventRoutes.get("/:id/performance", async (c) => {
       solveCount: r.solveCount,
       upsolveCount: r.upsolveCount,
       user: toUserSummary(
-        { id: r.userId, name: r.userName, username: r.userUsername, imageKey: r.userImageKey },
+        {
+          id: r.userId,
+          name: r.userName,
+          username: r.userUsername,
+          imageKey: r.userImageKey,
+          isBanned: r.userIsBanned,
+          banReason: r.userBanReason,
+        },
         origin,
       ),
     })),

@@ -1630,7 +1630,7 @@ export interface paths {
         options?: never;
         head?: never;
         /**
-         * Update a user (including password)
+         * Update a user, password, or ban state
          * @description **Access:** `manage_users` — Requires a bearer token for a user granted the `manage_users` permission. The super admin always passes.
          */
         patch: {
@@ -2160,6 +2160,15 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
+                /** @description Event link already exists */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
             };
         };
         delete?: never;
@@ -2439,6 +2448,15 @@ export interface paths {
                 };
                 /** @description Event not found */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Event link already exists */
+                409: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -6289,6 +6307,10 @@ export interface components {
             image: string | null;
             /** @description Highest Codeforces rating reached, or null if not set. */
             maxCfRating: number | null;
+            /** @description Whether this account is banned. */
+            isBanned: boolean;
+            /** @description Public ban reason, or null when the account is not banned. */
+            banReason: string | null;
             /** @description Effective admin-panel permissions. The super admin always reports all of them. */
             permissions: components["schemas"]["Permission"][];
             /** @description True when this user's email matches the configured `SUPER_ADMIN_EMAIL`. */
@@ -6309,6 +6331,9 @@ export interface components {
             username: string;
             /** Format: uri */
             image: string | null;
+            isBanned: boolean;
+            /** @description Public ban reason. */
+            banReason: string | null;
         };
         AuthResponse: {
             /** @description JWT — send as `Authorization: Bearer <token>`. */
@@ -6506,6 +6531,8 @@ export interface components {
             /** Format: uri */
             image: string | null;
             maxCfRating: number | null;
+            isBanned: boolean;
+            banReason: string | null;
             handles: components["schemas"]["HandlesMap"];
         };
         ProgrammerList: {
@@ -6537,6 +6564,8 @@ export interface components {
             /** Format: uri */
             image: string | null;
             maxCfRating: number | null;
+            isBanned: boolean;
+            banReason: string | null;
             handles: components["schemas"]["HandlesMap"];
             trackerPerformance: components["schemas"]["TrackerPerformanceEntry"][];
         };
@@ -6827,6 +6856,8 @@ export interface components {
             password?: string | null;
             studentId?: string | null;
             maxCfRating?: number | null;
+            isBanned?: boolean;
+            banReason?: string | null;
         };
         PermissionToggleRequest: {
             enabled: boolean;

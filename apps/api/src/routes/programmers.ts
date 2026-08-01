@@ -38,11 +38,14 @@ programmerRoutes.get("/", validate("query", programmersListQuery), async (c) => 
         username: users.username,
         imageKey: users.imageKey,
         maxCfRating: users.maxCfRating,
+        isBanned: users.isBanned,
+        banReason: users.banReason,
       })
       .from(users)
       .where(where)
       // Unrated (null) users sort last, then by rating desc, then name asc.
       .orderBy(
+        asc(users.isBanned),
         sql`${users.maxCfRating} is null`,
         desc(users.maxCfRating),
         asc(users.name),
@@ -93,6 +96,8 @@ programmerRoutes.get("/:username", async (c) => {
       username: users.username,
       imageKey: users.imageKey,
       maxCfRating: users.maxCfRating,
+      isBanned: users.isBanned,
+      banReason: users.banReason,
     })
     .from(users)
     .where(eq(users.username, username))
@@ -159,6 +164,8 @@ programmerRoutes.get("/:username", async (c) => {
     username: user.username,
     image: imageUrlFor(origin, user.imageKey),
     maxCfRating: user.maxCfRating,
+    isBanned: user.isBanned,
+    banReason: user.banReason,
     handles: toHandlesMap(handleRows),
     trackerPerformance: [...byTracker.values()],
   });

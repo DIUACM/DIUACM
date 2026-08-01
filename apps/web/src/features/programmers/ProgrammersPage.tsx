@@ -1,6 +1,7 @@
 import { Link, useSearchParams } from 'react-router'
 import { useProgrammers } from '@/api/queries/programmers'
 import { CfRatingBadge } from '@/components/shared/CfRatingBadge'
+import { BannedBadge } from '@/components/shared/BannedBadge'
 import { Pagination } from '@/components/shared/Pagination'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { SearchInput } from '@/components/shared/SearchInput'
@@ -34,6 +35,9 @@ function ProgrammerCard({ programmer }: { programmer: ProgrammerListItem }) {
                 {programmer.name}
               </h3>
               <CfRatingBadge rating={programmer.maxCfRating} className="text-sm" />
+              {programmer.isBanned && (
+                <BannedBadge reason={programmer.banReason} className="h-5 px-2" />
+              )}
             </div>
             <p className="truncate text-sm text-muted-foreground">
               @{programmer.username}

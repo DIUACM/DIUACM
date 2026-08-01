@@ -14,6 +14,7 @@ import {
 } from '@/api/queries/admin-users'
 import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
 import { UserAvatar } from '@/components/shared/UserAvatar'
+import { BannedBadge } from '@/components/shared/BannedBadge'
 import { ErrorState } from '@/components/shared/states'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,7 @@ import { Label } from '@/components/ui/label'
 import { PasswordInput } from '@/components/ui/password-input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
+import { Textarea } from '@/components/ui/textarea'
 import { useAuth } from '@/features/auth/auth-context'
 import {
   HANDLE_LABELS,
@@ -181,6 +183,87 @@ function PermissionToggles({ user }: { user: User }) {
         </div>
       ))}
     </div>
+  )
+}
+
+function BanControl({ user }: { user: User }) {
+  const { user: viewer } = useAuth()
+  const updateUser = useAdminUpdateUser(user.id)
+  const [reason, setReason] = useState(user.banReason ?? '')
+  const cannotBan = user.isSuperAdmin || viewer?.id === user.id
+
+  if (user.isBanned) {
+    return (
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <BannedBadge reason={user.banReason} />
+          <p className="text-sm text-muted-foreground">{user.banReason}</p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={updateUser.isPending}
+          onClick={() =>
+            updateUser.mutate(
+              { isBanned: false, banReason: null },
+              {
+                onSuccess: () => toast.success('User unbanned.'),
+                onError: (error) => toast.error(errorMessage(error)),
+              },
+            )
+          }
+        >
+          {updateUser.isPending ? 'Unbanning…' : 'Unban user'}
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <form
+      className="space-y-3"
+      onSubmit={(event) => {
+        event.preventDefault()
+        const normalizedReason = reason.trim()
+        if (!normalizedReason || cannotBan) return
+        updateUser.mutate(
+          { isBanned: true, banReason: normalizedReason },
+          {
+            onSuccess: () => toast.success('User banned.'),
+            onError: (error) => toast.error(errorMessage(error)),
+          },
+        )
+      }}
+    >
+      <div className="space-y-2">
+        <Label htmlFor="ban-reason">Public reason</Label>
+        <Textarea
+          id="ban-reason"
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
+          maxLength={500}
+          rows={3}
+          placeholder="Explain why this account is being banned…"
+          disabled={cannotBan || updateUser.isPending}
+          required
+        />
+        <p className="text-xs text-muted-foreground">
+          This reason is public and appears when someone hovers or focuses the banned badge.
+        </p>
+      </div>
+      <Button
+        type="submit"
+        variant="destructive"
+        disabled={cannotBan || updateUser.isPending || reason.trim() === ''}
+      >
+        {updateUser.isPending ? 'Banning…' : 'Ban user'}
+      </Button>
+      {cannotBan && (
+        <p className="text-xs text-muted-foreground">
+          You cannot ban yourself or the super admin.
+        </p>
+      )}
+    </form>
   )
 }
 
@@ -439,6 +522,7 @@ export function AdminUserDetailPage() {
               <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
                 {user.name}
                 {user.isSuperAdmin && <Badge>Super admin</Badge>}
+                {user.isBanned && <BannedBadge reason={user.banReason} />}
               </h1>
               <p className="text-sm text-muted-foreground">
                 @{user.username} ·{' '}
@@ -478,6 +562,18 @@ export function AdminUserDetailPage() {
         </CardHeader>
         <CardContent>
           <UserEditForm user={user} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Account status</CardTitle>
+          <CardDescription>
+            Banning immediately blocks sign-in and active sessions, and places the user last in ranklists.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BanControl key={`${user.id}-${user.isBanned}`} user={user} />
         </CardContent>
       </Card>
 

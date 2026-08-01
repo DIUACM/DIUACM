@@ -125,7 +125,14 @@ adminBlogRoutes.get("/:id", manageBlog, async (c) => {
   let author = null;
   if (post.authorId !== null) {
     const [row] = await db
-      .select({ id: users.id, name: users.name, username: users.username, imageKey: users.imageKey })
+      .select({
+        id: users.id,
+        name: users.name,
+        username: users.username,
+        imageKey: users.imageKey,
+        isBanned: users.isBanned,
+        banReason: users.banReason,
+      })
       .from(users)
       .where(eq(users.id, post.authorId))
       .limit(1);

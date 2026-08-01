@@ -11,6 +11,8 @@ type UserRow = Pick<
   | "studentId"
   | "imageKey"
   | "maxCfRating"
+  | "isBanned"
+  | "banReason"
   | "createdAt"
   | "updatedAt"
 >;
@@ -43,6 +45,8 @@ export const toAuthUser = (row: UserRow, origin: string, access: UserAccess) => 
   studentId: row.studentId,
   image: imageUrlFor(origin, row.imageKey),
   maxCfRating: row.maxCfRating,
+  isBanned: row.isBanned,
+  banReason: row.banReason,
   // Effective permissions: the super admin reports all of them.
   permissions: effectivePermissions(access.permissions, access.isSuperAdmin),
   isSuperAdmin: access.isSuperAdmin,
@@ -54,13 +58,15 @@ export type AuthUser = ReturnType<typeof toAuthUser>;
 
 /** Minimal public user reference embedded in lists (e.g. event attendance). */
 export const toUserSummary = (
-  row: Pick<User, "id" | "name" | "username" | "imageKey">,
+  row: Pick<User, "id" | "name" | "username" | "imageKey" | "isBanned" | "banReason">,
   origin: string,
 ) => ({
   id: row.id,
   name: row.name,
   username: row.username,
   image: imageUrlFor(origin, row.imageKey),
+  isBanned: row.isBanned,
+  banReason: row.banReason,
 });
 
 export type UserSummary = ReturnType<typeof toUserSummary>;
@@ -88,7 +94,10 @@ export type HandlesMap = ReturnType<typeof toHandlesMap>;
 
 /** Public programmer-directory item: a user summary plus rating and handles. */
 export const toProgrammerListItem = (
-  row: Pick<User, "id" | "name" | "username" | "imageKey" | "maxCfRating">,
+  row: Pick<
+    User,
+    "id" | "name" | "username" | "imageKey" | "maxCfRating" | "isBanned" | "banReason"
+  >,
   handleRows: { id: number; type: HandleType; handle: string }[],
   origin: string,
 ) => ({
@@ -97,6 +106,8 @@ export const toProgrammerListItem = (
   username: row.username,
   image: imageUrlFor(origin, row.imageKey),
   maxCfRating: row.maxCfRating,
+  isBanned: row.isBanned,
+  banReason: row.banReason,
   handles: toHandlesMap(handleRows),
 });
 

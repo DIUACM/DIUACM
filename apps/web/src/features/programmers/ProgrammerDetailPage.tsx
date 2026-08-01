@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useProgrammer } from '@/api/queries/programmers'
 import { CfRatingBadge } from '@/components/shared/CfRatingBadge'
+import { BannedBadge } from '@/components/shared/BannedBadge'
 import { Lightbox } from '@/components/shared/Lightbox'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { EmptyState, ErrorState } from '@/components/shared/states'
@@ -84,6 +85,7 @@ export function ProgrammerDetailPage() {
                 {programmer.name}
               </h1>
               <CfRatingBadge rating={programmer.maxCfRating} className="text-lg" />
+              {programmer.isBanned && <BannedBadge reason={programmer.banReason} />}
             </div>
             <p className="text-muted-foreground">@{programmer.username}</p>
           </div>

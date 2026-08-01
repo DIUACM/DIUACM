@@ -24,6 +24,7 @@ import { UserPicker } from '@/features/admin/shared/UserPicker'
 import { useRowSelection } from '@/features/admin/shared/use-row-selection'
 import { DataPanel } from '@/components/shared/DataPanel'
 import { UserAvatar } from '@/components/shared/UserAvatar'
+import { BannedBadge } from '@/components/shared/BannedBadge'
 import { ErrorState } from '@/components/shared/states'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -603,6 +604,12 @@ export function AdminRanklistDetailPage() {
                                 </span>
                                 {standing.autoAdded && (
                                   <Badge variant="secondary">auto</Badge>
+                                )}
+                                {standing.user.isBanned && (
+                                  <BannedBadge
+                                    reason={standing.user.banReason}
+                                    className="h-5 px-2"
+                                  />
                                 )}
                               </div>
                             </TableCell>

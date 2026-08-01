@@ -56,6 +56,8 @@ blogRoutes.get("/", validate("query", blogListQuery), async (c) => {
           name: users.name,
           username: users.username,
           imageKey: users.imageKey,
+          isBanned: users.isBanned,
+          banReason: users.banReason,
         },
       })
       .from(blogPosts)
@@ -100,6 +102,8 @@ blogRoutes.get("/:slug", async (c) => {
         name: users.name,
         username: users.username,
         imageKey: users.imageKey,
+        isBanned: users.isBanned,
+        banReason: users.banReason,
       },
     })
     .from(blogPosts)

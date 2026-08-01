@@ -117,6 +117,30 @@ describe("authentication routes", () => {
     await expect(response.json()).resolves.toEqual({ error: "Account no longer exists" });
   });
 
+  it("rejects banned users at login and immediately revokes existing tokens", async () => {
+    insertPasswordUser(1, await hashPassword("login password"));
+    db.prepare("UPDATE users SET is_banned = 1, ban_reason = ? WHERE id = 1").run(
+      "Repeated contest misconduct",
+    );
+
+    const loginResponse = await login("user1", "login password");
+    expect(loginResponse.status).toBe(403);
+    await expect(loginResponse.json()).resolves.toEqual({
+      error: "Account banned: Repeated contest misconduct",
+    });
+
+    const token = await signAuthToken({ id: 1, username: "user1" }, JWT_SECRET);
+    const protectedResponse = await app.request(
+      "/auth/me",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(protectedResponse.status).toBe(401);
+    await expect(protectedResponse.json()).resolves.toEqual({
+      error: "Account banned: Repeated contest misconduct",
+    });
+  });
+
   it("limits attendance attempts by user and event while keeping the password recoverable", async () => {
     insertPasswordUser(1, await hashPassword("login password"));
     const now = Math.floor(Date.now() / 1000);

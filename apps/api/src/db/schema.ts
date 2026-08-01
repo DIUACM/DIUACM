@@ -28,6 +28,11 @@ export const users = sqliteTable("users", {
   // nightly by src/sync/cf-rating.ts, which writes this column alone — it
   // deliberately leaves `updated_at` untouched.
   maxCfRating: integer("max_cf_rating"),
+  // Bans are enforced from the database on every authenticated request, so
+  // they immediately revoke both password/Google login and existing JWTs.
+  // The public reason is displayed alongside user references and standings.
+  isBanned: integer("is_banned", { mode: "boolean" }).notNull().default(false),
+  banReason: text("ban_reason"),
   // Unix epoch seconds (UTC). `updatedAt` is bumped by the profile-update handler.
   createdAt: integer("created_at")
     .notNull()
