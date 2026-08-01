@@ -4,6 +4,7 @@ import { HTTPException } from "hono/http-exception";
 
 import { getDb } from "../../db/client";
 import { eventAttendance, eventMedia, eventPerformance, events, users } from "../../db/schema";
+import { ContestMetadataError, getContestMetadata } from "../../lib/contest-metadata";
 import { parseImageUpload } from "../../lib/image-upload";
 import { likeContains } from "../../lib/like";
 import { buildMeta } from "../../lib/pagination";
@@ -15,6 +16,7 @@ import {
   adminAttendanceAddSchema,
   adminBulkIdsSchema,
   adminBulkPublishSchema,
+  adminContestDetailsQuery,
   adminEventCreateSchema,
   adminEventsListQuery,
   adminEventUpdateSchema,
@@ -93,6 +95,29 @@ adminEventRoutes.get("/", manageEvents, validate("query", adminEventsListQuery),
 
   return c.json({ data: rows, meta: buildMeta(page, perPage, total) });
 });
+
+adminEventRoutes.get(
+  "/contest-details",
+  manageEvents,
+  validate("query", adminContestDetailsQuery),
+  async (c) => {
+    const { link } = c.req.valid("query");
+    try {
+      return c.json(await getContestMetadata(link));
+    } catch (error) {
+      if (!(error instanceof ContestMetadataError)) throw error;
+      const status =
+        error.kind === "invalid-link" || error.kind === "unsupported"
+          ? 400
+          : error.kind === "not-found"
+            ? 404
+            : error.kind === "rate-limited"
+              ? 429
+              : 502;
+      throw new HTTPException(status, { message: error.message });
+    }
+  },
+);
 
 adminEventRoutes.post("/", manageEvents, validate("json", adminEventCreateSchema), async (c) => {
   const input = c.req.valid("json");

@@ -675,6 +675,21 @@ const adminEventListSchema = {
   required: ["data", "meta"],
 };
 
+const contestMetadataSchema = {
+  type: "object",
+  properties: {
+    platform: { type: "string", enum: ["codeforces", "vjudge", "atcoder"] },
+    title: { type: "string" },
+    description: {
+      type: "string",
+      description: "The source description, or an empty string when none is available.",
+    },
+    startingAt: epoch("Contest start in Unix epoch seconds (UTC)."),
+    endingAt: epoch("Contest end in Unix epoch seconds (UTC)."),
+  },
+  required: ["platform", "title", "description", "startingAt", "endingAt"],
+};
+
 const adminTrackerProps = {
   id: { type: "integer" },
   title: { type: "string" },
@@ -1288,6 +1303,7 @@ export const openApiDoc = {
       AdminEvent: adminEventSchema,
       AdminEventDetail: adminEventDetailSchema,
       AdminEventList: adminEventListSchema,
+      ContestMetadata: contestMetadataSchema,
       AdminTracker: adminTrackerSchema,
       AdminTrackerList: adminTrackerListSchema,
       AdminTrackerDetail: adminTrackerDetailSchema,
@@ -2023,6 +2039,32 @@ export const openApiDoc = {
             content: jsonBody(ref("Error")),
           },
           ...adminAuthResponses,
+        },
+      },
+    },
+    "/admin/events/contest-details": {
+      get: {
+        tags: ["admin-events"],
+        summary: "Fetch contest details from a supported judge link",
+        ...access(
+          "manage_events",
+          "Resolves Codeforces, VJudge, and AtCoder contest links and returns editable event fields.",
+        ),
+        parameters: [
+          {
+            name: "link",
+            in: "query",
+            required: true,
+            schema: { type: "string", format: "uri", maxLength: 500 },
+          },
+        ],
+        responses: {
+          "200": { description: "Resolved contest details", content: jsonBody(ref("ContestMetadata")) },
+          "400": { description: "Unsupported or invalid contest link", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Contest not found or private", content: jsonBody(ref("Error")) },
+          "429": { description: "Judge rate limit reached", content: jsonBody(ref("Error")) },
+          "502": { description: "Judge unavailable or returned invalid data", content: jsonBody(ref("Error")) },
         },
       },
     },

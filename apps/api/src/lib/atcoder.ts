@@ -39,6 +39,7 @@ export type AtcoderSubmission = {
 
 export type AtcoderContest = {
   id: string;
+  title?: string;
   start_epoch_second: number;
   duration_second: number;
 };
@@ -86,6 +87,7 @@ const isContest = (value: unknown): value is AtcoderContest => {
   return (
     !!c &&
     typeof c.id === "string" &&
+    (c.title === undefined || typeof c.title === "string") &&
     typeof c.start_epoch_second === "number" &&
     typeof c.duration_second === "number"
   );

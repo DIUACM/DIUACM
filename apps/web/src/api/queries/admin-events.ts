@@ -6,6 +6,7 @@ import type { BulkPublishAction, EventType, ParticipationScope } from '../types'
 
 export type AdminEvent = components['schemas']['AdminEvent']
 export type AdminEventDetail = components['schemas']['AdminEventDetail']
+export type ContestMetadata = components['schemas']['ContestMetadata']
 export type PublishStatus = AdminEvent['status']
 
 export interface AdminEventFilters {
@@ -44,6 +45,17 @@ export function useAdminEvent(id: number, enabled = true) {
     queryKey: ['admin', 'events', id],
     queryFn: () =>
       unwrap(api.GET('/admin/events/{id}', { params: { path: { id } } })),
+  })
+}
+
+export function useAdminContestDetails() {
+  return useMutation({
+    mutationFn: (link: string) =>
+      unwrap(
+        api.GET('/admin/events/contest-details', {
+          params: { query: { link } },
+        }),
+      ),
   })
 }
 

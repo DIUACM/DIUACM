@@ -33,6 +33,7 @@ const rank = (
   submissions: VjudgeSubmission[],
   participants: Record<string, { name: string }> = { [ALICE]: { name: "alice" } },
 ): VjudgeRank => ({
+  title: "DIU Team Forming Contest",
   // The API reports both in milliseconds.
   begin: BEGIN_SECONDS * 1000,
   length: LENGTH_SECONDS * 1000,

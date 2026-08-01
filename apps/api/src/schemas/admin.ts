@@ -73,6 +73,10 @@ export const adminEventsListQuery = z.object({
   q: z.string().trim().min(1).max(100).optional(),
 });
 
+export const adminContestDetailsQuery = z.object({
+  link: z.url().max(500),
+});
+
 export const adminEventCreateSchema = z.object({
   title: z.string().trim().min(1).max(200),
   description: descriptionField.optional(),

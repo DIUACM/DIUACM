@@ -2168,6 +2168,103 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/events/contest-details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fetch contest details from a supported judge link
+         * @description **Access:** `manage_events` — Requires a bearer token for a user granted the `manage_events` permission. The super admin always passes.
+         *
+         *     Resolves Codeforces, VJudge, and AtCoder contest links and returns editable event fields.
+         */
+        get: {
+            parameters: {
+                query: {
+                    link: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Resolved contest details */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ContestMetadata"];
+                    };
+                };
+                /** @description Unsupported or invalid contest link */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Caller lacks the required permission */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Contest not found or private */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Judge rate limit reached */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Judge unavailable or returned invalid data */
+                502: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/events/{id}": {
         parameters: {
             query?: never;
@@ -6596,6 +6693,17 @@ export interface components {
         AdminEventList: {
             data: components["schemas"]["AdminEvent"][];
             meta: components["schemas"]["PaginationMeta"];
+        };
+        ContestMetadata: {
+            /** @enum {string} */
+            platform: "codeforces" | "vjudge" | "atcoder";
+            title: string;
+            /** @description The source description, or an empty string when none is available. */
+            description: string;
+            /** @description Contest start in Unix epoch seconds (UTC). */
+            startingAt: number;
+            /** @description Contest end in Unix epoch seconds (UTC). */
+            endingAt: number;
         };
         AdminTracker: {
             id: number;

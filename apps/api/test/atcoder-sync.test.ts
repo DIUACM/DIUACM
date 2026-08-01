@@ -30,7 +30,12 @@ const submission = (
 });
 
 const CONTESTS: AtcoderContest[] = [
-  { id: CONTEST_ID, start_epoch_second: CONTEST_START, duration_second: CONTEST_DURATION },
+  {
+    id: CONTEST_ID,
+    title: "AtCoder Beginner Contest 300",
+    start_epoch_second: CONTEST_START,
+    duration_second: CONTEST_DURATION,
+  },
 ];
 
 type Calls = { contests: number; submissions: string[] };

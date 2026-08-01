@@ -42,6 +42,8 @@ export type VjudgeSubmission = [
 ];
 
 export type VjudgeRank = {
+  /** Contest title as displayed by VJudge. */
+  title?: string;
   /** Contest start, epoch **milliseconds**. */
   begin: number;
   /** Contest duration, **milliseconds**. */
@@ -118,6 +120,7 @@ export const getContestRank = async (
   const rank = parsed as Partial<VjudgeRank> | null;
   if (
     !rank ||
+    (rank.title !== undefined && typeof rank.title !== "string") ||
     typeof rank.begin !== "number" ||
     typeof rank.length !== "number" ||
     typeof rank.participants !== "object" ||
@@ -134,6 +137,7 @@ export const getContestRank = async (
   }
 
   return {
+    ...(rank.title === undefined ? {} : { title: rank.title }),
     begin: rank.begin,
     length: rank.length,
     participants,
