@@ -23,19 +23,30 @@ export type UserAccess = {
   isSuperAdmin: boolean;
 };
 
-/** Build the absolute, worker-served URL for a stored object key (served by `GET /files/:key`). */
-export const fileUrlFor = (origin: string, key: string | null): string | null =>
-  key ? `${origin}/files/${key}` : null;
+const PRODUCTION_API_ORIGIN = "https://api.diuacm.com";
+const PRODUCTION_R2_ORIGIN = "https://r2.diuacm.com";
 
-/** Build the absolute, worker-served URL for a stored image key. */
+/**
+ * Build the public URL for a stored object key. Production reads go directly
+ * through R2's custom domain, avoiding an API Worker invocation. Local and
+ * non-production environments retain the Worker-backed `/files` route so R2
+ * emulation and preview deployments continue to work without extra setup.
+ */
+export const fileUrlFor = (origin: string, key: string | null): string | null => {
+  if (!key) return null;
+  const base = origin === PRODUCTION_API_ORIGIN ? PRODUCTION_R2_ORIGIN : `${origin}/files`;
+  return `${base}/${key}`;
+};
+
+/** Build the absolute public URL for a stored image key. */
 export const imageUrlFor = (origin: string, imageKey: string | null): string | null =>
   fileUrlFor(origin, imageKey);
 
 /**
  * The public-safe user shape returned by auth endpoints. Centralised so every
  * endpoint that exposes a user stays in sync. Never includes `passwordHash`.
- * `origin` is the request origin (e.g. `https://api.example.com`) used to build
- * absolute image URLs.
+ * `origin` is the request origin used to select the production R2 hostname or
+ * the local/preview Worker-backed file route.
  */
 export const toAuthUser = (row: UserRow, origin: string, access: UserAccess) => ({
   id: row.id,

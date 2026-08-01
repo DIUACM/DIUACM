@@ -21,7 +21,7 @@ export const users = sqliteTable("users", {
   studentId: text("student_id").unique(),
   // Nullable: users who sign in with Google have no password of their own.
   passwordHash: text("password_hash"),
-  // R2 object key for the profile image (null if none). Served via GET /files/:key.
+  // R2 object key for the profile image (null if none). URL-shaped at response time.
   imageKey: text("image_key"),
   // Highest Codeforces rating reached; null until a Codeforces handle is saved,
   // and for accounts that are still unrated. Set on handle save and refreshed
@@ -133,7 +133,7 @@ export const eventMedia = sqliteTable(
       .notNull()
       .references(() => events.id, { onDelete: "cascade" }),
     type: text("type", { enum: ["image", "video"] }).notNull(),
-    // R2 object key; served via GET /files/:key.
+    // R2 object key; URL-shaped at response time.
     key: text("key").notNull(),
     order: integer("order").notNull().default(0),
     createdAt: integer("created_at")
@@ -408,7 +408,7 @@ export const galleryMedia = sqliteTable(
     albumId: integer("album_id")
       .notNull()
       .references(() => galleryAlbums.id, { onDelete: "cascade" }),
-    // R2 object key; served via GET /files/:key.
+    // R2 object key; URL-shaped at response time.
     key: text("key").notNull(),
     order: integer("order").notNull().default(0),
     createdAt: integer("created_at")
@@ -428,7 +428,7 @@ export const blogPosts = sqliteTable(
     status: text("status", { enum: ["published", "draft"] })
       .notNull()
       .default("draft"),
-    // R2 object key for the cover image (null if none). Served via GET /files/:key.
+    // R2 object key for the cover image (null if none). URL-shaped at response time.
     featuredImageKey: text("featured_image_key"),
     // Nullable: the author's account may be deleted without losing the post.
     authorId: integer("author_id").references(() => users.id, { onDelete: "set null" }),
@@ -459,7 +459,7 @@ export const blogAssets = sqliteTable(
       .notNull()
       .references(() => blogPosts.id, { onDelete: "cascade" }),
     kind: text("kind", { enum: ["image", "video", "file"] }).notNull(),
-    // R2 object key; served via GET /files/:key.
+    // R2 object key; URL-shaped at response time.
     key: text("key").notNull(),
     // Original upload filename, shown as link text for downloadable files.
     filename: text("filename").notNull(),

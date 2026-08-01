@@ -36,10 +36,11 @@ A [Hono](https://hono.dev) API for diuacm, running on **Cloudflare Workers** wit
 | GET    | `/trackers`      | —      | List published trackers (title, description, slug) |
 | GET    | `/trackers/:slug` | —      | Tracker details + its published ranklists (keyword, user/event counts) |
 | GET    | `/trackers/:slug/:keyword` | —      | Ranklist standings: events (with weight) + users (score, position, per-event performance) |
-| GET    | `/files/:key`    | —      | Stream a stored object (e.g. a profile image) from R2 |
+| GET    | `/files/:key`    | —      | Local/legacy proxy for a stored R2 object |
 
 Authenticated requests send the JWT from register/login/google as `Authorization: Bearer <token>`.
-The user object includes an absolute `image` URL (or `null`) served by `/files/:key`.
+The user object includes an absolute `image` URL (or `null`). Production URLs
+use `https://r2.diuacm.com`; local and preview environments use `/files/:key`.
 
 ### Auth model
 
@@ -399,6 +400,14 @@ The production Worker is attached to `api.diuacm.com` as a Cloudflare Custom
 Domain. Its public `workers.dev` and version-preview URLs are disabled. The web
 origin allowed by CORS is `https://diuacm.com`. Cloudflare's zone-level
 **Always Use HTTPS** setting redirects production HTTP requests at the edge.
+Public R2 objects are served directly from `https://r2.diuacm.com`; the bucket
+CORS policy is versioned in `r2-cors.json` and can be applied with
+`wrangler r2 bucket cors set diuacm-files-prod --file r2-cors.json`. Keep the
+bucket's `r2.dev` URL disabled. The custom domain requires TLS 1.2 and has
+host-scoped Cache and Response Header Transform Rules: successful immutable
+objects get a one-year edge TTL with strong ETags, 4xx/5xx responses are not
+stored, and browsers respect origin TTLs. Stored files also receive
+`Content-Security-Policy: sandbox` and `X-Content-Type-Options: nosniff`.
 
 ```bash
 wrangler d1 create diuacm-db-prod  # paste the returned database_id into wrangler.jsonc

@@ -93,7 +93,8 @@ export type ParsedAsset = {
  * Parse a multipart upload (field name "file") for a blog asset. Images and
  * common videos/PDFs are detected by magic bytes; everything else is accepted
  * as a generic downloadable file. Objects are always served with a strict
- * sandbox CSP + nosniff (see the files route), so a mislabelled type can't run.
+ * sandbox CSP + nosniff, either by the Worker fallback route or the production
+ * R2 hostname's response-header rule, so a mislabelled type can't run.
  */
 export const parseAssetUpload = async (c: Context<AppEnv>): Promise<ParsedAsset> => {
   const claimedHeader = c.req.header("content-length");

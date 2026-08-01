@@ -54,11 +54,12 @@ pnpm deploy:web
 ```
 
 Production traffic uses Cloudflare-managed Custom Domains: `api.diuacm.com`
-for the API and `diuacm.com` for the web app. Wrangler provisions their DNS
+for the API, `diuacm.com` for the web app, and `r2.diuacm.com` for public R2
+objects. Wrangler provisions the Worker domains' DNS
 records and edge certificates from the committed app configurations; the
 temporary `workers.dev` and version-preview URLs are disabled. The
 `diuacm.com` zone must keep Cloudflare's **Always Use HTTPS** setting enabled;
-this enforces HTTPS for both hosts without spending Worker invocations on
+this enforces HTTPS for all production hosts without spending Worker invocations on
 redirects. The proxied `www` CNAME points to `diuacm.com`, and the active
 `Canonicalize www to apex` Single Redirect permanently forwards both HTTP and
 HTTPS requests to `https://diuacm.com` while preserving paths and query strings.
