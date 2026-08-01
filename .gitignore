@@ -1,9 +1,12 @@
 node_modules/
+.pnpm-store/
 .wrangler/
 .dev.vars
 .env
 .env.*
 !.env.example
 dist/
+playwright-report/
+test-results/
 *.log
 .DS_Store
