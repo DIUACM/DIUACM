@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   BadgeCheck,
   Building2,
-  Code2,
   Cookie,
   Database,
   ExternalLink,
@@ -383,26 +382,6 @@ export function ContactPage() {
               </Button>
             </CardContent>
           </Card>
-
-          <ContactCard
-            icon={Code2}
-            title="Website developer"
-            description="Contact him for website help and general queries."
-          >
-            <p className="mb-4 text-base font-semibold">Sourov Biswas</p>
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-              <Button variant="outline" className="w-full" asChild>
-                <Link to="/programmers/sourov">
-                  View DIU ACM profile <UserRound />
-                </Link>
-              </Button>
-              <Button variant="outline" className="w-full" asChild>
-                <a href="mailto:sourov2305101004@diu.edu.bd">
-                  Email Sourov <Mail />
-                </a>
-              </Button>
-            </div>
-          </ContactCard>
 
           <ContactCard
             icon={UserRound}
