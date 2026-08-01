@@ -90,6 +90,9 @@ export function EventForm({ initial, submitLabel, isPending, onSubmit }: EventFo
                 startingAt: epochToLocalInput(details.startingAt),
                 endingAt: epochToLocalInput(details.endingAt),
                 eventLink: link,
+                participationScope: 'open_for_all',
+                openForAttendance: details.platform === 'vjudge',
+                strictAttendance: details.platform === 'vjudge',
               }))
             }
           />
