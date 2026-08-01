@@ -15,7 +15,7 @@ export function Layout() {
         <Outlet />
       </main>
       <Footer />
-      <Toaster richColors position="top-center" />
+      <Toaster richColors position="bottom-right" />
     </div>
   )
 }
