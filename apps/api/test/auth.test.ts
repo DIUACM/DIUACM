@@ -1,4 +1,5 @@
 import type Database from "better-sqlite3";
+import { hashSync as hashBcrypt } from "bcryptjs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { app } from "../src/index";
@@ -83,6 +84,19 @@ describe("authentication routes", () => {
     insertPasswordUser(1, await legacyHash("legacy password"));
 
     const response = await login("user1", "legacy password");
+    expect(response.status).toBe(200);
+
+    const row = db
+      .prepare("SELECT password_hash FROM users WHERE id = 1")
+      .get() as { password_hash: string };
+    expect(row.password_hash).toMatch(/^pbkdf2:600000:/);
+  });
+
+  it("accepts and upgrades an imported Laravel bcrypt hash", async () => {
+    const laravelHash = hashBcrypt("imported password", 4).replace("$2b$", "$2y$");
+    insertPasswordUser(1, laravelHash);
+
+    const response = await login("user1", "imported password");
     expect(response.status).toBe(200);
 
     const row = db

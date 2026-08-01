@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { hashSync as hashBcrypt } from "bcryptjs";
 
 import {
   hashPassword,
@@ -22,5 +23,13 @@ describe("password hashing", () => {
 
     expect(needsPasswordRehash(legacy)).toBe(true);
     expect(needsPasswordRehash("not-a-password-hash")).toBe(false);
+  });
+
+  it("verifies imported Laravel bcrypt hashes and marks them for upgrading", async () => {
+    const hash = hashBcrypt("legacy password", 4).replace("$2b$", "$2y$");
+
+    expect(await verifyPassword("legacy password", hash)).toBe(true);
+    expect(await verifyPassword("wrong password", hash)).toBe(false);
+    expect(needsPasswordRehash(hash)).toBe(true);
   });
 });

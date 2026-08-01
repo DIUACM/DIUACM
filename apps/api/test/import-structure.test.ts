@@ -32,6 +32,58 @@ afterEach(() => {
 });
 
 describe("structure importer", () => {
+  it("updates only supported hashes in passwords-only mode", () => {
+    const bcryptHash = "$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.";
+    const sql = runDryImport(
+      {
+        users: [
+          { id: 1, password: bcryptHash },
+          { id: 2, password: "unsupported" },
+          { id: 3 },
+        ],
+        events: [{ id: 10, title: "Must not import" }],
+      },
+      ["--passwords-only"],
+    );
+
+    expect(sql).toContain(
+      `UPDATE \`users\` SET \`password_hash\` = '${bcryptHash}' WHERE \`id\` = 1;`,
+    );
+    expect(sql).not.toContain("WHERE `id` = 2");
+    expect(sql).not.toContain("WHERE `id` = 3");
+    expect(sql).not.toContain("INSERT INTO");
+    expect(sql).not.toContain("Must not import");
+  });
+
+  it("preserves legacy password hashes without clearing omitted passwords", () => {
+    const legacyHash = "$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.";
+    const sql = runDryImport({
+      users: [
+        {
+          id: 1,
+          name: "Password User",
+          email: "password@example.com",
+          username: "password_user",
+          password: legacyHash,
+        },
+        {
+          id: 2,
+          name: "Passwordless User",
+          email: "passwordless@example.com",
+          username: "passwordless_user",
+        },
+      ],
+    });
+
+    const userInserts = sql
+      .split("\n")
+      .filter((line) => line.startsWith("INSERT INTO `users`"));
+    expect(userInserts[0]).toContain(`'${legacyHash}'`);
+    expect(userInserts[0]).toContain("`password_hash` = excluded.`password_hash`");
+    expect(userInserts[1]).toContain("NULL");
+    expect(userInserts[1]).not.toContain("`password_hash` = excluded.`password_hash`");
+  });
+
   it("maps remote user images to deterministic R2 keys", () => {
     const image = "https://diuacm.com/storage/users/avatar.jpg";
     const sql = runDryImport({

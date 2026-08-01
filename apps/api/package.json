@@ -17,6 +17,7 @@
   "dependencies": {
     "@diuacm/contest-link": "workspace:*",
     "@hono/zod-validator": "^0.8.0",
+    "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.12.26",
     "zod": "^4.4.3"

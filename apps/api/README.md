@@ -380,11 +380,15 @@ Migrations are applied with `wrangler d1 migrations apply`, **not** the Drizzle 
 
 ### Importing the legacy structure
 
-`pnpm import:structure -- --remote` reads the protected migration export, copies each
+`pnpm import:structure --remote` reads the protected migration export, copies each
 unique user image into `diuacm-files-stage`, and then imports the mapped rows into remote
 D1. Set `MIGRATION_EXPORT_KEY` in `.dev.vars` before running it. Use `--dry-run` to
 generate and validate the SQL without changing D1 or R2; `--bucket <name>` overrides the
-destination bucket.
+destination bucket. Legacy bcrypt password hashes are retained and upgraded to the API's
+current PBKDF2 format after each user's first successful password login. If passwords were
+previously imported as `NULL`, rerun this command after deploying the compatibility fix.
+Use `pnpm import:structure --passwords-only` (plus `--remote` for remote D1) to
+repair credentials without changing any other imported data.
 
 The source ranklist `is_active` flag has inverse semantics to this API's `is_locked`
 column: active ranklists import unlocked, and inactive ranklists import locked.
