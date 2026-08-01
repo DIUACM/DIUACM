@@ -59,4 +59,6 @@ records and edge certificates from the committed app configurations; the
 temporary `workers.dev` and version-preview URLs are disabled. The
 `diuacm.com` zone must keep Cloudflare's **Always Use HTTPS** setting enabled;
 this enforces HTTPS for both hosts without spending Worker invocations on
-redirects.
+redirects. The proxied `www` CNAME points to `diuacm.com`, and the active
+`Canonicalize www to apex` Single Redirect permanently forwards both HTTP and
+HTTPS requests to `https://diuacm.com` while preserving paths and query strings.

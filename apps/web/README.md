@@ -54,4 +54,6 @@ The production static assets deployment is attached to `diuacm.com` as a
 Cloudflare Custom Domain. Its public `workers.dev` and version-preview URLs are
 disabled. Cloudflare's zone-level **Always Use HTTPS** setting redirects HTTP at
 the edge, so asset requests do not invoke a Worker. HTTPS responses serve HSTS
-from `public/_headers`.
+from `public/_headers`. A proxied `www` CNAME and the zone's
+`Canonicalize www to apex` Single Redirect keep `diuacm.com` as the only
+canonical web origin while preserving requested paths and query strings.
