@@ -1,4 +1,3 @@
-import { Code2 } from 'lucide-react'
 import { Link } from 'react-router'
 
 const FOOTER_LINKS = [
@@ -7,23 +6,34 @@ const FOOTER_LINKS = [
   { to: '/programmers', label: 'Programmers' },
   { to: '/gallery', label: 'Gallery' },
   { to: '/blog', label: 'Blog' },
+  { to: '/contact', label: 'Contact' },
+  { to: '/privacy', label: 'Privacy' },
+  { to: '/terms', label: 'Terms' },
 ]
 
 export function Footer() {
   return (
     <footer className="pt-8 pb-6">
       <div className="container">
-        <div className="flex flex-col items-center justify-between gap-6 rounded-3xl bg-card/70 px-6 py-7 text-sm text-muted-foreground shadow-clay ring-1 ring-foreground/5 sm:flex-row">
+        <div className="flex flex-col items-center justify-between gap-6 rounded-3xl bg-card/70 px-6 py-7 text-sm text-muted-foreground shadow-clay ring-1 ring-foreground/5 lg:flex-row">
           <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-clay-sm">
-              <Code2 className="size-4.5" />
+            <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-0.5 shadow-clay-sm ring-1 ring-black/5 dark:bg-foreground/5 dark:ring-white/10">
+              <img
+                src="/brands/diu-acm-logo.png"
+                alt=""
+                className="size-full object-cover dark:brightness-125"
+                loading="lazy"
+              />
             </span>
             <p className="text-center sm:text-left">
-              © {new Date().getFullYear()} DIU ACM — Daffodil International
-              University
+              © {new Date().getFullYear()} DIU ACM — Department of CSE,
+              Daffodil International University
             </p>
           </div>
-          <nav className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1">
+          <nav
+            aria-label="Footer navigation"
+            className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1"
+          >
             {FOOTER_LINKS.map((link) => (
               <Link
                 key={link.to}

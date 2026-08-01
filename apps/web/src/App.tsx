@@ -11,6 +11,11 @@ import { GalleryAlbumPage } from '@/features/gallery/GalleryAlbumPage'
 import { GalleryPage } from '@/features/gallery/GalleryPage'
 import { HomePage } from '@/features/home/HomePage'
 import { NotFoundPage } from '@/features/home/NotFoundPage'
+import {
+  ContactPage,
+  PrivacyPage,
+  TermsPage,
+} from '@/features/info/PublicInfoPages'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { ProgrammerDetailPage } from '@/features/programmers/ProgrammerDetailPage'
 import { ProgrammersPage } from '@/features/programmers/ProgrammersPage'
@@ -46,6 +51,9 @@ const router = createBrowserRouter([
           { path: '/gallery', element: <GalleryPage /> },
           { path: '/gallery/:slug', element: <GalleryAlbumPage /> },
           { path: '/blog', element: <BlogPage /> },
+          { path: '/contact', element: <ContactPage /> },
+          { path: '/privacy', element: <PrivacyPage /> },
+          { path: '/terms', element: <TermsPage /> },
           {
             path: '/contests/uta',
             lazy: lazily(

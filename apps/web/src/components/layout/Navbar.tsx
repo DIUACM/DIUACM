@@ -1,4 +1,4 @@
-import { Code2, LogOut, Menu, Shield, User as UserIcon } from 'lucide-react'
+import { LogOut, Menu, Shield, User as UserIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
@@ -51,8 +51,12 @@ export function Navbar() {
             to="/"
             className="flex items-center gap-2.5 font-semibold tracking-tight"
           >
-            <span className="flex size-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-clay-sm">
-              <Code2 className="size-4.5" />
+            <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-0.5 shadow-clay-sm ring-1 ring-black/5 dark:bg-foreground/5 dark:ring-white/10">
+              <img
+                src="/brands/diu-acm-logo.png"
+                alt=""
+                className="size-full object-cover dark:brightness-125"
+              />
             </span>
             DIU ACM
           </Link>
@@ -131,8 +135,12 @@ export function Navbar() {
               <SheetContent side="right" className="w-72">
                 <SheetHeader>
                   <SheetTitle className="flex items-center gap-2.5">
-                    <span className="flex size-9 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-clay-sm">
-                      <Code2 className="size-4.5" />
+                    <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-0.5 shadow-clay-sm ring-1 ring-black/5 dark:bg-foreground/5 dark:ring-white/10">
+                      <img
+                        src="/brands/diu-acm-logo.png"
+                        alt=""
+                    className="size-full object-cover dark:brightness-125"
+                      />
                     </span>
                     DIU ACM
                   </SheetTitle>
