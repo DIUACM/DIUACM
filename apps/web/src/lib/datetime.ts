@@ -61,3 +61,21 @@ export function eventTiming(startSeconds: number, endSeconds: number): EventTimi
   if (now <= endSeconds) return 'ongoing'
   return 'ended'
 }
+
+export const ATTENDANCE_WINDOW_SECONDS = 15 * 60
+
+export type AttendanceWindowTiming = 'upcoming' | 'open' | 'closed'
+
+/**
+ * Attendance uses a wider window than the event itself: 15 minutes before the
+ * start through 15 minutes after the end. The boundary checks match the API.
+ */
+export function attendanceWindowTiming(
+  startSeconds: number,
+  endSeconds: number,
+  nowSeconds = Math.floor(Date.now() / 1000),
+): AttendanceWindowTiming {
+  if (nowSeconds < startSeconds - ATTENDANCE_WINDOW_SECONDS) return 'upcoming'
+  if (nowSeconds <= endSeconds + ATTENDANCE_WINDOW_SECONDS) return 'open'
+  return 'closed'
+}
