@@ -69,14 +69,14 @@ export function ProgrammerDetailPage() {
               <UserAvatar
                 name={programmer.name}
                 image={programmer.image}
-                className="size-20 text-xl shadow-clay transition-transform hover:scale-105"
+                className="size-24 text-2xl shadow-clay transition-transform hover:scale-105"
               />
             </button>
           ) : (
             <UserAvatar
               name={programmer.name}
               image={programmer.image}
-              className="size-20 text-xl shadow-clay"
+              className="size-24 text-2xl shadow-clay"
             />
           )}
           <div>
@@ -84,10 +84,15 @@ export function ProgrammerDetailPage() {
               <h1 className="text-3xl font-bold text-balance sm:text-4xl">
                 {programmer.name}
               </h1>
-              <CfRatingBadge rating={programmer.maxCfRating} className="text-lg" />
               {programmer.isBanned && <BannedBadge reason={programmer.banReason} />}
             </div>
             <p className="text-muted-foreground">@{programmer.username}</p>
+            {programmer.maxCfRating !== null && (
+              <p className="mt-1 text-sm">
+                <span className="text-muted-foreground">Max Codeforces: </span>
+                <CfRatingBadge rating={programmer.maxCfRating} showRank />
+              </p>
+            )}
           </div>
         </div>
       </div>

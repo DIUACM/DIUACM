@@ -68,9 +68,12 @@ export function handleProfileUrl(type: HandleType, handle: string): string {
 
 /** Codeforces rating tiers → title + color classes (light/dark aware). */
 export function cfRatingTier(rating: number): { title: string; className: string } {
+  if (rating >= 3000) return { title: 'Legendary Grandmaster', className: 'text-red-600 dark:text-red-400' }
+  if (rating >= 2600) return { title: 'International Grandmaster', className: 'text-red-600 dark:text-red-400' }
   if (rating >= 2400) return { title: 'Grandmaster', className: 'text-red-600 dark:text-red-400' }
+  if (rating >= 2300) return { title: 'International Master', className: 'text-orange-500 dark:text-orange-400' }
   if (rating >= 2100) return { title: 'Master', className: 'text-orange-500 dark:text-orange-400' }
-  if (rating >= 1900) return { title: 'Candidate Master', className: 'text-fuchsia-600 dark:text-fuchsia-400' }
+  if (rating >= 1900) return { title: 'Candidate Master', className: 'text-violet-600 dark:text-violet-400' }
   if (rating >= 1600) return { title: 'Expert', className: 'text-blue-600 dark:text-blue-400' }
   if (rating >= 1400) return { title: 'Specialist', className: 'text-cyan-600 dark:text-cyan-400' }
   if (rating >= 1200) return { title: 'Pupil', className: 'text-green-600 dark:text-green-400' }

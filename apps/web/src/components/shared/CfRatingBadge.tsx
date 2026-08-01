@@ -4,10 +4,15 @@ import { cn } from '@/lib/utils'
 interface CfRatingBadgeProps {
   rating: number | null
   className?: string
+  showRank?: boolean
 }
 
 /** Codeforces max rating colored by tier; renders nothing when unrated. */
-export function CfRatingBadge({ rating, className }: CfRatingBadgeProps) {
+export function CfRatingBadge({
+  rating,
+  className,
+  showRank = false,
+}: CfRatingBadgeProps) {
   if (rating === null) return null
   const tier = cfRatingTier(rating)
   return (
@@ -15,7 +20,7 @@ export function CfRatingBadge({ rating, className }: CfRatingBadgeProps) {
       title={tier.title}
       className={cn('font-semibold', tier.className, className)}
     >
-      {rating}
+      {showRank ? `${tier.title} · ${rating}` : rating}
     </span>
   )
 }
