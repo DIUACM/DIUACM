@@ -101,7 +101,9 @@ auth.post("/login", authRateLimit, validate("json", loginSchema), async (c) => {
   }
   if (row.isBanned) {
     throw new HTTPException(403, {
-      message: row.banReason ? `Account banned: ${row.banReason}` : "Account banned",
+      message: row.banReason
+        ? `Banned from DIUACM: ${row.banReason}`
+        : "Banned from DIUACM",
     });
   }
 
@@ -192,7 +194,9 @@ auth.post("/google", authRateLimit, validate("json", googleSignInSchema), async 
 
   if (user.isBanned) {
     throw new HTTPException(403, {
-      message: user.banReason ? `Account banned: ${user.banReason}` : "Account banned",
+      message: user.banReason
+        ? `Banned from DIUACM: ${user.banReason}`
+        : "Banned from DIUACM",
     });
   }
 

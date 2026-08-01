@@ -126,7 +126,7 @@ describe("authentication routes", () => {
     const loginResponse = await login("user1", "login password");
     expect(loginResponse.status).toBe(403);
     await expect(loginResponse.json()).resolves.toEqual({
-      error: "Account banned: Repeated contest misconduct",
+      error: "Banned from DIUACM: Repeated contest misconduct",
     });
 
     const token = await signAuthToken({ id: 1, username: "user1" }, JWT_SECRET);
@@ -137,7 +137,7 @@ describe("authentication routes", () => {
     );
     expect(protectedResponse.status).toBe(401);
     await expect(protectedResponse.json()).resolves.toEqual({
-      error: "Account banned: Repeated contest misconduct",
+      error: "Banned from DIUACM: Repeated contest misconduct",
     });
   });
 

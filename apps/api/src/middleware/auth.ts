@@ -44,7 +44,9 @@ const ensureAuthenticated = async (c: Context<AppEnv>): Promise<AuthPayload> => 
   if (!account) throw new HTTPException(401, { message: "Account no longer exists" });
   if (account.isBanned) {
     throw new HTTPException(401, {
-      message: account.banReason ? `Account banned: ${account.banReason}` : "Account banned",
+      message: account.banReason
+        ? `Banned from DIUACM: ${account.banReason}`
+        : "Banned from DIUACM",
     });
   }
 

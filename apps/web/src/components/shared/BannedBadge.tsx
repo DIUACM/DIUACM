@@ -28,7 +28,7 @@ export function BannedBadge({
         </Badge>
       </HoverCardTrigger>
       <HoverCardContent align="start" className="w-72 space-y-1.5">
-        <p className="text-sm font-semibold text-destructive">Account banned</p>
+        <p className="text-sm font-semibold text-destructive">Banned from DIUACM</p>
         <p className="text-sm leading-relaxed text-muted-foreground">
           {reason ?? 'No reason was provided.'}
         </p>
