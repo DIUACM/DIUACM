@@ -1,10 +1,8 @@
+import { Send } from 'lucide-react'
 import { Link } from 'react-router'
+import { Button } from '@/components/ui/button'
 
 const FOOTER_LINKS = [
-  { to: '/events', label: 'Events' },
-  { to: '/trackers', label: 'Trackers' },
-  { to: '/programmers', label: 'Programmers' },
-  { to: '/gallery', label: 'Gallery' },
   { to: '/blog', label: 'Blog' },
   { to: '/contact', label: 'Contact' },
   { to: '/privacy', label: 'Privacy' },
@@ -13,32 +11,62 @@ const FOOTER_LINKS = [
 
 export function Footer() {
   return (
-    <footer className="pt-8 pb-6">
+    <footer className="mt-10 border-t border-border/70 bg-card">
       <div className="container">
-        <div className="flex flex-col items-center justify-between gap-6 rounded-3xl bg-card/70 px-6 py-7 text-sm text-muted-foreground shadow-clay ring-1 ring-foreground/5 lg:flex-row">
-          <div className="flex flex-col items-center gap-2 sm:flex-row sm:gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-0.5 shadow-clay-sm ring-1 ring-black/5 dark:bg-foreground/5 dark:ring-white/10">
+        <div className="grid gap-7 py-9 md:grid-cols-[minmax(0,1fr)_auto] md:items-center sm:py-10">
+          <div className="flex items-start gap-4">
+            <Link
+              to="/"
+              aria-label="DIU ACM home"
+              className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-0.5 shadow-clay-sm ring-1 ring-black/5 transition-shadow hover:shadow-clay focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:bg-foreground/5 dark:ring-white/10"
+            >
               <img
                 src="/brands/diu-acm-logo.png"
                 alt=""
                 className="size-full object-cover dark:brightness-125"
                 loading="lazy"
               />
-            </span>
-            <p className="text-center sm:text-left">
-              © {new Date().getFullYear()} DIU ACM — Department of CSE,
-              Daffodil International University
-            </p>
+            </Link>
+
+            <div>
+              <Link
+                to="/"
+                className="font-heading text-base font-semibold text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                DIU ACM Programming Lab
+              </Link>
+              <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">
+                A competitive programming community of the Department of CSE,
+                Daffodil International University.
+              </p>
+            </div>
           </div>
+
+          <Button size="lg" className="w-full sm:w-fit md:justify-self-end" asChild>
+            <a
+              href="https://t.me/+AH0gg2-V5xIxYjA9"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Join Telegram <Send />
+            </a>
+          </Button>
+        </div>
+
+        <div className="flex flex-col gap-4 border-t border-border/70 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            © {new Date().getFullYear()} DIU ACM. All rights reserved.
+          </p>
+
           <nav
             aria-label="Footer navigation"
-            className="flex flex-wrap items-center justify-center gap-x-1 gap-y-1"
+            className="flex flex-wrap items-center gap-x-1 gap-y-1"
           >
             {FOOTER_LINKS.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
-                className="rounded-full px-3 py-1.5 transition-colors hover:bg-muted hover:text-foreground"
+                className="rounded-full px-2.5 py-1.5 transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {link.label}
               </Link>
