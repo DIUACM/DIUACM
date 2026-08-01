@@ -8,15 +8,6 @@ const get = (origin: string, env: Record<string, string>) =>
   app.request("/health", { headers: { Origin: origin } }, env);
 
 describe("CORS", () => {
-  it("redirects the production API hostname from HTTP to HTTPS", async () => {
-    const res = await app.request("http://api.diuacm.com/health?probe=1");
-
-    expect(res.status).toBe(308);
-    expect(res.headers.get("location")).toBe(
-      "https://api.diuacm.com/health?probe=1",
-    );
-  });
-
   it("allows a configured origin", async () => {
     const res = await get(WEB_ORIGIN, { CORS_ORIGINS: WEB_ORIGIN });
     expect(res.headers.get("Access-Control-Allow-Origin")).toBe(WEB_ORIGIN);

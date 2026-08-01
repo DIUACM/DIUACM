@@ -1,9 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "diuacm-web-prod",
-  "main": "src/worker.ts",
   "compatibility_date": "2026-07-18",
-  "compatibility_flags": ["nodejs_compat"],
   // Keep the production site on its canonical hostname. Cloudflare provisions
   // both the DNS record and edge certificate for this Custom Domain.
   "workers_dev": false,
@@ -14,13 +12,8 @@
       "custom_domain": true
     }
   ],
-  "observability": {
-    "enabled": true
-  },
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "single-page-application",
-    "binding": "ASSETS",
-    "run_worker_first": true
+    "not_found_handling": "single-page-application"
   }
 }

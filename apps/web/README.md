@@ -50,6 +50,8 @@ Static assets are served with the security/caching headers in `public/_headers`.
 pnpm run deploy      # build + wrangler deploy (needs `wrangler login`)
 ```
 
-The production Worker is attached to `diuacm.com` as a Cloudflare Custom
-Domain. Its public `workers.dev` and version-preview URLs are disabled. The
-Worker permanently redirects HTTP to HTTPS and serves HSTS on HTTPS responses.
+The production static assets deployment is attached to `diuacm.com` as a
+Cloudflare Custom Domain. Its public `workers.dev` and version-preview URLs are
+disabled. Cloudflare's zone-level **Always Use HTTPS** setting redirects HTTP at
+the edge, so asset requests do not invoke a Worker. HTTPS responses serve HSTS
+from `public/_headers`.

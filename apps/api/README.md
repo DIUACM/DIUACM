@@ -397,8 +397,8 @@ column: active ranklists import unlocked, and inactive ranklists import locked.
 
 The production Worker is attached to `api.diuacm.com` as a Cloudflare Custom
 Domain. Its public `workers.dev` and version-preview URLs are disabled. The web
-origin allowed by CORS is `https://diuacm.com`, and production HTTP requests are
-permanently redirected to HTTPS.
+origin allowed by CORS is `https://diuacm.com`. Cloudflare's zone-level
+**Always Use HTTPS** setting redirects production HTTP requests at the edge.
 
 ```bash
 wrangler d1 create diuacm-db-prod  # paste the returned database_id into wrangler.jsonc

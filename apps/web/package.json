@@ -10,7 +10,6 @@
     "lint": "oxlint",
     "test": "vitest run",
     "preview": "vite preview",
-    "cf-typegen": "wrangler types src/worker-configuration.d.ts",
     "api:types": "openapi-typescript https://api.diuacm.com/openapi.json -o src/api/schema.d.ts",
     "deploy": "pnpm build && wrangler deploy"
   },
