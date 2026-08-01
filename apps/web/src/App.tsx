@@ -2,29 +2,11 @@ import type { ComponentType } from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router'
 import { Layout } from '@/components/layout/Layout'
 import { RouteError } from '@/components/layout/RouteError'
-import { LoginPage } from '@/features/auth/LoginPage'
-import { RequireAuth } from '@/features/auth/RequireAuth'
-import { BlogPage } from '@/features/blog/BlogPage'
-import { EventDetailPage } from '@/features/events/EventDetailPage'
-import { EventsPage } from '@/features/events/EventsPage'
-import { GalleryAlbumPage } from '@/features/gallery/GalleryAlbumPage'
-import { GalleryPage } from '@/features/gallery/GalleryPage'
 import { HomePage } from '@/features/home/HomePage'
-import { NotFoundPage } from '@/features/home/NotFoundPage'
-import {
-  ContactPage,
-  PrivacyPage,
-  TermsPage,
-} from '@/features/info/PublicInfoPages'
-import { ProfilePage } from '@/features/profile/ProfilePage'
-import { ProgrammerDetailPage } from '@/features/programmers/ProgrammerDetailPage'
-import { ProgrammersPage } from '@/features/programmers/ProgrammersPage'
-import { TrackerDetailPage } from '@/features/trackers/TrackerDetailPage'
-import { TrackersPage } from '@/features/trackers/TrackersPage'
 
-// The admin area pulls in the heavy editor stack (TipTap, dnd-kit, …) and the
-// blog post page pulls in markdown/KaTeX/highlight.js, so those routes are
-// code-split: each `lazy` below becomes a separate chunk downloaded on demand.
+// Keep the home shell small and route-split everything else. In particular,
+// the editor, markdown renderer, data tables, and Google sign-in code should
+// never be part of the first visit's JavaScript payload.
 const lazily =
   (load: () => Promise<Record<string, unknown>>, name: string) => async () => ({
     Component: (await load())[name] as ComponentType,
@@ -42,18 +24,57 @@ const router = createBrowserRouter([
         errorElement: <RouteError />,
         children: [
           { path: '/', element: <HomePage /> },
-          { path: '/events', element: <EventsPage /> },
-          { path: '/events/:id', element: <EventDetailPage /> },
-          { path: '/trackers', element: <TrackersPage /> },
-          { path: '/trackers/:slug', element: <TrackerDetailPage /> },
-          { path: '/programmers', element: <ProgrammersPage /> },
-          { path: '/programmers/:username', element: <ProgrammerDetailPage /> },
-          { path: '/gallery', element: <GalleryPage /> },
-          { path: '/gallery/:slug', element: <GalleryAlbumPage /> },
-          { path: '/blog', element: <BlogPage /> },
-          { path: '/contact', element: <ContactPage /> },
-          { path: '/privacy', element: <PrivacyPage /> },
-          { path: '/terms', element: <TermsPage /> },
+          {
+            path: '/events',
+            lazy: lazily(() => import('@/features/events/EventsPage'), 'EventsPage'),
+          },
+          {
+            path: '/events/:id',
+            lazy: lazily(() => import('@/features/events/EventDetailPage'), 'EventDetailPage'),
+          },
+          {
+            path: '/trackers',
+            lazy: lazily(() => import('@/features/trackers/TrackersPage'), 'TrackersPage'),
+          },
+          {
+            path: '/trackers/:slug',
+            lazy: lazily(() => import('@/features/trackers/TrackerDetailPage'), 'TrackerDetailPage'),
+          },
+          {
+            path: '/programmers',
+            lazy: lazily(() => import('@/features/programmers/ProgrammersPage'), 'ProgrammersPage'),
+          },
+          {
+            path: '/programmers/:username',
+            lazy: lazily(
+              () => import('@/features/programmers/ProgrammerDetailPage'),
+              'ProgrammerDetailPage',
+            ),
+          },
+          {
+            path: '/gallery',
+            lazy: lazily(() => import('@/features/gallery/GalleryPage'), 'GalleryPage'),
+          },
+          {
+            path: '/gallery/:slug',
+            lazy: lazily(() => import('@/features/gallery/GalleryAlbumPage'), 'GalleryAlbumPage'),
+          },
+          {
+            path: '/blog',
+            lazy: lazily(() => import('@/features/blog/BlogPage'), 'BlogPage'),
+          },
+          {
+            path: '/contact',
+            lazy: lazily(() => import('@/features/info/PublicInfoPages'), 'ContactPage'),
+          },
+          {
+            path: '/privacy',
+            lazy: lazily(() => import('@/features/info/PublicInfoPages'), 'PrivacyPage'),
+          },
+          {
+            path: '/terms',
+            lazy: lazily(() => import('@/features/info/PublicInfoPages'), 'TermsPage'),
+          },
           {
             path: '/contests/uta',
             lazy: lazily(
@@ -79,10 +100,18 @@ const router = createBrowserRouter([
             path: '/blog/:slug',
             lazy: lazily(() => import('@/features/blog/BlogPostPage'), 'BlogPostPage'),
           },
-          { path: '/login', element: <LoginPage /> },
           {
-            element: <RequireAuth />,
-            children: [{ path: '/profile', element: <ProfilePage /> }],
+            path: '/login',
+            lazy: lazily(() => import('@/features/auth/LoginPage'), 'LoginPage'),
+          },
+          {
+            lazy: lazily(() => import('@/features/auth/RequireAuth'), 'RequireAuth'),
+            children: [
+              {
+                path: '/profile',
+                lazy: lazily(() => import('@/features/profile/ProfilePage'), 'ProfilePage'),
+              },
+            ],
           },
           {
             path: '/admin',
@@ -168,7 +197,10 @@ const router = createBrowserRouter([
               },
             ],
           },
-          { path: '*', element: <NotFoundPage /> },
+          {
+            path: '*',
+            lazy: lazily(() => import('@/features/home/NotFoundPage'), 'NotFoundPage'),
+          },
         ],
       },
     ],

@@ -15,7 +15,7 @@ import { EmptyState } from '@/components/shared/states'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useAuth } from '@/features/auth/auth-context'
-import { EventCard, EventListSkeleton } from '@/features/events/EventsPage'
+import { EventCard, EventListSkeleton } from '@/features/events/EventCard'
 import { useDocumentTitle } from '@/lib/use-document-title'
 import { cn } from '@/lib/utils'
 

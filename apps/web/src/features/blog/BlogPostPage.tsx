@@ -1,13 +1,19 @@
 import { ArrowLeft, CalendarDays } from 'lucide-react'
+import { lazy, Suspense } from 'react'
 import { Link, useParams } from 'react-router'
 import { useBlogPost } from '@/api/queries/blog'
-import { MarkdownContent } from '@/components/shared/MarkdownContent'
 import { ErrorState } from '@/components/shared/states'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatDate } from '@/lib/datetime'
 import { useDocumentTitle } from '@/lib/use-document-title'
+
+const MarkdownContent = lazy(() =>
+  import('@/components/shared/MarkdownContent').then((module) => ({
+    default: module.MarkdownContent,
+  })),
+)
 
 export function BlogPostPage() {
   const params = useParams()
@@ -76,7 +82,9 @@ export function BlogPostPage() {
         />
       )}
 
-      <MarkdownContent content={post.content} />
+      <Suspense fallback={<Skeleton className="h-64 w-full rounded-2xl" />}>
+        <MarkdownContent content={post.content} />
+      </Suspense>
     </article>
   )
 }

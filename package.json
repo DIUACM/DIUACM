@@ -11,7 +11,13 @@
     "typecheck": "pnpm --filter @diuacm/api typecheck && pnpm --filter @diuacm/web exec tsc -b",
     "lint": "pnpm --filter @diuacm/web lint",
     "test": "pnpm --filter @diuacm/api test && pnpm --filter @diuacm/web test",
+    "test:e2e": "playwright test",
+    "test:smoke": "pnpm build:web && pnpm test:e2e",
     "deploy:api": "pnpm --filter @diuacm/api run deploy",
     "deploy:web": "pnpm --filter @diuacm/web run deploy"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "wrangler": "^4.118.0"
   }
 }

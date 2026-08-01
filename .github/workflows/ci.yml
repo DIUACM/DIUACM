@@ -37,3 +37,9 @@ jobs:
 
       - name: Build web
         run: pnpm build:web
+
+      - name: Install smoke-test browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Browser smoke tests
+        run: pnpm test:e2e

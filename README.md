@@ -24,12 +24,15 @@ For a full local setup (D1 migrations, `.dev.vars`, env overrides) see each app'
 |---|---|
 | `pnpm typecheck` | TypeScript checks for both apps |
 | `pnpm lint` | oxlint over the web app |
-| `pnpm test` | API test suite (vitest) |
-| `pnpm build:web` | Production build of the frontend |
+| `pnpm test` | API Node and Workers-runtime suites, plus web unit tests |
+| `pnpm build:web` | Production frontend build with JavaScript bundle budgets |
+| `pnpm test:e2e` | Chromium smoke tests against the built site and a local Worker/D1 |
+| `pnpm test:smoke` | Build the site, then run the browser smoke tests |
 | `pnpm deploy:api` / `pnpm deploy:web` | Deploy each worker with wrangler |
 
-CI (`.github/workflows/ci.yml`) runs typecheck, lint, test, and the web build on
-every push to `main` and every pull request.
+CI (`.github/workflows/ci.yml`) runs typecheck, lint, both API runtimes, the web
+build and bundle budget, and browser smoke tests on every push to `main` and
+every pull request.
 
 ## Stage deployment
 

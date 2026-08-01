@@ -1,5 +1,5 @@
 import { ArrowLeft, Trash2, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link, useBlocker, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
@@ -12,7 +12,6 @@ import {
 } from '@/api/queries/admin-blog'
 import type { AdminBlogPostDetail } from '@/api/queries/admin-blog'
 import type { PublishStatus } from '@/api/queries/admin-events'
-import { BlogEditor } from '@/features/admin/blog/BlogEditor'
 import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
 import {
   AlertDialog,
@@ -47,6 +46,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ImageDropzone } from '@/components/shared/ImageDropzone'
 import { formatDate } from '@/lib/datetime'
 import { useDocumentTitle } from '@/lib/use-document-title'
+
+const BlogEditor = lazy(() =>
+  import('@/features/admin/blog/BlogEditor').then((module) => ({
+    default: module.BlogEditor,
+  })),
+)
 
 function PostEditForm({ post }: { post: AdminBlogPostDetail }) {
   const updatePost = useAdminUpdateBlogPost(post.id)
@@ -128,12 +133,14 @@ function PostEditForm({ post }: { post: AdminBlogPostDetail }) {
         <span className="flex items-center text-sm leading-none font-medium select-none">
           Body
         </span>
-        <BlogEditor
-          postId={post.id}
-          value={form.content}
-          onChange={(content) => setForm((prev) => ({ ...prev, content }))}
-          assets={post.assets}
-        />
+        <Suspense fallback={<Skeleton className="h-[32rem] w-full rounded-2xl" />}>
+          <BlogEditor
+            postId={post.id}
+            value={form.content}
+            onChange={(content) => setForm((prev) => ({ ...prev, content }))}
+            assets={post.assets}
+          />
+        </Suspense>
       </div>
       <div className="space-y-2">
         <Label htmlFor="bp-status">Status</Label>

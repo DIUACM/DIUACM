@@ -12,7 +12,9 @@
     "cf-typegen": "wrangler types",
     "import:structure": "node --env-file-if-exists=.dev.vars scripts/import-structure.mjs",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run && vitest run --config vitest.worker.config.ts",
+    "test:unit": "vitest run",
+    "test:worker": "vitest run --config vitest.worker.config.ts"
   },
   "dependencies": {
     "@diuacm/contest-link": "workspace:*",
@@ -23,6 +25,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.20.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20.19.43",
     "better-sqlite3": "^12.11.1",
