@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { app } from "../src/index";
 
-const WEB_ORIGIN = "https://diuacm-web-stage.sourov-cse.workers.dev";
+const WEB_ORIGIN = "https://diuacm-web-prod.sourov-cse.workers.dev";
 
 const get = (origin: string, env: Record<string, string>) =>
   app.request("/health", { headers: { Origin: origin } }, env);

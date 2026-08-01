@@ -10,7 +10,7 @@
     "lint": "oxlint",
     "test": "vitest run",
     "preview": "vite preview",
-    "api:types": "openapi-typescript https://diuacm-api-stage.sourov-cse.workers.dev/openapi.json -o src/api/schema.d.ts",
+    "api:types": "openapi-typescript https://diuacm-api-prod.sourov-cse.workers.dev/openapi.json -o src/api/schema.d.ts",
     "deploy": "pnpm build && wrangler deploy"
   },
   "dependencies": {

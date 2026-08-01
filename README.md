@@ -38,8 +38,8 @@ every pull request.
 
 One-time setup (see [`apps/api/README.md`](apps/api/README.md) for details):
 
-1. `wrangler d1 create diuacm-db-stage` and
-   `wrangler r2 bucket create diuacm-files-stage`,
+1. `wrangler d1 create diuacm-db-prod` and
+   `wrangler r2 bucket create diuacm-files-prod`,
    then put the ids in `apps/api/wrangler.jsonc`.
 2. Set the committed vars in `apps/api/wrangler.jsonc`: `GOOGLE_CLIENT_ID`,
    `SUPER_ADMIN_EMAIL`, and `CORS_ORIGINS` (the web app's origin).

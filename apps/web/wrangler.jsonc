@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "diuacm-web-stage",
+  "name": "diuacm-web-prod",
   "compatibility_date": "2026-07-18",
   "observability": {
     "enabled": true

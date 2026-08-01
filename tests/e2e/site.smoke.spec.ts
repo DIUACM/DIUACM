@@ -1,7 +1,7 @@
 import { expect, test, type Page, type Route } from '@playwright/test'
 import { createTestHarness } from 'wrangler'
 
-const API_ORIGIN = 'https://diuacm-api-stage.sourov-cse.workers.dev'
+const API_ORIGIN = 'https://diuacm-api-prod.sourov-cse.workers.dev'
 const browserErrors = new WeakMap<Page, string[]>()
 
 const apiServer = createTestHarness({

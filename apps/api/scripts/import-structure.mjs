@@ -7,7 +7,7 @@ import { tmpdir } from "node:os";
 
 const DEFAULT_EXPORT_URL = "https://diuacm.com/api/migration/export";
 const DEFAULT_DATABASE = "DB";
-const DEFAULT_BUCKET = "diuacm-files-stage";
+const DEFAULT_BUCKET = "diuacm-files-prod";
 const IMAGE_DOWNLOAD_CONCURRENCY = 20;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const FALLBACK_USER_IMAGE_PATH = "/images/fallback-gallery-image.jpeg";
@@ -1225,4 +1225,4 @@ const main = async () => {
   }
 };
 
-main().catch((error) => fail(error?.message ?? String(error)));
+await main().catch((error) => fail(error?.message ?? String(error)));

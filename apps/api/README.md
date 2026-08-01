@@ -381,7 +381,7 @@ Migrations are applied with `wrangler d1 migrations apply`, **not** the Drizzle 
 ### Importing the legacy structure
 
 `pnpm import:structure --remote` reads the protected migration export, copies each
-unique user image into `diuacm-files-stage`, and then imports the mapped rows into remote
+unique user image into `diuacm-files-prod`, and then imports the mapped rows into remote
 D1. Set `MIGRATION_EXPORT_KEY` in `.dev.vars` before running it. Use `--dry-run` to
 generate and validate the SQL without changing D1 or R2; `--bucket <name>` overrides the
 destination bucket. Legacy bcrypt password hashes are retained and upgraded to the API's
@@ -396,8 +396,8 @@ column: active ranklists import unlocked, and inactive ranklists import locked.
 ## Deploying to Cloudflare
 
 ```bash
-wrangler d1 create diuacm-db-stage  # paste the returned database_id into wrangler.jsonc
-wrangler r2 bucket create diuacm-files-stage
+wrangler d1 create diuacm-db-prod  # paste the returned database_id into wrangler.jsonc
+wrangler r2 bucket create diuacm-files-prod
 # set committed vars in wrangler.jsonc:
 #   GOOGLE_CLIENT_ID  — Google OAuth client id (public value)
 #   SUPER_ADMIN_EMAIL — implicitly holds every admin permission

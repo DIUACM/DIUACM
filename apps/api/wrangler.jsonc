@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "diuacm-api-stage",
+  "name": "diuacm-api-prod",
   "main": "src/index.ts",
   "compatibility_date": "2026-06-20",
   "compatibility_flags": ["nodejs_compat"],
@@ -49,15 +49,15 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "diuacm-db-stage",
-      "database_id": "09953aed-a973-4d1a-b74d-d288931470da",
+      "database_name": "diuacm-db-prod",
+      "database_id": "d03da8ad-ceb9-48c8-9c64-66bd48d66c01",
       "migrations_dir": "drizzle"
     }
   ],
   "r2_buckets": [
     {
       "binding": "BUCKET",
-      "bucket_name": "diuacm-files-stage"
+      "bucket_name": "diuacm-files-prod"
     }
   ],
   // Per-IP throttle for the credential endpoints (/auth/login, /auth/google).
@@ -72,7 +72,7 @@
   "vars": {
     // Browser origins allowed to call the API (comma-separated). Localhost is
     // always allowed in addition; an empty value allows every origin.
-    "CORS_ORIGINS": "https://diuacm-web-stage.sourov-cse.workers.dev",
+    "CORS_ORIGINS": "https://diuacm-web-prod.sourov-cse.workers.dev",
     // Google OAuth client id (public value — fine to commit). The ID token's
     // `aud` claim must match this. Replace with your own from the Google Cloud
     // console (OAuth 2.0 Client IDs).
