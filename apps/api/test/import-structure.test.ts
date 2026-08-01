@@ -103,6 +103,24 @@ describe("structure importer", () => {
     expect(sql).not.toContain(image);
   });
 
+  it("treats the legacy fallback image as no user image", () => {
+    const fallback = "https://diuacm.com/images/fallback-gallery-image.jpeg?version=1";
+    const sql = runDryImport({
+      users: [
+        {
+          id: 1,
+          name: "No Image User",
+          email: "no-image@example.com",
+          username: "no_image",
+          image: fallback,
+        },
+      ],
+    });
+
+    expect(sql).not.toContain("users/imported/");
+    expect(sql).not.toContain(fallback);
+  });
+
   it("maps ranklist is_active to the inverse is_locked value", () => {
     const sql = runDryImport({
       ranklists: [

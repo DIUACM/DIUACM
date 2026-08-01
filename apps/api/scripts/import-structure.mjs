@@ -10,6 +10,7 @@ const DEFAULT_DATABASE = "DB";
 const DEFAULT_BUCKET = "diuacm-files-stage";
 const IMAGE_DOWNLOAD_CONCURRENCY = 20;
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const FALLBACK_USER_IMAGE_PATH = "/images/fallback-gallery-image.jpeg";
 const IMAGE_TYPES = {
   gif: "image/gif",
   jpeg: "image/jpeg",
@@ -350,6 +351,8 @@ const normalizeUserImage = (value, userId, imageAssets, warnings) => {
     warn(warnings, "users", userId, "image URL must use HTTPS; using NULL");
     return null;
   }
+
+  if (url.pathname.toLowerCase().endsWith(FALLBACK_USER_IMAGE_PATH)) return null;
 
   const extension = url.pathname.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase();
   const contentType = extension ? IMAGE_TYPES[extension] : null;
