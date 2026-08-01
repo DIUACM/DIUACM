@@ -435,12 +435,12 @@ describe("runSync — Codeforces", () => {
     // Gym, group, draft, still running, and detached from every ranklist.
     insertContestEvent(db, 2, "https://codeforces.com/gym/104000");
     insertContestEvent(db, 3, "https://codeforces.com/group/ABC/contest/1900");
-    insertContestEvent(db, 4, "https://codeforces.com/contest/1900", { status: "draft" });
-    insertContestEvent(db, 5, "https://codeforces.com/contest/1900", {
+    insertContestEvent(db, 4, "https://codeforces.com/contest/1901", { status: "draft" });
+    insertContestEvent(db, 5, "https://codeforces.com/contest/1902", {
       startingAt: NOW + 1000,
       endingAt: NOW + 8000,
     });
-    insertContestEvent(db, 6, "https://codeforces.com/contest/1900");
+    insertContestEvent(db, 6, "https://codeforces.com/contest/1903");
     for (const id of [2, 3, 4, 5]) attachEvent(db, 1, id, 1);
 
     const summary = await run(

@@ -39,6 +39,28 @@ describe("GET /admin/events/contest-details", () => {
     );
   };
 
+  const createEvent = async (link: string) => {
+    const token = await signAuthToken({ id: 1, username: "user1" }, JWT_SECRET);
+    return app.request(
+      "/admin/events",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: "Contest",
+          type: "contest",
+          startingAt: 1_750_000_000,
+          endingAt: 1_750_007_200,
+          eventLink: link,
+        }),
+      },
+      env,
+    );
+  };
+
   it("returns editable event fields to an event manager", async () => {
     vi.stubGlobal(
       "fetch",
@@ -77,5 +99,18 @@ describe("GET /admin/events/contest-details", () => {
 
     expect(response.status).toBe(403);
     expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("rejects duplicate event links when creating events", async () => {
+    const first = await createEvent("https://codeforces.com/contest/2148");
+    expect(first.status).toBe(201);
+
+    const duplicate = await createEvent("https://codeforces.com/contest/2148");
+
+    expect(duplicate.status).toBe(409);
+    await expect(duplicate.json()).resolves.toEqual({
+      error: "Event link already exists",
+    });
+    expect(db.prepare("SELECT COUNT(*) AS count FROM events").get()).toEqual({ count: 1 });
   });
 });

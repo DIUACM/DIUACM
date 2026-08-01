@@ -134,6 +134,13 @@
       "when": 1785179786985,
       "tag": "0018_mature_jetstream",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1785578575560,
+      "tag": "0019_bright_slayback",
+      "breakpoints": true
     }
   ]
 }

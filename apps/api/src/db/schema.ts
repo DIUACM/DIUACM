@@ -116,6 +116,7 @@ export const events = sqliteTable(
     index("events_scope_idx").on(t.participationScope),
     index("events_status_idx").on(t.status),
     index("events_starting_at_idx").on(t.startingAt),
+    uniqueIndex("events_event_link_unique").on(t.eventLink),
   ],
 );
 

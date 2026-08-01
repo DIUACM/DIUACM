@@ -265,7 +265,7 @@ describe("runVjudgeSync", () => {
   });
 
   it("fetches a contest once when two events point at it", async () => {
-    insertVjudgeEvent(db, 2, CONTEST_ID);
+    insertVjudgeEvent(db, 2, `${CONTEST_ID}?source=mirror`);
     attachEvent(db, 1, 2, 1);
     const calls: Calls = { contests: [] };
 

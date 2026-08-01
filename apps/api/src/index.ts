@@ -118,7 +118,9 @@ app.onError((err, c) => {
       .map((s) => s.trim().split(".").pop() ?? "")
       .filter(Boolean);
     const message =
-      cols.length === 1
+      cols.length === 1 && cols[0] === "event_link"
+        ? "Event link already exists"
+        : cols.length === 1
         ? `${cols[0]} already exists`
         : `combination of ${cols.join(", ")} already exists`;
     return c.json({ error: message }, 409);
