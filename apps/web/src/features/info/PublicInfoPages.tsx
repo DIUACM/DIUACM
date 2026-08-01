@@ -2,7 +2,8 @@ import type { LucideIcon } from 'lucide-react'
 import {
   AlertTriangle,
   BadgeCheck,
-  Bug,
+  Building2,
+  Code2,
   Cookie,
   Database,
   ExternalLink,
@@ -11,9 +12,12 @@ import {
   KeyRound,
   Mail,
   MapPin,
+  MessageCircle,
+  Phone,
   Scale,
   ShieldCheck,
   UserCheck,
+  UserRound,
 } from 'lucide-react'
 import { Link } from 'react-router'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -276,98 +280,159 @@ export function ContactPage() {
     <div className="w-full">
       <PageHeader
         title="Contact DIU ACM"
-        description="Choose the route that best matches your question so it reaches the right people."
+        description="Visit the lab, join our Telegram channel, or contact the right person directly."
       />
 
-      <section className="grid gap-5 md:grid-cols-3">
-        <ContactCard
-          icon={Bug}
-          title="Platform support"
-          description="Report a reproducible problem with this website, API, event page, or ranklist."
-        >
-          <Button variant="outline" className="w-full" asChild>
-            <a
-              href="https://github.com/SourovCodes/diuacm-backend-api/issues/new"
-              target="_blank"
-              rel="noreferrer"
-            >
-              Open a GitHub issue <ExternalLink />
-            </a>
-          </Button>
-        </ContactCard>
+      <section className="grid items-start gap-5 lg:grid-cols-2">
+        <div className="grid gap-5">
+          <Card>
+            <CardHeader>
+              <span className="mb-2 flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-clay-sm">
+                <MapPin className="size-5" />
+              </span>
+              <p className="text-xs font-semibold tracking-[0.16em] text-primary uppercase">
+                University location
+              </p>
+              <h2 className="text-2xl font-semibold">Visit the DIU ACM Lab</h2>
+              <CardDescription className="leading-6">
+                Find the programming lab at Daffodil Smart City.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <address className="rounded-2xl bg-muted/55 p-4 not-italic shadow-clay-inset dark:bg-input/30">
+                <span className="flex size-9 items-center justify-center rounded-xl bg-card text-primary shadow-clay-sm">
+                  <Building2 className="size-4" />
+                </span>
+                <p className="mt-4 font-semibold">
+                  Daffodil International University
+                </p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Daffodil Smart City, Birulia, Savar, Dhaka–1216, Bangladesh
+                </p>
+              </address>
 
-        <ContactCard
-          icon={Mail}
-          title="CSE Department Office"
-          description="For official departmental or academic enquiries, contact the DIU CSE office."
-        >
-          <Button variant="outline" className="w-full" asChild>
-            <a href="mailto:cseoffice@daffodilvarsity.edu.bd">
-              Email the CSE office <Mail />
-            </a>
-          </Button>
-        </ContactCard>
+              <div className="rounded-2xl bg-muted/55 p-4 shadow-clay-inset dark:bg-input/30">
+                <span className="flex size-9 items-center justify-center rounded-xl bg-card text-primary shadow-clay-sm">
+                  <MapPin className="size-4" />
+                </span>
+                <p className="mt-4 text-xs font-semibold tracking-[0.14em] text-muted-foreground uppercase">
+                  ACM lab room
+                </p>
+                <p className="mt-1 text-2xl font-bold">KT-310</p>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Room 310 in Knowledge Tower (KT). Knowledge Tower was formerly
+                  known as Academic Building 4 (AB4).
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-        <ContactCard
-          icon={MapPin}
-          title="Visit the campus"
-          description="Daffodil Smart City, Birulia, Savar, Dhaka–1216, Bangladesh."
-        >
-          <Button variant="outline" className="w-full" asChild>
-            <a
-              href="https://daffodilvarsity.edu.bd/department/cse"
-              target="_blank"
-              rel="noreferrer"
-            >
-              View CSE website <ExternalLink />
-            </a>
-          </Button>
-        </ContactCard>
-      </section>
+          <ContactCard
+            icon={GraduationCap}
+            title="Faculty in charge"
+            description="Currently in charge of the DIU ACM Lab."
+          >
+            <div className="mb-4 space-y-1">
+              <p className="text-base font-semibold">Mr. Mehadi Hasan</p>
+              <p className="text-sm font-medium text-primary">Lecturer</p>
+              <p className="text-sm leading-6 text-muted-foreground">
+                Department of Computer Science and Engineering
+                <br />
+                Faculty of Science and Information Technology
+              </p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+              <Button variant="outline" className="w-full" asChild>
+                <a href="mailto:mehadihasan.cse@diu.edu.bd">
+                  Email Mr. Mehadi Hasan <Mail />
+                </a>
+              </Button>
+              <Button variant="outline" className="w-full" asChild>
+                <a
+                  href="https://faculty.daffodilvarsity.edu.bd/profile/cse/mehadi.html"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  View faculty profile <ExternalLink />
+                </a>
+              </Button>
+            </div>
+          </ContactCard>
+        </div>
 
-      <section className="mt-8 grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
-        <Card>
-          <CardHeader>
-            <h2 className="text-xl font-semibold">Before contacting us</h2>
-            <CardDescription>
-              A little context helps the right person respond faster.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
-            <p>
-              For event, attendance, account, or training questions, contact your
-              current DIU ACM coordinator or administrator through the lab&apos;s
-              established communication channel.
-            </p>
-            <p>
-              For a technical report, include the page URL, what you expected,
-              what happened, and steps to reproduce it. You may include your
-              username, but never send a password, authentication token, or event
-              attendance password.
-            </p>
-          </CardContent>
-        </Card>
+        <div className="grid gap-5">
+          <Card className="bg-primary text-primary-foreground">
+            <CardHeader>
+              <span className="mb-2 flex size-11 items-center justify-center rounded-2xl bg-primary-foreground/10 text-primary-foreground shadow-clay-sm ring-1 ring-primary-foreground/15">
+                <MessageCircle className="size-5" />
+              </span>
+              <h2 className="text-xl font-semibold">Telegram Channel</h2>
+              <CardDescription className="leading-6 text-primary-foreground/75">
+                Join the DIU ACM channel for community updates and announcements.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="secondary" className="w-full" asChild>
+                <a
+                  href="https://t.me/+AH0gg2-V5xIxYjA9"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Join the Telegram channel <ExternalLink />
+                </a>
+              </Button>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-primary text-primary-foreground">
-          <CardHeader>
-            <h2 className="text-xl font-semibold">Official DIU help desk</h2>
-            <CardDescription className="text-primary-foreground/75">
-              University-wide questions such as student services, campus access,
-              or institutional support belong with DIU.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="secondary" className="w-full" asChild>
-              <a
-                href="https://pd.daffodilvarsity.edu.bd/support_ticket"
-                target="_blank"
-                rel="noreferrer"
+          <ContactCard
+            icon={Code2}
+            title="Website developer"
+            description="Contact him for website help and general queries."
+          >
+            <p className="mb-4 text-base font-semibold">Sourov Biswas</p>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+              <Button variant="outline" className="w-full" asChild>
+                <Link to="/programmers/sourov">
+                  View DIU ACM profile <UserRound />
+                </Link>
+              </Button>
+              <Button variant="outline" className="w-full" asChild>
+                <a href="mailto:sourov2305101004@diu.edu.bd">
+                  Email Sourov <Mail />
+                </a>
+              </Button>
+            </div>
+          </ContactCard>
+
+          <ContactCard
+            icon={UserRound}
+            title="Student representative"
+            description="Student Representative of the DIU ACM Lab."
+          >
+            <p className="mb-4 text-base font-semibold">A. K. M Shohan</p>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+              <Button
+                variant="outline"
+                className="w-full sm:col-span-2 lg:col-span-1"
+                asChild
               >
-                Open the DIU help desk <ExternalLink />
-              </a>
-            </Button>
-          </CardContent>
-        </Card>
+                <Link to="/programmers/shohan241">
+                  View DIU ACM profile <UserRound />
+                </Link>
+              </Button>
+              <Button variant="outline" className="w-full" asChild>
+                <a href="mailto:m241-15-862@diu.edu.bd">
+                  Email Shohan <Mail />
+                </a>
+              </Button>
+              <Button variant="outline" className="w-full" asChild>
+                <a href="tel:+8801629775652">
+                  01629-775652 <Phone />
+                </a>
+              </Button>
+            </div>
+          </ContactCard>
+        </div>
       </section>
     </div>
   )
