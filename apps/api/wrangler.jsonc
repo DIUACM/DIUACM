@@ -15,6 +15,17 @@
       "custom_domain": true
     }
   ],
+  // `wrangler dev` otherwise takes the request URL's host from the first route
+  // above, so `new URL(c.req.url).origin` reads `http://api.diuacm.com` even on
+  // localhost. Every stored-file URL is built from that origin
+  // (src/lib/user-shape.ts), so local uploads would be handed out pointing at
+  // production — where the key does not exist — and never render. Pinning the
+  // dev host restores `http://localhost:8787`. Keep `host` and `port` in step:
+  // a host without the port drops it from the generated URLs.
+  "dev": {
+    "port": 8787,
+    "host": "localhost:8787"
+  },
   "observability": {
     "enabled": true,
     // Keep all application logs while traffic is modest; traces are sampled

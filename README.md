@@ -12,7 +12,9 @@ pnpm monorepo for the DIU ACM platform, deployed on Cloudflare.
 ```sh
 pnpm install
 
-pnpm dev:api   # wrangler dev (API) — http://localhost:8787
+pnpm dev       # both apps together (API on http://localhost:8787, Vite on 5173)
+
+pnpm dev:api   # or one at a time — wrangler dev (API)
 pnpm dev:web   # vite dev server (frontend)
 ```
 
@@ -22,6 +24,7 @@ For a full local setup (D1 migrations, `.dev.vars`, env overrides) see each app'
 
 | Script | What it does |
 |---|---|
+| `pnpm dev` | Both dev servers in parallel, output prefixed per app |
 | `pnpm typecheck` | TypeScript checks for both apps |
 | `pnpm lint` | oxlint over the web app |
 | `pnpm test` | API Node and Workers-runtime suites, plus web unit tests |

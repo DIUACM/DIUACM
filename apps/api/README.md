@@ -22,7 +22,6 @@ A [Hono](https://hono.dev) API for diuacm, running on **Cloudflare Workers** wit
 | GET    | `/docs`          | —      | Scalar API reference |
 | GET    | `/openapi.json`  | —      | OpenAPI 3.1 spec |
 | GET    | `/auth/config`   | —      | Public auth config (`googleClientId`) |
-| POST   | `/auth/register` | —      | Register `{ name, email, username, password, studentId? }` |
 | POST   | `/auth/login`    | —      | Log in `{ identifier, password }` — `identifier` is the email **or** username |
 | POST   | `/auth/google`   | —      | Sign in with a Google ID token `{ idToken }` (**@diu.edu.bd** only) |
 | GET    | `/auth/me`       | Bearer | Current user |
@@ -38,13 +37,15 @@ A [Hono](https://hono.dev) API for diuacm, running on **Cloudflare Workers** wit
 | GET    | `/trackers/:slug/:keyword` | —      | Ranklist standings: events (with weight) + users (score, position, per-event performance) |
 | GET    | `/files/:key`    | —      | Local/legacy proxy for a stored R2 object |
 
-Authenticated requests send the JWT from register/login/google as `Authorization: Bearer <token>`.
+Authenticated requests send the JWT from login/google as `Authorization: Bearer <token>`.
 The user object includes an absolute `image` URL (or `null`). Production URLs
 use `https://r2.diuacm.com`; local and preview environments use `/files/:key`.
 
 ### Auth model
 
-- **Password** register/login is open to any email. Login accepts the email **or** the username.
+- **There is no self-service registration.** Accounts come from Google sign-in or from the
+  admin API — password login serves accounts that already exist, including imported ones.
+- **Password** login accepts the email **or** the username.
 - **Google** sign-in is restricted to **@diu.edu.bd** addresses and creates an account with an
   opaque username (changeable later via `PATCH /auth/me`). Google accounts have no password.
 - Set your Google OAuth client id in `wrangler.jsonc` → `vars.GOOGLE_CLIENT_ID`.
@@ -365,11 +366,32 @@ pnpm db:migrate:local    # apply migrations to the local D1 database
 pnpm dev                 # http://localhost:8787
 ```
 
+From the repo root, `pnpm dev` runs this Worker and the web app together.
+
 Then open http://localhost:8787/docs to browse the API in Scalar. R2 is emulated locally by
 `wrangler dev`, so image upload and `/files/:key` work without a real bucket.
 
 Local secrets live in `.dev.vars` (gitignored). Copy `.dev.vars.example` to `.dev.vars`
 and set a `JWT_SECRET`.
+
+`dev.host` in `wrangler.jsonc` is load bearing. Without it `wrangler dev` takes the request
+URL's host from the first configured route, so `new URL(c.req.url).origin` reads
+`http://api.diuacm.com` on localhost — and since every stored-file URL is built from that
+origin (`src/lib/user-shape.ts`), locally uploaded images would be served as production URLs
+for keys that only exist in the local bucket, and silently never render. Change the dev port
+and `dev.host` must change with it; `test/file-url.test.ts` checks the two agree.
+
+**There is no registration endpoint**, so a fresh local database has no one to log in as. The
+first account has to be inserted directly — a `password_hash` in the `pbkdf2:100000:<saltHex>:<hashHex>`
+format that `src/lib/password.ts` reads:
+
+```bash
+node -e 'const c=require("crypto"),s=c.randomBytes(16);console.log("pbkdf2:100000:"+s.toString("hex")+":"+c.pbkdf2Sync(process.argv[1],s,100000,32,"sha256").toString("hex"))' "your-password"
+```
+
+```bash
+pnpm exec wrangler d1 execute DB --local --command "insert into users (name, email, username, password_hash) values ('Local Test', 'local@diu.edu.bd', 'localtest', '<hash>')"
+```
 
 ## Database changes
 
