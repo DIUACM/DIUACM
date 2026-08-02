@@ -13,11 +13,22 @@ export const fetchWithTimeout = (
   input: RequestInfo | URL,
   init: RequestInit = {},
   timeoutMs = DEFAULT_TIMEOUT_MS,
-): Promise<Response> =>
-  fetcher(input, {
+): Promise<Response> => {
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+  const signal = init.signal
+    ? AbortSignal.any([init.signal, timeoutSignal])
+    : timeoutSignal;
+
+  return fetcher(input, {
     ...init,
-    signal: init.signal ?? AbortSignal.timeout(timeoutMs),
+    signal,
   });
+};
+
+/** Release an upstream response body that the caller intentionally will not read. */
+export const cancelResponseBody = async (response: Response): Promise<void> => {
+  await response.body?.cancel();
+};
 
 /** Read a small upstream body while enforcing the cap on streamed bytes. */
 export const readLimitedText = async (

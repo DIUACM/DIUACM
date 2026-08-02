@@ -1,4 +1,4 @@
-import { fetchWithTimeout, readLimitedJson } from "./upstream";
+import { cancelResponseBody, fetchWithTimeout, readLimitedJson } from "./upstream";
 
 // ---------------------------------------------------------------------------
 // AtCoder has no official API, and its own standings are private: a plain GET
@@ -58,9 +58,11 @@ const request = async (url: URL, fetcher: typeof fetch): Promise<unknown> => {
   }
 
   if (response.status === 429) {
+    await cancelResponseBody(response);
     throw new AtcoderApiError("AtCoder Problems rate limit hit.", "rate-limited");
   }
   if (!response.ok) {
+    await cancelResponseBody(response);
     throw new AtcoderApiError(
       `AtCoder Problems returned HTTP ${response.status}.`,
       "unavailable",

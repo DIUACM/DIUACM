@@ -6,11 +6,11 @@ const errorFields = (cause: unknown): LogFields =>
     : { errorMessage: String(cause) };
 
 export const logInfo = (event: string, fields: LogFields = {}): void => {
-  console.log(JSON.stringify({ event, ...fields }));
+  console.log({ event, ...fields });
 };
 
 export const logWarn = (event: string, fields: LogFields = {}): void => {
-  console.warn(JSON.stringify({ event, ...fields }));
+  console.warn({ event, ...fields });
 };
 
 export const logError = (
@@ -18,5 +18,5 @@ export const logError = (
   cause: unknown,
   fields: LogFields = {},
 ): void => {
-  console.error(JSON.stringify({ event, ...fields, ...errorFields(cause) }));
+  console.error({ event, ...fields, ...errorFields(cause) });
 };

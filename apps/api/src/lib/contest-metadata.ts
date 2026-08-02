@@ -1,7 +1,12 @@
 import { detectContestLink, type ContestPlatform } from "@diuacm/contest-link";
 
 import { AtcoderApiError, getContests } from "./atcoder";
-import { fetchWithTimeout, readLimitedJson, readLimitedText } from "./upstream";
+import {
+  cancelResponseBody,
+  fetchWithTimeout,
+  readLimitedJson,
+  readLimitedText,
+} from "./upstream";
 import { getContestRank, VjudgeApiError } from "./vjudge";
 
 const CODEFORCES_CONTESTS_URL = "https://codeforces.com/api/contest.list";
@@ -69,9 +74,11 @@ const resolveCodeforces = async (
   }
 
   if (response.status === 429) {
+    await cancelResponseBody(response);
     throw new ContestMetadataError("Codeforces rate limit hit. Please try again shortly.", "rate-limited");
   }
   if (!response.ok) {
+    await cancelResponseBody(response);
     throw new ContestMetadataError(
       `Codeforces returned HTTP ${response.status}.`,
       "unavailable",
@@ -188,15 +195,18 @@ const resolveAtcoderPage = async (
   }
 
   if (response.status === 404) {
+    await cancelResponseBody(response);
     throw new ContestMetadataError(`AtCoder contest ${contestId} was not found.`, "not-found");
   }
   if (response.status === 429) {
+    await cancelResponseBody(response);
     throw new ContestMetadataError(
       "AtCoder rate limit hit. Please try again shortly.",
       "rate-limited",
     );
   }
   if (!response.ok) {
+    await cancelResponseBody(response);
     throw new ContestMetadataError(
       `AtCoder's contest page returned HTTP ${response.status}.`,
       "unavailable",

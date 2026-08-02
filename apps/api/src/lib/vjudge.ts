@@ -1,4 +1,4 @@
-import { fetchWithTimeout, readLimitedText } from "./upstream";
+import { cancelResponseBody, fetchWithTimeout, readLimitedText } from "./upstream";
 
 // ---------------------------------------------------------------------------
 // VJudge has no documented API, but the endpoint its own standings page calls —
@@ -81,12 +81,14 @@ const request = async (contestId: string, fetcher: typeof fetch): Promise<string
   // 403 is the Cloudflare challenge, not a permission error on this contest:
   // the next contest would be answered the same way, so back the whole run off.
   if (response.status === 429 || response.status === 403) {
+    await cancelResponseBody(response);
     throw new VjudgeApiError(
       `VJudge refused the request (HTTP ${response.status}).`,
       "rate-limited",
     );
   }
   if (!response.ok) {
+    await cancelResponseBody(response);
     throw new VjudgeApiError(`VJudge returned HTTP ${response.status}.`, "unavailable");
   }
 

@@ -1,4 +1,4 @@
-import { fetchWithTimeout, readLimitedJson } from "./upstream";
+import { cancelResponseBody, fetchWithTimeout, readLimitedJson } from "./upstream";
 
 // Validates a Google-issued OAuth ID token by calling Google's public
 // tokeninfo endpoint. Google parses, verifies the signature and expiry, and
@@ -53,6 +53,7 @@ export const verifyGoogleIdToken = async (
     body: new URLSearchParams({ id_token: idToken }).toString(),
   }, TOKENINFO_TIMEOUT_MS);
   if (!res.ok) {
+    await cancelResponseBody(res);
     throw new GoogleAuthError(`tokeninfo rejected token (${res.status})`);
   }
 

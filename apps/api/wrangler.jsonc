@@ -51,8 +51,9 @@
   // Alerts and the daily digest to SUPER_ADMIN_EMAIL (see src/lib/notify.ts).
   // Sends fail closed and are logged, never breaking a sync.
   //
-  // `remote: true` only affects `wrangler dev`, where it proxies sends to the
-  // real service. Without it a local send silently no-ops, which is the one
+  // `remote: true` proxies local-development sends to the real service.
+  // Worker tests override this with a fully local Miniflare email binding.
+  // Without it a manual local send silently no-ops, which is the one
   // failure mode this whole feature exists to avoid — so local runs really do
   // mail the super admin. The 1h per-key cooldown keeps that bearable.
   "send_email": [

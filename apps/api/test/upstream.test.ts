@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  cancelResponseBody,
   fetchWithTimeout,
   readLimitedJson,
   readLimitedText,
@@ -17,7 +18,7 @@ describe("upstream response safeguards", () => {
     expect(fetcher.mock.calls[0][1]?.signal).toBeInstanceOf(AbortSignal);
   });
 
-  it("preserves a caller-provided abort signal", async () => {
+  it("combines a caller-provided abort signal with the deadline", async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(new Response("ok"));
     const controller = new AbortController();
 
@@ -25,7 +26,20 @@ describe("upstream response safeguards", () => {
       signal: controller.signal,
     });
 
-    expect(fetcher.mock.calls[0][1]?.signal).toBe(controller.signal);
+    const signal = fetcher.mock.calls[0][1]?.signal;
+    expect(signal).toBeInstanceOf(AbortSignal);
+    expect(signal).not.toBe(controller.signal);
+    controller.abort();
+    expect(signal?.aborted).toBe(true);
+  });
+
+  it("cancels response bodies that will not be consumed", async () => {
+    const cancel = vi.fn();
+    const response = new Response(new ReadableStream({ cancel }));
+
+    await cancelResponseBody(response);
+
+    expect(cancel).toHaveBeenCalledOnce();
   });
 
   it("parses JSON below the byte cap", async () => {
