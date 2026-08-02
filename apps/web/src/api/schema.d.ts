@@ -3250,6 +3250,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/events/{id}/ranklists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the ranklists an event is attached to
+         * @description **Access:** `manage_trackers` — Requires a bearer token for a user granted the `manage_trackers` permission. The super admin always passes.
+         *
+         *     Read-only view of the same links managed under `/admin/ranklists/{id}/events/{eventId}`.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The event's ranklist links */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminEventRanklistList"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Caller lacks the required permission */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Event not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/trackers": {
         parameters: {
             query?: never;
@@ -3962,6 +4032,73 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/ranklists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List ranklists across every tracker (including drafts)
+         * @description **Access:** `manage_trackers` — Requires a bearer token for a user granted the `manage_trackers` permission. The super admin always passes.
+         *
+         *     Flat alternative to the tracker detail route, for searching a ranklist without knowing which tracker owns it.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description 1-based page number. */
+                    page?: number;
+                    /** @description Items per page (max 100). */
+                    perPage?: number;
+                    status?: "published" | "draft";
+                    /** @description Search on keyword, tracker title, or tracker slug. */
+                    q?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A page of ranklists */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminRanklistList"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Caller lacks the required permission */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -6723,6 +6860,21 @@ export interface components {
             data: components["schemas"]["AdminEvent"][];
             meta: components["schemas"]["PaginationMeta"];
         };
+        AdminEventRanklistEntry: {
+            id: number;
+            keyword: string;
+            /** @enum {string} */
+            status: "published" | "draft";
+            isLocked: boolean;
+            /** @description This event's weight in the ranklist (0.00–1.00). */
+            weight: number;
+            trackerId: number;
+            trackerTitle: string;
+            trackerSlug: string;
+        };
+        AdminEventRanklistList: {
+            data: components["schemas"]["AdminEventRanklistEntry"][];
+        };
         ContestMetadata: {
             /** @enum {string} */
             platform: "codeforces" | "vjudge" | "atcoder";
@@ -6788,6 +6940,34 @@ export interface components {
             createdAt: number;
             /** @description Unix epoch seconds (UTC). */
             updatedAt: number;
+        };
+        AdminRanklistWithTracker: {
+            id: number;
+            trackerId: number;
+            keyword: string;
+            description: string;
+            /** @enum {string} */
+            status: "published" | "draft";
+            /** @description 0.00–1.00. */
+            upsolveWeight: number;
+            isLocked: boolean;
+            considerStrictAttendance: boolean;
+            /** @description When true, DB triggers keep membership in sync with participation on attached events. */
+            autoAddUsers: boolean;
+            /** @description Display order within the tracker (0 = first = latest). */
+            order: number;
+            userCount: number;
+            eventCount: number;
+            /** @description Unix epoch seconds (UTC). */
+            createdAt: number;
+            /** @description Unix epoch seconds (UTC). */
+            updatedAt: number;
+            trackerTitle: string;
+            trackerSlug: string;
+        };
+        AdminRanklistList: {
+            data: components["schemas"]["AdminRanklistWithTracker"][];
+            meta: components["schemas"]["PaginationMeta"];
         };
         AdminRanklistEventEntry: {
             id: number;

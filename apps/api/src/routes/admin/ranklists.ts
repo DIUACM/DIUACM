@@ -1,9 +1,18 @@
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, or, type SQL } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import { getDb } from "../../db/client";
-import { events, ranklistEvents, ranklists, ranklistUsers, users } from "../../db/schema";
+import {
+  events,
+  ranklistEvents,
+  ranklists,
+  ranklistUsers,
+  trackers,
+  users,
+} from "../../db/schema";
+import { likeContains } from "../../lib/like";
+import { buildMeta } from "../../lib/pagination";
 import { parseId } from "../../lib/parse-id";
 import { toUserSummary } from "../../lib/user-shape";
 import { validate } from "../../lib/validator";
@@ -12,6 +21,7 @@ import {
   adminBulkIdsSchema,
   adminRanklistEventBulkSchema,
   adminRanklistEventSetSchema,
+  adminRanklistsListQuery,
   adminRanklistUpdateSchema,
 } from "../../schemas/admin";
 import { ranklistColumns } from "./trackers";
@@ -32,6 +42,44 @@ const loadRanklist = async (db: ReturnType<typeof getDb>, id: number) => {
   if (!row) throw new HTTPException(404, { message: "Ranklist not found" });
   return row;
 };
+
+// Ranklists across every tracker, newest tracker order first. Unlike the
+// tracker detail route this is flat, so callers that only know a ranklist by
+// keyword (the event page's attach picker) can search without its tracker.
+adminRanklistRoutes.get("/", manageTrackers, validate("query", adminRanklistsListQuery), async (c) => {
+  const { page, perPage, status, q } = c.req.valid("query");
+  const db = getDb(c.env.DB);
+
+  const filters: SQL[] = [];
+  if (status) filters.push(eq(ranklists.status, status));
+  if (q) {
+    const expr = or(
+      likeContains(ranklists.keyword, q),
+      likeContains(trackers.title, q),
+      likeContains(trackers.slug, q),
+    );
+    if (expr) filters.push(expr);
+  }
+  const where = filters.length > 0 ? and(...filters) : undefined;
+
+  const [rows, [{ value: total }]] = await Promise.all([
+    db
+      .select({ ...ranklistColumns, trackerTitle: trackers.title, trackerSlug: trackers.slug })
+      .from(ranklists)
+      .innerJoin(trackers, eq(ranklists.trackerId, trackers.id))
+      .where(where)
+      .orderBy(asc(trackers.order), asc(ranklists.order), desc(ranklists.id))
+      .limit(perPage)
+      .offset((page - 1) * perPage),
+    db
+      .select({ value: count() })
+      .from(ranklists)
+      .innerJoin(trackers, eq(ranklists.trackerId, trackers.id))
+      .where(where),
+  ]);
+
+  return c.json({ data: rows, meta: buildMeta(page, perPage, total) });
+});
 
 // Full ranklist detail: its fields, attached events (with weight), and member
 // users (with trigger-maintained score/rank).

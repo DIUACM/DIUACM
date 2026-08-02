@@ -162,6 +162,13 @@ const keywordField = z
   .max(100)
   .regex(/^[a-zA-Z0-9_-]+$/, "Only letters, numbers, underscores, and hyphens");
 
+export const adminRanklistsListQuery = z.object({
+  ...pageFields,
+  status: z.enum(PUBLISH_STATUSES).optional(),
+  // Searches keyword / tracker title / tracker slug.
+  q: z.string().trim().min(1).max(100).optional(),
+});
+
 export const adminRanklistCreateSchema = z.object({
   keyword: keywordField,
   description: descriptionField.optional(),

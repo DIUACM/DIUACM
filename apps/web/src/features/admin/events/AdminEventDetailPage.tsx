@@ -1,4 +1,4 @@
-import { ArrowLeft, Trash2, X } from 'lucide-react'
+import { ArrowLeft, Lock, Trash2, X } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
@@ -17,6 +17,11 @@ import {
   useAdminSetPerformance,
   useAdminUpdateEvent,
 } from '@/api/queries/admin-events'
+import {
+  useAdminEventRanklists,
+  useAdminRemoveEventRanklist,
+  useAdminSetEventRanklist,
+} from '@/api/queries/admin-trackers'
 import { useEvent, useEventAttendance, useEventPerformance } from '@/api/queries/events'
 import {
   BulkBar,
@@ -25,12 +30,15 @@ import {
   SelectAllHead,
 } from '@/features/admin/shared/BulkBar'
 import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
+import { RanklistPicker } from '@/features/admin/shared/RanklistPicker'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
 import { UserPicker } from '@/features/admin/shared/UserPicker'
+import { WeightCell } from '@/features/admin/shared/WeightCell'
 import { useRowSelection } from '@/features/admin/shared/use-row-selection'
 import { DataPanel } from '@/components/shared/DataPanel'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { ErrorState } from '@/components/shared/states'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -533,6 +541,140 @@ function PerformanceManager({ eventId }: { eventId: number }) {
   )
 }
 
+// Its own mutation per row, so saving one weight doesn't disable the others.
+function RanklistWeightCell({
+  eventId,
+  ranklistId,
+  weight,
+}: {
+  eventId: number
+  ranklistId: number
+  weight: number
+}) {
+  const setRanklist = useAdminSetEventRanklist(eventId)
+
+  return (
+    <WeightCell
+      weight={weight}
+      isPending={setRanklist.isPending}
+      onSave={(next) =>
+        setRanklist.mutate(
+          { ranklistId, weight: next },
+          {
+            onSuccess: () => toast.success('Weight updated. Scores recalculated.'),
+            onError: (error) => toast.error(errorMessage(error)),
+          },
+        )
+      }
+    />
+  )
+}
+
+function RanklistManager({ eventId }: { eventId: number }) {
+  const ranklistsQuery = useAdminEventRanklists(eventId)
+  const setRanklist = useAdminSetEventRanklist(eventId)
+  const removeRanklist = useAdminRemoveEventRanklist(eventId)
+
+  return (
+    <div className="space-y-4">
+      <RanklistPicker
+        placeholder="Attach to a ranklist by keyword or tracker…"
+        onSelect={(ranklist) =>
+          setRanklist.mutate(
+            { ranklistId: ranklist.id, weight: 1 },
+            {
+              onSuccess: () =>
+                toast.success(`Attached to “${ranklist.keyword}”.`),
+              onError: (error) => toast.error(errorMessage(error)),
+            },
+          )
+        }
+      />
+      {ranklistsQuery.isPending ? (
+        <Skeleton className="h-32 w-full" />
+      ) : ranklistsQuery.isError ? (
+        <p className="text-sm text-destructive">
+          {errorMessage(ranklistsQuery.error)}
+        </p>
+      ) : ranklistsQuery.data.data.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          Not attached to any ranklist.
+        </p>
+      ) : (
+        <DataPanel>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Ranklist</TableHead>
+                <TableHead>Tracker</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-center">Weight</TableHead>
+                <TableHead className="w-12" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {ranklistsQuery.data.data.map((ranklist) => (
+                <TableRow key={ranklist.id}>
+                  <TableCell>
+                    <Link
+                      to={`/admin/ranklists/${ranklist.id}`}
+                      className="font-medium hover:underline"
+                    >
+                      {ranklist.keyword}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Link
+                      to={`/admin/trackers/${ranklist.trackerId}`}
+                      className="text-muted-foreground hover:underline"
+                    >
+                      {ranklist.trackerTitle}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1.5">
+                      <StatusBadge status={ranklist.status} />
+                      {ranklist.isLocked && (
+                        <Badge variant="outline" className="gap-1">
+                          <Lock className="size-3" /> Locked
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <RanklistWeightCell
+                      key={`${ranklist.id}-${ranklist.weight}`}
+                      eventId={eventId}
+                      ranklistId={ranklist.id}
+                      weight={ranklist.weight}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 text-destructive hover:text-destructive"
+                      aria-label={`Detach from ${ranklist.keyword}`}
+                      onClick={() =>
+                        removeRanklist.mutate(ranklist.id, {
+                          onSuccess: () => toast.success('Event detached.'),
+                          onError: (error) => toast.error(errorMessage(error)),
+                        })
+                      }
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </DataPanel>
+      )}
+    </div>
+  )
+}
+
 export function AdminEventDetailPage() {
   const params = useParams()
   const id = Number(params.id)
@@ -541,6 +683,7 @@ export function AdminEventDetailPage() {
   const { user } = useAuth()
   const canManageEvents = hasPermission(user, 'manage_events')
   const canManageAttendance = hasPermission(user, 'manage_attendance')
+  const canManageTrackers = hasPermission(user, 'manage_trackers')
 
   // Attendance-only admins read the public event; see AdminEventsPage.
   const adminQuery = useAdminEvent(id, canManageEvents)
@@ -550,12 +693,15 @@ export function AdminEventDetailPage() {
   const tabs = [
     ...(canManageEvents ? ['media', 'performance'] : []),
     ...(canManageAttendance ? ['attendance'] : []),
+    ...(canManageTrackers ? ['ranklists'] : []),
   ]
   const requestedTab = searchParams.get('tab')
   const tab = requestedTab && tabs.includes(requestedTab) ? requestedTab : tabs[0]
 
   const updateEvent = useAdminUpdateEvent(id)
   const deleteEvent = useAdminDeleteEvent()
+  // Shares its cache entry with the tab body; here only for the tab's count.
+  const ranklistsQuery = useAdminEventRanklists(id, canManageTrackers)
   useDocumentTitle(
     eventQuery.data ? `Admin · ${eventQuery.data.title}` : 'Admin · Event',
   )
@@ -680,6 +826,11 @@ export function AdminEventDetailPage() {
                     Performance ({event.performanceCount})
                   </TabsTrigger>
                 )}
+                {canManageTrackers && (
+                  <TabsTrigger value="ranklists">
+                    Ranklists ({(ranklistsQuery.data?.data ?? []).length})
+                  </TabsTrigger>
+                )}
               </TabsList>
             </CardHeader>
             <CardContent>
@@ -706,6 +857,15 @@ export function AdminEventDetailPage() {
                     Solve counts and standings for this event's leaderboard.
                   </CardDescription>
                   <PerformanceManager eventId={id} />
+                </TabsContent>
+              )}
+              {canManageTrackers && (
+                <TabsContent value="ranklists" className="space-y-4">
+                  <CardDescription>
+                    Ranklists this event counts towards. Attaching or changing a
+                    weight recalculates that ranklist's scores.
+                  </CardDescription>
+                  <RanklistManager eventId={id} />
                 </TabsContent>
               )}
             </CardContent>

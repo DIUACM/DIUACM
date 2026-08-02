@@ -9,6 +9,10 @@ export type AdminTracker = components['schemas']['AdminTracker']
 export type AdminTrackerDetail = components['schemas']['AdminTrackerDetail']
 export type AdminRanklist = components['schemas']['AdminRanklist']
 export type AdminRanklistDetail = components['schemas']['AdminRanklistDetail']
+export type AdminRanklistWithTracker =
+  components['schemas']['AdminRanklistWithTracker']
+export type AdminEventRanklistEntry =
+  components['schemas']['AdminEventRanklistEntry']
 
 export interface AdminTrackerFilters {
   page?: number
@@ -228,6 +232,33 @@ export function useAdminCreateRanklist(trackerId: number) {
   })
 }
 
+export interface AdminRanklistFilters {
+  page?: number
+  status?: PublishStatus
+  q?: string
+}
+
+/** Flat search across every tracker's ranklists (needs `manage_trackers`). */
+export function useAdminRanklists(filters: AdminRanklistFilters = {}, enabled = true) {
+  return useQuery({
+    queryKey: ['admin', 'ranklists', filters],
+    queryFn: () =>
+      unwrap(
+        api.GET('/admin/ranklists', {
+          params: {
+            query: {
+              page: filters.page ?? 1,
+              status: filters.status,
+              q: filters.q || undefined,
+            },
+          },
+        }),
+      ),
+    placeholderData: keepPreviousData,
+    enabled,
+  })
+}
+
 export function useAdminRanklist(id: number) {
   return useQuery({
     queryKey: ['admin', 'ranklists', id],
@@ -315,6 +346,60 @@ export function useAdminBulkRanklistEvents(ranklistId: number) {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'ranklists', ranklistId] })
       void queryClient.invalidateQueries({ queryKey: ['trackers'] })
     },
+  })
+}
+
+// The same ranklist ↔ event links, seen from one event (admin event detail).
+// The ranklist id varies per row here, so these take it as an argument instead
+// of closing over it like the ranklist-scoped hooks above.
+
+export function useAdminEventRanklists(eventId: number, enabled = true) {
+  return useQuery({
+    enabled,
+    queryKey: ['admin', 'events', eventId, 'ranklists'],
+    queryFn: () =>
+      unwrap(
+        api.GET('/admin/events/{id}/ranklists', { params: { path: { id: eventId } } }),
+      ),
+  })
+}
+
+function useEventRanklistInvalidation(eventId: number) {
+  const queryClient = useQueryClient()
+  return (ranklistId: number) => {
+    void queryClient.invalidateQueries({
+      queryKey: ['admin', 'events', eventId, 'ranklists'],
+    })
+    void queryClient.invalidateQueries({ queryKey: ['admin', 'ranklists', ranklistId] })
+    void queryClient.invalidateQueries({ queryKey: ['trackers'] })
+  }
+}
+
+/** Attach this event to a ranklist, or change its weight there. */
+export function useAdminSetEventRanklist(eventId: number) {
+  const invalidate = useEventRanklistInvalidation(eventId)
+  return useMutation({
+    mutationFn: ({ ranklistId, weight }: { ranklistId: number; weight: number }) =>
+      unwrap(
+        api.PUT('/admin/ranklists/{id}/events/{eventId}', {
+          params: { path: { id: ranklistId, eventId } },
+          body: { weight },
+        }),
+      ),
+    onSuccess: (_data, { ranklistId }) => invalidate(ranklistId),
+  })
+}
+
+export function useAdminRemoveEventRanklist(eventId: number) {
+  const invalidate = useEventRanklistInvalidation(eventId)
+  return useMutation({
+    mutationFn: (ranklistId: number) =>
+      unwrap(
+        api.DELETE('/admin/ranklists/{id}/events/{eventId}', {
+          params: { path: { id: ranklistId, eventId } },
+        }),
+      ),
+    onSuccess: (_data, ranklistId) => invalidate(ranklistId),
   })
 }
 

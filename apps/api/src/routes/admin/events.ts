@@ -3,7 +3,16 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import { getDb } from "../../db/client";
-import { eventAttendance, eventMedia, eventPerformance, events, users } from "../../db/schema";
+import {
+  eventAttendance,
+  eventMedia,
+  eventPerformance,
+  events,
+  ranklistEvents,
+  ranklists,
+  trackers,
+  users,
+} from "../../db/schema";
 import { ContestMetadataError, getContestMetadata } from "../../lib/contest-metadata";
 import { parseImageUpload } from "../../lib/image-upload";
 import { likeContains } from "../../lib/like";
@@ -46,9 +55,11 @@ const eventColumns = {
 };
 
 // Events, media, and performance need manage_events; the attendance routes
-// below need manage_attendance instead.
+// below need manage_attendance instead, and the ranklist links need
+// manage_trackers — the same permission that attaches them from the ranklist side.
 const manageEvents = requirePermission("manage_events");
 const manageAttendance = requirePermission("manage_attendance");
+const manageTrackers = requirePermission("manage_trackers");
 
 const adminEventRoutes = new Hono<AppEnv>();
 
@@ -466,6 +477,36 @@ adminEventRoutes.delete("/:id/performance/:userId", manageEvents, async (c) => {
   if (!deleted) throw new HTTPException(404, { message: "Performance not found" });
 
   return c.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------------
+// Ranklist links — read-only from this side. Attaching, re-weighting, and
+// detaching all go through /admin/ranklists/:id/events/:eventId.
+// ---------------------------------------------------------------------------
+
+adminEventRoutes.get("/:id/ranklists", manageTrackers, async (c) => {
+  const id = requireEventId(c);
+  const db = getDb(c.env.DB);
+  await loadEvent(db, id);
+
+  const rows = await db
+    .select({
+      id: ranklists.id,
+      keyword: ranklists.keyword,
+      status: ranklists.status,
+      isLocked: ranklists.isLocked,
+      weight: ranklistEvents.weight,
+      trackerId: trackers.id,
+      trackerTitle: trackers.title,
+      trackerSlug: trackers.slug,
+    })
+    .from(ranklistEvents)
+    .innerJoin(ranklists, eq(ranklistEvents.ranklistId, ranklists.id))
+    .innerJoin(trackers, eq(ranklists.trackerId, trackers.id))
+    .where(eq(ranklistEvents.eventId, id))
+    .orderBy(asc(trackers.order), asc(ranklists.order), asc(ranklists.id));
+
+  return c.json({ data: rows });
 });
 
 export default adminEventRoutes;

@@ -789,6 +789,25 @@ const adminRanklistSchema = {
   ],
 };
 
+const adminRanklistWithTrackerSchema = {
+  type: "object",
+  properties: {
+    ...adminRanklistSchema.properties,
+    trackerTitle: { type: "string" },
+    trackerSlug: { type: "string" },
+  },
+  required: [...adminRanklistSchema.required, "trackerTitle", "trackerSlug"],
+};
+
+const adminRanklistListSchema = {
+  type: "object",
+  properties: {
+    data: { type: "array", items: ref("AdminRanklistWithTracker") },
+    meta: ref("PaginationMeta"),
+  },
+  required: ["data", "meta"],
+};
+
 const adminTrackerDetailSchema = {
   type: "object",
   properties: { ...adminTrackerProps, ranklists: { type: "array", items: ref("AdminRanklist") } },
@@ -805,6 +824,37 @@ const adminRanklistEventEntrySchema = {
     weight: { type: "number", description: "This event's weight in the ranklist (0.00–1.00)." },
   },
   required: ["id", "title", "status", "startingAt", "weight"],
+};
+
+// One ranklist an event is attached to, seen from the event's side.
+const adminEventRanklistEntrySchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    keyword: { type: "string" },
+    status: { type: "string", enum: ["published", "draft"] },
+    isLocked: { type: "boolean" },
+    weight: { type: "number", description: "This event's weight in the ranklist (0.00–1.00)." },
+    trackerId: { type: "integer" },
+    trackerTitle: { type: "string" },
+    trackerSlug: { type: "string" },
+  },
+  required: [
+    "id",
+    "keyword",
+    "status",
+    "isLocked",
+    "weight",
+    "trackerId",
+    "trackerTitle",
+    "trackerSlug",
+  ],
+};
+
+const adminEventRanklistListSchema = {
+  type: "object",
+  properties: { data: { type: "array", items: ref("AdminEventRanklistEntry") } },
+  required: ["data"],
 };
 
 const adminRanklistStandingSchema = {
@@ -1336,11 +1386,15 @@ export const openApiDoc = {
       AdminEvent: adminEventSchema,
       AdminEventDetail: adminEventDetailSchema,
       AdminEventList: adminEventListSchema,
+      AdminEventRanklistEntry: adminEventRanklistEntrySchema,
+      AdminEventRanklistList: adminEventRanklistListSchema,
       ContestMetadata: contestMetadataSchema,
       AdminTracker: adminTrackerSchema,
       AdminTrackerList: adminTrackerListSchema,
       AdminTrackerDetail: adminTrackerDetailSchema,
       AdminRanklist: adminRanklistSchema,
+      AdminRanklistWithTracker: adminRanklistWithTrackerSchema,
+      AdminRanklistList: adminRanklistListSchema,
       AdminRanklistEventEntry: adminRanklistEventEntrySchema,
       AdminRanklistStanding: adminRanklistStandingSchema,
       AdminRanklistDetail: adminRanklistDetailSchema,
@@ -2299,6 +2353,26 @@ export const openApiDoc = {
         },
       },
     },
+    "/admin/events/{id}/ranklists": {
+      get: {
+        tags: ["admin-events"],
+        summary: "List the ranklists an event is attached to",
+        ...access(
+          "manage_trackers",
+          "Read-only view of the same links managed under " +
+            "`/admin/ranklists/{id}/events/{eventId}`.",
+        ),
+        parameters: [idParam("id")],
+        responses: {
+          "200": {
+            description: "The event's ranklist links",
+            content: jsonBody(ref("AdminEventRanklistList")),
+          },
+          ...adminAuthResponses,
+          "404": { description: "Event not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
     "/admin/trackers": {
       get: {
         tags: ["admin-trackers"],
@@ -2450,6 +2524,35 @@ export const openApiDoc = {
             description: "Keyword already exists in this tracker",
             content: jsonBody(ref("Error")),
           },
+        },
+      },
+    },
+    "/admin/ranklists": {
+      get: {
+        tags: ["admin-ranklists"],
+        summary: "List ranklists across every tracker (including drafts)",
+        ...access(
+          "manage_trackers",
+          "Flat alternative to the tracker detail route, for searching a ranklist " +
+            "without knowing which tracker owns it.",
+        ),
+        parameters: [
+          ...pageParams,
+          {
+            name: "status",
+            in: "query",
+            schema: { type: "string", enum: ["published", "draft"] },
+          },
+          {
+            name: "q",
+            in: "query",
+            description: "Search on keyword, tracker title, or tracker slug.",
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": { description: "A page of ranklists", content: jsonBody(ref("AdminRanklistList")) },
+          ...adminAuthResponses,
         },
       },
     },

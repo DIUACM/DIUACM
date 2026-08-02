@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Lock, Trash2 } from 'lucide-react'
+import { ArrowLeft, Lock, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { toast } from 'sonner'
@@ -21,6 +21,7 @@ import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
 import { EventPicker } from '@/features/admin/shared/EventPicker'
 import { StatusBadge } from '@/features/admin/shared/StatusBadge'
 import { UserPicker } from '@/features/admin/shared/UserPicker'
+import { WeightCell } from '@/features/admin/shared/WeightCell'
 import { useRowSelection } from '@/features/admin/shared/use-row-selection'
 import { DataPanel } from '@/components/shared/DataPanel'
 import { UserAvatar } from '@/components/shared/UserAvatar'
@@ -193,7 +194,7 @@ function RanklistEditForm({ ranklist }: { ranklist: AdminRanklistDetail }) {
   )
 }
 
-function WeightCell({
+function EventWeightCell({
   ranklistId,
   eventId,
   weight,
@@ -202,48 +203,22 @@ function WeightCell({
   eventId: number
   weight: number
 }) {
-  const [value, setValue] = useState(String(weight))
   const setEvent = useAdminSetRanklistEvent(ranklistId)
-  const dirty = Number(value) !== weight
-
-  const save = () => {
-    if (!dirty || setEvent.isPending) return
-    setEvent.mutate(
-      { eventId, weight: Number(value) || 0 },
-      {
-        onSuccess: () => toast.success('Weight updated. Scores recalculated.'),
-        onError: (error) => toast.error(errorMessage(error)),
-      },
-    )
-  }
 
   return (
-    <div className="flex items-center justify-center gap-1.5">
-      <Input
-        type="number"
-        min={0}
-        max={1}
-        step="0.05"
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') save()
-        }}
-        className="h-8 w-20"
-        aria-label="Event weight"
-      />
-      {dirty && (
-        <Button
-          size="icon"
-          className="size-8"
-          aria-label="Save weight"
-          disabled={setEvent.isPending}
-          onClick={save}
-        >
-          <Check className="size-4" />
-        </Button>
-      )}
-    </div>
+    <WeightCell
+      weight={weight}
+      isPending={setEvent.isPending}
+      onSave={(next) =>
+        setEvent.mutate(
+          { eventId, weight: next },
+          {
+            onSuccess: () => toast.success('Weight updated. Scores recalculated.'),
+            onError: (error) => toast.error(errorMessage(error)),
+          },
+        )
+      }
+    />
   )
 }
 
@@ -484,7 +459,7 @@ export function AdminRanklistDetailPage() {
                               <StatusBadge status={event.status} />
                             </TableCell>
                             <TableCell>
-                              <WeightCell
+                              <EventWeightCell
                                 key={`${event.id}-${event.weight}`}
                                 ranklistId={id}
                                 eventId={event.id}
