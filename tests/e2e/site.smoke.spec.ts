@@ -1,17 +1,51 @@
+import path from 'node:path'
+
 import { expect, test, type Page, type Route } from '@playwright/test'
 import { createTestHarness } from 'wrangler'
 
 const API_ORIGIN = 'https://api.diuacm.com'
 const browserErrors = new WeakMap<Page, string[]>()
 
+// Bindings are declared here rather than loaded from apps/api/wrangler.jsonc,
+// for the same reason as apps/api/vitest.worker.config.ts: that config binds
+// EMAIL with `remote: true`, and the harness has no way to force a remote
+// binding local, so loading it would make CI demand a CLOUDFLARE_API_TOKEN.
+// Paths below resolve against `root`. Keep this list in step with the
+// production config — a binding that is missing here fails at first request.
 const apiServer = createTestHarness({
-  root: process.cwd(),
+  root: path.resolve(import.meta.dirname, '../../apps/api'),
   workers: [
     {
-      configPath: 'apps/api/wrangler.jsonc',
-      secrets: {
-        JWT_SECRET: 'browser-smoke-test-secret',
-        MIGRATION_EXPORT_KEY: 'browser-smoke-test-export-key',
+      config: {
+        name: 'diuacm-api-smoke',
+        main: 'src/index.ts',
+        compatibility_date: '2026-06-20',
+        compatibility_flags: ['nodejs_compat'],
+        d1_databases: [
+          {
+            binding: 'DB',
+            database_name: 'diuacm-db-smoke',
+            database_id: 'diuacm-db-smoke',
+            migrations_dir: 'drizzle',
+          },
+        ],
+        r2_buckets: [{ binding: 'BUCKET', bucket_name: 'diuacm-files-smoke' }],
+        send_email: [{ name: 'EMAIL' }],
+        ratelimits: [
+          {
+            name: 'AUTH_RATE_LIMITER',
+            namespace_id: '1001',
+            simple: { limit: 10, period: 60 },
+          },
+        ],
+        vars: {
+          CORS_ORIGINS: 'https://diuacm.com',
+          GOOGLE_CLIENT_ID: 'browser-smoke-test-client-id',
+          SUPER_ADMIN_EMAIL: 'admin@example.test',
+          ALERT_FROM_EMAIL: 'alerts@example.test',
+          JWT_SECRET: 'browser-smoke-test-secret',
+          MIGRATION_EXPORT_KEY: 'browser-smoke-test-export-key',
+        },
       },
     },
   ],
