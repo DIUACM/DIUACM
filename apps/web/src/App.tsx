@@ -60,6 +60,17 @@ const router = createBrowserRouter([
             lazy: lazily(() => import('@/features/gallery/GalleryAlbumPage'), 'GalleryAlbumPage'),
           },
           {
+            path: '/courses',
+            lazy: lazily(() => import('@/features/courses/CoursesPage'), 'CoursesPage'),
+          },
+          {
+            path: '/courses/:slug',
+            lazy: lazily(
+              () => import('@/features/courses/CourseDetailPage'),
+              'CourseDetailPage',
+            ),
+          },
+          {
             path: '/blog',
             lazy: lazily(() => import('@/features/blog/BlogPage'), 'BlogPage'),
           },

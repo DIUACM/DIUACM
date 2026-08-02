@@ -4,6 +4,7 @@ import {
   ChartNoAxesColumn,
   Code2,
   FileSpreadsheet,
+  GraduationCap,
   Puzzle,
   Rocket,
   Trophy,
@@ -61,6 +62,14 @@ const FEATURES = [
       'Explore the complete Take-OFF Programming Contest archive, organized by semester.',
     to: '/contests/topc',
     tint: 'bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300',
+  },
+  {
+    icon: GraduationCap,
+    title: 'Free C Programming Course',
+    description:
+      'Seven recorded classes that take you from your first C program to pointers — watch them right here.',
+    to: '/courses',
+    tint: 'bg-sky-100 text-sky-600 dark:bg-sky-500/20 dark:text-sky-300',
   },
   {
     icon: FileSpreadsheet,

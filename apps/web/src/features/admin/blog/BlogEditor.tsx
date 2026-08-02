@@ -241,6 +241,30 @@ function Separator() {
   return <span className="mx-1 h-5 w-px bg-border" />
 }
 
+/**
+ * What the toolbar shows when there is no live editor to read. Frozen and
+ * shared so `useEditorState`'s equality check treats repeats as unchanged.
+ */
+const IDLE_TOOLBAR_STATE = Object.freeze({
+  bold: false,
+  italic: false,
+  code: false,
+  link: false,
+  h1: false,
+  h2: false,
+  h3: false,
+  h4: false,
+  codeBlock: false,
+  bulletList: false,
+  orderedList: false,
+  blockquote: false,
+  canUndo: false,
+  canRedo: false,
+  inTable: false,
+  canMergeCells: false,
+  canSplitCell: false,
+})
+
 function Toolbar({
   editor,
   onUpload,
@@ -259,25 +283,36 @@ function Toolbar({
   // the state was at mount. This subscribes to just the flags the toolbar draws.
   const state = useEditorState({
     editor,
-    selector: ({ editor }) => ({
-      bold: editor.isActive('bold'),
-      italic: editor.isActive('italic'),
-      code: editor.isActive('code'),
-      link: editor.isActive('link'),
-      h1: editor.isActive('heading', { level: 1 }),
-      h2: editor.isActive('heading', { level: 2 }),
-      h3: editor.isActive('heading', { level: 3 }),
-      h4: editor.isActive('heading', { level: 4 }),
-      codeBlock: editor.isActive('codeBlock'),
-      bulletList: editor.isActive('bulletList'),
-      orderedList: editor.isActive('orderedList'),
-      blockquote: editor.isActive('blockquote'),
-      canUndo: editor.can().undo(),
-      canRedo: editor.can().redo(),
-      inTable: editor.isActive('table'),
-      canMergeCells: editor.can().mergeCells(),
-      canSplitCell: editor.can().splitCell(),
-    }),
+    selector: ({ editor }) => {
+      // The selector can run against an editor Tiptap has already torn down:
+      // `useEditor` destroys the outgoing instance on a timer (see
+      // `scheduleDestroy`), which StrictMode's mount/unmount/remount triggers
+      // on every dev page load. `destroy()` nulls out `commandManager`,
+      // `extensionManager` and `schema`, and neither `can()` nor `isActive()`
+      // guards against that — so reading either would throw before the
+      // replacement editor arrives. An inert toolbar for one render is the
+      // right answer; the next transaction fills it in.
+      if (!editor || editor.isDestroyed) return IDLE_TOOLBAR_STATE
+      return {
+        bold: editor.isActive('bold'),
+        italic: editor.isActive('italic'),
+        code: editor.isActive('code'),
+        link: editor.isActive('link'),
+        h1: editor.isActive('heading', { level: 1 }),
+        h2: editor.isActive('heading', { level: 2 }),
+        h3: editor.isActive('heading', { level: 3 }),
+        h4: editor.isActive('heading', { level: 4 }),
+        codeBlock: editor.isActive('codeBlock'),
+        bulletList: editor.isActive('bulletList'),
+        orderedList: editor.isActive('orderedList'),
+        blockquote: editor.isActive('blockquote'),
+        canUndo: editor.can().undo(),
+        canRedo: editor.can().redo(),
+        inTable: editor.isActive('table'),
+        canMergeCells: editor.can().mergeCells(),
+        canSplitCell: editor.can().splitCell(),
+      }
+    },
   })
   const headingActive = { 1: state.h1, 2: state.h2, 3: state.h3, 4: state.h4 }
 

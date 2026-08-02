@@ -5,6 +5,10 @@ import { createTestHarness } from 'wrangler'
 
 const API_ORIGIN = 'https://api.diuacm.com'
 const browserErrors = new WeakMap<Page, string[]>()
+const TRANSPARENT_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+)
 
 // Bindings are declared here rather than loaded from apps/api/wrangler.jsonc,
 // for the same reason as apps/api/vitest.worker.config.ts: that config binds
@@ -93,6 +97,16 @@ test.beforeEach(async ({ page }) => {
     if (message.type() === 'error') errors.push(message.text())
   })
   await page.route(`${API_ORIGIN}/**`, proxyApiRequest)
+
+  // The course pages reference YouTube's thumbnail host and player. Stub both:
+  // a real fetch would make these tests depend on network access, and a failed
+  // one surfaces as a console error that trips the assertion in `afterEach`.
+  await page.route('https://i.ytimg.com/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'image/png', body: TRANSPARENT_PNG }),
+  )
+  await page.route('https://www.youtube-nocookie.com/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><title>stub</title>' }),
+  )
 })
 
 test.afterEach(async ({ page }) => {
@@ -125,4 +139,47 @@ test('a direct visit loads a lazy informational route', async ({ page }) => {
 
   await expect(page.getByRole('heading', { name: 'Privacy Policy' })).toBeVisible()
   await expect(page.getByText('Information we collect')).toBeVisible()
+})
+
+test('the courses index lists the static course without calling the API', async ({ page }) => {
+  await page.goto('/courses')
+
+  await expect(page.getByRole('heading', { name: 'Courses', exact: true })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'C for Beginners' })).toBeVisible()
+  await expect(page.getByText('7 lessons · 9h 50m')).toBeVisible()
+})
+
+test('a course lesson only loads the YouTube player once play is pressed', async ({ page }) => {
+  await page.goto('/courses/c-for-beginners')
+
+  await expect(page.getByRole('heading', { name: 'C for Beginners', level: 1 })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Introduction to C', level: 2 })).toBeVisible()
+
+  // The facade is the point: no third-party player until someone asks for it.
+  await expect(page.locator('iframe')).toHaveCount(0)
+
+  await page.getByRole('button', { name: /^Play Lesson 1/ }).click()
+  await expect(page.locator('iframe')).toHaveAttribute(
+    'src',
+    /youtube-nocookie\.com\/embed\/MSE6VlVt6as/,
+  )
+})
+
+test('selecting a lesson is reflected in the URL and survives a reload', async ({ page }) => {
+  await page.goto('/courses/c-for-beginners')
+
+  await page.getByRole('button', { name: 'Lesson 4: Loops' }).click()
+  await expect(page).toHaveURL(/\?lesson=4$/)
+  await expect(page.getByRole('heading', { name: 'Loops', level: 2 })).toBeVisible()
+
+  // The lesson is addressable, so a direct visit to the deep link works too.
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Loops', level: 2 })).toBeVisible()
+})
+
+test('an unknown course slug shows a recoverable not-found state', async ({ page }) => {
+  await page.goto('/courses/does-not-exist')
+
+  await expect(page.getByText(/That course doesn't exist/)).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Browse all courses' })).toBeVisible()
 })

@@ -11,6 +11,10 @@ const MAX_INITIAL_BYTES = 600 * 1024
 const MAX_INITIAL_GZIP_BYTES = 180 * 1024
 const measuredRoutes = [
   ['public blog post shell', 'src/features/blog/BlogPostPage.tsx', 50 * 1024],
+  // The course page embeds YouTube through a plain iframe on purpose. This
+  // budget is the tripwire for anyone reaching for a player SDK or pulling the
+  // markdown renderer onto the route.
+  ['public course page', 'src/features/courses/CourseDetailPage.tsx', 20 * 1024],
   ['public markdown renderer', 'src/components/shared/MarkdownContent.tsx', 280 * 1024],
   ['admin blog edit shell', 'src/features/admin/blog/AdminBlogPostDetailPage.tsx', 75 * 1024],
   ['admin rich-text editor', 'src/features/admin/blog/BlogEditor.tsx', 400 * 1024],
