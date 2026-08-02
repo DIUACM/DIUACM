@@ -1,3 +1,4 @@
+import { logInfo } from "../lib/log";
 import { sendMail, type Notice } from "../lib/notify";
 import type { Bindings } from "../types";
 import { collectLivenessFaults } from "./faults";
@@ -216,7 +217,7 @@ export const runDigest = async (
   now = Math.floor(Date.now() / 1000),
 ): Promise<{ faults: Notice[] }> => {
   const { body, faults } = await buildDigest(env.DB, now);
-  console.log("digest\n" + body);
+  logInfo("cron.digest_generated", { body });
   await sendMail(env, { subject: "[DIU ACM] Daily sync digest", text: body });
   // Once a day, on the job least likely to be starved of time, and after the
   // mail is away so a slow delete can never cost the digest itself.

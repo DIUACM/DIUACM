@@ -1,3 +1,7 @@
+import { fetchWithTimeout, readLimitedJson } from "./upstream";
+
+const MAX_CODEFORCES_RESPONSE_BYTES = 8_000_000;
+
 export class CodeforcesApiError extends Error {
   constructor(
     message: string,
@@ -56,7 +60,7 @@ export const getCodeforcesUsers = async (
 
   let response: Response;
   try {
-    response = await fetcher(url, {
+    response = await fetchWithTimeout(fetcher, url, {
       headers: { Accept: "application/json" },
     });
   } catch {
@@ -68,7 +72,10 @@ export const getCodeforcesUsers = async (
 
   let body: CodeforcesResponse;
   try {
-    body = (await response.json()) as CodeforcesResponse;
+    body = (await readLimitedJson(
+      response,
+      MAX_CODEFORCES_RESPONSE_BYTES,
+    )) as CodeforcesResponse;
   } catch {
     throw new CodeforcesApiError(
       "Codeforces returned an invalid response. Please try again.",
@@ -204,14 +211,19 @@ export const getUserSubmissions = async (
 
     let response: Response;
     try {
-      response = await fetcher(url, { headers: { Accept: "application/json" } });
+      response = await fetchWithTimeout(fetcher, url, {
+        headers: { Accept: "application/json" },
+      });
     } catch {
       throw new CodeforcesApiError("Could not reach Codeforces.", "unavailable");
     }
 
     let body: SubmissionsResponse;
     try {
-      body = (await response.json()) as SubmissionsResponse;
+      body = (await readLimitedJson(
+        response,
+        MAX_CODEFORCES_RESPONSE_BYTES,
+      )) as SubmissionsResponse;
     } catch {
       throw new CodeforcesApiError("Codeforces returned an invalid response.", "unavailable");
     }

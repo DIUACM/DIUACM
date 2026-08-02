@@ -1,12 +1,14 @@
 import { detectContestLink, type ContestPlatform } from "@diuacm/contest-link";
 
 import { AtcoderApiError, getContests } from "./atcoder";
+import { fetchWithTimeout, readLimitedJson, readLimitedText } from "./upstream";
 import { getContestRank, VjudgeApiError } from "./vjudge";
 
 const CODEFORCES_CONTESTS_URL = "https://codeforces.com/api/contest.list";
 const ATCODER_ORIGIN = "https://atcoder.jp";
 const USER_AGENT = "diuacm-sync (+https://diuacm.com)";
 const MAX_ATCODER_PAGE_BYTES = 2_000_000;
+const MAX_CODEFORCES_RESPONSE_BYTES = 8_000_000;
 
 export type ContestMetadata = {
   platform: ContestPlatform;
@@ -59,7 +61,9 @@ const resolveCodeforces = async (
 
   let response: Response;
   try {
-    response = await fetcher(url, { headers: { Accept: "application/json" } });
+    response = await fetchWithTimeout(fetcher, url, {
+      headers: { Accept: "application/json" },
+    });
   } catch {
     throw new ContestMetadataError("Could not reach Codeforces.", "unavailable");
   }
@@ -76,7 +80,10 @@ const resolveCodeforces = async (
 
   let body: CodeforcesContestListResponse;
   try {
-    body = (await response.json()) as CodeforcesContestListResponse;
+    body = (await readLimitedJson(
+      response,
+      MAX_CODEFORCES_RESPONSE_BYTES,
+    )) as CodeforcesContestListResponse;
   } catch {
     throw new ContestMetadataError("Codeforces returned an invalid response.", "unavailable");
   }
@@ -173,7 +180,7 @@ const resolveAtcoderPage = async (
 
   let response: Response;
   try {
-    response = await fetcher(url, {
+    response = await fetchWithTimeout(fetcher, url, {
       headers: { Accept: "text/html", "User-Agent": USER_AGENT },
     });
   } catch {
@@ -196,13 +203,10 @@ const resolveAtcoderPage = async (
     );
   }
 
-  const contentLength = Number(response.headers.get("Content-Length"));
-  if (Number.isFinite(contentLength) && contentLength > MAX_ATCODER_PAGE_BYTES) {
-    throw new ContestMetadataError("AtCoder's contest page was unexpectedly large.", "unavailable");
-  }
-
-  const html = await response.text();
-  if (html.length > MAX_ATCODER_PAGE_BYTES) {
+  let html: string;
+  try {
+    html = await readLimitedText(response, MAX_ATCODER_PAGE_BYTES);
+  } catch {
     throw new ContestMetadataError("AtCoder's contest page was unexpectedly large.", "unavailable");
   }
 

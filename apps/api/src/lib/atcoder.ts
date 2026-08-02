@@ -1,3 +1,5 @@
+import { fetchWithTimeout, readLimitedJson } from "./upstream";
+
 // ---------------------------------------------------------------------------
 // AtCoder has no official API, and its own standings are private: a plain GET
 // of https://atcoder.jp/contests/<slug>/standings/json redirects to the login
@@ -14,6 +16,7 @@ const CONTESTS_URL = "https://kenkoooo.com/atcoder/resources/contests.json";
 
 /** Identifies us to a volunteer-run service rather than showing up anonymous. */
 const USER_AGENT = "diuacm-sync (+https://diuacm.com)";
+const MAX_ATCODER_RESPONSE_BYTES = 8_000_000;
 
 /** The endpoint's documented page size. A short page means the end of history. */
 const PAGE_SIZE = 500;
@@ -47,7 +50,7 @@ export type AtcoderContest = {
 const request = async (url: URL, fetcher: typeof fetch): Promise<unknown> => {
   let response: Response;
   try {
-    response = await fetcher(url, {
+    response = await fetchWithTimeout(fetcher, url, {
       headers: { Accept: "application/json", "User-Agent": USER_AGENT },
     });
   } catch {
@@ -65,7 +68,7 @@ const request = async (url: URL, fetcher: typeof fetch): Promise<unknown> => {
   }
 
   try {
-    return await response.json();
+    return await readLimitedJson(response, MAX_ATCODER_RESPONSE_BYTES);
   } catch {
     throw new AtcoderApiError("AtCoder Problems returned an invalid response.", "unavailable");
   }

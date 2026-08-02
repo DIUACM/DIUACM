@@ -10,6 +10,23 @@ export type AuthPayload = {
   exp: number;
 };
 
+const isAuthPayload = (value: unknown): value is AuthPayload => {
+  if (typeof value !== "object" || value === null) return false;
+  const payload = value as Record<string, unknown>;
+  return (
+    typeof payload.sub === "number" &&
+    Number.isInteger(payload.sub) &&
+    payload.sub > 0 &&
+    typeof payload.username === "string" &&
+    payload.username.length > 0 &&
+    typeof payload.iat === "number" &&
+    Number.isInteger(payload.iat) &&
+    typeof payload.exp === "number" &&
+    Number.isInteger(payload.exp) &&
+    payload.exp > payload.iat
+  );
+};
+
 export const signAuthToken = async (
   user: { id: number; username: string },
   secret: string,
@@ -29,5 +46,7 @@ export const verifyAuthToken = async (
   secret: string,
 ): Promise<AuthPayload> => {
   // hono/jwt's `verify` needs the algorithm as the third argument.
-  return (await verify(token, secret, ALG)) as unknown as AuthPayload;
+  const payload: unknown = await verify(token, secret, ALG);
+  if (!isAuthPayload(payload)) throw new Error("Invalid auth token payload");
+  return payload;
 };

@@ -1,3 +1,4 @@
+import { logError, logInfo, logWarn } from "../lib/log";
 import { reportNotice, type Notice } from "../lib/notify";
 import type { Bindings } from "../types";
 import { atcoderPlatform } from "./atcoder";
@@ -139,7 +140,7 @@ export const handleScheduled = async (
 ): Promise<void> => {
   const job = JOBS[controller.cron];
   if (!job) {
-    console.warn(`No handler for cron "${controller.cron}"`);
+    logWarn("cron.unknown_schedule", { cron: controller.cron });
     return;
   }
 
@@ -171,7 +172,7 @@ export const handleScheduled = async (
     throw cause;
   }
 
-  console.log(`${job.name} sync`, JSON.stringify(result.summary));
+  logInfo("cron.completed", { job: job.name, summary: result.summary });
 
   // `degraded` is the state nothing else can show. The invocation succeeded, so
   // Workers Observability counts it as healthy and its error charts stay flat —
@@ -192,7 +193,10 @@ export const handleScheduled = async (
   for (const fault of result.faults) {
     // Logged at error level as well as mailed, so the run is findable by
     // filtering logs to level=error even though the invocation itself is green.
-    console.error(`${fault.key} ${fault.detail}`);
+    logError("cron.degraded", fault.detail, {
+      job: job.name,
+      faultKey: fault.key,
+    });
     await reportNotice(env, env.DB, fault, now);
   }
 };

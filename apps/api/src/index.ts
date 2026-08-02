@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 import { secureHeaders } from "hono/secure-headers";
 
+import { logError } from "./lib/log";
 import { openApiDoc } from "./openapi";
 import admin from "./routes/admin";
 import auth from "./routes/auth";
@@ -132,7 +133,10 @@ app.onError((err, c) => {
     return c.json({ error: `${notNull[1]} is required` }, 400);
   }
 
-  console.error("Unhandled error", err);
+  logError("request.unhandled_error", err, {
+    method: c.req.method,
+    path: c.req.path,
+  });
   return c.json({ error: "Internal server error" }, 500);
 });
 

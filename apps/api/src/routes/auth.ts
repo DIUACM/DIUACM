@@ -8,6 +8,7 @@ import { CodeforcesApiError, getCodeforcesUser } from "../lib/codeforces";
 import { GoogleAuthError, verifyGoogleIdToken } from "../lib/google-oauth";
 import { parseImageUpload } from "../lib/image-upload";
 import { signAuthToken } from "../lib/jwt";
+import { logError } from "../lib/log";
 import { hashPassword, needsPasswordRehash, verifyPassword } from "../lib/password";
 import { isSuperAdminEmail, loadPermissions } from "../lib/permissions";
 import { toAuthUser, toHandlesMap } from "../lib/user-shape";
@@ -185,7 +186,7 @@ auth.post("/google", authRateLimit, validate("json", googleSignInSchema), async 
       }
     }
     if (!user) {
-      console.error("Google sign-in: insert failed after retries", lastErr);
+      logError("auth.google_insert_failed", lastErr);
       throw new HTTPException(500, {
         message: "Could not create user from Google sign-in",
       });
@@ -277,7 +278,7 @@ auth.put("/me/image", requireAuth, async (c) => {
     try {
       await c.env.BUCKET.delete(key);
     } catch (cleanupErr) {
-      console.error("R2 cleanup failed for orphan image key", key, cleanupErr);
+      logError("r2.orphan_cleanup_failed", cleanupErr, { objectKey: key });
     }
     throw err;
   }
@@ -287,7 +288,9 @@ auth.put("/me/image", requireAuth, async (c) => {
     try {
       await c.env.BUCKET.delete(prev.imageKey);
     } catch (err) {
-      console.error("R2 delete failed for old image", prev.imageKey, err);
+      logError("r2.replaced_object_delete_failed", err, {
+        objectKey: prev.imageKey,
+      });
     }
   }
 

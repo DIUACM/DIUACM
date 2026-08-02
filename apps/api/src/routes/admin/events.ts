@@ -7,6 +7,7 @@ import { eventAttendance, eventMedia, eventPerformance, events, users } from "..
 import { ContestMetadataError, getContestMetadata } from "../../lib/contest-metadata";
 import { parseImageUpload } from "../../lib/image-upload";
 import { likeContains } from "../../lib/like";
+import { logError } from "../../lib/log";
 import { buildMeta } from "../../lib/pagination";
 import { parseId } from "../../lib/parse-id";
 import { fileUrlFor, toUserSummary } from "../../lib/user-shape";
@@ -190,7 +191,7 @@ adminEventRoutes.delete("/:id", manageEvents, async (c) => {
     try {
       await c.env.BUCKET.delete(m.key);
     } catch (err) {
-      console.error("R2 delete failed for event media", m.key, err);
+      logError("r2.event_media_delete_failed", err, { objectKey: m.key });
     }
   }
 
@@ -219,7 +220,9 @@ adminEventRoutes.post("/bulk", manageEvents, validate("json", adminBulkPublishSc
       try {
         await c.env.BUCKET.delete(keys);
       } catch (err) {
-        console.error("R2 bulk delete failed for event media", keys, err);
+        logError("r2.event_media_bulk_delete_failed", err, {
+          objectKeys: keys,
+        });
       }
     }
 
@@ -265,7 +268,7 @@ adminEventRoutes.post("/:id/media", manageEvents, async (c) => {
     try {
       await c.env.BUCKET.delete(key);
     } catch (cleanupErr) {
-      console.error("R2 cleanup failed for orphan media key", key, cleanupErr);
+      logError("r2.orphan_cleanup_failed", cleanupErr, { objectKey: key });
     }
     throw err;
   }
@@ -289,7 +292,9 @@ adminEventRoutes.delete("/:id/media/:mediaId", manageEvents, async (c) => {
   try {
     await c.env.BUCKET.delete(deleted.key);
   } catch (err) {
-    console.error("R2 delete failed for event media", deleted.key, err);
+    logError("r2.event_media_delete_failed", err, {
+      objectKey: deleted.key,
+    });
   }
 
   return c.json({ ok: true });
@@ -315,7 +320,9 @@ adminEventRoutes.post(
       try {
         await c.env.BUCKET.delete(keys);
       } catch (err) {
-        console.error("R2 bulk delete failed for event media", keys, err);
+        logError("r2.event_media_bulk_delete_failed", err, {
+          objectKeys: keys,
+        });
       }
     }
 

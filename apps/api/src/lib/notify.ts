@@ -1,4 +1,5 @@
 import type { Bindings } from "../types";
+import { logError, logWarn } from "./log";
 
 // ---------------------------------------------------------------------------
 // Super-admin alerting.
@@ -89,9 +90,7 @@ export const sendMail = async (
   const to: string = env.SUPER_ADMIN_EMAIL;
 
   if (!from || !to) {
-    console.warn(
-      `Alert not sent (ALERT_FROM_EMAIL/SUPER_ADMIN_EMAIL unset): ${message.subject}`,
-    );
+    logWarn("alert.not_configured", { subject: message.subject });
     return false;
   }
 
@@ -107,7 +106,7 @@ export const sendMail = async (
   } catch (cause) {
     // E_SENDER_NOT_VERIFIED until the domain is onboarded, which is the
     // expected state on a fresh deploy. Logged, never fatal.
-    console.error(`Alert send failed: ${message.subject}`, cause);
+    logError("alert.send_failed", cause, { subject: message.subject });
     return false;
   }
 };
@@ -132,7 +131,7 @@ export const reportNotice = async (
       .bind(notice.key, now, now, notice.detail)
       .first<NoticeRow>();
   } catch (cause) {
-    console.error(`Could not record notice ${notice.key}`, cause);
+    logError("alert.notice_record_failed", cause, { noticeKey: notice.key });
     return "undeliverable";
   }
 
@@ -155,7 +154,7 @@ export const reportNotice = async (
   try {
     await d1.prepare(NOTICE_SENT_SQL).bind(now, notice.key).run();
   } catch (cause) {
-    console.error(`Could not stamp notice ${notice.key}`, cause);
+    logError("alert.notice_stamp_failed", cause, { noticeKey: notice.key });
   }
   return "sent";
 };

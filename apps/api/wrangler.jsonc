@@ -4,6 +4,7 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-06-20",
   "compatibility_flags": ["nodejs_compat"],
+  "upload_source_maps": true,
   // Production traffic is served only through the managed Custom Domain.
   // Cloudflare creates the DNS record and edge certificate during deployment.
   "workers_dev": false,
@@ -15,7 +16,11 @@
     }
   ],
   "observability": {
-    "enabled": true
+    "enabled": true,
+    // Keep all application logs while traffic is modest; traces are sampled
+    // because they are much more verbose and are primarily diagnostic.
+    "logs": { "enabled": true, "head_sampling_rate": 1 },
+    "traces": { "enabled": true, "head_sampling_rate": 0.01 }
   },
   // Background solve/upsolve sync. One expression per platform so each can run
   // on its own cadence; src/sync/index.ts dispatches on the expression.

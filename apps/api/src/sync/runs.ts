@@ -1,3 +1,4 @@
+import { logError } from "../lib/log";
 import { firesPerDay, JOB_CRONS, JOB_NAMES, type JobName } from "./schedule";
 
 // ---------------------------------------------------------------------------
@@ -72,7 +73,7 @@ export const recordRun = async (d1: D1Database, run: RunRecord): Promise<void> =
       )
       .run();
   } catch (cause) {
-    console.error(`Could not record run for ${run.job}`, cause);
+    logError("cron.ledger_write_failed", cause, { job: run.job });
   }
 };
 
@@ -84,7 +85,7 @@ export const pruneRuns = async (d1: D1Database, now: number): Promise<void> => {
       .bind(now - RUN_RETENTION_DAYS * 24 * 60 * 60)
       .run();
   } catch (cause) {
-    console.error("Could not prune cron_runs", cause);
+    logError("cron.ledger_prune_failed", cause);
   }
 };
 

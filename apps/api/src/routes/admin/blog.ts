@@ -7,6 +7,7 @@ import { blogAssets, blogPosts, users } from "../../db/schema";
 import { parseAssetUpload } from "../../lib/asset-upload";
 import { parseImageUpload } from "../../lib/image-upload";
 import { likeContains } from "../../lib/like";
+import { logError } from "../../lib/log";
 import { buildMeta } from "../../lib/pagination";
 import { parseId } from "../../lib/parse-id";
 import { fileUrlFor, toUserSummary } from "../../lib/user-shape";
@@ -198,13 +199,13 @@ adminBlogRoutes.delete("/:id", manageBlog, async (c) => {
 
   await db.delete(blogPosts).where(eq(blogPosts.id, id));
 
-  const keys = [...assets.map((a) => a.key)];
+  const keys = assets.map((a) => a.key);
   if (post.featuredImageKey) keys.push(post.featuredImageKey);
   for (const key of keys) {
     try {
       await c.env.BUCKET.delete(key);
     } catch (err) {
-      console.error("R2 delete failed for blog object", key, err);
+      logError("r2.blog_object_delete_failed", err, { objectKey: key });
     }
   }
 
@@ -243,7 +244,9 @@ adminBlogRoutes.post("/bulk", manageBlog, validate("json", adminBulkPublishSchem
       try {
         await c.env.BUCKET.delete(keys);
       } catch (err) {
-        console.error("R2 bulk delete failed for blog objects", keys, err);
+        logError("r2.blog_object_bulk_delete_failed", err, {
+          objectKeys: keys,
+        });
       }
     }
 
@@ -297,7 +300,7 @@ adminBlogRoutes.post("/:id/assets", manageBlog, async (c) => {
     try {
       await c.env.BUCKET.delete(key);
     } catch (cleanupErr) {
-      console.error("R2 cleanup failed for orphan blog asset", key, cleanupErr);
+      logError("r2.orphan_cleanup_failed", cleanupErr, { objectKey: key });
     }
     throw err;
   }
@@ -321,7 +324,9 @@ adminBlogRoutes.delete("/:id/assets/:assetId", manageBlog, async (c) => {
   try {
     await c.env.BUCKET.delete(deleted.key);
   } catch (err) {
-    console.error("R2 delete failed for blog asset", deleted.key, err);
+    logError("r2.blog_asset_delete_failed", err, {
+      objectKey: deleted.key,
+    });
   }
 
   return c.json({ ok: true });
@@ -351,7 +356,7 @@ adminBlogRoutes.post("/:id/featured-image", manageBlog, async (c) => {
     try {
       await c.env.BUCKET.delete(key);
     } catch (cleanupErr) {
-      console.error("R2 cleanup failed for orphan featured image", key, cleanupErr);
+      logError("r2.orphan_cleanup_failed", cleanupErr, { objectKey: key });
     }
     throw err;
   }
@@ -360,7 +365,9 @@ adminBlogRoutes.post("/:id/featured-image", manageBlog, async (c) => {
     try {
       await c.env.BUCKET.delete(post.featuredImageKey);
     } catch (err) {
-      console.error("R2 delete failed for replaced featured image", post.featuredImageKey, err);
+      logError("r2.replaced_object_delete_failed", err, {
+        objectKey: post.featuredImageKey,
+      });
     }
   }
 
@@ -384,7 +391,9 @@ adminBlogRoutes.delete("/:id/featured-image", manageBlog, async (c) => {
   try {
     await c.env.BUCKET.delete(post.featuredImageKey);
   } catch (err) {
-    console.error("R2 delete failed for blog featured image", post.featuredImageKey, err);
+    logError("r2.blog_featured_image_delete_failed", err, {
+      objectKey: post.featuredImageKey,
+    });
   }
 
   return c.json({ ok: true });

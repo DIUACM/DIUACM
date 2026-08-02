@@ -1,3 +1,5 @@
+import { fetchWithTimeout, readLimitedText } from "./upstream";
+
 // ---------------------------------------------------------------------------
 // VJudge has no documented API, but the endpoint its own standings page calls —
 // /contest/rank/single/<id> — is public JSON and needs no session, even for the
@@ -15,6 +17,7 @@ const RANK_URL = "https://vjudge.net/contest/rank/single/";
 
 /** Identifies us rather than showing up anonymous — and gets us past the bot check. */
 const USER_AGENT = "diuacm-sync (+https://diuacm.com)";
+const MAX_VJUDGE_RESPONSE_BYTES = 16_000_000;
 
 /** VJudge's own code for an accepted submission; everything else is a failure. */
 const ACCEPTED = 1;
@@ -66,9 +69,11 @@ const participantName = (value: unknown): string | null => {
 const request = async (contestId: string, fetcher: typeof fetch): Promise<string | null> => {
   let response: Response;
   try {
-    response = await fetcher(`${RANK_URL}${encodeURIComponent(contestId)}`, {
-      headers: { Accept: "application/json", "User-Agent": USER_AGENT },
-    });
+    response = await fetchWithTimeout(
+      fetcher,
+      `${RANK_URL}${encodeURIComponent(contestId)}`,
+      { headers: { Accept: "application/json", "User-Agent": USER_AGENT } },
+    );
   } catch {
     throw new VjudgeApiError("Could not reach VJudge.", "unavailable");
   }
@@ -85,7 +90,12 @@ const request = async (contestId: string, fetcher: typeof fetch): Promise<string
     throw new VjudgeApiError(`VJudge returned HTTP ${response.status}.`, "unavailable");
   }
 
-  const body = await response.text();
+  let body: string;
+  try {
+    body = await readLimitedText(response, MAX_VJUDGE_RESPONSE_BYTES);
+  } catch {
+    throw new VjudgeApiError("VJudge returned an invalid response.", "unavailable");
+  }
   return body.trim() === "" ? null : body;
 };
 

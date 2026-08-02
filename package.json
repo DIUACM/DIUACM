@@ -9,7 +9,7 @@
     "dev:web": "pnpm --filter @diuacm/web dev",
     "build:web": "pnpm --filter @diuacm/web build",
     "typecheck": "pnpm --filter @diuacm/api typecheck && pnpm --filter @diuacm/web exec tsc -b",
-    "lint": "pnpm --filter @diuacm/web lint",
+    "lint": "pnpm --filter @diuacm/api lint && pnpm --filter @diuacm/web lint",
     "test": "pnpm --filter @diuacm/api test && pnpm --filter @diuacm/web test",
     "test:e2e": "playwright test",
     "test:smoke": "pnpm build:web && pnpm test:e2e",

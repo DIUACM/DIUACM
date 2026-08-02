@@ -10,6 +10,7 @@
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
     "cf-typegen": "wrangler types",
+    "lint": "oxlint --deny typescript/no-floating-promises src test",
     "import:structure": "node --env-file-if-exists=.dev.vars scripts/import-structure.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run && vitest run --config vitest.worker.config.ts",
@@ -30,6 +31,7 @@
     "@types/node": "^20.19.43",
     "better-sqlite3": "^12.11.1",
     "drizzle-kit": "^0.31.10",
+    "oxlint": "^1.71.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10",
     "wrangler": "^4.118.0"

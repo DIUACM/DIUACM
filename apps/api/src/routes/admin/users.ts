@@ -6,6 +6,7 @@ import { getDb } from "../../db/client";
 import { userHandles, userPermissions, users } from "../../db/schema";
 import { CodeforcesApiError, getCodeforcesUser } from "../../lib/codeforces";
 import { likeContains } from "../../lib/like";
+import { logError } from "../../lib/log";
 import { buildMeta } from "../../lib/pagination";
 import { parseId } from "../../lib/parse-id";
 import { hashPassword } from "../../lib/password";
@@ -318,8 +319,10 @@ adminUserRoutes.patch("/:id", manageUsers, validate("json", adminUserUpdateSchem
   if (id === null) throw new HTTPException(404, { message: "User not found" });
 
   const { password, isBanned, banReason, ...input } = c.req.valid("json");
+  const hasBanState = isBanned !== undefined;
+  const hasBanReason = banReason !== undefined;
   if (
-    isBanned === undefined !== (banReason === undefined) ||
+    hasBanState !== hasBanReason ||
     (isBanned === true && banReason === null) ||
     (isBanned === false && banReason !== null)
   ) {
@@ -419,7 +422,9 @@ adminUserRoutes.delete("/:id", manageUsers, async (c) => {
     try {
       await c.env.BUCKET.delete(deleted.imageKey);
     } catch (err) {
-      console.error("R2 delete failed for user image", deleted.imageKey, err);
+      logError("r2.user_image_delete_failed", err, {
+        objectKey: deleted.imageKey,
+      });
     }
   }
 

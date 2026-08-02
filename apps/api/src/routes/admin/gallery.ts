@@ -6,6 +6,7 @@ import { getDb } from "../../db/client";
 import { galleryAlbums, galleryMedia } from "../../db/schema";
 import { parseImageUpload } from "../../lib/image-upload";
 import { likeContains } from "../../lib/like";
+import { logError } from "../../lib/log";
 import { buildMeta } from "../../lib/pagination";
 import { parseId } from "../../lib/parse-id";
 import { fileUrlFor } from "../../lib/user-shape";
@@ -167,7 +168,7 @@ adminGalleryRoutes.delete("/:id", manageGallery, async (c) => {
     try {
       await c.env.BUCKET.delete(m.key);
     } catch (err) {
-      console.error("R2 delete failed for gallery media", m.key, err);
+      logError("r2.gallery_media_delete_failed", err, { objectKey: m.key });
     }
   }
 
@@ -213,7 +214,9 @@ adminGalleryRoutes.post("/bulk", manageGallery, validate("json", adminBulkPublis
       try {
         await c.env.BUCKET.delete(keys);
       } catch (err) {
-        console.error("R2 bulk delete failed for gallery media", keys, err);
+        logError("r2.gallery_media_bulk_delete_failed", err, {
+          objectKeys: keys,
+        });
       }
     }
 
@@ -261,7 +264,7 @@ adminGalleryRoutes.post("/:id/media", manageGallery, async (c) => {
     try {
       await c.env.BUCKET.delete(key);
     } catch (cleanupErr) {
-      console.error("R2 cleanup failed for orphan media key", key, cleanupErr);
+      logError("r2.orphan_cleanup_failed", cleanupErr, { objectKey: key });
     }
     throw err;
   }
@@ -285,7 +288,9 @@ adminGalleryRoutes.delete("/:id/media/:mediaId", manageGallery, async (c) => {
   try {
     await c.env.BUCKET.delete(deleted.key);
   } catch (err) {
-    console.error("R2 delete failed for gallery media", deleted.key, err);
+    logError("r2.gallery_media_delete_failed", err, {
+      objectKey: deleted.key,
+    });
   }
 
   return c.json({ ok: true });
@@ -312,7 +317,9 @@ adminGalleryRoutes.post(
       try {
         await c.env.BUCKET.delete(keys);
       } catch (err) {
-        console.error("R2 bulk delete failed for gallery media", keys, err);
+        logError("r2.gallery_media_bulk_delete_failed", err, {
+          objectKeys: keys,
+        });
       }
     }
 

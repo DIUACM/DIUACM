@@ -1,9 +1,13 @@
+import { fetchWithTimeout, readLimitedJson } from "./upstream";
+
 // Validates a Google-issued OAuth ID token by calling Google's public
 // tokeninfo endpoint. Google parses, verifies the signature and expiry, and
 // returns the claims as JSON. Caller must still check `aud` and `email_verified`
 // — the endpoint does NOT enforce those itself.
 
 const TOKENINFO_URL = "https://oauth2.googleapis.com/tokeninfo";
+const MAX_TOKENINFO_RESPONSE_BYTES = 64_000;
+const TOKENINFO_TIMEOUT_MS = 10_000;
 
 export type GoogleClaims = {
   sub: string;
@@ -43,16 +47,21 @@ export const verifyGoogleIdToken = async (
   // POST the credential as a form body. Putting an ID token in the URL query
   // would land it in CF access logs, Workers Observability traces, and any
   // upstream proxy — bearer credentials shouldn't appear in URLs.
-  const res = await fetch(TOKENINFO_URL, {
+  const res = await fetchWithTimeout(fetch, TOKENINFO_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ id_token: idToken }).toString(),
-  });
+  }, TOKENINFO_TIMEOUT_MS);
   if (!res.ok) {
     throw new GoogleAuthError(`tokeninfo rejected token (${res.status})`);
   }
 
-  const data = (await res.json()) as TokeninfoResponse;
+  let data: TokeninfoResponse;
+  try {
+    data = (await readLimitedJson(res, MAX_TOKENINFO_RESPONSE_BYTES)) as TokeninfoResponse;
+  } catch {
+    throw new GoogleAuthError("tokeninfo returned an invalid response");
+  }
 
   if (!data.sub || !data.email || !data.aud) {
     throw new GoogleAuthError("tokeninfo response missing required claims");
