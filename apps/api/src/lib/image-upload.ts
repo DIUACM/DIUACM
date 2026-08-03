@@ -3,7 +3,7 @@ import { HTTPException } from "hono/http-exception";
 
 import type { AppEnv } from "../types";
 
-export const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
+export const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MiB
 
 type Format = {
   contentType: string;

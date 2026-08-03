@@ -366,7 +366,7 @@ export interface paths {
                     "multipart/form-data": {
                         /**
                          * Format: binary
-                         * @description PNG, JPEG, GIF, or WebP — max 5 MB.
+                         * @description PNG, JPEG, GIF, or WebP — max 10 MiB.
                          */
                         image: string;
                     };
@@ -400,7 +400,7 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Image exceeds the 5 MB limit */
+                /** @description Image exceeds the 10 MiB limit */
                 413: {
                     headers: {
                         [name: string]: unknown;
@@ -2567,7 +2567,7 @@ export interface paths {
                     "multipart/form-data": {
                         /**
                          * Format: binary
-                         * @description PNG, JPEG, GIF, or WebP — max 5 MB.
+                         * @description PNG, JPEG, GIF, or WebP — max 10 MiB.
                          */
                         image: string;
                     };
@@ -2619,7 +2619,7 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Image exceeds the 5 MB limit */
+                /** @description Image exceeds the 10 MiB limit */
                 413: {
                     headers: {
                         [name: string]: unknown;
@@ -5215,7 +5215,7 @@ export interface paths {
                     "multipart/form-data": {
                         /**
                          * Format: binary
-                         * @description PNG, JPEG, GIF, or WebP — max 5 MB.
+                         * @description PNG, JPEG, GIF, or WebP — max 10 MiB.
                          */
                         image: string;
                     };
@@ -5267,7 +5267,7 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Image exceeds the 5 MB limit */
+                /** @description Image exceeds the 10 MiB limit */
                 413: {
                     headers: {
                         [name: string]: unknown;
@@ -5938,7 +5938,7 @@ export interface paths {
                     "multipart/form-data": {
                         /**
                          * Format: binary
-                         * @description PNG, JPEG, GIF, or WebP — max 5 MB.
+                         * @description PNG, JPEG, GIF, or WebP — max 10 MiB.
                          */
                         image: string;
                     };
@@ -5990,7 +5990,7 @@ export interface paths {
                         "application/json": components["schemas"]["Error"];
                     };
                 };
-                /** @description Image exceeds the 5 MB limit */
+                /** @description Image exceeds the 10 MiB limit */
                 413: {
                     headers: {
                         [name: string]: unknown;

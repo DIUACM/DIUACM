@@ -1,5 +1,5 @@
 /** Mirrors the API's own limits (apps/api/src/lib/image-upload.ts). */
-export const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+export const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
 export const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp']
 
@@ -16,7 +16,7 @@ export function imageRejection(file: File): string | null {
     return `${file.name}: use a PNG, JPEG, GIF, or WebP image.`
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    return `${file.name}: must be 5 MB or smaller.`
+    return `${file.name}: must be 10 MiB or smaller.`
   }
   return null
 }

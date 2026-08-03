@@ -26,7 +26,7 @@ A [Hono](https://hono.dev) API for diuacm, running on **Cloudflare Workers** wit
 | POST   | `/auth/google`   | —      | Sign in with a Google ID token `{ idToken }` (**@diu.edu.bd** only) |
 | GET    | `/auth/me`       | Bearer | Current user |
 | PATCH  | `/auth/me`       | Bearer | Update profile `{ name?, username?, studentId? }` |
-| PUT    | `/auth/me/image` | Bearer | Upload profile image (multipart field `image`; PNG/JPEG/GIF/WebP ≤ 5 MB) |
+| PUT    | `/auth/me/image` | Bearer | Upload profile image (multipart field `image`; PNG/JPEG/GIF/WebP ≤ 10 MiB) |
 | GET    | `/events`        | —      | List published events; filter by `type`/`scope`, search `q` (title/description/link) |
 | GET    | `/events/:id`    | —      | Event details + media |
 | POST   | `/events/:id/attendance` | Bearer | Mark attendance (body `{ password }`; within the attendance window) |

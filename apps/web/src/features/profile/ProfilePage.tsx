@@ -68,7 +68,7 @@ function AvatarUploader({ user }: { user: User }) {
           <Camera className="size-4" /> Change photo
         </Button>
         <p className="mt-1.5 text-xs text-muted-foreground">
-          PNG, JPEG, GIF, or WebP · max 5 MB
+          PNG, JPEG, GIF, or WebP · max 10 MiB
         </p>
         <input
           ref={inputRef}
