@@ -69,6 +69,7 @@ export function ProgrammerDetailPage() {
               <UserAvatar
                 name={programmer.name}
                 image={programmer.image}
+                imagePreset="profileAvatar"
                 className="size-24 text-2xl shadow-clay transition-transform hover:scale-105"
               />
             </button>
@@ -76,6 +77,7 @@ export function ProgrammerDetailPage() {
             <UserAvatar
               name={programmer.name}
               image={programmer.image}
+              imagePreset="profileAvatar"
               className="size-24 text-2xl shadow-clay"
             />
           )}

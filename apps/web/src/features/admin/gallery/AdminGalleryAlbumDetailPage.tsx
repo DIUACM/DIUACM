@@ -54,6 +54,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { ImageDropzone } from '@/components/shared/ImageDropzone'
+import { ResponsiveImage } from '@/components/shared/ResponsiveImage'
 import { useDocumentTitle } from '@/lib/use-document-title'
 
 function AlbumEditForm({ album }: { album: AdminGalleryAlbumDetail }) {
@@ -286,10 +287,10 @@ function PhotoManager({ album }: { album: AdminGalleryAlbumDetail }) {
                     disabled={reorderMedia.isPending}
                     className="group relative overflow-hidden rounded-2xl shadow-clay-sm ring-1 ring-foreground/5"
                   >
-                    <img
+                    <ResponsiveImage
                       src={item.url}
+                      preset="squareGrid"
                       alt=""
-                      loading="lazy"
                       draggable={false}
                       className="aspect-square w-full object-cover"
                     />

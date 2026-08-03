@@ -44,6 +44,7 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ImageDropzone } from '@/components/shared/ImageDropzone'
+import { ResponsiveImage } from '@/components/shared/ResponsiveImage'
 import { formatDate } from '@/lib/datetime'
 import { useDocumentTitle } from '@/lib/use-document-title'
 
@@ -208,8 +209,9 @@ function FeaturedImageManager({ post }: { post: AdminBlogPostDetail }) {
     <div className="space-y-4">
       {post.featuredImageUrl ? (
         <div className="group relative max-w-md overflow-hidden rounded-2xl shadow-clay-sm ring-1 ring-foreground/5">
-          <img
+          <ResponsiveImage
             src={post.featuredImageUrl}
+            preset="landscapeGrid"
             alt=""
             className="aspect-video w-full object-cover"
           />

@@ -62,6 +62,7 @@ import {
 import { useAuth } from '@/features/auth/auth-context'
 import { hasPermission } from '@/lib/constants'
 import { ImageDropzone } from '@/components/shared/ImageDropzone'
+import { ResponsiveImage } from '@/components/shared/ResponsiveImage'
 import { formatDateTime } from '@/lib/datetime'
 import { useDocumentTitle } from '@/lib/use-document-title'
 import type { UserSummary } from '@/api/types'
@@ -142,10 +143,10 @@ function MediaManager({ eventId }: { eventId: number }) {
                     key={item.id}
                     className="group relative overflow-hidden rounded-2xl shadow-clay-sm ring-1 ring-foreground/5"
                   >
-                    <img
+                    <ResponsiveImage
                       src={item.url}
+                      preset="landscapeGallery"
                       alt=""
-                      loading="lazy"
                       className="aspect-video w-full object-cover"
                     />
                     <span className="absolute bottom-1.5 left-1.5 rounded-xl bg-background/90 p-1 shadow-clay-sm">

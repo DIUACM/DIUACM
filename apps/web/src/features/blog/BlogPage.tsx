@@ -4,6 +4,7 @@ import { useBlogPosts } from '@/api/queries/blog'
 import { Pagination } from '@/components/shared/Pagination'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { SearchInput } from '@/components/shared/SearchInput'
+import { ResponsiveImage } from '@/components/shared/ResponsiveImage'
 import { EmptyState, ErrorState } from '@/components/shared/states'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { Card, CardContent } from '@/components/ui/card'
@@ -17,10 +18,10 @@ function BlogPostCard({ post }: { post: BlogPostListItem }) {
     <Link to={`/blog/${post.slug}`} className="group clay-lift-trigger block">
       <Card className="clay-lift h-full overflow-hidden py-0">
         {post.featuredImageUrl ? (
-          <img
+          <ResponsiveImage
             src={post.featuredImageUrl}
+            preset="landscapeGrid"
             alt=""
-            loading="lazy"
             className="aspect-video w-full object-cover transition-transform group-hover:scale-105"
           />
         ) : (

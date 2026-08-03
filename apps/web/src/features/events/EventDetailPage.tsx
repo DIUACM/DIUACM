@@ -11,6 +11,7 @@ import { Link, useParams } from 'react-router'
 import { useEvent, useEventAttendance, useEventPerformance } from '@/api/queries/events'
 import { DataPanel } from '@/components/shared/DataPanel'
 import { Lightbox } from '@/components/shared/Lightbox'
+import { ResponsiveImage } from '@/components/shared/ResponsiveImage'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { EmptyState, ErrorState } from '@/components/shared/states'
 import { Button } from '@/components/ui/button'
@@ -213,10 +214,10 @@ function EventDetailContent({ event }: { event: EventDetail }) {
               className="group clay-lift-trigger block cursor-zoom-in rounded-2xl focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
             >
               <div className="clay-lift overflow-hidden rounded-2xl shadow-clay ring-1 ring-foreground/5">
-                <img
+                <ResponsiveImage
                   src={photo.url}
+                  preset="landscapeGallery"
                   alt=""
-                  loading="lazy"
                   className="aspect-video w-full object-cover transition-transform group-hover:scale-105"
                 />
               </div>

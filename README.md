@@ -66,3 +66,10 @@ this enforces HTTPS for all production hosts without spending Worker invocations
 redirects. The proxied `www` CNAME points to `diuacm.com`, and the active
 `Canonicalize www to apex` Single Redirect permanently forwards both HTTP and
 HTTPS requests to `https://diuacm.com` while preserving paths and query strings.
+
+Cloudflare **Images → Transformations** is enabled for the `diuacm.com` zone
+with Sources set to **This zone only**. The web app keeps immutable originals in
+R2 and builds a bounded `srcset` of `/cdn-cgi/image/` variants through
+`apps/web/src/lib/responsive-image.ts`; this serves cropped thumbnails and
+scale-down lightbox/content images with automatic AVIF/WebP negotiation. Local,
+preview, and third-party image URLs bypass transformations automatically.

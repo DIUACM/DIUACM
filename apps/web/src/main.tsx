@@ -31,7 +31,13 @@ if (import.meta.env.DEV) {
   ;(window as unknown as { __queryClient?: QueryClient }).__queryClient = queryClient
 }
 
-createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root')
+
+if (!rootElement) {
+  throw new Error('Unable to start the app: root element not found')
+}
+
+createRoot(rootElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>

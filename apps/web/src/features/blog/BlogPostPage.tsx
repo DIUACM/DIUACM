@@ -3,6 +3,7 @@ import { lazy, Suspense } from 'react'
 import { Link, useParams } from 'react-router'
 import { useBlogPost } from '@/api/queries/blog'
 import { ErrorState } from '@/components/shared/states'
+import { ResponsiveImage } from '@/components/shared/ResponsiveImage'
 import { UserAvatar } from '@/components/shared/UserAvatar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -75,9 +76,12 @@ export function BlogPostPage() {
       </div>
 
       {post.featuredImageUrl && (
-        <img
+        <ResponsiveImage
           src={post.featuredImageUrl}
+          preset="hero"
           alt=""
+          loading="eager"
+          fetchPriority="high"
           className="aspect-video w-full rounded-3xl object-cover shadow-clay ring-1 ring-foreground/5"
         />
       )}

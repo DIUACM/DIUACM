@@ -8,6 +8,7 @@ import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import { highlightLanguages } from '@/lib/highlight'
 import { cn } from '@/lib/utils'
+import { ResponsiveImage } from './ResponsiveImage'
 
 const attrs = defaultSchema.attributes ?? {}
 
@@ -86,7 +87,21 @@ export function MarkdownContent({
         className,
       )}
     >
-      <Markdown remarkPlugins={remarkPlugins} rehypePlugins={rehypePlugins}>
+      <Markdown
+        remarkPlugins={remarkPlugins}
+        rehypePlugins={rehypePlugins}
+        components={{
+          img: ({ src, alt, ...props }) =>
+            typeof src === 'string' ? (
+              <ResponsiveImage
+                {...props}
+                src={src}
+                preset="content"
+                alt={alt ?? ''}
+              />
+            ) : null,
+        }}
+      >
         {content}
       </Markdown>
     </div>

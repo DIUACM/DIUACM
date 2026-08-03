@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router'
 import { useGalleryAlbums } from '@/api/queries/gallery'
 import { Pagination } from '@/components/shared/Pagination'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { ResponsiveImage } from '@/components/shared/ResponsiveImage'
 import { EmptyState, ErrorState } from '@/components/shared/states'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -46,10 +47,10 @@ export function GalleryPage() {
               >
                 <Card className="clay-lift h-full overflow-hidden py-0">
                   {album.coverUrl ? (
-                    <img
+                    <ResponsiveImage
                       src={album.coverUrl}
+                      preset="landscapeGrid"
                       alt=""
-                      loading="lazy"
                       className="aspect-video w-full object-cover transition-transform group-hover:scale-105"
                     />
                   ) : (

@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight, Download, X } from 'lucide-react'
 import { useCallback, useEffect } from 'react'
 import { Dialog as DialogPrimitive } from 'radix-ui'
 import { Button } from '@/components/ui/button'
+import { ResponsiveImage } from './ResponsiveImage'
 
 export interface LightboxItem {
   url: string
@@ -114,9 +115,12 @@ export function Lightbox({
             aria-label="Close"
             tabIndex={-1}
           >
-            <img
+            <ResponsiveImage
               src={current.url}
+              preset="lightbox"
               alt={current.caption ?? ''}
+              loading="eager"
+              fetchPriority="high"
               onClick={(event) => event.stopPropagation()}
               className="max-h-full max-w-full cursor-default rounded-2xl object-contain shadow-2xl"
             />
