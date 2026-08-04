@@ -185,15 +185,12 @@ export function HomePage() {
         className="rounded-4xl bg-card p-5 shadow-clay-lg ring-1 ring-foreground/5 sm:p-7"
       >
         <div className="mb-5 text-center">
-          <p className="text-xs font-semibold tracking-[0.18em] text-primary uppercase">
+          <p
+            id="affiliations-heading"
+            className="text-xs font-semibold tracking-[0.18em] text-primary uppercase"
+          >
             Our affiliation
           </p>
-          <h2
-            id="affiliations-heading"
-            className="mt-1 text-xl font-bold sm:text-2xl"
-          >
-            One university, one department, one programming community
-          </h2>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-3">

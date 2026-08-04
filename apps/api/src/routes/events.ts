@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, or, type SQL } from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
@@ -221,8 +221,8 @@ eventRoutes.get("/:id/attendance", async (c) => {
   });
 });
 
-// Full performance leaderboard for an event. Sorted by position ascending;
-// rows without a position (NULL) sort last.
+// Full performance leaderboard for an event. Judge-derived performance leads:
+// solves descending, then upsolves descending, then user id for stable ties.
 eventRoutes.get("/:id/performance", async (c) => {
   const id = parseId(c.req.param("id"));
   if (id === null) throw new HTTPException(404, { message: "Event not found" });
@@ -254,8 +254,11 @@ eventRoutes.get("/:id/performance", async (c) => {
     .from(eventPerformance)
     .innerJoin(users, eq(eventPerformance.userId, users.id))
     .where(eq(eventPerformance.eventId, id))
-    // `position is null` is 0 for ranked rows, 1 for unranked → unranked sort last.
-    .orderBy(sql`${eventPerformance.position} is null`, asc(eventPerformance.position));
+    .orderBy(
+      desc(eventPerformance.solveCount),
+      desc(eventPerformance.upsolveCount),
+      asc(users.id),
+    );
 
   return c.json({
     data: rows.map((r) => ({

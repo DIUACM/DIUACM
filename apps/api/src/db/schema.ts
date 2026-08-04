@@ -175,8 +175,8 @@ export const eventPerformance = sqliteTable(
     userId: integer("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    // Nullable — a performance row may exist without a position; these sort last.
-    // This is the user's standing within the single event (contest).
+    // Nullable — a performance row may exist without an official position.
+    // This is the user's recorded standing within the single event (contest).
     position: integer("position"),
     solveCount: integer("solve_count").notNull().default(0),
     upsolveCount: integer("upsolve_count").notNull().default(0),

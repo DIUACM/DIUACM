@@ -1720,7 +1720,7 @@ export const openApiDoc = {
     "/events/{id}/performance": {
       get: {
         tags: ["events"],
-        summary: "Event performance leaderboard (ordered by rank)",
+        summary: "Event performance leaderboard (ordered by solves, then upsolves)",
         ...access("public"),
         parameters: [{ name: "id", in: "path", required: true, schema: { type: "integer" } }],
         responses: {
