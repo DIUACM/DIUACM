@@ -109,6 +109,11 @@ app.onError((err, c) => {
 
   const joined = walkErrorMessages(err).join(" | ");
 
+  // Expression indexes are reported by index name rather than column name.
+  if (/UNIQUE constraint failed: index ['"]users_username_unique['"]/i.test(joined)) {
+    return c.json({ error: "username already exists" }, 409);
+  }
+
   const unique = joined.match(/UNIQUE constraint failed: ([\w., ]+)/);
   if (unique) {
     const cols = unique[1]

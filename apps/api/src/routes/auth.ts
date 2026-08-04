@@ -87,10 +87,16 @@ auth.post("/login", authRateLimit, validate("json", loginSchema), async (c) => {
 
   // identifier is an email or a username. Emails are stored lowercased;
   // usernames cannot contain "@" (schema regex), so there is no collision.
+  // NOCASE matches the database's username identity and unique index.
   const [row] = await db
     .select()
     .from(users)
-    .where(or(eq(users.email, id.toLowerCase()), eq(users.username, id)))
+    .where(
+      or(
+        eq(users.email, id.toLowerCase()),
+        sql`${users.username} = ${id} COLLATE NOCASE`,
+      ),
+    )
     .limit(1);
 
   // Same error — and the same PBKDF2 work, via the dummy hash — whether the

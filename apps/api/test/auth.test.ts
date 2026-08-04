@@ -80,6 +80,50 @@ describe("authentication routes", () => {
     expect(limit).toHaveBeenCalledWith({ key: "auth:203.0.113.10" });
   });
 
+  it("treats usernames as case-insensitive identities", async () => {
+    const passwordHash = await hashPassword("login password");
+    db.prepare(
+      "INSERT INTO users (id, name, email, username, password_hash) VALUES (1, 'Nahid', 'nahid@example.com', 'Nahid', ?)",
+    ).run(passwordHash);
+
+    const loginResponse = await login("nAhId", "login password");
+    expect(loginResponse.status).toBe(200);
+    await expect(loginResponse.json()).resolves.toMatchObject({
+      user: { username: "Nahid" },
+    });
+
+    const programmerResponse = await app.request("/programmers/NAHID", {}, env);
+    expect(programmerResponse.status).toBe(200);
+    await expect(programmerResponse.json()).resolves.toMatchObject({ username: "Nahid" });
+  });
+
+  it("rejects usernames that differ only by capitalization", async () => {
+    db.prepare(
+      "INSERT INTO users (id, name, email, username) VALUES (1, 'Admin', 'super@example.com', 'Nahid')",
+    ).run();
+    const token = await signAuthToken({ id: 1, username: "Nahid" }, JWT_SECRET);
+
+    const response = await app.request(
+      "/admin/users",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: "Other User",
+          email: "other@example.com",
+          username: "nahid",
+        }),
+      },
+      env,
+    );
+
+    expect(response.status).toBe(409);
+    await expect(response.json()).resolves.toEqual({ error: "username already exists" });
+  });
+
   it("upgrades a legacy hash after a successful login", async () => {
     insertPasswordUser(1, await legacyHash("legacy password"));
 
