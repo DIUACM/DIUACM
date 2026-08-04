@@ -124,7 +124,6 @@ export const solvesByUser = (
   rank: Awaited<ReturnType<typeof getContestRank>>,
   handles: Map<string, number>,
 ): Map<number, Solve[]> => {
-  const beginSeconds = Math.floor(rank.begin / 1000);
   const lengthSeconds = Math.floor(rank.length / 1000);
 
   const byUser = new Map<number, Solve[]>();
@@ -141,7 +140,6 @@ export const solvesByUser = (
       contestId,
       // Unique within the contest, which is all `computePerformance` needs.
       problemId: String(problemIndex),
-      solvedAt: beginSeconds + secondsSinceBegin,
       // VJudge keeps recording after the clock runs out; that tail is exactly
       // what an upsolve is.
       inContest: secondsSinceBegin <= lengthSeconds,

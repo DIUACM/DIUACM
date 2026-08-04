@@ -168,9 +168,8 @@ describe("runVjudgeSync", () => {
     expect(performance(db, 1, 1)).toEqual({ solve_count: 1, upsolve_count: 0 });
   });
 
-  it("counts a solve inside the event's own window when VJudge's clock says otherwise", async () => {
-    // A club session replaying an older VJudge contest: submissions land long
-    // after `length`, but inside the event the ranklist actually tracks.
+  it("uses VJudge's contest clock instead of the event window", async () => {
+    // The acceptance is inside the club event but after VJudge's contest ended.
     db.prepare("UPDATE events SET starting_at = ?, ending_at = ? WHERE id = 1").run(
       BEGIN_SECONDS + 100_000,
       BEGIN_SECONDS + 120_000,
@@ -178,7 +177,7 @@ describe("runVjudgeSync", () => {
 
     await run(db, fetcherFor({ [CONTEST_ID]: rank([submission(ALICE, 0, 110_000)]) }));
 
-    expect(performance(db, 1, 1)).toEqual({ solve_count: 1, upsolve_count: 0 });
+    expect(performance(db, 1, 1)).toEqual({ solve_count: 0, upsolve_count: 1 });
   });
 
   it("ignores participants with no handle on record", async () => {

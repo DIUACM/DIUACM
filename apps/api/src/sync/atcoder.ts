@@ -46,9 +46,8 @@ export const atcoderPlatform: SyncPlatform = {
           solves.push({
             contestId: submission.contest_id,
             problemId: submission.problem_id,
-            solvedAt: submission.epoch_second,
-            // Unknown contest → let the runner fall back to the event's own
-            // window rather than silently calling everything an upsolve.
+            // Without contest metadata the API provides no evidence that this
+            // was a live-contest acceptance, so it remains an upsolve.
             inContest:
               window !== undefined &&
               submission.epoch_second >= window.start &&

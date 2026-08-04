@@ -177,7 +177,7 @@ describe("runSync — AtCoder", () => {
     expect(performance(db, 1, 1)).toEqual({ solve_count: 1, upsolve_count: 0 });
   });
 
-  it("falls back to the event window for a contest missing from contests.json", async () => {
+  it("counts an accept as an upsolve when contests.json has no contest window", async () => {
     const calls: Calls = { contests: 0, submissions: [] };
     await run(
       db,
@@ -185,7 +185,7 @@ describe("runSync — AtCoder", () => {
     );
 
     expect(calls.contests).toBe(1);
-    expect(performance(db, 1, 1)).toEqual({ solve_count: 1, upsolve_count: 0 });
+    expect(performance(db, 1, 1)).toEqual({ solve_count: 0, upsolve_count: 1 });
   });
 
   it("ignores submissions for contests no event points at", async () => {

@@ -92,7 +92,6 @@ export type Solve = {
   contestId: string;
   /** Unique within its contest — an index ("A") or a slug ("abc300_a"). */
   problemId: string;
-  solvedAt: number;
   /** The platform itself says this landed during the live contest. */
   inContest: boolean;
 };
@@ -142,14 +141,14 @@ export type SyncPlatform = {
 /**
  * Solve / upsolve counts per event, from one user's accepted submissions.
  *
- * Solved = accepted during the contest, meaning either the judge marks it as a
- * live participation or it landed inside the event's own window — the second
- * branch is what counts club-run replays, where members take part virtually or
- * in practice mode during a scheduled session. Upsolved = accepted at any other
- * time, on a problem not already solved during the contest.
+ * Solved = the judge API identifies the acceptance as part of the live contest.
+ * Upsolved = every other acceptance, on a problem not already solved during the
+ * contest. Event timestamps deliberately do not participate in classification:
+ * they describe the club event, while the judge API owns the contest window and
+ * participation mode.
  *
- * Counted per event rather than per contest, because two events can point at the
- * same contest with different windows.
+ * Counted per event because performance is persisted against event ids, even
+ * when several events point at the same upstream contest.
  */
 export const computePerformance = (
   events: SyncEvent[],
@@ -170,10 +169,7 @@ export const computePerformance = (
     const solved = new Set<string>();
     const upsolved = new Set<string>();
     for (const solve of relevant) {
-      const inContest =
-        solve.inContest ||
-        (solve.solvedAt >= event.startingAt && solve.solvedAt <= event.endingAt);
-      if (inContest) solved.add(solve.problemId);
+      if (solve.inContest) solved.add(solve.problemId);
       else upsolved.add(solve.problemId);
     }
     for (const problemId of solved) upsolved.delete(problemId);

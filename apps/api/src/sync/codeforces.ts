@@ -44,7 +44,6 @@ export const codeforcesPlatform: SyncPlatform = {
         solves.push({
           contestId: String(contestId),
           problemId: submission.problem.index,
-          solvedAt: submission.creationTimeSeconds,
           inContest: IN_CONTEST_PARTICIPANT_TYPES.has(submission.author.participantType),
         });
       }

@@ -109,16 +109,15 @@ describe("computePerformance — Codeforces submissions", () => {
     expect(counts.get(1)).toEqual({ solveCount: 0, upsolveCount: 1 });
   });
 
-  it("treats a submission inside the event window as a solve whatever Codeforces calls it", async () => {
-    // Club replays: members participate virtually during the scheduled session.
+  it("uses Codeforces participation type instead of the event window", async () => {
     const counts = computePerformance(
       [EVENT],
       await solvesFor([submission("A", "VIRTUAL", CONTEST_START + 500)]),
     );
-    expect(counts.get(1)).toEqual({ solveCount: 1, upsolveCount: 0 });
+    expect(counts.get(1)).toEqual({ solveCount: 0, upsolveCount: 1 });
   });
 
-  it("splits the same contest differently for two events with different windows", async () => {
+  it("classifies the same contest identically across different event windows", async () => {
     const replay: SyncEvent = {
       eventId: 2,
       contestId: "1900",
@@ -130,7 +129,7 @@ describe("computePerformance — Codeforces submissions", () => {
       await solvesFor([submission("A", "PRACTICE", CONTEST_END + 87_000)]),
     );
     expect(counts.get(1)).toEqual({ solveCount: 0, upsolveCount: 1 });
-    expect(counts.get(2)).toEqual({ solveCount: 1, upsolveCount: 0 });
+    expect(counts.get(2)).toEqual({ solveCount: 0, upsolveCount: 1 });
   });
 
   it("ignores rejected verdicts and other contests", async () => {
