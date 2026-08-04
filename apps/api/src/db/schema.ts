@@ -10,37 +10,45 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
-export const users = sqliteTable("users", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  name: text("name").notNull(),
-  // Stored lowercased (normalized in the route handlers).
-  email: text("email").notNull().unique(),
-  username: text("username").notNull().unique(),
-  // Optional. SQLite allows multiple NULLs in a UNIQUE column, so this can be
-  // both nullable and unique.
-  studentId: text("student_id").unique(),
-  // Nullable: users who sign in with Google have no password of their own.
-  passwordHash: text("password_hash"),
-  // R2 object key for the profile image (null if none). URL-shaped at response time.
-  imageKey: text("image_key"),
-  // Highest Codeforces rating reached; null until a Codeforces handle is saved,
-  // and for accounts that are still unrated. Set on handle save and refreshed
-  // nightly by src/sync/cf-rating.ts, which writes this column alone — it
-  // deliberately leaves `updated_at` untouched.
-  maxCfRating: integer("max_cf_rating"),
-  // Bans are enforced from the database on every authenticated request, so
-  // they immediately revoke both password/Google login and existing JWTs.
-  // The public reason is displayed alongside user references and standings.
-  isBanned: integer("is_banned", { mode: "boolean" }).notNull().default(false),
-  banReason: text("ban_reason"),
-  // Unix epoch seconds (UTC). `updatedAt` is bumped by the profile-update handler.
-  createdAt: integer("created_at")
-    .notNull()
-    .default(sql`(unixepoch())`),
-  updatedAt: integer("updated_at")
-    .notNull()
-    .default(sql`(unixepoch())`),
-});
+export const users = sqliteTable(
+  "users",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull(),
+    // Stored lowercased (normalized in the route handlers).
+    email: text("email").notNull().unique(),
+    // Preserve the user's capitalization for display; identity and uniqueness
+    // are case-insensitive through the NOCASE index below.
+    username: text("username").notNull(),
+    // Optional. SQLite allows multiple NULLs in a UNIQUE column, so this can be
+    // both nullable and unique.
+    studentId: text("student_id").unique(),
+    // Nullable: users who sign in with Google have no password of their own.
+    passwordHash: text("password_hash"),
+    // R2 object key for the profile image (null if none). URL-shaped at response time.
+    imageKey: text("image_key"),
+    // Highest Codeforces rating reached; null until a Codeforces handle is saved,
+    // and for accounts that are still unrated. Set on handle save and refreshed
+    // nightly by src/sync/cf-rating.ts, which writes this column alone — it
+    // deliberately leaves `updated_at` untouched.
+    maxCfRating: integer("max_cf_rating"),
+    // Bans are enforced from the database on every authenticated request, so
+    // they immediately revoke both password/Google login and existing JWTs.
+    // The public reason is displayed alongside user references and standings.
+    isBanned: integer("is_banned", { mode: "boolean" }).notNull().default(false),
+    banReason: text("ban_reason"),
+    // Unix epoch seconds (UTC). `updatedAt` is bumped by the profile-update handler.
+    createdAt: integer("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer("updated_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [
+    uniqueIndex("users_username_unique").on(sql`${t.username} COLLATE NOCASE`),
+  ],
+);
 
 // Admin-panel permissions. Access control is permission-based: a user may hold
 // any subset of these. The super admin (email matches SUPER_ADMIN_EMAIL in

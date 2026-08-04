@@ -100,7 +100,7 @@ programmerRoutes.get("/:username", async (c) => {
       banReason: users.banReason,
     })
     .from(users)
-    .where(eq(users.username, username))
+    .where(sql`${users.username} = ${username} COLLATE NOCASE`)
     .limit(1);
   if (!user) throw new HTTPException(404, { message: "Programmer not found" });
 
