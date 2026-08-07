@@ -21,13 +21,11 @@ import { logError, logWarn } from "./log";
 /**
  * How long one fault stays quiet after its mail goes out.
  *
- * An hour, not a day: a day of silence is long enough for a transient outage to
- * start, alert, and fully recover unobserved, and the mail now carries the
- * failure reasons rather than pointing at a column the next successful sync
- * clears. The worst case is one mail an hour per distinct fault key while
- * something is genuinely broken, which is the point.
+ * Six hours keeps a persistent upstream incident visible without turning a
+ * quarter-hourly cron into an inbox flood. The first occurrence is immediate;
+ * a successful run sends a separate recovery message and clears the incident.
  */
-export const NOTICE_COOLDOWN_SECONDS = 60 * 60;
+export const NOTICE_COOLDOWN_SECONDS = 6 * 60 * 60;
 
 export type Notice = {
   /** Stable and specific, one per distinct fault: "codeforces:paging-truncated". */
@@ -157,4 +155,39 @@ export const reportNotice = async (
     logError("alert.notice_stamp_failed", cause, { noticeKey: notice.key });
   }
   return "sent";
+};
+
+/** Close an open incident after a real successful probe, with one recovery mail. */
+export const resolveNotice = async (
+  env: Bindings,
+  d1: D1Database,
+  recovery: { key: string; subject: string; detail: string },
+): Promise<"absent" | "resolved" | "undeliverable"> => {
+  let row: { first_seen_at: number; last_seen_at: number } | null;
+  try {
+    row = await d1
+      .prepare("SELECT first_seen_at, last_seen_at FROM admin_notices WHERE key = ?")
+      .bind(recovery.key)
+      .first<{ first_seen_at: number; last_seen_at: number }>();
+  } catch (cause) {
+    logError("alert.recovery_read_failed", cause, { noticeKey: recovery.key });
+    return "undeliverable";
+  }
+  if (!row) return "absent";
+
+  const sent = await sendMail(env, {
+    subject: recovery.subject,
+    text:
+      `${recovery.detail}\n\nIncident opened ${isoish(row.first_seen_at)} and was last seen ` +
+      `${isoish(row.last_seen_at)}.`,
+  });
+  if (!sent) return "undeliverable";
+
+  try {
+    await d1.prepare("DELETE FROM admin_notices WHERE key = ?").bind(recovery.key).run();
+  } catch (cause) {
+    logError("alert.recovery_clear_failed", cause, { noticeKey: recovery.key });
+    return "undeliverable";
+  }
+  return "resolved";
 };

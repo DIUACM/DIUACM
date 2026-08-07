@@ -1,7 +1,15 @@
 import { logError, logInfo, logWarn } from "../lib/log";
-import { reportNotice, type Notice } from "../lib/notify";
+import { reportNotice, resolveNotice, type Notice } from "../lib/notify";
 import type { Bindings } from "../types";
 import { atcoderPlatform } from "./atcoder";
+import {
+  clearBackoff,
+  codeforcesBackoffNotice,
+  codeforcesBackoffSkippedNotice,
+  CODEFORCES_UPSTREAM,
+  extendBackoff,
+  getActiveBackoff,
+} from "./backoff";
 import { runCfRatingSync } from "./cf-rating";
 import { codeforcesPlatform } from "./codeforces";
 import { runDigest } from "./digest";
@@ -40,10 +48,26 @@ export {
 /** What the health page charts per run, pulled out of each job's own summary. */
 type Metrics = { rowsWritten: number | null; errors: number | null };
 
+type UpstreamActivity = {
+  /** At least one documented response proved the upstream is answering again. */
+  successfulProbe: boolean;
+  rateLimited: boolean;
+  error: string | null;
+};
+
+type JobResult = {
+  summary: unknown;
+  faults: Notice[];
+  metrics: Metrics;
+  upstreamActivity?: UpstreamActivity;
+};
+
 type Job = {
   name: JobName;
+  /** Jobs sharing this name also share one persistent D1 circuit breaker. */
+  upstream?: typeof CODEFORCES_UPSTREAM;
   /** The run, plus whatever about it is worth mailing the super admin. */
-  run: (env: Bindings) => Promise<{ summary: unknown; faults: Notice[]; metrics: Metrics }>;
+  run: (env: Bindings) => Promise<JobResult>;
 };
 
 /**
@@ -58,11 +82,17 @@ type Job = {
 const JOBS: Record<string, Job> = {
   [JOB_CRONS.codeforces]: {
     name: "codeforces",
+    upstream: CODEFORCES_UPSTREAM,
     run: async (env) => {
       const summary = await runSync(env.DB, codeforcesPlatform);
       return {
         summary,
         metrics: { rowsWritten: summary.rowsWritten, errors: summary.errors },
+        upstreamActivity: {
+          successfulProbe: summary.handlesProcessed > summary.errors,
+          rateLimited: summary.stoppedReason === "rate-limit",
+          error: Object.keys(summary.errorReasons)[0] ?? null,
+        },
         faults: collectFaults({
           platform: "codeforces",
           unit: "handle",
@@ -114,13 +144,22 @@ const JOBS: Record<string, Job> = {
   },
   [JOB_CRONS["codeforces-rating"]]: {
     name: "codeforces-rating",
+    upstream: CODEFORCES_UPSTREAM,
     run: async (env) => {
       const summary = await runCfRatingSync(env.DB);
       return {
         summary,
         // Its unit of work is a chunk of a hundred handles, so `chunksFailed` is
         // the closest thing it has to an error count.
-        metrics: { rowsWritten: summary.ratingsUpdated, errors: summary.chunksFailed },
+        metrics: {
+          rowsWritten: summary.ratingsUpdated,
+          errors: summary.chunksFailed + (summary.stoppedReason === "rate-limit" ? 1 : 0),
+        },
+        upstreamActivity: {
+          successfulProbe: summary.checked + summary.invalid.length > 0,
+          rateLimited: summary.stoppedReason === "rate-limit",
+          error: Object.keys(summary.errorReasons)[0] ?? null,
+        },
         faults: collectCfRatingFaults(summary),
       };
     },
@@ -147,11 +186,50 @@ export const handleScheduled = async (
   const now = Math.floor(Date.now() / 1000);
   const startedAtMs = Date.now();
 
-  let result: Awaited<ReturnType<Job["run"]>>;
+  let result: JobResult;
+  let upstream: UpstreamActivity | undefined;
   try {
-    // Awaited rather than handed to waitUntil: a throw here marks the cron
-    // invocation as failed, which is what the dashboard should show.
-    result = await job.run(env);
+    const activeBackoff = job.upstream
+      ? await getActiveBackoff(env.DB, job.upstream, now)
+      : null;
+    if (activeBackoff) {
+      result = {
+        summary: {
+          skipped: true,
+          reason: `${activeBackoff.upstream}-backoff`,
+          blockedUntil: activeBackoff.blockedUntil,
+          failures: activeBackoff.failures,
+        },
+        faults: [codeforcesBackoffSkippedNotice(activeBackoff)],
+        metrics: { rowsWritten: null, errors: 0 },
+      };
+    } else {
+      // Awaited rather than handed to waitUntil: a throw here marks the cron
+      // invocation as failed, which is what the dashboard should show.
+      result = await job.run(env);
+    }
+
+    upstream = result.upstreamActivity;
+    if (job.upstream && upstream?.rateLimited) {
+      const state = await extendBackoff(
+        env.DB,
+        job.upstream,
+        now,
+        upstream.error ?? "Codeforces call limit exceeded.",
+      );
+      // One shared incident replaces the solve job's generic blocked notice and
+      // the rating job's generic unreachable notice.
+      result.faults = result.faults.filter(
+        (fault) =>
+          fault.key !== "codeforces:blocked" && fault.key !== "codeforces-rating:unreachable",
+      );
+      result.faults.push(codeforcesBackoffNotice(state));
+      if (result.summary && typeof result.summary === "object") {
+        result.summary = { ...result.summary, backoffUntil: state.blockedUntil };
+      }
+    } else if (job.upstream && upstream?.successfulProbe) {
+      await clearBackoff(env.DB, job.upstream);
+    }
   } catch (cause) {
     const fault = runFailedFault(job.name, cause);
     // Recorded before the mail, so a crash is in the ledger even if the send
@@ -198,5 +276,32 @@ export const handleScheduled = async (
       faultKey: fault.key,
     });
     await reportNotice(env, env.DB, fault, now);
+  }
+
+  // Recovery is deliberately after the successful run is in the ledger. If a
+  // recovery mail points someone at the health page, the proof is already there.
+  if (job.upstream && upstream?.successfulProbe && !upstream.rateLimited) {
+    const openFaults = new Set(result.faults.map((fault) => fault.key));
+    await resolveNotice(env, env.DB, {
+      key: "codeforces:blocked",
+      subject: "[DIU ACM] Codeforces API sync recovered",
+      detail: "A scheduled Codeforces request completed successfully. The shared backoff is closed and normal syncing has resumed.",
+    });
+    if (job.name === "codeforces" && !openFaults.has("codeforces:error-rate")) {
+      await resolveNotice(env, env.DB, {
+        key: "codeforces:error-rate",
+        subject: "[DIU ACM] Codeforces submission sync recovered",
+        detail: "The Codeforces submission sync completed a successful API request without triggering its outage breaker.",
+      });
+    } else if (
+      job.name === "codeforces-rating" &&
+      !openFaults.has("codeforces-rating:unreachable")
+    ) {
+      await resolveNotice(env, env.DB, {
+        key: "codeforces-rating:unreachable",
+        subject: "[DIU ACM] Codeforces rating refresh recovered",
+        detail: "The Codeforces rating refresh received a valid API response again.",
+      });
+    }
   }
 };

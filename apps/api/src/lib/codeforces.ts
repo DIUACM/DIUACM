@@ -1,4 +1,4 @@
-import { fetchWithTimeout, readLimitedJson } from "./upstream";
+import { fetchWithTimeout, readLimitedText } from "./upstream";
 
 const MAX_CODEFORCES_RESPONSE_BYTES = 8_000_000;
 
@@ -6,11 +6,77 @@ export class CodeforcesApiError extends Error {
   constructor(
     message: string,
     readonly kind: "invalid-handle" | "unavailable" | "call-limit",
+    readonly diagnostics: Readonly<Record<string, string | number | null | undefined>> = {},
   ) {
     super(message);
     this.name = "CodeforcesApiError";
   }
 }
+
+const diagnosticValue = (value: unknown, maxLength = 240): string => {
+  const compact = String(value).replace(/\s+/g, " ").trim();
+  return compact.length > maxLength ? `${compact.slice(0, maxLength)}…` : compact;
+};
+
+/** Detailed enough for D1/logs, while `message` stays safe for API clients. */
+export const formatCodeforcesError = (cause: unknown): string => {
+  if (!(cause instanceof CodeforcesApiError)) {
+    return cause instanceof Error ? cause.message : String(cause);
+  }
+  const fields = Object.entries(cause.diagnostics)
+    .filter(([, value]) => value !== null && value !== undefined && value !== "")
+    .map(([key, value]) => `${key}=${JSON.stringify(diagnosticValue(value))}`);
+  return fields.length > 0 ? `${cause.message} ${fields.join(" ")}` : cause.message;
+};
+
+type RequestDiagnostics = {
+  endpoint: "user.info" | "user.status";
+  batchSize?: number;
+  pageFrom?: number;
+};
+
+const responseDiagnostics = (
+  response: Response,
+  request: RequestDiagnostics,
+): Record<string, string | number | null | undefined> => ({
+  ...request,
+  httpStatus: response.status,
+  statusText: response.statusText,
+  contentType: response.headers.get("content-type"),
+  cfRay: response.headers.get("cf-ray"),
+});
+
+const readCodeforcesJson = async (
+  response: Response,
+  request: RequestDiagnostics,
+): Promise<unknown> => {
+  let text: string;
+  try {
+    text = await readLimitedText(response, MAX_CODEFORCES_RESPONSE_BYTES);
+  } catch (cause) {
+    throw new CodeforcesApiError(
+      "Codeforces returned an invalid response.",
+      "unavailable",
+      {
+        ...responseDiagnostics(response, request),
+        readError: cause instanceof Error ? `${cause.name}: ${cause.message}` : String(cause),
+      },
+    );
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new CodeforcesApiError(
+      "Codeforces returned an invalid response.",
+      "unavailable",
+      {
+        ...responseDiagnostics(response, request),
+        bodyPreview: diagnosticValue(text),
+      },
+    );
+  }
+};
 
 type CodeforcesUser = {
   handle: string;
@@ -57,44 +123,58 @@ export const getCodeforcesUsers = async (
   // them, which Codeforces decodes back — verified against the live API.
   url.searchParams.set("handles", handles.join(";"));
   url.searchParams.set("checkHistoricHandles", "true");
+  const request = { endpoint: "user.info", batchSize: handles.length } as const;
 
   let response: Response;
   try {
     response = await fetchWithTimeout(fetcher, url, {
       headers: { Accept: "application/json" },
     });
-  } catch {
+  } catch (cause) {
     throw new CodeforcesApiError(
       "Could not reach Codeforces. Please try again.",
       "unavailable",
+      {
+        ...request,
+        transportError: cause instanceof Error ? `${cause.name}: ${cause.message}` : String(cause),
+      },
     );
   }
 
   let body: CodeforcesResponse;
-  try {
-    body = (await readLimitedJson(
-      response,
-      MAX_CODEFORCES_RESPONSE_BYTES,
-    )) as CodeforcesResponse;
-  } catch {
+  const parsed = await readCodeforcesJson(response, request);
+  if (!parsed || typeof parsed !== "object" || !("status" in parsed)) {
     throw new CodeforcesApiError(
       "Codeforces returned an invalid response. Please try again.",
       "unavailable",
+      {
+        ...responseDiagnostics(response, request),
+        bodyPreview: diagnosticValue(JSON.stringify(parsed)),
+      },
     );
   }
+  body = parsed as CodeforcesResponse;
 
   if (body.status === "FAILED") {
+    const diagnostics = {
+      ...responseDiagnostics(response, request),
+      comment: body.comment ?? null,
+    };
     if (isInvalidHandleComment(body.comment)) {
+      // Invalid-handle comments embed the handle. Keeping them would turn one
+      // reason per bad account into hundreds of distinct tally buckets; the
+      // handle already lives beside the error in user_handles.
       throw new CodeforcesApiError("Invalid Codeforces handle.", "invalid-handle");
     }
     // Distinguished from a plain outage because a caller working through a queue
     // has to stop rather than retry — the next call would be refused too.
     if (isCallLimitComment(body.comment)) {
-      throw new CodeforcesApiError("Codeforces call limit exceeded.", "call-limit");
+      throw new CodeforcesApiError("Codeforces call limit exceeded.", "call-limit", diagnostics);
     }
     throw new CodeforcesApiError(
       "Codeforces is temporarily unavailable. Please try again.",
       "unavailable",
+      diagnostics,
     );
   }
 
@@ -102,6 +182,7 @@ export const getCodeforcesUsers = async (
     throw new CodeforcesApiError(
       "Codeforces is temporarily unavailable. Please try again.",
       "unavailable",
+      responseDiagnostics(response, request),
     );
   }
 
@@ -113,6 +194,7 @@ export const getCodeforcesUsers = async (
     throw new CodeforcesApiError(
       "Codeforces returned an invalid response. Please try again.",
       "unavailable",
+      responseDiagnostics(response, request),
     );
   }
 
@@ -125,6 +207,7 @@ export const getCodeforcesUsers = async (
       throw new CodeforcesApiError(
         "Codeforces returned an invalid response. Please try again.",
         "unavailable",
+        responseDiagnostics(response, request),
       );
     }
     return { handle: user.handle, maxRating: user.maxRating ?? null };
@@ -208,29 +291,37 @@ export const getUserSubmissions = async (
     url.searchParams.set("handle", handle);
     url.searchParams.set("from", String(page * PAGE_SIZE + 1));
     url.searchParams.set("count", String(PAGE_SIZE));
+    const request = { endpoint: "user.status", pageFrom: page * PAGE_SIZE + 1 } as const;
 
     let response: Response;
     try {
       response = await fetchWithTimeout(fetcher, url, {
         headers: { Accept: "application/json" },
       });
-    } catch {
-      throw new CodeforcesApiError("Could not reach Codeforces.", "unavailable");
+    } catch (cause) {
+      throw new CodeforcesApiError("Could not reach Codeforces.", "unavailable", {
+        ...request,
+        transportError: cause instanceof Error ? `${cause.name}: ${cause.message}` : String(cause),
+      });
     }
 
     let body: SubmissionsResponse;
-    try {
-      body = (await readLimitedJson(
-        response,
-        MAX_CODEFORCES_RESPONSE_BYTES,
-      )) as SubmissionsResponse;
-    } catch {
-      throw new CodeforcesApiError("Codeforces returned an invalid response.", "unavailable");
+    const parsed = await readCodeforcesJson(response, request);
+    if (!parsed || typeof parsed !== "object" || !("status" in parsed)) {
+      throw new CodeforcesApiError("Codeforces returned an invalid response.", "unavailable", {
+        ...responseDiagnostics(response, request),
+        bodyPreview: diagnosticValue(JSON.stringify(parsed)),
+      });
     }
+    body = parsed as SubmissionsResponse;
 
     if (body.status === "FAILED") {
+      const diagnostics = {
+        ...responseDiagnostics(response, request),
+        comment: body.comment ?? null,
+      };
       if (isCallLimitComment(body.comment)) {
-        throw new CodeforcesApiError("Codeforces call limit exceeded.", "call-limit");
+        throw new CodeforcesApiError("Codeforces call limit exceeded.", "call-limit", diagnostics);
       }
       if (isInvalidHandleComment(body.comment)) {
         throw new CodeforcesApiError("Invalid Codeforces handle.", "invalid-handle");
@@ -238,11 +329,16 @@ export const getUserSubmissions = async (
       throw new CodeforcesApiError(
         body.comment ?? "Codeforces is temporarily unavailable.",
         "unavailable",
+        diagnostics,
       );
     }
 
     if (!response.ok || !Array.isArray(body.result)) {
-      throw new CodeforcesApiError("Codeforces returned an invalid response.", "unavailable");
+      throw new CodeforcesApiError(
+        "Codeforces returned an invalid response.",
+        "unavailable",
+        responseDiagnostics(response, request),
+      );
     }
 
     const submissions = body.result.filter(isValidSubmission);

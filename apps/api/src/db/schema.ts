@@ -237,6 +237,21 @@ export const adminNotices = sqliteTable("admin_notices", {
 });
 
 /**
+ * Cross-invocation upstream circuit breakers. Scheduled invocations do not
+ * share memory, so a judge that asks us to back off has to be remembered in D1
+ * or the next cron tick will immediately start a fresh batch.
+ */
+export const upstreamBackoffs = sqliteTable("upstream_backoffs", {
+  /** Stable upstream name, currently only "codeforces". */
+  upstream: text("upstream").primaryKey(),
+  blockedUntil: integer("blocked_until").notNull(),
+  /** Saturating exponential-backoff step: 1=30m, 2=1h, 3=2h, 4=4h. */
+  failures: integer("failures").notNull().default(0),
+  lastError: text("last_error"),
+  updatedAt: integer("updated_at").notNull(),
+});
+
+/**
  * One row per scheduled invocation (src/sync/index.ts). The summaries used to
  * exist only as a `console.log` line, which means they lived in Workers
  * Observability — behind a Cloudflare login, with its own retention — and could
@@ -598,6 +613,7 @@ export type EventAttendance = typeof eventAttendance.$inferSelect;
 export type EventPerformance = typeof eventPerformance.$inferSelect;
 export type EventSyncState = typeof eventSyncState.$inferSelect;
 export type AdminNotice = typeof adminNotices.$inferSelect;
+export type UpstreamBackoff = typeof upstreamBackoffs.$inferSelect;
 export type CronRun = typeof cronRuns.$inferSelect;
 export type Tracker = typeof trackers.$inferSelect;
 export type NewTracker = typeof trackers.$inferInsert;

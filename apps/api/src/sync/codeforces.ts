@@ -1,4 +1,8 @@
-import { CodeforcesApiError, getUserSubmissions } from "../lib/codeforces";
+import {
+  CodeforcesApiError,
+  formatCodeforcesError,
+  getUserSubmissions,
+} from "../lib/codeforces";
 import type { Solve, SolvePage, SyncPlatform } from "./runner";
 
 // ---------------------------------------------------------------------------
@@ -20,8 +24,12 @@ export const codeforcesPlatform: SyncPlatform = {
   // have to be authenticated to use this method" — so they stay manual.
   accepts: (contest) => contest.platform === "codeforces" && contest.kind === "contest",
 
-  /** Codeforces documents roughly one request per two seconds. Stay there. */
-  requestDelayMs: 2000,
+  /**
+   * Codeforces permits one request per 2s, but production Workers egress still
+   * received HTTP 429 at 3s. Five seconds is the largest interval that keeps a
+   * 100-handle batch comfortably inside the runner's 10-minute wall budget.
+   */
+  requestDelayMs: 5000,
 
   isRateLimit: (cause) => cause instanceof CodeforcesApiError && cause.kind === "call-limit",
 
@@ -30,6 +38,8 @@ export const codeforcesPlatform: SyncPlatform = {
   // kind a handle owns, and it deliberately does not count: a few dead accounts
   // in a row are normal and must never stop the batch.
   isOutage: (cause) => cause instanceof CodeforcesApiError && cause.kind === "unavailable",
+
+  formatError: formatCodeforcesError,
 
   // Nothing to load up front: every signal needed to classify a submission is
   // on the submission itself.

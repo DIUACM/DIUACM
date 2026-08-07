@@ -1,5 +1,6 @@
 import {
   CodeforcesApiError,
+  formatCodeforcesError,
   getCodeforcesUsers,
   type ResolvedCodeforcesUser,
 } from "../lib/codeforces";
@@ -289,15 +290,17 @@ export const runCfRatingSync = async (
     try {
       result = await attempt(rows.slice(start, start + chunkSize));
     } catch (cause) {
+      const error = formatCodeforcesError(cause);
       if (cause instanceof CodeforcesApiError && cause.kind === "call-limit") {
         // Every later chunk would be refused the same way.
+        tallyError(summary.errorReasons, error);
         summary.stoppedReason = "rate-limit";
         break;
       }
       // One chunk's handles go unchecked until tomorrow; the rest are still
       // worth reading, so the run continues rather than giving up on all of them.
       summary.chunksFailed += 1;
-      tallyError(summary.errorReasons, cause instanceof Error ? cause.message : String(cause));
+      tallyError(summary.errorReasons, error);
       continue;
     }
 

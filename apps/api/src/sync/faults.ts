@@ -110,7 +110,13 @@ export const collectFaults = (outcome: RunOutcome): Notice[] => {
 
   // 3. Most of the batch failing means the API changed shape or went down —
   //    a handful of dead handles is normal and deliberately excluded.
-  if (processed >= MIN_SAMPLE && errors / processed > ERROR_RATE_THRESHOLD) {
+  // A call-limit stop already raises `${platform}:blocked`. Treating the same
+  // run as a second error-rate incident produces duplicate mail for one cause.
+  if (
+    stoppedReason !== "rate-limit" &&
+    processed >= MIN_SAMPLE &&
+    errors / processed > ERROR_RATE_THRESHOLD
+  ) {
     const percent = Math.round((errors / processed) * 100);
     // The breaker aborts after a short run of judge-side failures, so the counts
     // here are small by design. Saying so keeps "5 of 5" from reading as a

@@ -116,6 +116,8 @@ export type SyncPlatform = {
   requestDelayMs: number;
   /** Whether a thrown error means the whole batch should back off. */
   isRateLimit: (cause: unknown) => boolean;
+  /** Preserve bounded upstream diagnostics without exposing them to API clients. */
+  formatError?: (cause: unknown) => string;
   /**
    * Whether this failure is the judge's fault rather than the handle's — the
    * judge being down or answering with something that is not the documented
@@ -265,7 +267,7 @@ export type StopReason = "time-budget" | "rate-limit" | "judge-down" | null;
 export type ErrorTally = Record<string, number>;
 
 /** Long enough to keep a judge's own wording, short enough not to bloat a log line. */
-const MAX_REASON_LENGTH = 160;
+const MAX_REASON_LENGTH = 512;
 /** Distinct messages kept before the rest collapse into one bucket. */
 const MAX_DISTINCT_REASONS = 8;
 const OTHER_REASONS = "(other)";
@@ -418,7 +420,9 @@ export const runSync = async (
       }
     } catch (cause) {
       upserts = [];
-      error = cause instanceof Error ? cause.message : String(cause);
+      error =
+        platform.formatError?.(cause) ??
+        (cause instanceof Error ? cause.message : String(cause));
       // Backing off is the only useful response; the rest of the batch would
       // fail the same way.
       rateLimited = platform.isRateLimit(cause);

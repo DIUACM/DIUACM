@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  formatCodeforcesError,
   getCodeforcesUser,
   getCodeforcesUsers,
   getUserSubmissions,
@@ -80,6 +81,34 @@ describe("getCodeforcesUser", () => {
     await expect(getCodeforcesUser("tourist", fetcher)).rejects.toMatchObject({
       kind: "call-limit",
     });
+  });
+
+  it("retains bounded HTTP and Codeforces diagnostics for operations", async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json(
+        { status: "FAILED", comment: "Call limit exceeded" },
+        { status: 429, headers: { "cf-ray": "abc123-SIN" } },
+      ),
+    );
+
+    const error = await getCodeforcesUser("tourist", fetcher).catch((cause: unknown) => cause);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(formatCodeforcesError(error)).toContain('endpoint="user.info"');
+    expect(formatCodeforcesError(error)).toContain('httpStatus="429"');
+    expect(formatCodeforcesError(error)).toContain('cfRay="abc123-SIN"');
+    expect(formatCodeforcesError(error)).toContain('comment="Call limit exceeded"');
+  });
+
+  it("retains a short body preview when Codeforces returns non-JSON", async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response("<html>upstream challenge</html>", { status: 502 }));
+
+    const error = await getCodeforcesUser("tourist", fetcher).catch((cause: unknown) => cause);
+
+    expect(formatCodeforcesError(error)).toContain('httpStatus="502"');
+    expect(formatCodeforcesError(error)).toContain("upstream challenge");
   });
 
   it("reports upstream failures as unavailable", async () => {

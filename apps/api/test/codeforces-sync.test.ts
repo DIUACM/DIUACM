@@ -315,10 +315,12 @@ describe("runSync — Codeforces", () => {
     );
 
     expect(summary.errors).toBe(3);
-    expect(summary.errorReasons).toEqual({
-      "Invalid Codeforces handle.": 2,
-      "Codeforces is temporarily unavailable": 1,
-    });
+    expect(summary.errorReasons["Invalid Codeforces handle."]).toBe(2);
+    expect(
+      Object.entries(summary.errorReasons).find(([reason]) =>
+        reason.startsWith("Codeforces is temporarily unavailable"),
+      )?.[1],
+    ).toBe(1);
   });
 
   describe("outage breaker", () => {

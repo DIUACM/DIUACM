@@ -1,7 +1,12 @@
 import type Database from "better-sqlite3";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { NOTICE_COOLDOWN_SECONDS, reportNotice, sendMail } from "../src/lib/notify";
+import {
+  NOTICE_COOLDOWN_SECONDS,
+  reportNotice,
+  resolveNotice,
+  sendMail,
+} from "../src/lib/notify";
 import { buildDigest } from "../src/sync/digest";
 import type { CfRatingSummary } from "../src/sync/cf-rating";
 import {
@@ -152,6 +157,41 @@ describe("reportNotice", () => {
     expect(noticeRow(db, "codeforces:blocked")).toMatchObject({ occurrences: 1, last_sent_at: null });
     warn.mockRestore();
   });
+
+  it("sends one recovery message and clears the open incident", async () => {
+    const sent: SentMail[] = [];
+    const d1 = d1Shim(db);
+    await reportNotice(envWith(sent), d1, notice(), NOW);
+
+    const result = await resolveNotice(envWith(sent), d1, {
+      key: "codeforces:blocked",
+      subject: "[DIU ACM] Codeforces recovered",
+      detail: "A valid response arrived.",
+    });
+
+    expect(result).toBe("resolved");
+    expect(sent).toHaveLength(2);
+    expect(sent[1].subject).toContain("recovered");
+    expect(sent[1].text).toContain("Incident opened");
+    expect(noticeRow(db, "codeforces:blocked")).toBeUndefined();
+  });
+
+  it("keeps an incident open when the recovery email is undeliverable", async () => {
+    const sent: SentMail[] = [];
+    const d1 = d1Shim(db);
+    await reportNotice(envWith(sent), d1, notice(), NOW);
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const result = await resolveNotice(envWith([], { fail: true }), d1, {
+      key: "codeforces:blocked",
+      subject: "recovered",
+      detail: "ok",
+    });
+
+    expect(result).toBe("undeliverable");
+    expect(noticeRow(db, "codeforces:blocked")).toBeDefined();
+    error.mockRestore();
+  });
 });
 
 describe("collectFaults", () => {
@@ -277,8 +317,19 @@ describe("collectFaults", () => {
     expect(faults.map((f) => f.key)).toEqual([
       "codeforces:paging-truncated",
       "codeforces:blocked",
-      "codeforces:error-rate",
     ]);
+  });
+
+  it("does not send a duplicate error-rate incident for a rate-limit stop", () => {
+    const faults = collectFaults({
+      ...healthy,
+      processed: 5,
+      errors: 5,
+      stoppedReason: "rate-limit",
+      errorReasons: { "Codeforces call limit exceeded.": 5 },
+    });
+
+    expect(faults.map((fault) => fault.key)).toEqual(["codeforces:blocked"]);
   });
 });
 
@@ -386,10 +437,10 @@ describe("tallyError", () => {
 
   it("truncates a message too long to belong in a log line", () => {
     const tally: ErrorTally = {};
-    tallyError(tally, "x".repeat(400));
+    tallyError(tally, "x".repeat(800));
 
     const [reason] = Object.keys(tally);
-    expect(reason).toHaveLength(161);
+    expect(reason).toHaveLength(513);
     expect(reason.endsWith("…")).toBe(true);
   });
 
