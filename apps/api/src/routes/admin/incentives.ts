@@ -7,7 +7,7 @@ import { incentiveApplications } from "../../db/schema";
 import { likeContains } from "../../lib/like";
 import { buildMeta } from "../../lib/pagination";
 import { parseId } from "../../lib/parse-id";
-import { toUserSummary } from "../../lib/user-shape";
+import { toHandlesMap, toUserSummary } from "../../lib/user-shape";
 import { validate } from "../../lib/validator";
 import { requirePermission } from "../../middleware/auth";
 import { adminBulkIdsSchema } from "../../schemas/admin";
@@ -42,21 +42,33 @@ const applicationQuery = {
         isBanned: true,
         banReason: true,
       },
+      with: {
+        handles: {
+          columns: {
+            id: true,
+            type: true,
+            handle: true,
+          },
+        },
+      },
     },
   },
 } as const;
 
 type ApplicantRow = Parameters<typeof toUserSummary>[0];
+type HandleRows = Parameters<typeof toHandlesMap>[0];
+type ApplicantWithHandles = ApplicantRow & { handles: HandleRows };
 
 // Rename the joined row to `applicant` — "user" alone reads ambiguously next to
 // the application's own typed-in identity fields. Generic so the application
 // columns keep their inferred types.
-const shapeApplication = <T extends { user: ApplicantRow | null }>(
+const shapeApplication = <T extends { user: ApplicantWithHandles | null }>(
   { user, ...application }: T,
   origin: string,
 ) => ({
   ...application,
   applicant: user ? toUserSummary(user, origin) : null,
+  handles: toHandlesMap(user?.handles ?? []),
 });
 
 const manageIncentives = requirePermission("manage_incentives");

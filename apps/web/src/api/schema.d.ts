@@ -7772,6 +7772,8 @@ export interface components {
             updatedAt: number;
             /** @description The account that filed the application. */
             applicant: components["schemas"]["UserSummary"] | null;
+            /** @description The applicant account's current competitive-programming handles. */
+            handles: components["schemas"]["HandlesMap"];
         };
         AdminIncentiveApplicationList: {
             data: components["schemas"]["AdminIncentiveApplication"][];

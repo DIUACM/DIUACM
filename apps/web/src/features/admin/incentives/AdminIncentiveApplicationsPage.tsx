@@ -48,6 +48,7 @@ import {
   downloadIncentiveExport,
   type IncentiveExportFormat,
 } from './incentive-export'
+import { ProgrammerHandles } from './ProgrammerHandles'
 
 const ALL = 'all'
 
@@ -219,6 +220,7 @@ export function AdminIncentiveApplicationsPage() {
                 <TableRow>
                   <SelectAllHead selection={selection} label="Select all applications" />
                   <TableHead>Applicant</TableHead>
+                  <TableHead>Handles</TableHead>
                   <TableHead>Student ID</TableHead>
                   <TableHead>Batch</TableHead>
                   <TableHead>Semester</TableHead>
@@ -244,6 +246,9 @@ export function AdminIncentiveApplicationsPage() {
                         {application.fullName}
                       </Link>
                       <p className="text-muted-foreground">{application.email}</p>
+                    </TableCell>
+                    <TableCell className="min-w-40 align-top">
+                      <ProgrammerHandles handles={application.handles} compact />
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {application.studentId}

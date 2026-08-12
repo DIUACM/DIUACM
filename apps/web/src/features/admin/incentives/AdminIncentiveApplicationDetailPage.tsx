@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
 import { formatDateTime } from '@/lib/datetime'
 import { useDocumentTitle } from '@/lib/use-document-title'
+import { ProgrammerHandles } from './ProgrammerHandles'
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
@@ -105,7 +106,7 @@ export function AdminIncentiveApplicationDetailPage() {
         <CardHeader>
           <CardTitle>Applicant account</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-5">
           {applicant ? (
             <div className="flex flex-wrap items-center gap-3">
               <UserAvatar
@@ -129,6 +130,10 @@ export function AdminIncentiveApplicationDetailPage() {
               The account that filed this application no longer exists.
             </p>
           )}
+          <div className="border-t border-border/70 pt-5">
+            <p className="mb-3 text-sm font-medium">Programmer handles</p>
+            <ProgrammerHandles handles={record.handles} />
+          </div>
         </CardContent>
       </Card>
 

@@ -1078,8 +1078,12 @@ const adminIncentiveApplicationSchema = {
       oneOf: [ref("UserSummary"), { type: "null" }],
       description: "The account that filed the application.",
     },
+    handles: {
+      ...ref("HandlesMap"),
+      description: "The applicant account's current competitive-programming handles.",
+    },
   },
-  required: [...incentiveApplicationSchema.required, "applicant"],
+  required: [...incentiveApplicationSchema.required, "applicant", "handles"],
 };
 
 const adminIncentiveApplicationListSchema = {

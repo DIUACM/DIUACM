@@ -223,6 +223,11 @@ describe("incentive applications", () => {
         fullName: string;
         batch: string;
         applicant: { id: number; username: string } | null;
+        handles: {
+          codeforces: { id: number; handle: string }[];
+          vjudge: { id: number; handle: string }[];
+          atcoder: { id: number; handle: string }[];
+        };
       }[];
       meta: { total: number; page: number; totalPages: number };
     };
@@ -252,6 +257,19 @@ describe("incentive applications", () => {
 
     it("lists applications with their applicant", async () => {
       await seedTwo();
+      db.prepare(
+        "INSERT INTO user_handles (user_id, type, handle) VALUES (?, ?, ?), (?, ?, ?), (?, ?, ?)",
+      ).run(
+        2,
+        "codeforces",
+        "student_two_cf",
+        2,
+        "vjudge",
+        "student_two_vj_1",
+        2,
+        "vjudge",
+        "student_two_vj_2",
+      );
 
       const res = await call("/admin/incentive-applications", await tokenFor(3, "user3"));
       expect(res.status).toBe(200);
@@ -260,6 +278,11 @@ describe("incentive applications", () => {
       expect(body.meta.total).toBe(2);
       expect(body.data).toHaveLength(2);
       expect(body.data[0].applicant?.username).toBe("user2");
+      expect(body.data[0].handles).toMatchObject({
+        codeforces: [{ handle: "student_two_cf" }],
+        vjudge: [{ handle: "student_two_vj_1" }, { handle: "student_two_vj_2" }],
+        atcoder: [],
+      });
     });
 
     it("searches across the typed-in details", async () => {
@@ -302,6 +325,9 @@ describe("incentive applications", () => {
 
     it("gets one application by id, and 404s on an unknown id", async () => {
       await seedTwo();
+      db.prepare(
+        "INSERT INTO user_handles (user_id, type, handle) VALUES (?, ?, ?)",
+      ).run(2, "atcoder", "student_two_ac");
       const token = await tokenFor(3, "user3");
 
       const list = (await (
@@ -311,7 +337,15 @@ describe("incentive applications", () => {
 
       const res = await call(`/admin/incentive-applications/${id}`, token);
       expect(res.status).toBe(200);
-      expect(((await res.json()) as ApplicationBody).application?.id).toBe(id);
+      const detail = (await res.json()) as {
+        application: NonNullable<ApplicationBody["application"]> & {
+          handles: ListBody["data"][number]["handles"];
+        };
+      };
+      expect(detail.application.id).toBe(id);
+      expect(detail.application.handles.atcoder).toMatchObject([
+        { handle: "student_two_ac" },
+      ]);
 
       expect((await call("/admin/incentive-applications/9999", token)).status).toBe(404);
       expect((await call("/admin/incentive-applications/abc", token)).status).toBe(404);

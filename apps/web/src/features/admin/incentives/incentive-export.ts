@@ -15,6 +15,9 @@ const HEADERS = [
   'Account Username',
   'Account Name',
   'Account ID',
+  'Codeforces Handle',
+  'VJudge Handles',
+  'AtCoder Handle',
   'Course Number',
   'Course Name',
   'Course Code',
@@ -27,7 +30,7 @@ const HEADERS = [
   'Updated At (UTC)',
 ] as const
 
-const COLUMN_WIDTHS = [15, 24, 18, 14, 28, 18, 17, 20, 24, 12, 14, 25, 15, 11, 24, 16, 28, 17, 22, 22]
+const COLUMN_WIDTHS = [15, 24, 18, 14, 28, 18, 17, 20, 24, 12, 22, 26, 22, 14, 25, 15, 11, 24, 16, 28, 17, 22, 22]
 
 function dateFromEpochSeconds(value: number): Date {
   return new Date(value * 1_000)
@@ -49,6 +52,9 @@ function rowForCourse(
     application.applicant?.username ?? '',
     application.applicant?.name ?? '',
     application.applicant?.id ?? null,
+    application.handles.codeforces.map(({ handle }) => handle).join('; '),
+    application.handles.vjudge.map(({ handle }) => handle).join('; '),
+    application.handles.atcoder.map(({ handle }) => handle).join('; '),
     course ? courseIndex + 1 : null,
     course?.courseName ?? '',
     course?.courseCode ?? '',

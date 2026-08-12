@@ -45,6 +45,14 @@ const application: AdminIncentiveApplication = {
     isBanned: false,
     banReason: null,
   },
+  handles: {
+    codeforces: [{ id: 1, handle: 'student_cf' }],
+    vjudge: [
+      { id: 2, handle: 'student_vj_1' },
+      { id: 3, handle: 'student_vj_2' },
+    ],
+    atcoder: [{ id: 4, handle: 'student_ac' }],
+  },
 }
 
 describe('incentive application exports', () => {
@@ -55,6 +63,9 @@ describe('incentive application exports', () => {
     expect(rows[0]).toContain('Algorithms, Advanced')
     expect(rows[1]).toContain('Databases')
     expect(rows[0]).toContain('student7')
+    expect(rows[0]).toContain('student_cf')
+    expect(rows[0]).toContain('student_vj_1; student_vj_2')
+    expect(rows[0]).toContain('student_ac')
   })
 
   it('creates an Excel-friendly UTF-8 CSV and neutralizes formulas', async () => {
@@ -78,7 +89,9 @@ describe('incentive application exports', () => {
     expect(packageText).toContain('Incentive Applications')
     expect(packageText).toContain('Algorithms, Advanced')
     expect(packageText).toContain('Databases')
-    expect(packageText).toContain('<autoFilter ref="A1:T3"/>')
+    expect(packageText).toContain('Codeforces Handle')
+    expect(packageText).toContain('student_vj_1; student_vj_2')
+    expect(packageText).toContain('<autoFilter ref="A1:W3"/>')
     expect(packageText).toContain('state="frozen"')
   })
 })
