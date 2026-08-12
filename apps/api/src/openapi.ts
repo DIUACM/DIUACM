@@ -28,6 +28,7 @@ import { googleSignInSchema, loginSchema, profileUpdateSchema } from "./schemas/
 import { RUN_RETENTION_DAYS } from "./sync/runs";
 import { attendanceGiveSchema } from "./schemas/events";
 import { handleSetSchema } from "./schemas/handles";
+import { incentiveApplicationSubmitSchema } from "./schemas/incentives";
 
 // Request bodies are derived from the same Zod schemas the routes validate
 // against (via `z.toJSONSchema`) so the docs can't drift from validation.
@@ -642,6 +643,76 @@ const blogPostDetailSchema = {
   required: ["id", "title", "slug", "content", "featuredImageUrl", "publishedAt", "author"],
 };
 
+const incentiveCourseSchemaDoc = {
+  type: "object",
+  properties: {
+    courseName: { type: "string" },
+    courseCode: { type: "string" },
+    teacherName: { type: "string" },
+    teacherInitial: { type: "string" },
+    section: { type: "string" },
+    teacherEmail: { type: "string", format: "email" },
+    teacherPhone: { type: "string" },
+  },
+  required: [
+    "courseName",
+    "courseCode",
+    "teacherName",
+    "teacherInitial",
+    "section",
+    "teacherEmail",
+    "teacherPhone",
+  ],
+};
+
+const incentiveApplicationSchema = {
+  type: "object",
+  properties: {
+    id: { type: "integer" },
+    userId: { type: "integer", description: "The applicant's account id." },
+    fullName: { type: "string" },
+    studentId: {
+      type: "string",
+      description: "As typed on the form — independent of the account's student id.",
+    },
+    batch: { type: "string" },
+    email: {
+      type: "string",
+      format: "email",
+      description: "Copied from the account at submission time; not client-supplied.",
+    },
+    currentSemester: { type: "string" },
+    phoneNumber: { type: "string" },
+    courses: { type: "array", items: ref("IncentiveCourse") },
+    createdAt: epoch("Unix epoch seconds (UTC)."),
+    updatedAt: epoch("Unix epoch seconds (UTC)."),
+  },
+  required: [
+    "id",
+    "userId",
+    "fullName",
+    "studentId",
+    "batch",
+    "email",
+    "currentSemester",
+    "phoneNumber",
+    "courses",
+    "createdAt",
+    "updatedAt",
+  ],
+};
+
+const incentiveApplicationResponseSchema = {
+  type: "object",
+  properties: {
+    application: {
+      oneOf: [ref("IncentiveApplication"), { type: "null" }],
+      description: "Null when the caller has not applied yet.",
+    },
+  },
+  required: ["application"],
+};
+
 // ---------------------------------------------------------------------------
 // Admin shapes — like the public ones, but nothing is hidden: drafts are
 // visible, events include eventPassword, trackers/ranklists expose ids,
@@ -997,6 +1068,44 @@ const assetUploadSchema = {
   required: ["file"],
 };
 
+// An application plus the account that filed it. The applicant's details are
+// typed into the form, so they may legitimately differ from their profile.
+const adminIncentiveApplicationSchema = {
+  type: "object",
+  properties: {
+    ...incentiveApplicationSchema.properties,
+    applicant: {
+      oneOf: [ref("UserSummary"), { type: "null" }],
+      description: "The account that filed the application.",
+    },
+  },
+  required: [...incentiveApplicationSchema.required, "applicant"],
+};
+
+const adminIncentiveApplicationListSchema = {
+  type: "object",
+  properties: {
+    data: { type: "array", items: ref("AdminIncentiveApplication") },
+    meta: ref("PaginationMeta"),
+  },
+  required: ["data", "meta"],
+};
+
+const adminIncentiveApplicationDetailSchema = {
+  type: "object",
+  properties: { application: ref("AdminIncentiveApplication") },
+  required: ["application"],
+};
+
+const adminIncentiveFiltersSchema = {
+  type: "object",
+  properties: {
+    batches: { type: "array", items: { type: "string" } },
+    semesters: { type: "array", items: { type: "string" } },
+  },
+  required: ["batches", "semesters"],
+};
+
 // ---------------------------------------------------------------------------
 // System health — the scheduled jobs, as seen from the admin panel.
 // ---------------------------------------------------------------------------
@@ -1249,6 +1358,7 @@ Admin access is **permission-based**, not role-based. A user may hold any subset
 | \`manage_trackers\` | Trackers and ranklists under \`/admin/trackers\` and \`/admin/ranklists\` |
 | \`manage_gallery\` | Gallery albums and their images under \`/admin/gallery\` |
 | \`manage_blog\` | Blog posts under \`/admin/blog\` |
+| \`manage_incentives\` | Incentive applications under \`/admin/incentive-applications\` |
 
 The **super admin** — the account whose email matches \`SUPER_ADMIN_EMAIL\` — implicitly
 holds every permission and is the only one who can turn permissions on or off
@@ -1278,6 +1388,10 @@ export const openApiDoc = {
     { name: "programmers", description: "Programmer directory, handles, and tracker performance" },
     { name: "gallery", description: "Photo albums" },
     { name: "blog", description: "Blog posts" },
+    {
+      name: "incentive-applications",
+      description: "The signed-in user's course incentive application",
+    },
     { name: "files", description: "Stored object serving" },
     {
       name: "admin-users",
@@ -1299,6 +1413,10 @@ export const openApiDoc = {
     { name: "admin-gallery", description: "Admin: manage gallery albums and images (`manage_gallery`)." },
     { name: "admin-blog", description: "Admin: manage blog posts (`manage_blog`)." },
     {
+      name: "admin-incentive-applications",
+      description: "Admin: review submitted incentive applications (`manage_incentives`).",
+    },
+    {
       name: "admin-system",
       description:
         "Admin: what the scheduled jobs have been doing (`manage_system`) — run " +
@@ -1308,7 +1426,17 @@ export const openApiDoc = {
   "x-tagGroups": [
     {
       name: "Non-admin",
-      tags: ["meta", "auth", "events", "trackers", "programmers", "gallery", "blog", "files"],
+      tags: [
+        "meta",
+        "auth",
+        "events",
+        "trackers",
+        "programmers",
+        "gallery",
+        "blog",
+        "incentive-applications",
+        "files",
+      ],
     },
     {
       name: "Admin",
@@ -1319,6 +1447,7 @@ export const openApiDoc = {
         "admin-ranklists",
         "admin-gallery",
         "admin-blog",
+        "admin-incentive-applications",
         "admin-system",
       ],
     },
@@ -1374,6 +1503,10 @@ export const openApiDoc = {
       BlogPostListItem: blogPostListItemSchema,
       BlogPostList: blogPostListSchema,
       BlogPostDetail: blogPostDetailSchema,
+      IncentiveCourse: incentiveCourseSchemaDoc,
+      IncentiveApplication: incentiveApplicationSchema,
+      IncentiveApplicationResponse: incentiveApplicationResponseSchema,
+      IncentiveApplicationRequest: toSchema(incentiveApplicationSubmitSchema),
       LoginRequest: toSchema(loginSchema),
       GoogleSignInRequest: toSchema(googleSignInSchema),
       ProfileUpdateRequest: toSchema(profileUpdateSchema),
@@ -1430,6 +1563,10 @@ export const openApiDoc = {
       AdminGalleryAlbumUpdateRequest: toSchema(adminGalleryAlbumUpdateSchema),
       AdminBlogPostCreateRequest: toSchema(adminBlogPostCreateSchema),
       AdminBlogPostUpdateRequest: toSchema(adminBlogPostUpdateSchema),
+      AdminIncentiveApplication: adminIncentiveApplicationSchema,
+      AdminIncentiveApplicationList: adminIncentiveApplicationListSchema,
+      AdminIncentiveApplicationDetail: adminIncentiveApplicationDetailSchema,
+      AdminIncentiveFilters: adminIncentiveFiltersSchema,
       CronRunStatus: runStatusSchema,
       CronRun: cronRunSchema,
       CronRunList: cronRunListSchema,
@@ -1866,6 +2003,42 @@ export const openApiDoc = {
         responses: {
           "200": { description: "The post", content: jsonBody(ref("BlogPostDetail")) },
           "404": { description: "Not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/incentive-applications/me": {
+      get: {
+        tags: ["incentive-applications"],
+        summary: "Get the caller's incentive application",
+        ...access(
+          "user",
+          "Returns `{ application: null }` when the caller has not applied — that is " +
+            "the state the blank form renders from, not an error.",
+        ),
+        responses: {
+          "200": {
+            description: "The application, or null",
+            content: jsonBody(ref("IncentiveApplicationResponse")),
+          },
+          "401": { description: "Missing or invalid token", content: jsonBody(ref("Error")) },
+        },
+      },
+      put: {
+        tags: ["incentive-applications"],
+        summary: "Submit or replace the caller's incentive application",
+        ...access(
+          "user",
+          "One application per user: resubmitting overwrites the previous one. The " +
+            "recorded `email` is taken from the account, not the request body.",
+        ),
+        requestBody: { required: true, content: jsonBody(ref("IncentiveApplicationRequest")) },
+        responses: {
+          "200": {
+            description: "The saved application",
+            content: jsonBody(ref("IncentiveApplicationResponse")),
+          },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          "401": { description: "Missing or invalid token", content: jsonBody(ref("Error")) },
         },
       },
     },
@@ -3018,6 +3191,101 @@ export const openApiDoc = {
           "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
           ...adminAuthResponses,
           "404": { description: "Asset not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/incentive-applications": {
+      get: {
+        tags: ["admin-incentive-applications"],
+        summary: "List submitted applications, newest first",
+        ...access("manage_incentives"),
+        parameters: [
+          ...pageParams,
+          {
+            name: "q",
+            in: "query",
+            description: "Search on full name, student id, email, phone number, or batch.",
+            schema: { type: "string" },
+          },
+          {
+            name: "batch",
+            in: "query",
+            description: "Exact batch match.",
+            schema: { type: "string" },
+          },
+          {
+            name: "semester",
+            in: "query",
+            description: "Exact `currentSemester` match.",
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "A page of applications",
+            content: jsonBody(ref("AdminIncentiveApplicationList")),
+          },
+          ...adminAuthResponses,
+        },
+      },
+    },
+    "/admin/incentive-applications/filters": {
+      get: {
+        tags: ["admin-incentive-applications"],
+        summary: "Distinct batch and semester values, for filter dropdowns",
+        ...access(
+          "manage_incentives",
+          "Computed across every application, not just the current page or filter.",
+        ),
+        responses: {
+          "200": {
+            description: "Available filter values",
+            content: jsonBody(ref("AdminIncentiveFilters")),
+          },
+          ...adminAuthResponses,
+        },
+      },
+    },
+    "/admin/incentive-applications/{id}": {
+      get: {
+        tags: ["admin-incentive-applications"],
+        summary: "Get an application with its applicant",
+        ...access("manage_incentives"),
+        parameters: [idParam("id")],
+        responses: {
+          "200": {
+            description: "The application",
+            content: jsonBody(ref("AdminIncentiveApplicationDetail")),
+          },
+          ...adminAuthResponses,
+          "404": { description: "Application not found", content: jsonBody(ref("Error")) },
+        },
+      },
+      delete: {
+        tags: ["admin-incentive-applications"],
+        summary: "Delete an application",
+        ...access(
+          "manage_incentives",
+          "The applicant may file a fresh one afterwards — deleting frees up their slot.",
+        ),
+        parameters: [idParam("id")],
+        responses: {
+          "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
+          ...adminAuthResponses,
+          "404": { description: "Application not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/incentive-applications/bulk-delete": {
+      post: {
+        tags: ["admin-incentive-applications"],
+        summary: "Delete a batch of applications",
+        ...access("manage_incentives"),
+        requestBody: { required: true, content: jsonBody(ref("AdminBulkIdsRequest")) },
+        responses: {
+          "200": { description: "Applications deleted", content: jsonBody(ref("BulkResult")) },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
         },
       },
     },

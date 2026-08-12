@@ -4,6 +4,7 @@ import { requireAuth } from "../../middleware/auth";
 import adminBlog from "./blog";
 import adminEvents from "./events";
 import adminGallery from "./gallery";
+import adminIncentives from "./incentives";
 import adminRanklists from "./ranklists";
 import adminSystem from "./system";
 import adminTrackers from "./trackers";
@@ -22,6 +23,7 @@ admin.route("/trackers", adminTrackers);
 admin.route("/ranklists", adminRanklists);
 admin.route("/gallery", adminGallery);
 admin.route("/blog", adminBlog);
+admin.route("/incentive-applications", adminIncentives);
 admin.route("/system", adminSystem);
 
 export default admin;

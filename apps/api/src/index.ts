@@ -11,6 +11,7 @@ import blog from "./routes/blog";
 import events from "./routes/events";
 import files from "./routes/files";
 import gallery from "./routes/gallery";
+import incentives from "./routes/incentives";
 import programmers from "./routes/programmers";
 import trackers from "./routes/trackers";
 import { handleScheduled } from "./sync";
@@ -81,6 +82,7 @@ app.route("/blog", blog);
 app.route("/events", events);
 app.route("/files", files);
 app.route("/gallery", gallery);
+app.route("/incentive-applications", incentives);
 app.route("/programmers", programmers);
 app.route("/trackers", trackers);
 

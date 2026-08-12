@@ -2,6 +2,7 @@ import {
   Activity,
   CalendarDays,
   ChartNoAxesColumn,
+  FileText,
   Images,
   Newspaper,
   ShieldAlert,
@@ -27,6 +28,12 @@ const SECTIONS: AdminSection[] = [
   { to: '/admin/trackers', label: 'Trackers', icon: ChartNoAxesColumn, permission: 'manage_trackers' },
   { to: '/admin/gallery', label: 'Gallery', icon: Images, permission: 'manage_gallery' },
   { to: '/admin/blog', label: 'Blog', icon: Newspaper, permission: 'manage_blog' },
+  {
+    to: '/admin/incentive-applications',
+    label: 'Incentives',
+    icon: FileText,
+    permission: 'manage_incentives',
+  },
   { to: '/admin/system', label: 'System', icon: Activity, permission: 'manage_system' },
 ]
 

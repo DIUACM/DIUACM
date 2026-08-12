@@ -162,6 +162,13 @@
       "when": 1786125268086,
       "tag": "0022_goofy_colonel_america",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1786471399338,
+      "tag": "0023_amused_gamora",
+      "breakpoints": true
     }
   ]
 }

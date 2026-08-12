@@ -843,7 +843,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Event performance leaderboard (ordered by rank)
+         * Event performance leaderboard (ordered by solves, then upsolves)
          * @description **Access:** `Public` — No authentication required.
          */
         get: {
@@ -1313,6 +1313,103 @@ export interface paths {
             };
         };
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/incentive-applications/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the caller's incentive application
+         * @description **Access:** `User` — Requires a bearer token (`Authorization: Bearer <token>`).
+         *
+         *     Returns `{ application: null }` when the caller has not applied — that is the state the blank form renders from, not an error.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The application, or null */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["IncentiveApplicationResponse"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        /**
+         * Submit or replace the caller's incentive application
+         * @description **Access:** `User` — Requires a bearer token (`Authorization: Bearer <token>`).
+         *
+         *     One application per user: resubmitting overwrites the previous one. The recorded `email` is taken from the account, not the request body.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["IncentiveApplicationRequest"];
+                };
+            };
+            responses: {
+                /** @description The saved application */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["IncentiveApplicationResponse"];
+                    };
+                };
+                /** @description Validation failed */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
         post?: never;
         delete?: never;
         options?: never;
@@ -6226,6 +6323,325 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/incentive-applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List submitted applications, newest first
+         * @description **Access:** `manage_incentives` — Requires a bearer token for a user granted the `manage_incentives` permission. The super admin always passes.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description 1-based page number. */
+                    page?: number;
+                    /** @description Items per page (max 100). */
+                    perPage?: number;
+                    /** @description Search on full name, student id, email, phone number, or batch. */
+                    q?: string;
+                    /** @description Exact batch match. */
+                    batch?: string;
+                    /** @description Exact `currentSemester` match. */
+                    semester?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description A page of applications */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminIncentiveApplicationList"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Caller lacks the required permission */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/incentive-applications/filters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Distinct batch and semester values, for filter dropdowns
+         * @description **Access:** `manage_incentives` — Requires a bearer token for a user granted the `manage_incentives` permission. The super admin always passes.
+         *
+         *     Computed across every application, not just the current page or filter.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Available filter values */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminIncentiveFilters"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Caller lacks the required permission */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/incentive-applications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an application with its applicant
+         * @description **Access:** `manage_incentives` — Requires a bearer token for a user granted the `manage_incentives` permission. The super admin always passes.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The application */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminIncentiveApplicationDetail"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Caller lacks the required permission */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Application not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        /**
+         * Delete an application
+         * @description **Access:** `manage_incentives` — Requires a bearer token for a user granted the `manage_incentives` permission. The super admin always passes.
+         *
+         *     The applicant may file a fresh one afterwards — deleting frees up their slot.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Ok"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Caller lacks the required permission */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Application not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/incentive-applications/bulk-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Delete a batch of applications
+         * @description **Access:** `manage_incentives` — Requires a bearer token for a user granted the `manage_incentives` permission. The super admin always passes.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AdminBulkIdsRequest"];
+                };
+            };
+            responses: {
+                /** @description Applications deleted */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["BulkResult"];
+                    };
+                };
+                /** @description Validation failed */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Caller lacks the required permission */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/system/health": {
         parameters: {
             query?: never;
@@ -6461,7 +6877,7 @@ export interface components {
          * @description An admin-panel permission.
          * @enum {string}
          */
-        Permission: "manage_users" | "manage_events" | "manage_attendance" | "manage_trackers" | "manage_gallery" | "manage_blog" | "manage_system";
+        Permission: "manage_users" | "manage_events" | "manage_attendance" | "manage_trackers" | "manage_gallery" | "manage_blog" | "manage_incentives" | "manage_system";
         UserSummary: {
             id: number;
             name: string;
@@ -6764,6 +7180,58 @@ export interface components {
             /** @description Unix epoch seconds (UTC). */
             publishedAt: number | null;
             author: components["schemas"]["UserSummary"] | null;
+        };
+        IncentiveCourse: {
+            courseName: string;
+            courseCode: string;
+            teacherName: string;
+            teacherInitial: string;
+            section: string;
+            /** Format: email */
+            teacherEmail: string;
+            teacherPhone: string;
+        };
+        IncentiveApplication: {
+            id: number;
+            /** @description The applicant's account id. */
+            userId: number;
+            fullName: string;
+            /** @description As typed on the form — independent of the account's student id. */
+            studentId: string;
+            batch: string;
+            /**
+             * Format: email
+             * @description Copied from the account at submission time; not client-supplied.
+             */
+            email: string;
+            currentSemester: string;
+            phoneNumber: string;
+            courses: components["schemas"]["IncentiveCourse"][];
+            /** @description Unix epoch seconds (UTC). */
+            createdAt: number;
+            /** @description Unix epoch seconds (UTC). */
+            updatedAt: number;
+        };
+        IncentiveApplicationResponse: {
+            /** @description Null when the caller has not applied yet. */
+            application: components["schemas"]["IncentiveApplication"] | null;
+        };
+        IncentiveApplicationRequest: {
+            fullName: string;
+            studentId: string;
+            batch: string;
+            currentSemester: string;
+            phoneNumber: string;
+            courses: {
+                courseName: string;
+                courseCode: string;
+                teacherName: string;
+                teacherInitial: string;
+                section: string;
+                /** Format: email */
+                teacherEmail: string;
+                teacherPhone: string;
+            }[];
         };
         LoginRequest: {
             identifier: string;
@@ -7281,6 +7749,40 @@ export interface components {
             content?: string;
             /** @enum {string} */
             status?: "published" | "draft";
+        };
+        AdminIncentiveApplication: {
+            id: number;
+            /** @description The applicant's account id. */
+            userId: number;
+            fullName: string;
+            /** @description As typed on the form — independent of the account's student id. */
+            studentId: string;
+            batch: string;
+            /**
+             * Format: email
+             * @description Copied from the account at submission time; not client-supplied.
+             */
+            email: string;
+            currentSemester: string;
+            phoneNumber: string;
+            courses: components["schemas"]["IncentiveCourse"][];
+            /** @description Unix epoch seconds (UTC). */
+            createdAt: number;
+            /** @description Unix epoch seconds (UTC). */
+            updatedAt: number;
+            /** @description The account that filed the application. */
+            applicant: components["schemas"]["UserSummary"] | null;
+        };
+        AdminIncentiveApplicationList: {
+            data: components["schemas"]["AdminIncentiveApplication"][];
+            meta: components["schemas"]["PaginationMeta"];
+        };
+        AdminIncentiveApplicationDetail: {
+            application: components["schemas"]["AdminIncentiveApplication"];
+        };
+        AdminIncentiveFilters: {
+            batches: string[];
+            semesters: string[];
         };
         /**
          * @description `degraded` is an invocation that finished but raised faults — the state Cloudflare's own dashboard cannot show, because the invocation succeeded.

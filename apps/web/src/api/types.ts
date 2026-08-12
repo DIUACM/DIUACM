@@ -38,6 +38,11 @@ export type GalleryMedia = Schemas['GalleryMedia']
 export type BlogPostListItem = Schemas['BlogPostListItem']
 export type BlogPostDetail = Schemas['BlogPostDetail']
 
+export type IncentiveApplication = Schemas['IncentiveApplication']
+export type IncentiveCourse = Schemas['IncentiveCourse']
+export type IncentiveApplicationInput = Schemas['IncentiveApplicationRequest']
+export type AdminIncentiveApplication = Schemas['AdminIncentiveApplication']
+
 export type PaginationMeta = Schemas['PaginationMeta']
 
 /** Shared by every `/admin/…/bulk` endpoint on a publishable resource. */

@@ -8,6 +8,7 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   manage_trackers: 'Manage trackers',
   manage_gallery: 'Manage gallery',
   manage_blog: 'Manage blog',
+  manage_incentives: 'Manage incentive applications',
   manage_system: 'View system health',
 }
 

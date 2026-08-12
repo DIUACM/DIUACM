@@ -122,6 +122,13 @@ const router = createBrowserRouter([
                 path: '/profile',
                 lazy: lazily(() => import('@/features/profile/ProfilePage'), 'ProfilePage'),
               },
+              {
+                path: '/incentive-application',
+                lazy: lazily(
+                  () => import('@/features/incentives/IncentiveApplicationPage'),
+                  'IncentiveApplicationPage',
+                ),
+              },
             ],
           },
           {
@@ -197,6 +204,26 @@ const router = createBrowserRouter([
                 lazy: lazily(
                   () => import('@/features/admin/blog/AdminBlogPostDetailPage'),
                   'AdminBlogPostDetailPage',
+                ),
+              },
+              {
+                path: 'incentive-applications',
+                lazy: lazily(
+                  () =>
+                    import(
+                      '@/features/admin/incentives/AdminIncentiveApplicationsPage'
+                    ),
+                  'AdminIncentiveApplicationsPage',
+                ),
+              },
+              {
+                path: 'incentive-applications/:id',
+                lazy: lazily(
+                  () =>
+                    import(
+                      '@/features/admin/incentives/AdminIncentiveApplicationDetailPage'
+                    ),
+                  'AdminIncentiveApplicationDetailPage',
                 ),
               },
               {

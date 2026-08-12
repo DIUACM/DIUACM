@@ -60,6 +60,7 @@ export const PERMISSIONS = [
   "manage_trackers",
   "manage_gallery",
   "manage_blog",
+  "manage_incentives",
   // Read-only view of the scheduled jobs (src/routes/admin/system.ts), plus the
   // one write it allows: acknowledging a fault.
   "manage_system",
@@ -530,12 +531,70 @@ export const userHandles = sqliteTable(
   ],
 );
 
-export const usersRelations = relations(users, ({ many }) => ({
+/**
+ * One course a student is claiming an incentive for, together with the teacher
+ * who runs it. Stored inside `incentive_applications.courses` rather than in a
+ * table of its own: the rows are never queried or joined individually, they are
+ * only ever read and rewritten as a whole with their application.
+ */
+export type IncentiveCourse = {
+  courseName: string;
+  courseCode: string;
+  teacherName: string;
+  teacherInitial: string;
+  section: string;
+  teacherEmail: string;
+  teacherPhone: string;
+};
+
+// A student's application for the course incentive. One row per user (see the
+// unique user_id below) — resubmitting overwrites the existing application.
+export const incentiveApplications = sqliteTable(
+  "incentive_applications",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .unique()
+      .references(() => users.id, { onDelete: "cascade" }),
+    fullName: text("full_name").notNull(),
+    studentId: text("student_id").notNull(),
+    batch: text("batch").notNull(),
+    // Copied from the account at submission time; the applicant cannot set it.
+    // Kept on the row so an application still shows the address it was filed
+    // with after the user changes their account email.
+    email: text("email").notNull(),
+    currentSemester: text("current_semester").notNull(),
+    phoneNumber: text("phone_number").notNull(),
+    courses: text("courses", { mode: "json" }).$type<IncentiveCourse[]>().notNull(),
+    createdAt: integer("created_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+    updatedAt: integer("updated_at")
+      .notNull()
+      .default(sql`(unixepoch())`),
+  },
+  (t) => [
+    // The admin list sorts by submission time.
+    index("incentive_applications_created_at_idx").on(t.createdAt),
+  ],
+);
+
+export const usersRelations = relations(users, ({ many, one }) => ({
   attendance: many(eventAttendance),
   performance: many(eventPerformance),
   ranklists: many(ranklistUsers),
   handles: many(userHandles),
   permissions: many(userPermissions),
+  // At most one — incentive_applications.user_id is unique.
+  incentiveApplication: one(incentiveApplications),
+}));
+
+export const incentiveApplicationsRelations = relations(incentiveApplications, ({ one }) => ({
+  user: one(users, {
+    fields: [incentiveApplications.userId],
+    references: [users.id],
+  }),
 }));
 
 export const userPermissionsRelations = relations(userPermissions, ({ one }) => ({
@@ -630,3 +689,5 @@ export type GalleryMedia = typeof galleryMedia.$inferSelect;
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type NewBlogPost = typeof blogPosts.$inferInsert;
 export type BlogAsset = typeof blogAssets.$inferSelect;
+export type IncentiveApplication = typeof incentiveApplications.$inferSelect;
+export type NewIncentiveApplication = typeof incentiveApplications.$inferInsert;
