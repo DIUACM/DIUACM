@@ -1,4 +1,4 @@
-import { isoish, type Notice } from "../lib/notify";
+import { isoish, TRANSIENT_SUSTAIN, type Notice } from "../lib/notify";
 
 // ---------------------------------------------------------------------------
 // Persistent upstream backoff.
@@ -103,6 +103,9 @@ export const clearBackoff = async (
 export const codeforcesBackoffNotice = (state: UpstreamBackoff): Notice => ({
   key: "codeforces:blocked",
   subject: "[DIU ACM] Codeforces API is rate-limiting sync",
+  // Codeforces refuses a request most days and is answering again a tick or two
+  // later. Only an incident that outlives the sustain window is worth a mail.
+  sustain: TRANSIENT_SUSTAIN,
   detail:
     `Codeforces refused an API request with "Call limit exceeded". The shared circuit ` +
     `breaker is now pausing both the solve and rating jobs until ${isoish(state.blockedUntil)} ` +

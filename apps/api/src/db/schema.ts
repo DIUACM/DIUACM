@@ -225,6 +225,12 @@ export const eventSyncState = sqliteTable("event_sync_state", {
  * times a day, so a persistent fault would otherwise mail the admin every 15
  * minutes; a notice is recorded on every occurrence but only sent when its
  * cooldown has expired, and the mail says how many times it fired meanwhile.
+ *
+ * One row is one open incident. A fault that declares a sustain window is held
+ * unsent while `last_sent_at` is null and the incident is younger than that
+ * window, which is how a judge blip that fixes itself stays out of the mailbox;
+ * a row whose fault stops recurring is dropped, so the next occurrence opens a
+ * new incident rather than inheriting this one's clock.
  */
 export const adminNotices = sqliteTable("admin_notices", {
   /** Stable, one per distinct fault, e.g. "codeforces:paging-truncated". */

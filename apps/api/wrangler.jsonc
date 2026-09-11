@@ -66,7 +66,9 @@
   // Worker tests override this with a fully local Miniflare email binding.
   // Without it a manual local send silently no-ops, which is the one
   // failure mode this whole feature exists to avoid — so local runs really do
-  // mail the super admin. The 1h per-key cooldown keeps that bearable.
+  // mail the super admin. The sustain window and the per-key cooldown in
+  // src/lib/notify.ts keep that bearable: a transient upstream fault has to last
+  // two hours before it mails at all.
   "send_email": [
     {
       "name": "EMAIL",

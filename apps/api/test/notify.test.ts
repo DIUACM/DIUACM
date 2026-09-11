@@ -6,8 +6,9 @@ import {
   reportNotice,
   resolveNotice,
   sendMail,
+  TRANSIENT_SUSTAIN,
 } from "../src/lib/notify";
-import { buildDigest } from "../src/sync/digest";
+import { buildDigest, collectIncidents } from "../src/sync/digest";
 import type { CfRatingSummary } from "../src/sync/cf-rating";
 import {
   collectCfRatingFaults,
@@ -46,6 +47,9 @@ const notice = (key = "codeforces:blocked") => ({
   subject: "[DIU ACM] test alert",
   detail: "Something went wrong.",
 });
+
+/** The same fault, declared as one that usually clears on its own. */
+const transient = (key = "codeforces:blocked") => ({ ...notice(key), sustain: TRANSIENT_SUSTAIN });
 
 const noticeRow = (db: Database.Database, key: string) =>
   db.prepare("SELECT * FROM admin_notices WHERE key = ?").get(key) as
@@ -156,6 +160,83 @@ describe("reportNotice", () => {
     expect(result).toBe("undeliverable");
     expect(noticeRow(db, "codeforces:blocked")).toMatchObject({ occurrences: 1, last_sent_at: null });
     warn.mockRestore();
+  });
+
+  it("records a transient fault without mailing it until it has lasted", async () => {
+    // The production case this exists for: Codeforces refuses a request, the
+    // backoff opens, and the next tick or two is skipped. Nobody can act on it.
+    const sent: SentMail[] = [];
+    const d1 = d1Shim(db);
+
+    const results: string[] = [];
+    // One tick every 15 minutes, as the cron actually fires, right up to the
+    // moment the incident is two hours old.
+    for (let at = NOW; at <= NOW + TRANSIENT_SUSTAIN.minSeconds; at += 900) {
+      results.push(await reportNotice(envWith(sent), d1, transient(), at));
+    }
+
+    expect(results.slice(0, -1).every((result) => result === "pending")).toBe(true);
+    expect(results.at(-1)).toBe("sent");
+    expect(sent).toHaveLength(1);
+    expect(sent[0].text).toMatch(/Seen 9 times since/);
+    expect(noticeRow(db, "codeforces:blocked")).toMatchObject({
+      occurrences: 0,
+      first_seen_at: NOW,
+    });
+  });
+
+  it("restarts the clock for a fault that comes back after the gap", async () => {
+    // A fault that flaps all day must never accumulate its way past the sustain
+    // window: each new incident is measured from when it opened, not from the
+    // first time the key was ever seen.
+    const sent: SentMail[] = [];
+    const d1 = d1Shim(db);
+    const gap = TRANSIENT_SUSTAIN.gapSeconds + 60;
+
+    for (let tick = 0; tick < 6; tick += 1) {
+      expect(await reportNotice(envWith(sent), d1, transient(), NOW + tick * gap)).toBe(
+        "pending",
+      );
+    }
+
+    expect(sent).toHaveLength(0);
+    expect(noticeRow(db, "codeforces:blocked")).toMatchObject({
+      occurrences: 1,
+      first_seen_at: NOW + 5 * gap,
+    });
+  });
+
+  it("keeps mailing a fault that has no sustain window on sight", async () => {
+    // Wrong data does not improve by waiting, so those notices are unchanged.
+    const sent: SentMail[] = [];
+
+    const result = await reportNotice(
+      envWith(sent),
+      d1Shim(db),
+      notice("codeforces:paging-truncated"),
+      NOW,
+    );
+
+    expect(result).toBe("sent");
+    expect(sent).toHaveLength(1);
+  });
+
+  it("closes an unannounced incident silently", async () => {
+    // The other half of the volume fix: no "recovered" mail for an incident the
+    // admin was never told about.
+    const sent: SentMail[] = [];
+    const d1 = d1Shim(db);
+    await reportNotice(envWith(sent), d1, transient(), NOW);
+
+    const result = await resolveNotice(envWith(sent), d1, {
+      key: "codeforces:blocked",
+      subject: "[DIU ACM] Codeforces recovered",
+      detail: "A valid response arrived.",
+    });
+
+    expect(result).toBe("unannounced");
+    expect(sent).toHaveLength(0);
+    expect(noticeRow(db, "codeforces:blocked")).toBeUndefined();
   });
 
   it("sends one recovery message and clears the open incident", async () => {
@@ -481,7 +562,7 @@ describe("buildDigest", () => {
 
     expect(body).toContain("codeforces");
     expect(body).toContain("1 total");
-    expect(body).toContain("ALERTS (24h): none");
+    expect(body).toContain("INCIDENTS (24h): none");
     expect(body).toContain("No action needed.");
   });
 
@@ -498,19 +579,73 @@ describe("buildDigest", () => {
     ).run(NOW - 100);
     db.prepare(
       "INSERT INTO admin_notices (key, first_seen_at, last_seen_at, occurrences) VALUES ('vjudge:blocked', ?, ?, 4)",
-    ).run(NOW - 7200, NOW - 3600);
+    ).run(NOW - 7200, NOW - 60);
+    for (const offset of [7200, 6300, 900, 60]) {
+      db.prepare(
+        "INSERT INTO cron_runs (job, started_at, duration_ms, status, faults) VALUES ('vjudge', ?, 10, 'degraded', 'vjudge:blocked')",
+      ).run(NOW - offset);
+    }
 
     const { body } = await buildDigest(d1Shim(db), NOW);
 
     expect(body).toContain("atcoder/ghost — HTTP 500");
     expect(body).toContain("event 7");
-    expect(body).toContain("vjudge:blocked — 4 occurrence(s)");
+    expect(body).toContain("vjudge:blocked");
+    expect(body).toContain("2 episode(s), 4 tick(s)");
+    expect(body).toContain("still open, not yet alerted");
     expect(body).toContain("needing attention");
     expect(body).not.toContain("No action needed.");
+  });
+
+  it("reports a fault that cleared on its own without calling the day unhealthy", async () => {
+    // Self-healed blips are the common case now that they are not mailed: the
+    // digest has to show them, and must not cry wolf about them either.
+    insertUser(db, 1);
+    db.prepare(
+      "INSERT INTO user_handles (user_id, type, handle, last_synced_at) VALUES (1, 'codeforces', 'alice', ?)",
+    ).run(NOW - 600);
+    for (const offset of [7200, 6300]) {
+      db.prepare(
+        "INSERT INTO cron_runs (job, started_at, duration_ms, status, faults) VALUES ('codeforces', ?, 10, 'degraded', 'codeforces:blocked')",
+      ).run(NOW - offset);
+    }
+
+    const { body } = await buildDigest(d1Shim(db), NOW);
+
+    expect(body).toContain("codeforces:blocked");
+    expect(body).toContain("1 episode(s), 2 tick(s), longest 15m");
+    expect(body).toContain("cleared");
+    expect(body).toContain("No action needed.");
   });
 
   it("works on an empty database", async () => {
     const { body } = await buildDigest(d1Shim(db), NOW);
     expect(body).toContain("none registered");
+  });
+});
+
+describe("collectIncidents", () => {
+  it("splits consecutive ticks from a later recurrence", () => {
+    const [incident] = collectIncidents([
+      { started_at: NOW, faults: "codeforces:blocked" },
+      { started_at: NOW + 900, faults: "codeforces:blocked" },
+      { started_at: NOW + 1800, faults: "codeforces:blocked" },
+      // Four hours later: a separate incident, not a four-hour outage.
+      { started_at: NOW + 4 * 3600, faults: "codeforces:blocked" },
+    ]);
+
+    expect(incident).toMatchObject({ episodes: 2, ticks: 4, longestSeconds: 1800 });
+  });
+
+  it("counts each key of a multi-fault run separately", () => {
+    const incidents = collectIncidents([
+      { started_at: NOW, faults: "codeforces:blocked,codeforces:error-rate" },
+      { started_at: NOW + 900, faults: "codeforces:blocked" },
+    ]);
+
+    expect(incidents.map((row) => [row.key, row.ticks])).toEqual([
+      ["codeforces:blocked", 2],
+      ["codeforces:error-rate", 1],
+    ]);
   });
 });

@@ -1,4 +1,4 @@
-import { isoish, type Notice } from "../lib/notify";
+import { DAILY_SUSTAIN, isoish, TRANSIENT_SUSTAIN, type Notice } from "../lib/notify";
 import type { CfRatingSummary } from "./cf-rating";
 import type { ErrorTally, StopReason } from "./runner";
 import { LIVENESS_WINDOW_SECONDS, livenessIsMeaningful, type Liveness } from "./runs";
@@ -13,6 +13,13 @@ import { LIVENESS_WINDOW_SECONDS, livenessIsMeaningful, type Liveness } from "./
 // The bar is deliberately high. Two things qualify: the numbers are silently
 // wrong, or the sync has stopped working. Individual failures do not — those
 // are recorded per row in `last_sync_error` and summarised in the daily digest.
+//
+// A second bar applies to the faults that come from the judges rather than from
+// us. Those almost always clear on their own within a tick or two, so they carry
+// a sustain window (see `Sustain` in notify.ts): raised and recorded at once,
+// mailed only if they are still going two hours later. The faults that describe
+// our own data — a truncated history, a handle that no longer exists — carry no
+// window, because nothing about them improves by waiting.
 // ---------------------------------------------------------------------------
 
 /**
@@ -98,6 +105,7 @@ export const collectFaults = (outcome: RunOutcome): Notice[] => {
     faults.push({
       key: `${platform}:blocked`,
       subject: `[DIU ACM] ${platform} sync is being rate-limited`,
+      sustain: TRANSIENT_SUSTAIN,
       detail:
         `The ${platform} sync stopped early because the judge refused a request (rate limit, ` +
         `or for VJudge a Cloudflare bot challenge). It got through ${processed} ${unit}(s) ` +
@@ -130,6 +138,7 @@ export const collectFaults = (outcome: RunOutcome): Notice[] => {
     faults.push({
       key: `${platform}:error-rate`,
       subject: `[DIU ACM] ${platform} sync is failing on most ${unit}s`,
+      sustain: TRANSIENT_SUSTAIN,
       detail:
         `${errors} of ${processed} ${unit}(s) failed in the last ${platform} run (${percent}%). ` +
         `A few failures are normal — a deleted account, a hidden contest — but this many at once ` +
@@ -213,6 +222,9 @@ export const collectCfRatingFaults = (summary: CfRatingSummary): Notice[] => {
     faults.push({
       key: "codeforces-rating:unreachable",
       subject: `[DIU ACM] Codeforces rating refresh could not check every handle`,
+      // The mail itself says a missed day is harmless and that what matters is
+      // whether it repeats, so it waits for the repeat before being sent.
+      sustain: DAILY_SUSTAIN,
       detail:
         `${why} ${unchecked} of ${summary.handles} handle(s) were not checked on this run.\n\n` +
         reasonBlock(summary.errorReasons) +

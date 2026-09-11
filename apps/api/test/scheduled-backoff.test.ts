@@ -33,7 +33,7 @@ describe("scheduled Codeforces backoff", () => {
 
     db.prepare(
       "INSERT INTO upstream_backoffs (upstream, blocked_until, failures, last_error, updated_at) VALUES ('codeforces', ?, 2, 'limited', ?)",
-    ).run(NOW + 3600, NOW);
+    ).run(NOW + 4 * 3600, NOW);
   });
 
   afterEach(() => {
@@ -53,6 +53,19 @@ describe("scheduled Codeforces backoff", () => {
       { job: "codeforces-rating", status: "degraded", faults: "codeforces:blocked" },
     ]);
     expect(runs.every((run) => JSON.parse(run.summary).skipped === true)).toBe(true);
+    // Nothing mailed yet: a Codeforces call limit that clears within the hour is
+    // not something anyone can act on, so the incident is only recorded.
+    expect(sent).toHaveLength(0);
+  });
+
+  it("mails once, for both jobs, when the block outlasts the sustain window", async () => {
+    for (let at = NOW; at <= NOW + 2 * 3600; at += 900) {
+      vi.setSystemTime(new Date(at * 1000));
+      await handleScheduled({ cron: CODEFORCES_CRON } as ScheduledController, env);
+    }
+    vi.setSystemTime(new Date((NOW + 2 * 3600 + 60) * 1000));
+    await handleScheduled({ cron: CF_RATING_CRON } as ScheduledController, env);
+
     expect(sent).toHaveLength(1);
     expect(sent[0].subject).toContain("rate-limiting");
   });

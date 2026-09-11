@@ -235,11 +235,11 @@ adminSystemRoutes.get("/runs", manageSystem, validate("query", adminSystemRunsQu
 /**
  * Acknowledge a fault: drop its cooldown ledger row.
  *
- * Deleting rather than flagging is deliberate. The row's only job is to
- * suppress repeat mail for an hour, so removing it means "I have dealt with
- * this" *and* "if it happens again, tell me straight away" rather than leaving
- * the admin inside a cooldown started by the problem they just fixed. The run
- * that raised it stays in `cron_runs` either way, so the history is not lost.
+ * Deleting rather than flagging is deliberate. The row is one open incident and
+ * nothing else, so removing it means "I have dealt with this" *and* "whatever
+ * happens next is a new incident" rather than leaving the admin inside a
+ * cooldown started by the problem they just fixed. The run that raised it stays
+ * in `cron_runs` either way, so the history is not lost.
  */
 adminSystemRoutes.delete(
   "/notices/:key",

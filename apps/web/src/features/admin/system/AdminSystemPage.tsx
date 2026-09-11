@@ -279,9 +279,9 @@ function NoticeCard({ notice, now }: { notice: SystemNotice; now: number }) {
             }
             title="Mark this fault resolved?"
             description={
-              'Clears the alert cooldown for this fault. If it happens again you will be ' +
-              'mailed straight away rather than waiting out the hour. The runs that raised ' +
-              'it stay in the history below.'
+              'Clears the alert ledger for this fault, so the next occurrence opens a new ' +
+              'incident instead of continuing this one. The runs that raised it stay in the ' +
+              'history below.'
             }
             confirmLabel="Mark resolved"
             onConfirm={() =>
