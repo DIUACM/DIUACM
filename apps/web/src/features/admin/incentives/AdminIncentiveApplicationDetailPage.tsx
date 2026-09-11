@@ -1,4 +1,5 @@
-import { ArrowLeft, Trash2 } from 'lucide-react'
+import { ArrowLeft, Pencil, Trash2 } from 'lucide-react'
+import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import { errorMessage } from '@/api/client'
@@ -21,6 +22,8 @@ import { ConfirmDialog } from '@/features/admin/shared/ConfirmDialog'
 import { formatDateTime } from '@/lib/datetime'
 import { useDocumentTitle } from '@/lib/use-document-title'
 import { ProgrammerHandles } from './ProgrammerHandles'
+import { AdminIncentiveApplicationForm } from './AdminIncentiveApplicationForm'
+import { ReplicateApplicationDialog } from './ReplicateApplicationDialog'
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
@@ -36,6 +39,7 @@ export function AdminIncentiveApplicationDetailPage() {
   const navigate = useNavigate()
   const applicationQuery = useAdminIncentiveApplication(Number(id))
   const deleteApplication = useAdminDeleteIncentiveApplication()
+  const [editing, setEditing] = useState(false)
   const application = applicationQuery.data?.application
   useDocumentTitle(
     application ? `Admin · ${application.fullName}` : 'Admin · Incentive application',
@@ -81,16 +85,24 @@ export function AdminIncentiveApplicationDetailPage() {
         >
           <ArrowLeft className="size-4" /> All applications
         </Link>
-        <ConfirmDialog
-          trigger={
-            <Button variant="destructive" size="sm" disabled={deleteApplication.isPending}>
-              <Trash2 className="size-4" /> Delete
+        {!editing && (
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+              <Pencil className="size-4" /> Edit
             </Button>
-          }
-          title="Delete this application?"
-          description="This cannot be undone. The student may submit a new one afterwards."
-          onConfirm={handleDelete}
-        />
+            <ReplicateApplicationDialog applicationId={record.id} />
+            <ConfirmDialog
+              trigger={
+                <Button variant="destructive" size="sm" disabled={deleteApplication.isPending}>
+                  <Trash2 className="size-4" /> Delete
+                </Button>
+              }
+              title="Delete this application?"
+              description="This cannot be undone. The student may submit a new one afterwards."
+              onConfirm={handleDelete}
+            />
+          </div>
+        )}
       </div>
 
       <div>
@@ -137,47 +149,56 @@ export function AdminIncentiveApplicationDetailPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Details as submitted</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-6 sm:grid-cols-2">
-          <Detail label="Full name" value={record.fullName} />
-          <Detail label="Student ID" value={record.studentId} />
-          <Detail label="Batch" value={record.batch} />
-          <Detail label="Email" value={record.email} />
-          <Detail label="Current semester" value={record.currentSemester} />
-          <Detail label="Phone number" value={record.phoneNumber} />
-        </CardContent>
-      </Card>
+      {editing ? (
+        <AdminIncentiveApplicationForm
+          application={record}
+          onCancel={() => setEditing(false)}
+        />
+      ) : (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Details as submitted</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-6 sm:grid-cols-2">
+              <Detail label="Full name" value={record.fullName} />
+              <Detail label="Student ID" value={record.studentId} />
+              <Detail label="Batch" value={record.batch} />
+              <Detail label="Email" value={record.email} />
+              <Detail label="Current semester" value={record.currentSemester} />
+              <Detail label="Phone number" value={record.phoneNumber} />
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Courses ({record.courses.length})</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {record.courses.map((course, index) => (
-            <div
-              key={index}
-              className="space-y-4 rounded-2xl bg-muted/50 p-5 shadow-clay-inset"
-            >
-              <p className="font-semibold">
-                {course.courseName}{' '}
-                <span className="text-muted-foreground">({course.courseCode})</span>
-              </p>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Detail label="Section" value={course.section} />
-                <Detail
-                  label="Teacher"
-                  value={`${course.teacherName} (${course.teacherInitial})`}
-                />
-                <Detail label="Teacher email" value={course.teacherEmail} />
-                <Detail label="Teacher phone" value={course.teacherPhone} />
-              </div>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Courses ({record.courses.length})</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {record.courses.map((course, index) => (
+                <div
+                  key={index}
+                  className="space-y-4 rounded-2xl bg-muted/50 p-5 shadow-clay-inset"
+                >
+                  <p className="font-semibold">
+                    {course.courseName}{' '}
+                    <span className="text-muted-foreground">({course.courseCode})</span>
+                  </p>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <Detail label="Section" value={course.section} />
+                    <Detail
+                      label="Teacher"
+                      value={`${course.teacherName} (${course.teacherInitial})`}
+                    />
+                    <Detail label="Teacher email" value={course.teacherEmail} />
+                    <Detail label="Teacher phone" value={course.teacherPhone} />
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   )
 }

@@ -1,7 +1,10 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { runBulkInChunks } from '../bulk'
 import { api, unwrap } from '../client'
-import type { AdminIncentiveApplication } from '../types'
+import type {
+  AdminIncentiveApplication,
+  IncentiveApplicationInput,
+} from '../types'
 
 export interface AdminIncentiveFilters {
   page?: number
@@ -82,6 +85,57 @@ export function useAdminIncentiveApplication(id: number) {
     queryKey: ['admin', 'incentive-applications', id],
     queryFn: () =>
       unwrap(api.GET('/admin/incentive-applications/{id}', { params: { path: { id } } })),
+  })
+}
+
+export type AdminIncentiveApplicationUpdateInput = IncentiveApplicationInput & {
+  email: string
+}
+
+export function useAdminUpdateIncentiveApplication(id: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (body: AdminIncentiveApplicationUpdateInput) =>
+      unwrap(
+        api.PUT('/admin/incentive-applications/{id}', {
+          params: { path: { id } },
+          body,
+        }),
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'incentive-applications'] })
+      void queryClient.invalidateQueries({ queryKey: ['incentive-application'] })
+    },
+  })
+}
+
+export function useAdminIncentiveReplicationTargets(query: string, enabled = true) {
+  return useQuery({
+    queryKey: ['admin', 'incentive-applications', 'replication-targets', query],
+    queryFn: () =>
+      unwrap(
+        api.GET('/admin/incentive-applications/replication-targets', {
+          params: { query: { q: query || undefined } },
+        }),
+      ),
+    enabled,
+  })
+}
+
+export function useAdminReplicateIncentiveApplication(id: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (targetUserId: number) =>
+      unwrap(
+        api.POST('/admin/incentive-applications/{id}/replicate', {
+          params: { path: { id } },
+          body: { targetUserId },
+        }),
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'incentive-applications'] })
+      void queryClient.invalidateQueries({ queryKey: ['incentive-application'] })
+    },
   })
 }
 

@@ -6450,6 +6450,68 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/incentive-applications/replication-targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Find accounts that can receive a replicated application
+         * @description **Access:** `manage_incentives` — Requires a bearer token for a user granted the `manage_incentives` permission. The super admin always passes.
+         *
+         *     Returns up to 10 accounts that do not already have an incentive application.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Search name, username, email, or student id. */
+                    q?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Eligible target accounts */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminIncentiveReplicationTargets"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Caller lacks the required permission */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/incentive-applications/{id}": {
         parameters: {
             query?: never;
@@ -6510,7 +6572,72 @@ export interface paths {
                 };
             };
         };
-        put?: never;
+        /**
+         * Update an application
+         * @description **Access:** `manage_incentives` — Requires a bearer token for a user granted the `manage_incentives` permission. The super admin always passes.
+         */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AdminIncentiveApplicationUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description Updated application */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminIncentiveApplicationDetail"];
+                    };
+                };
+                /** @description Validation failed */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Caller lacks the required permission */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Application not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
         post?: never;
         /**
          * Delete an application
@@ -6567,6 +6694,98 @@ export interface paths {
                 };
             };
         };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/incentive-applications/{id}/replicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Replicate an application for another account
+         * @description **Access:** `manage_incentives` — Requires a bearer token for a user granted the `manage_incentives` permission. The super admin always passes.
+         *
+         *     Copies the submitted details to an account without an existing application. The copy records the target account's verified email.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["AdminIncentiveApplicationReplicateRequest"];
+                };
+            };
+            responses: {
+                /** @description Replicated application */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AdminIncentiveApplicationDetail"];
+                    };
+                };
+                /** @description Validation failed */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Missing or invalid token */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Caller lacks the required permission */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Application or target user not found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Target already has an application */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -7233,6 +7452,28 @@ export interface components {
                 teacherPhone: string;
             }[];
         };
+        AdminIncentiveApplicationUpdateRequest: {
+            fullName: string;
+            studentId: string;
+            batch: string;
+            currentSemester: string;
+            phoneNumber: string;
+            courses: {
+                courseName: string;
+                courseCode: string;
+                teacherName: string;
+                teacherInitial: string;
+                section: string;
+                /** Format: email */
+                teacherEmail: string;
+                teacherPhone: string;
+            }[];
+            /** Format: email */
+            email: string;
+        };
+        AdminIncentiveApplicationReplicateRequest: {
+            targetUserId: number;
+        };
         LoginRequest: {
             identifier: string;
             password: string;
@@ -7778,6 +8019,9 @@ export interface components {
         AdminIncentiveApplicationList: {
             data: components["schemas"]["AdminIncentiveApplication"][];
             meta: components["schemas"]["PaginationMeta"];
+        };
+        AdminIncentiveReplicationTargets: {
+            users: components["schemas"]["UserSummary"][];
         };
         AdminIncentiveApplicationDetail: {
             application: components["schemas"]["AdminIncentiveApplication"];

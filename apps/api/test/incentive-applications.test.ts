@@ -351,6 +351,87 @@ describe("incentive applications", () => {
       expect((await call("/admin/incentive-applications/abc", token)).status).toBe(404);
     });
 
+    it("edits every submitted field without changing the owning account", async () => {
+      await submit(await tokenFor(1, "user1"), application());
+      const adminToken = await tokenFor(3, "user3");
+      const list = (await (
+        await call("/admin/incentive-applications", adminToken)
+      ).json()) as ListBody;
+      const id = list.data[0].id;
+
+      const res = await call(`/admin/incentive-applications/${id}`, adminToken, {
+        method: "PUT",
+        body: JSON.stringify({
+          ...application({
+            fullName: "Edited Student",
+            currentSemester: "Summer 2026",
+            courses: [course({ courseName: "Data Structures" })],
+          }),
+          email: "reviewed@example.com",
+        }),
+      });
+
+      expect(res.status).toBe(200);
+      const updated = (await res.json()) as {
+        application: NonNullable<ApplicationBody["application"]>;
+      };
+      expect(updated.application).toMatchObject({
+        id,
+        userId: 1,
+        fullName: "Edited Student",
+        email: "reviewed@example.com",
+        currentSemester: "Summer 2026",
+      });
+      expect(updated.application.courses[0].courseName).toBe("Data Structures");
+    });
+
+    it("replicates an application to an eligible account using its verified email", async () => {
+      await submit(await tokenFor(1, "user1"), application());
+      const adminToken = await tokenFor(3, "user3");
+      const list = (await (
+        await call("/admin/incentive-applications", adminToken)
+      ).json()) as ListBody;
+      const sourceId = list.data[0].id;
+
+      const targets = await call(
+        "/admin/incentive-applications/replication-targets?q=user4",
+        adminToken,
+      );
+      expect(targets.status).toBe(200);
+      expect(await targets.json()).toMatchObject({
+        users: [{ id: 4, username: "user4" }],
+      });
+
+      const res = await call(
+        `/admin/incentive-applications/${sourceId}/replicate`,
+        adminToken,
+        { method: "POST", body: JSON.stringify({ targetUserId: 4 }) },
+      );
+      expect(res.status).toBe(201);
+      const copy = (await res.json()) as {
+        application: NonNullable<ApplicationBody["application"]>;
+      };
+      expect(copy.application).toMatchObject({
+        userId: 4,
+        fullName: "Student One",
+        email: "user4@example.com",
+      });
+      expect(copy.application.id).not.toBe(sourceId);
+
+      const afterTargets = await call(
+        "/admin/incentive-applications/replication-targets?q=user4",
+        adminToken,
+      );
+      expect(await afterTargets.json()).toEqual({ users: [] });
+
+      const duplicate = await call(
+        `/admin/incentive-applications/${sourceId}/replicate`,
+        adminToken,
+        { method: "POST", body: JSON.stringify({ targetUserId: 4 }) },
+      );
+      expect(duplicate.status).toBe(409);
+    });
+
     it("deletes an application, freeing the applicant to file a new one", async () => {
       const userToken = await tokenFor(1, "user1");
       await submit(userToken, application());

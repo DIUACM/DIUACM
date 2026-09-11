@@ -28,7 +28,11 @@ import { googleSignInSchema, loginSchema, profileUpdateSchema } from "./schemas/
 import { RUN_RETENTION_DAYS } from "./sync/runs";
 import { attendanceGiveSchema } from "./schemas/events";
 import { handleSetSchema } from "./schemas/handles";
-import { incentiveApplicationSubmitSchema } from "./schemas/incentives";
+import {
+  adminIncentiveApplicationReplicateSchema,
+  adminIncentiveApplicationUpdateSchema,
+  incentiveApplicationSubmitSchema,
+} from "./schemas/incentives";
 
 // Request bodies are derived from the same Zod schemas the routes validate
 // against (via `z.toJSONSchema`) so the docs can't drift from validation.
@@ -1095,6 +1099,14 @@ const adminIncentiveApplicationListSchema = {
   required: ["data", "meta"],
 };
 
+const adminIncentiveReplicationTargetsSchema = {
+  type: "object",
+  properties: {
+    users: { type: "array", items: ref("UserSummary") },
+  },
+  required: ["users"],
+};
+
 const adminIncentiveApplicationDetailSchema = {
   type: "object",
   properties: { application: ref("AdminIncentiveApplication") },
@@ -1511,6 +1523,12 @@ export const openApiDoc = {
       IncentiveApplication: incentiveApplicationSchema,
       IncentiveApplicationResponse: incentiveApplicationResponseSchema,
       IncentiveApplicationRequest: toSchema(incentiveApplicationSubmitSchema),
+      AdminIncentiveApplicationUpdateRequest: toSchema(
+        adminIncentiveApplicationUpdateSchema,
+      ),
+      AdminIncentiveApplicationReplicateRequest: toSchema(
+        adminIncentiveApplicationReplicateSchema,
+      ),
       LoginRequest: toSchema(loginSchema),
       GoogleSignInRequest: toSchema(googleSignInSchema),
       ProfileUpdateRequest: toSchema(profileUpdateSchema),
@@ -1569,6 +1587,7 @@ export const openApiDoc = {
       AdminBlogPostUpdateRequest: toSchema(adminBlogPostUpdateSchema),
       AdminIncentiveApplication: adminIncentiveApplicationSchema,
       AdminIncentiveApplicationList: adminIncentiveApplicationListSchema,
+      AdminIncentiveReplicationTargets: adminIncentiveReplicationTargetsSchema,
       AdminIncentiveApplicationDetail: adminIncentiveApplicationDetailSchema,
       AdminIncentiveFilters: adminIncentiveFiltersSchema,
       CronRunStatus: runStatusSchema,
@@ -3250,6 +3269,31 @@ export const openApiDoc = {
         },
       },
     },
+    "/admin/incentive-applications/replication-targets": {
+      get: {
+        tags: ["admin-incentive-applications"],
+        summary: "Find accounts that can receive a replicated application",
+        ...access(
+          "manage_incentives",
+          "Returns up to 10 accounts that do not already have an incentive application.",
+        ),
+        parameters: [
+          {
+            name: "q",
+            in: "query",
+            description: "Search name, username, email, or student id.",
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Eligible target accounts",
+            content: jsonBody(ref("AdminIncentiveReplicationTargets")),
+          },
+          ...adminAuthResponses,
+        },
+      },
+    },
     "/admin/incentive-applications/{id}": {
       get: {
         tags: ["admin-incentive-applications"],
@@ -3261,6 +3305,25 @@ export const openApiDoc = {
             description: "The application",
             content: jsonBody(ref("AdminIncentiveApplicationDetail")),
           },
+          ...adminAuthResponses,
+          "404": { description: "Application not found", content: jsonBody(ref("Error")) },
+        },
+      },
+      put: {
+        tags: ["admin-incentive-applications"],
+        summary: "Update an application",
+        ...access("manage_incentives"),
+        parameters: [idParam("id")],
+        requestBody: {
+          required: true,
+          content: jsonBody(ref("AdminIncentiveApplicationUpdateRequest")),
+        },
+        responses: {
+          "200": {
+            description: "Updated application",
+            content: jsonBody(ref("AdminIncentiveApplicationDetail")),
+          },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
           ...adminAuthResponses,
           "404": { description: "Application not found", content: jsonBody(ref("Error")) },
         },
@@ -3277,6 +3340,32 @@ export const openApiDoc = {
           "200": { description: "Deleted", content: jsonBody(ref("Ok")) },
           ...adminAuthResponses,
           "404": { description: "Application not found", content: jsonBody(ref("Error")) },
+        },
+      },
+    },
+    "/admin/incentive-applications/{id}/replicate": {
+      post: {
+        tags: ["admin-incentive-applications"],
+        summary: "Replicate an application for another account",
+        ...access(
+          "manage_incentives",
+          "Copies the submitted details to an account without an existing application. " +
+            "The copy records the target account's verified email.",
+        ),
+        parameters: [idParam("id")],
+        requestBody: {
+          required: true,
+          content: jsonBody(ref("AdminIncentiveApplicationReplicateRequest")),
+        },
+        responses: {
+          "201": {
+            description: "Replicated application",
+            content: jsonBody(ref("AdminIncentiveApplicationDetail")),
+          },
+          "400": { description: "Validation failed", content: jsonBody(ref("Error")) },
+          ...adminAuthResponses,
+          "404": { description: "Application or target user not found", content: jsonBody(ref("Error")) },
+          "409": { description: "Target already has an application", content: jsonBody(ref("Error")) },
         },
       },
     },

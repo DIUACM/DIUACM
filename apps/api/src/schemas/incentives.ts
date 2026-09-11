@@ -29,6 +29,22 @@ export const incentiveApplicationSubmitSchema = z.object({
   courses: z.array(incentiveCourseSchema).min(1).max(20),
 });
 
+// Admins edit the complete submitted snapshot, including the recorded email.
+// Unlike the applicant endpoint, this does not derive the address from the
+// caller because the caller is the reviewer, not the applicant.
+export const adminIncentiveApplicationUpdateSchema =
+  incentiveApplicationSubmitSchema.extend({
+    email: z.email().max(254),
+  });
+
+export const adminIncentiveApplicationReplicateSchema = z.object({
+  targetUserId: z.number().int().min(1),
+});
+
+export const adminIncentiveReplicationTargetsQuery = z.object({
+  q: z.string().trim().min(1).max(100).optional(),
+});
+
 export const adminIncentiveApplicationsListQuery = z.object({
   ...pageFields,
   // Searches full name / student id / email / phone number / batch.

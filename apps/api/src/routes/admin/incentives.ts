@@ -1,9 +1,19 @@
-import { and, count, desc, eq, inArray, or, sql, type SQL } from "drizzle-orm";
+import {
+  and,
+  count,
+  desc,
+  eq,
+  inArray,
+  notInArray,
+  or,
+  sql,
+  type SQL,
+} from "drizzle-orm";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import { getDb } from "../../db/client";
-import { incentiveApplications } from "../../db/schema";
+import { incentiveApplications, users } from "../../db/schema";
 import { likeContains } from "../../lib/like";
 import { buildMeta } from "../../lib/pagination";
 import { parseId } from "../../lib/parse-id";
@@ -11,7 +21,12 @@ import { toHandlesMap, toUserSummary } from "../../lib/user-shape";
 import { validate } from "../../lib/validator";
 import { requirePermission } from "../../middleware/auth";
 import { adminBulkIdsSchema } from "../../schemas/admin";
-import { adminIncentiveApplicationsListQuery } from "../../schemas/incentives";
+import {
+  adminIncentiveApplicationReplicateSchema,
+  adminIncentiveApplicationsListQuery,
+  adminIncentiveApplicationUpdateSchema,
+  adminIncentiveReplicationTargetsQuery,
+} from "../../schemas/incentives";
 import type { AppEnv } from "../../types";
 
 // Every application column. The applicant's own details are typed into the
@@ -142,6 +157,51 @@ adminIncentiveRoutes.get("/filters", manageIncentives, async (c) => {
   });
 });
 
+// Accounts that can own a replicated application. This lives under the
+// incentive permission (rather than /admin/users) so an incentive reviewer
+// does not also need broad user-management access just to choose a target.
+adminIncentiveRoutes.get(
+  "/replication-targets",
+  manageIncentives,
+  validate("query", adminIncentiveReplicationTargetsQuery),
+  async (c) => {
+    const { q } = c.req.valid("query");
+    const db = getDb(c.env.DB);
+    const filters: SQL[] = [
+      notInArray(
+        users.id,
+        db.select({ userId: incentiveApplications.userId }).from(incentiveApplications),
+      ),
+    ];
+    if (q) {
+      const expr = or(
+        likeContains(users.name, q),
+        likeContains(users.username, q),
+        likeContains(users.email, q),
+        likeContains(users.studentId, q),
+      );
+      if (expr) filters.push(expr);
+    }
+
+    const rows = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        username: users.username,
+        imageKey: users.imageKey,
+        isBanned: users.isBanned,
+        banReason: users.banReason,
+      })
+      .from(users)
+      .where(and(...filters))
+      .orderBy(users.name, users.id)
+      .limit(10);
+
+    const origin = new URL(c.req.url).origin;
+    return c.json({ users: rows.map((row) => toUserSummary(row, origin)) });
+  },
+);
+
 adminIncentiveRoutes.get("/:id", manageIncentives, async (c) => {
   const id = parseId(c.req.param("id"));
   if (id === null) throw new HTTPException(404, { message: "Application not found" });
@@ -155,6 +215,78 @@ adminIncentiveRoutes.get("/:id", manageIncentives, async (c) => {
 
   return c.json({ application: shapeApplication(row, new URL(c.req.url).origin) });
 });
+
+adminIncentiveRoutes.put(
+  "/:id",
+  manageIncentives,
+  validate("json", adminIncentiveApplicationUpdateSchema),
+  async (c) => {
+    const id = parseId(c.req.param("id"));
+    if (id === null) throw new HTTPException(404, { message: "Application not found" });
+
+    const db = getDb(c.env.DB);
+    const [updated] = await db
+      .update(incentiveApplications)
+      .set({ ...c.req.valid("json"), updatedAt: Math.floor(Date.now() / 1000) })
+      .where(eq(incentiveApplications.id, id))
+      .returning({ id: incentiveApplications.id });
+    if (!updated) throw new HTTPException(404, { message: "Application not found" });
+
+    const row = await db.query.incentiveApplications.findFirst({
+      ...applicationQuery,
+      where: eq(incentiveApplications.id, updated.id),
+    });
+    if (!row) throw new HTTPException(404, { message: "Application not found" });
+    return c.json({ application: shapeApplication(row, new URL(c.req.url).origin) });
+  },
+);
+
+adminIncentiveRoutes.post(
+  "/:id/replicate",
+  manageIncentives,
+  validate("json", adminIncentiveApplicationReplicateSchema),
+  async (c) => {
+    const id = parseId(c.req.param("id"));
+    if (id === null) throw new HTTPException(404, { message: "Application not found" });
+
+    const db = getDb(c.env.DB);
+    const source = await db.query.incentiveApplications.findFirst({
+      columns: {
+        fullName: true,
+        studentId: true,
+        batch: true,
+        currentSemester: true,
+        phoneNumber: true,
+        courses: true,
+      },
+      where: eq(incentiveApplications.id, id),
+    });
+    if (!source) throw new HTTPException(404, { message: "Application not found" });
+
+    const { targetUserId } = c.req.valid("json");
+    const [target] = await db
+      .select({ id: users.id, email: users.email })
+      .from(users)
+      .where(eq(users.id, targetUserId))
+      .limit(1);
+    if (!target) throw new HTTPException(404, { message: "Target user not found" });
+
+    const [created] = await db
+      .insert(incentiveApplications)
+      .values({ ...source, userId: target.id, email: target.email })
+      .returning({ id: incentiveApplications.id });
+    if (!created) {
+      throw new HTTPException(500, { message: "Could not replicate the application" });
+    }
+
+    const row = await db.query.incentiveApplications.findFirst({
+      ...applicationQuery,
+      where: eq(incentiveApplications.id, created.id),
+    });
+    if (!row) throw new HTTPException(404, { message: "Application not found" });
+    return c.json({ application: shapeApplication(row, new URL(c.req.url).origin) }, 201);
+  },
+);
 
 adminIncentiveRoutes.delete("/:id", manageIncentives, async (c) => {
   const id = parseId(c.req.param("id"));
